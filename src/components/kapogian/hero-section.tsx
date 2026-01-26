@@ -25,9 +25,9 @@ export function HeroSection() {
       <div className="flex flex-col md:flex-row">
         <div className="w-full md:w-1/2 p-8 md:p-12 md:pr-0 flex flex-col justify-center relative z-10 pt-20">
           <div className="inline-block self-start bg-black text-white px-3 py-1 text-xs font-bold uppercase tracking-widest rounded mb-4 transform -rotate-2">
-            Series 1 • 2024 Edition
+            Series 1 • 2026 Edition
           </div>
-          <h1 className="text-[5rem] leading-[0.85] text-primary text-outline mb-4 transform -rotate-1 origin-bottom-left">
+          <h1 className="text-[5rem] leading-[0.85] text-primary text-outline mb-4 transform -rotate-1 origin-bottom-left"> 
             KAPO<br/>GIAN
           </h1>
           <p className="font-headline text-2xl text-slate-800 mb-6 max-w-sm leading-tight">

@@ -246,7 +246,9 @@ export default function GeneratorPage() {
                     </div>
 
                     <div className="flex gap-4 mb-6">
-                        <div className="w-20 h-20 bg-stone-100 border-2 border-black rounded-md shrink-0"></div>
+                        <div className="w-20 h-20 bg-stone-100 border-2 border-black rounded-md shrink-0 overflow-hidden">
+                          <Image src="/images/KPG.png" alt="Kapogian Character" width={80} height={80} />
+                        </div>
                         <div className="flex flex-col justify-center">
                             <span className="font-semibold text-lg">Kapogian #442</span>
                             <span className="text-sm text-stone-500">Includes Digital Asset</span>
