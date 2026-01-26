@@ -2,16 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { WandSparkles, UserRound, LoaderCircle } from 'lucide-react';
+import { WandSparkles } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { IntroSection } from '@/components/kapogian/intro-section';
 
 export function HeroSection() {
-  const [characterImage, setCharacterImage] = useState<string | null>(null);
   const [characterName, setCharacterName] = useState('MYSTERY');
   const [randomFigureId, setRandomFigureId] = useState('????');
-  const [isPending, setIsPending] = useState(false); // Keep pending state for UI feedback if needed
 
   useEffect(() => {
     // Generate random figure ID on client to prevent hydration mismatch
@@ -58,16 +56,7 @@ export function HeroSection() {
             <div className="absolute inset-0 flex items-center justify-center z-10">
               <div className="sticker-cut bg-white p-2 rounded-3xl comic-border transform rotate-2">
                 <div className="w-48 h-48 bg-slate-100 rounded-2xl flex items-center justify-center overflow-hidden border-2 border-slate-200 relative">
-                  {isPending && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white/50">
-                      <LoaderCircle className="w-16 h-16 text-slate-400 animate-spin"/>
-                    </div>
-                  )}
-                  {characterImage ? (
-                     <Image src={characterImage} alt="Generated character" width={192} height={192} className="object-cover w-full h-full" />
-                  ) : (
-                    <UserRound className="w-20 h-20 text-slate-300" strokeWidth={1} />
-                  )}
+                  <Image src="/images/kpg.png" alt="Kapogian character" width={192} height={192} className="object-cover w-full h-full" />
                 </div>
                 <div className="mt-2 text-center">
                   <span className="font-headline text-xl block">{characterName}</span>
