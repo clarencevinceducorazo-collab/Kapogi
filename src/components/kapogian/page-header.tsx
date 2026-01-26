@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Menu, Wallet } from "lucide-react";
+import { WandSparkles, Wallet } from "lucide-react";
 
 const TickerContent = () => (
     <div className="flex shrink-0 items-center gap-8 font-headline text-sm tracking-widest">
@@ -27,10 +27,10 @@ export function PageHeader() {
         <div className="bg-white comic-border rounded-full p-2 flex justify-between items-center toy-shadow relative">
           <Button
             className="bg-primary hover:bg-red-500 text-primary-foreground comic-border rounded-full px-6 py-2 font-headline text-lg flex items-center gap-2 h-auto"
-            aria-label="Menu"
+            aria-label="Generate"
           >
-            <Menu className="w-6 h-6" strokeWidth={2.5} />
-            <span className="hidden sm:inline">MENU</span>
+            <WandSparkles className="w-6 h-6" strokeWidth={2.5} />
+            <span className="hidden sm:inline">GENERATE</span>
           </Button>
 
           <div className="hidden md:flex absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
