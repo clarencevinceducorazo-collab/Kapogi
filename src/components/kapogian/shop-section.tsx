@@ -50,8 +50,8 @@ export function ShopSection() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <ProductSticker imageUrl="/images/shirt.png" name="TEE" />
           <ProductSticker imageUrl="/images/printmug.png" name="MUG" />
-          <ProductSticker icon={Mouse} name="PAD" />
-          <ProductSticker icon={UtensilsCrossed} name="PLATE" />
+          <ProductSticker imageUrl="/images/pad.png" name="PAD" />
+          <ProductSticker imageUrl="/images/aluminum.png" name="PLATE" />
         </div>
 
         <div className="bg-[hsl(var(--brand-yellow))] text-black comic-border rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">

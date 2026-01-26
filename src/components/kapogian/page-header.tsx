@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { WandSparkles, Wallet } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 const TickerContent = () => (
     <div className="flex shrink-0 items-center gap-8 font-headline text-sm tracking-widest">
@@ -37,8 +38,8 @@ export function PageHeader() {
           </Link>
 
           <div className="hidden md:flex absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <div className="w-20 h-20 bg-white comic-border rounded-full flex items-center justify-center toy-shadow rotate-3 z-10">
-              <span className="font-headline text-3xl tracking-tighter">KP</span>
+            <div className="w-20 h-20 bg-white comic-border rounded-full flex items-center justify-center toy-shadow rotate-3 z-10 overflow-hidden">
+                <Image src="/images/kapogian.webp" alt="Kapogian Logo" width={80} height={80} />
             </div>
           </div>
 
