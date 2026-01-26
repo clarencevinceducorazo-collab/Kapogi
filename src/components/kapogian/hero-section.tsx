@@ -1,43 +1,22 @@
 'use client';
 
-import { useActionState, useEffect, useState } from 'react';
-import { generateCharacterAction, type FormState } from '@/app/actions';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 import { WandSparkles, UserRound, LoaderCircle } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { IntroSection } from '@/components/kapogian/intro-section';
 
-const initialState: FormState = {
-  message: '',
-};
-
 export function HeroSection() {
-  const [state, formAction, isPending] = useActionState(generateCharacterAction, initialState);
-  const { toast } = useToast();
   const [characterImage, setCharacterImage] = useState<string | null>(null);
   const [characterName, setCharacterName] = useState('MYSTERY');
   const [randomFigureId, setRandomFigureId] = useState('????');
+  const [isPending, setIsPending] = useState(false); // Keep pending state for UI feedback if needed
 
   useEffect(() => {
     // Generate random figure ID on client to prevent hydration mismatch
     setRandomFigureId(String(Math.floor(Math.random() * 9000) + 1000));
   }, []);
-
-  useEffect(() => {
-    if (state.message === 'success' && state.character) {
-      setCharacterImage(state.character.imageUrl);
-      const name = state.character.characterDescription?.split(' ')?.[0]?.toUpperCase() || 'CHARACTER';
-      setCharacterName(name);
-    } else if (state.message && state.message !== 'success') {
-      toast({
-        variant: 'destructive',
-        title: 'Generation Failed',
-        description: state.message,
-      });
-    }
-  }, [state, toast]);
-  
 
   return (
     <div className="bg-white comic-border-thick rounded-[2.5rem] overflow-hidden toy-shadow-lg mb-12 relative">
@@ -61,25 +40,14 @@ export function HeroSection() {
             Generate a 1-of-1 character. Mint on SUI. Receive exclusive merchandise delivered to your door.
           </p>
           <div className="flex gap-4">
-            <form action={formAction}>
+            <Link href="/generate">
               <Button
-                type="submit"
-                disabled={isPending}
                 className="bg-[hsl(var(--brand-yellow))] hover:bg-yellow-300 text-black comic-border rounded-xl px-6 py-3 font-headline text-xl toy-shadow flex items-center gap-2 h-auto text-center"
               >
-                {isPending ? (
-                  <>
-                    <LoaderCircle className="animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <WandSparkles />
-                    Start
-                  </>
-                )}
+                <WandSparkles />
+                Start
               </Button>
-            </form>
+            </Link>
           </div>
         </div>
 
