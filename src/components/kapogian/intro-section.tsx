@@ -8,7 +8,7 @@ export function IntroSection() {
                 <div className="h-full w-full bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center relative overflow-hidden">
                     <Shirt className="absolute top-4 left-4 text-primary sticker-cut w-12 h-12" strokeWidth={1.5} />
                     <CupSoda className="absolute bottom-6 right-6 text-accent sticker-cut w-14 h-14" strokeWidth={1.5} />
-                    <video src="/videos/merch.mp4" autoPlay loop muted playsInline className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-40 h-40 object-contain" />
+                    <video src="/videos/merch.mp4" autoPlay loop muted playsInline className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 object-contain" />
                 </div>
                 <div className="absolute bottom-2 right-4 text-[10px] font-bold text-slate-400">FIG 1.0: MERCH BUNDLE</div>
             </div>

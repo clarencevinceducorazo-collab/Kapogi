@@ -1,10 +1,29 @@
 import { Button } from "@/components/ui/button";
-import { Shirt, CupSoda, Mouse, UtensilsCrossed, Gem } from "lucide-react";
+import { Mouse, UtensilsCrossed, Gem } from "lucide-react";
+import Image from "next/image";
 
-const ProductSticker = ({ icon: Icon, name }: { icon: React.ElementType, name: string }) => (
+const ProductSticker = ({
+  icon: Icon,
+  name,
+  imageUrl,
+}: {
+  icon?: React.ElementType;
+  name: string;
+  imageUrl?: string;
+}) => (
   <div className="bg-white text-black comic-border rounded-2xl p-4 flex flex-col items-center sticker-cut cursor-pointer hover:bg-yellow-50">
-    <div className="w-full aspect-square bg-slate-100 rounded-xl mb-3 border-2 border-slate-200 flex items-center justify-center">
-      <Icon className="w-12 h-12 text-slate-700" strokeWidth={1.5} />
+    <div className="w-full aspect-square bg-slate-100 rounded-xl mb-3 border-2 border-slate-200 flex items-center justify-center overflow-hidden">
+      {imageUrl ? (
+        <Image
+          src={imageUrl}
+          alt={name}
+          width={150}
+          height={150}
+          className="object-contain w-full h-full p-2"
+        />
+      ) : (
+        Icon && <Icon className="w-12 h-12 text-slate-700" strokeWidth={1.5} />
+      )}
     </div>
     <span className="font-headline text-lg">{name}</span>
   </div>
@@ -29,8 +48,8 @@ export function ShopSection() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <ProductSticker icon={Shirt} name="TEE" />
-          <ProductSticker icon={CupSoda} name="MUG" />
+          <ProductSticker imageUrl="/images/shirt.png" name="TEE" />
+          <ProductSticker imageUrl="/images/printmug.png" name="MUG" />
           <ProductSticker icon={Mouse} name="PAD" />
           <ProductSticker icon={UtensilsCrossed} name="PLATE" />
         </div>

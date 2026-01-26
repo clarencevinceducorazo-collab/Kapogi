@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { IntroSection } from '@/components/kapogian/intro-section';
 
 export function HeroSection() {
-  const [characterName, setCharacterName] = useState('MYSTERY');
+  const [characterName, setCharacterName] = useState('Tzar');
   const [randomFigureId, setRandomFigureId] = useState('????');
 
   useEffect(() => {
