@@ -39,7 +39,7 @@ export function PageHeader() {
 
           <div className="hidden md:flex absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <div className="w-20 h-20 bg-white comic-border rounded-full flex items-center justify-center toy-shadow rotate-3 z-10 overflow-hidden">
-                <Image src="/images/kapogian.webp" alt="Kapogian Logo" width={80} height={80} />
+                <Image src="/images/Kapogian.webp" alt="Kapogian Logo" width={80} height={80} />
             </div>
           </div>
 

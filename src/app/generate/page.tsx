@@ -15,6 +15,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 export default function GeneratorPage() {
   const [page, setPage] = useState('generator');
@@ -137,10 +138,7 @@ export default function GeneratorPage() {
                 
                 <div className="flex flex-col md:flex-row border-b-4 border-black">
                     <div className="w-full md:w-1/2 p-8 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px]">
-                        <div className="w-64 h-64 bg-white border-4 border-black border-dashed rounded-full flex flex-col items-center justify-center text-center p-4 shadow-inner">
-                            <Ghost className="w-12 h-12 text-stone-300 mb-2" />
-                            <p className="text-stone-400 font-medium text-base leading-tight">Your character image will appear here.</p>
-                        </div>
+                        <Image src="/images/KPG.png" alt="Kapogian Character" width={256} height={256} className="rounded-full border-4 border-black hard-shadow" />
                     </div>
                     <div className="w-full md:w-1/2 p-8 bg-white flex flex-col">
                         <div className="mb-4">
