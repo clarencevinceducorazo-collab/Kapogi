@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   Package,
   Sparkles,
@@ -11,6 +12,7 @@ import {
   ArrowRight,
   Truck,
   Utensils,
+  ArrowLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -26,11 +28,17 @@ export default function GeneratorPage() {
     <div className="generate-page min-h-screen p-4 md:p-8 flex items-center justify-center text-lg text-black antialiased">
       <main className="relative w-full max-w-4xl bg-white border-4 border-black rounded-3xl hard-shadow overflow-hidden flex flex-col">
         <header className="bg-black text-white p-4 border-b-4 border-black flex justify-between items-center">
-          <div className="flex items-center gap-2">
+          <div className="w-1/3">
+            <Link href="/" className="flex items-center gap-2 text-white hover:text-yellow-400 transition-colors">
+                <ArrowLeft className="w-6 h-6" />
+                <span className="font-display font-semibold tracking-tight text-lg hidden md:inline">Home</span>
+            </Link>
+          </div>
+          <div className="w-1/3 flex justify-center items-center gap-2">
             <Package className="w-6 h-6 text-yellow-400" />
             <span className="font-display font-semibold tracking-tight text-xl text-yellow-400">KAPOGIAN WORLD</span>
           </div>
-          <div className="flex gap-2">
+          <div className="w-1/3 flex justify-end gap-2">
             <div className="w-4 h-4 rounded-full bg-red-500 border-2 border-white"></div>
             <div className="w-4 h-4 rounded-full bg-yellow-400 border-2 border-white"></div>
             <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-white"></div>
