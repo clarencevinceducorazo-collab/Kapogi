@@ -56,7 +56,7 @@ export function HeroSection() {
             <div className="absolute inset-0 flex items-center justify-center z-10">
               <div className="sticker-cut bg-white p-2 rounded-3xl comic-border transform rotate-2">
                 <div className="w-48 h-48 bg-slate-100 rounded-2xl flex items-center justify-center overflow-hidden border-2 border-slate-200 relative">
-                  <Image src="/images/kpg.png" alt="Kapogian character" width={192} height={192} className="object-cover w-full h-full" />
+                  <Image src="/images/KPG.png" alt="Kapogian character" width={192} height={192} className="object-cover w-full h-full" />
                 </div>
                 <div className="mt-2 text-center">
                   <span className="font-headline text-xl block">{characterName}</span>
