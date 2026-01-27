@@ -58,9 +58,9 @@ export async function mintCharacterNFT(params: {
     console.log('📝 Executing transaction...');
     
     // The `signAndExecute` hook from `@mysten/dapp-kit` expects a single object
-    // with a `transaction` property of type `TransactionBlock`.
+    // with a `transactionBlock` property of type `TransactionBlock`.
     const result = await params.signAndExecute({
-        transaction: tx,
+        transactionBlock: tx,
         options: {
             showEffects: true,
             showObjectChanges: true,
@@ -105,7 +105,7 @@ export async function upgradeToBundleNFT(params: {
     console.log('📝 Executing upgrade transaction...');
     
     const result = await params.signAndExecute({
-        transaction: tx,
+        transactionBlock: tx,
         options: {
             showEffects: true,
             showObjectChanges: true,
@@ -185,7 +185,7 @@ export async function markAsShipped(params: {
     });
     
     const result = await params.signAndExecute({
-        transaction: tx,
+        transactionBlock: tx,
         options: {
             showEffects: true,
         }
