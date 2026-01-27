@@ -18,7 +18,7 @@ export function WhitepaperModal({
 }) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl h-[80vh] flex flex-col p-0 comic-border-thick rounded-3xl overflow-hidden">
+      <DialogContent className="max-w-3xl h-[80vh] flex flex-col p-0 comic-border-thick rounded-3xl overflow-hidden animate__animated animate__zoomIn">
         <DialogHeader className="p-6 pb-2 border-b-4 border-black bg-yellow-300">
           <DialogTitle className="font-headline text-3xl tracking-wide">The Pogi Protocol</DialogTitle>
           <DialogDescription className="font-bold text-black/60">
@@ -63,7 +63,7 @@ export function WhitepaperModal({
               <li><strong>Artifacts:</strong> Aluminum A4 Plates. These are high-durability, industrial-grade art pieces meant for wall mounting, serving as a permanent physical record of your digital identity.</li>
             </ul>
 
-            <h2>4. Phase II: The Kapogian Card Game (2027)</h2>
+            <h2>4. Phase II: The Kapogian CardGame (2027)</h2>
             <p>
               In 2027, the ecosystem evolves into a competitive arena. The Kapogian Card Game (KCG) is a strategic tabletop-style digital game where your NFT is not just an avatar, but a deck commander.
             </p>
