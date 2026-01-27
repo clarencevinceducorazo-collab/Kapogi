@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <>
       <PageHeader />
-      <main className="max-w-6xl mx-auto px-4 mt-6">
+      <main className="max-w-6xl mx-auto px-4 mt-6 pt-44">
         <HeroSection />
         <HowItWorksSection />
         <ShopSection />
