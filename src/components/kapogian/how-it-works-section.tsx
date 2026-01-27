@@ -14,7 +14,7 @@ export function HowItWorksSection() {
     ];
 
     return (
-        <div ref={ref} className="mb-12">
+        <div ref={ref} className={cn("mb-12 animate__animated", inView ? "animate__lightSpeedInRight" : "animate__lightSpeedOutLeft")}>
             <div className="bg-white px-6 py-2 inline-block comic-border rounded-t-2xl border-b-0 ml-8 relative z-10">
                 <h3 className="font-headline text-2xl">INSTRUCTIONS</h3>
             </div>
