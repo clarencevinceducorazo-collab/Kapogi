@@ -25,6 +25,8 @@ import { mintCharacterNFT } from '@/lib/sui';
 import { ENCRYPTION_CONFIG } from '@/lib/constants';
 import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
 import { encryptShippingInfo, validateShippingInfo, ShippingInfo } from '@/lib/encryption';
+import { generateImage } from '@/ai/flows/generate-image-flow';
+import { generateText } from '@/ai/flows/generate-text-flow';
 
 
 interface CharacterData {
@@ -102,16 +104,9 @@ export default function GeneratorPage() {
 
   const generateName = async (): Promise<string> => {
     try {
-      const response = await fetch('/api/generate-text', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          type: 'name',
+      const result = await generateText({ 
           prompt: 'Generate a single unique and creative name for a Filipino male character. The name should be a traditional or modern Filipino name. Do not include any other text, just the name.'
-        })
       });
-      if (!response.ok) throw new Error('Failed to generate name');
-      const result = await response.json();
       return result.text?.replace(/["']+/g, '') || "Pogi";
     } catch (e) {
       console.error("Name generation failed:", e);
@@ -121,16 +116,9 @@ export default function GeneratorPage() {
 
   const generateCountry = async (): Promise<string> => {
     try {
-      const response = await fetch('/api/generate-text', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          type: 'country',
+      const result = await generateText({
           prompt: 'Generate a name of a foreign country, do not include any other text.'
-        })
       });
-      if (!response.ok) throw new Error('Failed to generate country');
-      const result = await response.json();
       return result.text?.replace(/["']+/g, '') || "a foreign land";
     } catch (e) {
       console.error("Country generation failed:", e);
@@ -149,16 +137,9 @@ export default function GeneratorPage() {
         Do not mention the exact stat numbers in the narrative. Focus on the creative description.
         Use markdown formatting like bolding and italics to make the text stylish.`;
 
-      const response = await fetch('/api/generate-text', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          type: 'lore',
+      const result = await generateText({
           prompt: promptText
-        })
       });
-      if (!response.ok) throw new Error('Failed to generate lore');
-      const result = await response.json();
       return result.text || 'Failed to generate lore.';
     } catch (e) {
       console.error("Lore generation failed:", e);
@@ -249,14 +230,13 @@ export default function GeneratorPage() {
 
     try {
       const fullPrompt = buildCharacterPrompt(nameToUse, originDesc);
-      const imagePromise = fetch('/api/generate-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: fullPrompt }) });
+      const imagePromise = generateImage({ prompt: fullPrompt });
       const lorePromise = generateLore(nameToUse, originDesc);
-      const [imageResponse, lore] = await Promise.all([imagePromise, lorePromise]);
-      if (!imageResponse.ok) throw new Error('Failed to generate image');
-      const result = await imageResponse.json();
-      const base64Data = result?.base64Image;
-      if (!base64Data) throw new Error('No image data received from the API.');
+      const [imageResult, lore] = await Promise.all([imagePromise, lorePromise]);
+      const imageUrl = imageResult?.imageUrl;
+      if (!imageUrl) throw new Error('No image data received from the API.');
       
+      const base64Data = imageUrl.split(',')[1];
       const byteCharacters = atob(base64Data);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
@@ -265,7 +245,7 @@ export default function GeneratorPage() {
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: 'image/png' });
       setGeneratedImageBlob(blob);
-      setGeneratedImage(`data:image/png;base64,${base64Data}`);
+      setGeneratedImage(imageUrl);
       setGeneratedLore(lore);
       navigate('page-preview');
     } catch (err: any) {
@@ -300,7 +280,9 @@ export default function GeneratorPage() {
       }
   
       // 2. Encrypt Shipping Info
+      console.log('🔐 Encrypting shipping information...');
       const encryptedShippingInfo = await encryptShippingInfo(shippingInfo);
+      console.log('✅ Shipping info encrypted successfully');
   
       // 3. Map selection to contract-expected value
       let itemsSelected = '';
@@ -329,19 +311,20 @@ export default function GeneratorPage() {
       // 4. Upload to IPFS
       console.log('📤 Uploading to IPFS...');
       const attributes = { cuteness, confidence, tiliFactor, luzon, visayas, mindanao, hairAmount, facialHair, clothingStyle, hairColor, eyewear, skinColor, bodyFat, posture, holdingItem };
-      const { metadataUrl } = await uploadCharacterToIPFS(generatedImageBlob, {
+      const { imageUrl, metadataUrl } = await uploadCharacterToIPFS(generatedImageBlob, {
         name: generatedName,
         description: `A Kapogian character from ${originDescription}`,
         attributes: attributes,
       });
-      console.log('✅ IPFS upload complete:', metadataUrl);
+      console.log('✅ IPFS image upload complete:', imageUrl);
+      console.log('✅ IPFS metadata upload complete:', metadataUrl);
   
       // 5. Mint on SUI blockchain
       console.log('⛓️ Minting on SUI blockchain...');
       const result = await mintCharacterNFT({
         name: generatedName,
         description: `A Kapogian character from ${originDescription}`,
-        imageUrl: metadataUrl, // Pass metadata URL to the contract
+        imageUrl: imageUrl, // Use the direct image URL from IPFS
         attributes: JSON.stringify(attributes),
         itemsSelected: itemsSelected,
         encryptedShippingInfo: encryptedShippingInfo,
