@@ -23,7 +23,7 @@ export default function Home() {
         <ShopSection />
         <SecurityRoadmapSection />
         <FaqSection />
-        <FinalCtaSection />
+        <FinalCtaSection onWhitepaperOpen={() => setIsWhitepaperOpen(true)} />
       </main>
       <PageFooter />
       <WhitepaperModal isOpen={isWhitepaperOpen} onOpenChange={setIsWhitepaperOpen} />
