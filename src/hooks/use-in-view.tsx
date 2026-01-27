@@ -28,6 +28,10 @@ export function useInView(
           if (triggerOnce && ref.current) {
             observer.unobserve(ref.current);
           }
+        } else {
+          if (!triggerOnce) {
+            setInView(false);
+          }
         }
       },
       {

@@ -5,7 +5,7 @@ import { useInView } from "@/hooks/use-in-view";
 import { cn } from "@/lib/utils";
 
 export function IntroSection() {
-    const [ref, inView] = useInView({ threshold: 0.5, triggerOnce: true });
+    const [ref, inView] = useInView({ threshold: 0.5, triggerOnce: false });
     
     const items = [
         { icon: BadgeCheck, text: "1-of-1 AI Generation", color: "text-green-600" },

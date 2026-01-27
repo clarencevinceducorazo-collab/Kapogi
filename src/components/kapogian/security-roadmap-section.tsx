@@ -4,8 +4,8 @@ import { ShieldCheck, MapPin, LockKeyhole, Server, CheckCheck } from "lucide-rea
 import { useInView } from "@/hooks/use-in-view";
 
 export function SecurityRoadmapSection() {
-    const [secureRef, secureInView] = useInView({ threshold: 0.5, triggerOnce: true });
-    const [roadmapRef, roadmapInView] = useInView({ threshold: 0.3, triggerOnce: true });
+    const [secureRef, secureInView] = useInView({ threshold: 0.5, triggerOnce: false });
+    const [roadmapRef, roadmapInView] = useInView({ threshold: 0.3, triggerOnce: false });
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">

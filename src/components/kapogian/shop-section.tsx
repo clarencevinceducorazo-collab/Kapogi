@@ -22,6 +22,7 @@ const ProductSticker = ({
   const [rotation, setRotation] = useState(0);
 
   useEffect(() => {
+    // Generate random rotation only on the client-side
     setRotation(Math.random() * 6 - 3);
   }, []);
 
@@ -56,7 +57,7 @@ const ProductSticker = ({
 };
 
 export function ShopSection() {
-  const [ref, inView] = useInView({ threshold: 0.2, triggerOnce: true });
+  const [ref, inView] = useInView({ threshold: 0.2, triggerOnce: false });
   
   const products = [
       { name: "TEE", imageUrl: "/images/shirt.png" },

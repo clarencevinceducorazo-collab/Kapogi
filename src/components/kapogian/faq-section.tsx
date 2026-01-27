@@ -4,7 +4,7 @@ import { HelpCircle } from "lucide-react";
 import { useInView } from "@/hooks/use-in-view";
 
 export function FaqSection() {
-    const [ref, inView] = useInView({ threshold: 0.2, triggerOnce: true });
+    const [ref, inView] = useInView({ threshold: 0.2, triggerOnce: false });
 
     return (
         <div ref={ref} className="max-w-3xl mx-auto mb-16">

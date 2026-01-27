@@ -6,7 +6,7 @@ import { ConnectButton } from "@mysten/dapp-kit";
 import { useInView } from "@/hooks/use-in-view";
 
 export function FinalCtaSection() {
-    const [ref, inView] = useInView({ threshold: 0.4, triggerOnce: true });
+    const [ref, inView] = useInView({ threshold: 0.4, triggerOnce: false });
     
     return (
         <div ref={ref} className={`bg-primary comic-border-thick rounded-[3rem] p-10 text-center toy-shadow-lg mb-12 relative overflow-hidden transition-all duration-800 ease-premium-ease ${inView ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>

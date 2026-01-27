@@ -5,7 +5,7 @@ import { useInView } from "@/hooks/use-in-view";
 import { cn } from "@/lib/utils";
 
 export function HowItWorksSection() {
-    const [ref, inView] = useInView({ threshold: 0.3, triggerOnce: true });
+    const [ref, inView] = useInView({ threshold: 0.3, triggerOnce: false });
 
     const steps = [
         { icon: Wallet, title: "CONNECT", description: "Link your SUI wallet to access the factory.", delay: 0 },
