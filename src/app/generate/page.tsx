@@ -581,6 +581,12 @@ export default function GeneratorPage() {
                       </div>
                     )}
                     
+                    <div className="absolute -bottom-4 -left-4 z-20">
+                         <button onClick={() => navigate('generator')} className="bg-white text-black border-4 border-black rounded-full w-20 h-20 flex items-center justify-center hard-shadow hover:-rotate-12 transition-transform">
+                            <ArrowLeft className="w-10 h-10 stroke-[2.5]" />
+                        </button>
+                    </div>
+
                     <div className="absolute -bottom-4 -right-4 z-20">
                          <button onClick={handleContinueToShipping} className="bg-pink-500 text-white border-4 border-black rounded-full w-20 h-20 flex items-center justify-center hard-shadow hover:rotate-12 transition-transform">
                             <ArrowRight className="w-10 h-10 stroke-[2.5]" />
@@ -675,4 +681,5 @@ export default function GeneratorPage() {
     
 
     
+
 
