@@ -7,7 +7,7 @@ import { IPFS_CONFIG } from './constants';
 /**
  * Upload image to IPFS via Pinata Direct API
  */
-export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Promise<string> {
+export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Promise<{ gatewayUrl: string; ipfsHash: string }> {
   try {
     console.log('📤 Uploading image to IPFS...');
     
@@ -54,7 +54,7 @@ export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Prom
     const gatewayUrl = `${IPFS_CONFIG.gateway}${ipfsHash}`;
     
     console.log('✅ Image uploaded to IPFS:', gatewayUrl);
-    return gatewayUrl;
+    return { gatewayUrl, ipfsHash };
   } catch (error) {
     console.error('❌ Failed to upload image to IPFS:', error);
     throw new Error('Failed to upload image to IPFS');
@@ -64,7 +64,7 @@ export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Prom
 /**
  * Upload JSON metadata to IPFS via Pinata Direct API
  */
-export async function uploadMetadataToIPFS(metadata: CharacterMetadata): Promise<string> {
+export async function uploadMetadataToIPFS(metadata: CharacterMetadata): Promise<{ gatewayUrl: string; ipfsHash: string }> {
   try {
     console.log('📤 Uploading metadata to IPFS...');
     
@@ -102,12 +102,40 @@ export async function uploadMetadataToIPFS(metadata: CharacterMetadata): Promise
     const gatewayUrl = `${IPFS_CONFIG.gateway}${ipfsHash}`;
     
     console.log('✅ Metadata uploaded to IPFS:', gatewayUrl);
-    return gatewayUrl;
+    return { gatewayUrl, ipfsHash };
   } catch (error) {
     console.error('❌ Failed to upload metadata to IPFS:', error);
     throw new Error('Failed to upload metadata to IPFS');
   }
 }
+
+/**
+ * Unpin (delete) a file from Pinata IPFS by its hash
+ */
+export async function unpinFromIPFS(ipfsHash: string): Promise<void> {
+  try {
+    console.log(`🗑️ Unpinning ${ipfsHash} from IPFS...`);
+
+    const response = await fetch(`https://api.pinata.cloud/pinning/unpin/${ipfsHash}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${IPFS_CONFIG.jwt}`,
+      },
+    });
+
+    if (!response.ok) {
+      // It's okay if it fails (e.g., already unpinned), just log it
+      const errorText = await response.text();
+      console.warn(`⚠️ Failed to unpin ${ipfsHash}:`, errorText);
+    } else {
+      console.log(`✅ Successfully unpinned ${ipfsHash}`);
+    }
+  } catch (error) {
+    console.error(`❌ Error unpinning ${ipfsHash}:`, error);
+    // Don't re-throw, as cleanup failure shouldn't block user flow
+  }
+}
+
 
 /**
  * Complete upload flow: Image + Metadata
@@ -119,10 +147,10 @@ export async function uploadCharacterToIPFS(
     description: string;
     attributes: Record<string, any>;
   }
-): Promise<{ imageUrl: string; metadataUrl: string }> {
+): Promise<{ imageUrl: string; metadataUrl: string; imageHash: string; metadataHash: string }> {
   try {
     // 1. Upload image first
-    const imageUrl = await uploadImageToIPFS(
+    const { gatewayUrl: imageUrl, ipfsHash: imageHash } = await uploadImageToIPFS(
       imageBlob,
       `${characterData.name.replace(/\s/g, '_')}.png`
     );
@@ -139,9 +167,9 @@ export async function uploadCharacterToIPFS(
     };
 
     // 3. Upload metadata
-    const metadataUrl = await uploadMetadataToIPFS(metadata);
+    const { gatewayUrl: metadataUrl, ipfsHash: metadataHash } = await uploadMetadataToIPFS(metadata);
 
-    return { imageUrl, metadataUrl };
+    return { imageUrl, metadataUrl, imageHash, metadataHash };
   } catch (error) {
     console.error('❌ Failed to upload character to IPFS:', error);
     throw error;

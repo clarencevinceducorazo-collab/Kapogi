@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { uploadCharacterToIPFS } from '@/lib/pinata';
+import { uploadCharacterToIPFS, unpinFromIPFS } from '@/lib/pinata';
 import { mintCharacterNFT } from '@/lib/sui';
 import { ENCRYPTION_CONFIG } from '@/lib/constants';
 import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
@@ -264,6 +264,9 @@ export default function GeneratorPage() {
   
     setMinting(true);
     setError('');
+
+    let imageHash: string | null = null;
+    let metadataHash: string | null = null;
   
     try {
       // 1. Validate Shipping Info
@@ -311,13 +314,17 @@ export default function GeneratorPage() {
       // 4. Upload to IPFS
       console.log('📤 Uploading to IPFS...');
       const attributes = { cuteness, confidence, tiliFactor, luzon, visayas, mindanao, hairAmount, facialHair, clothingStyle, hairColor, eyewear, skinColor, bodyFat, posture, holdingItem };
-      const { imageUrl, metadataUrl } = await uploadCharacterToIPFS(generatedImageBlob, {
+      const { imageUrl, imageHash: imgHash, metadataHash: metaHash } = await uploadCharacterToIPFS(generatedImageBlob, {
         name: generatedName,
         description: `A Kapogian character from ${originDescription}`,
         attributes: attributes,
       });
-      console.log('✅ IPFS image upload complete:', imageUrl);
-      console.log('✅ IPFS metadata upload complete:', metadataUrl);
+
+      // Store hashes for potential cleanup
+      imageHash = imgHash;
+      metadataHash = metaHash;
+      
+      console.log('✅ IPFS upload complete:', imageUrl);
   
       // 5. Mint on SUI blockchain
       console.log('⛓️ Minting on SUI blockchain...');
@@ -343,6 +350,14 @@ export default function GeneratorPage() {
     } catch (err: any) {
       console.error('❌ Mint failed:', err);
       setError(err.message || 'Failed to mint NFT. Please try again.');
+
+      // Cleanup IPFS files if they were uploaded
+      if (imageHash) {
+        await unpinFromIPFS(imageHash);
+      }
+      if (metadataHash) {
+        await unpinFromIPFS(metadataHash);
+      }
     } finally {
       setMinting(false);
     }
