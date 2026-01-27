@@ -43,13 +43,13 @@ export async function mintCharacterNFT(params: {
       arguments: [
         mintCounter,  // Shared object
         coin,
-        tx.pure.string(params.name),
-        tx.pure.string(params.description),
-        tx.pure.string(params.imageUrl),
-        tx.pure.string(params.attributes),
-        tx.pure.string(params.itemsSelected),
-        tx.pure.string(params.encryptedShippingInfo),
-        tx.pure.string(params.encryptionPubkey),
+        tx.pure(params.name),
+        tx.pure(params.description),
+        tx.pure(params.imageUrl),
+        tx.pure(params.attributes),
+        tx.pure(params.itemsSelected),
+        tx.pure(params.encryptedShippingInfo),
+        tx.pure(params.encryptionPubkey),
         clock,
       ],
     });
@@ -98,7 +98,7 @@ export async function upgradeToBundleNFT(params: {
       arguments: [
         tx.object(params.receiptId),
         coin,
-        tx.pure.string(params.newEncryptedShippingInfo),
+        tx.pure(params.newEncryptedShippingInfo),
       ],
     });
     
