@@ -5,18 +5,17 @@ import { Gem } from "lucide-react";
 import Image from "next/image";
 import { useInView } from "@/hooks/use-in-view";
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 const ProductSticker = ({
   icon: Icon,
   name,
   imageUrl,
-  inView,
   delay,
 }: {
   icon?: React.ElementType;
   name: string;
   imageUrl?: string;
-  inView: boolean;
   delay: number;
 }) => {
   const [rotation, setRotation] = useState(0);
@@ -32,9 +31,7 @@ const ProductSticker = ({
         transitionDelay: `${delay}ms`,
         transform: `rotate(${rotation}deg)`,
       }}
-      className={`bg-white text-black comic-border rounded-2xl p-4 flex flex-col items-center sticker-cut cursor-pointer hover:bg-yellow-50 transition-all duration-700 ease-premium-ease hover:!scale-105 hover:!rotate-0 group hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${
-        inView ? "opacity-100 scale-100" : "opacity-0 scale-75"
-      }`}
+      className="bg-white text-black comic-border rounded-2xl p-4 flex flex-col items-center sticker-cut cursor-pointer hover:bg-yellow-50 transition-all duration-700 ease-premium-ease hover:!scale-105 hover:!rotate-0 group hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
     >
       <div className="w-full aspect-square bg-slate-100 rounded-xl mb-3 border-2 border-slate-200 flex items-center justify-center overflow-hidden">
         {imageUrl ? (
@@ -67,7 +64,7 @@ export function ShopSection() {
   ];
 
   return (
-    <div ref={ref} className="bg-accent comic-border-thick rounded-[2.5rem] p-8 md:p-12 mb-12 toy-shadow-lg text-white relative overflow-hidden">
+    <div ref={ref} className={cn("bg-accent comic-border-thick rounded-[2.5rem] p-8 md:p-12 mb-12 toy-shadow-lg text-white relative overflow-hidden animate__animated", inView ? "animate__fadeInLeft" : "animate__fadeOutLeft")}>
       <div className="absolute inset-0 opacity-10" style={{backgroundImage: "linear-gradient(45deg, #000 25%, transparent 25%, transparent 50%, #000 50%, #000 75%, transparent 75%, transparent)", backgroundSize: "20px 20px"}}></div>
       
       <div className="relative z-10">
@@ -85,11 +82,11 @@ export function ShopSection() {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {products.map((product, index) => (
-            <ProductSticker key={product.name} {...product} inView={inView} delay={index * 120} />
+            <ProductSticker key={product.name} {...product} delay={index * 120} />
           ))}
         </div>
 
-        <div className={`bg-[hsl(var(--brand-yellow))] text-black comic-border rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden transition-all duration-700 ease-premium-ease delay-500 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        <div className="bg-[hsl(var(--brand-yellow))] text-black comic-border rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden transition-all duration-700 ease-premium-ease delay-500">
           <div className="absolute top-0 left-0 w-full h-full animate-shine-sweep bg-white/20 pointer-events-none"></div>
           <div className="flex items-center gap-4">
             <div className="bg-white p-3 rounded-xl comic-border">
