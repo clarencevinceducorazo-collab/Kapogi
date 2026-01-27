@@ -17,6 +17,7 @@ import {
   ArrowLeft,
   LoaderCircle,
   UserRound,
+  Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -68,6 +69,12 @@ export default function GeneratorPage() {
   const [shippingName, setShippingName] = useState('');
   const [shippingContact, setShippingContact] = useState('');
   const [shippingAddress, setShippingAddress] = useState('');
+
+  // Merch selection state
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [isBundle, setIsBundle] = useState(false);
+  const allMerchItems = ['Tee', 'Mug', 'Pad', 'Plate'];
+
 
   // Result State
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
@@ -297,7 +304,7 @@ export default function GeneratorPage() {
         description: `A Kapogian character from ${originDescription}`,
         imageUrl,
         attributes: JSON.stringify({ cuteness, confidence, tiliFactor, luzon, visayas, mindanao, hairAmount, facialHair, clothingStyle, hairColor, eyewear, skinColor, bodyFat, posture, holdingItem }),
-        itemsSelected: 'bundle', // Placeholder
+        itemsSelected: JSON.stringify(selectedItems),
         encryptedShippingInfo: encryptedShippingInfo,
         encryptionPubkey: ENCRYPTION_CONFIG.adminPublicKey,
         signAndExecute,
@@ -313,6 +320,36 @@ export default function GeneratorPage() {
       setMinting(false);
     }
   };
+
+  const handleItemSelect = (item: string) => {
+    const newItems = selectedItems.includes(item)
+      ? selectedItems.filter((i) => i !== item)
+      : [...selectedItems, item];
+    
+    setSelectedItems(newItems);
+    
+    setIsBundle(newItems.length === allMerchItems.length && allMerchItems.every(i => newItems.includes(i)));
+  };
+
+  const handleBundleSelect = () => {
+    const nextIsBundle = !isBundle;
+    setIsBundle(nextIsBundle);
+    if (nextIsBundle) {
+      setSelectedItems(allMerchItems);
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleContinueToShipping = () => {
+    if (selectedItems.length === 0) {
+      setError("Please select at least one merchandise item or the bundle.");
+    } else {
+      setError('');
+      navigate('page-shipping');
+    }
+  };
+
 
   if (!account) {
     return (
@@ -504,25 +541,25 @@ export default function GeneratorPage() {
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 relative z-10">
-                        <button className="group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all">
+                        <button onClick={() => handleItemSelect('Tee')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selectedItems.includes('Tee') && "ring-4 ring-offset-2 ring-pink-500")}>
                             <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
                                 <Shirt className="w-10 h-10 text-stone-800" />
                             </div>
                             <span className="font-display font-semibold uppercase">Tee</span>
                         </button>
-                        <button className="group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all">
+                        <button onClick={() => handleItemSelect('Mug')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selectedItems.includes('Mug') && "ring-4 ring-offset-2 ring-pink-500")}>
                             <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
                                 <Coffee className="w-10 h-10 text-stone-800" />
                             </div>
                             <span className="font-display font-semibold uppercase">Mug</span>
                         </button>
-                        <button className="group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all">
+                        <button onClick={() => handleItemSelect('Pad')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selectedItems.includes('Pad') && "ring-4 ring-offset-2 ring-pink-500")}>
                             <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
                                 <MousePointer2 className="w-10 h-10 text-stone-800" />
                             </div>
                             <span className="font-display font-semibold uppercase">Pad</span>
                         </button>
-                        <button className="group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all">
+                        <button onClick={() => handleItemSelect('Plate')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selectedItems.includes('Plate') && "ring-4 ring-offset-2 ring-pink-500")}>
                             <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
                                 <div className="w-10 h-10 rounded-full border-2 border-stone-800"></div>
                             </div>
@@ -530,21 +567,29 @@ export default function GeneratorPage() {
                         </button>
                     </div>
 
-                    <div className="bg-yellow-400 border-4 border-black rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 hard-shadow-sm relative z-10">
+                    <button onClick={handleBundleSelect} className={cn("bg-yellow-400 border-4 border-black rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 hard-shadow-sm relative z-10 transition-all", isBundle && "ring-4 ring-offset-2 ring-pink-500")}>
                         <div className="flex items-center gap-4">
-                            <div className="w-8 h-8 bg-white border-4 border-black rounded-md"></div>
-                            <div className="flex flex-col">
+                            <div className="w-8 h-8 bg-white border-4 border-black rounded-md flex items-center justify-center">
+                                {isBundle && <Check className="w-6 h-6 text-black" />}
+                            </div>
+                            <div className="flex flex-col text-left">
                                 <span className="font-display font-semibold text-xl uppercase leading-none">The "All-In" Bundle</span>
                                 <span className="text-sm font-medium leading-tight">Save 20% when you grab the whole set.</span>
                             </div>
                         </div>
-                        <button className="bg-black text-white font-display font-semibold px-6 py-3 rounded-lg border-2 border-white shadow-[4px_4px_0px_rgba(0,0,0,0.2)] hover:scale-105 transition-transform uppercase text-base">
-                            Upgrade (+10 SUI)
-                        </button>
-                    </div>
+                        <div className="bg-black text-white font-display font-semibold px-6 py-3 rounded-lg border-2 border-white shadow-[4px_4px_0px_rgba(0,0,0,0.2)] hover:scale-105 transition-transform uppercase text-base">
+                            {isBundle ? 'Selected (+10 SUI)' : 'Upgrade (+10 SUI)'}
+                        </div>
+                    </button>
+
+                    {error && (
+                      <div className="mt-4 text-sm text-center bg-red-100 p-3 rounded-lg border border-red-300 text-red-700 relative z-10">
+                        {error}
+                      </div>
+                    )}
                     
                     <div className="absolute -bottom-4 -right-4 z-20">
-                         <button onClick={() => navigate('page-shipping')} className="bg-pink-500 text-white border-4 border-black rounded-full w-20 h-20 flex items-center justify-center hard-shadow hover:rotate-12 transition-transform">
+                         <button onClick={handleContinueToShipping} className="bg-pink-500 text-white border-4 border-black rounded-full w-20 h-20 flex items-center justify-center hard-shadow hover:rotate-12 transition-transform">
                             <ArrowRight className="w-10 h-10 stroke-[2.5]" />
                         </button>
                     </div>
@@ -633,3 +678,5 @@ export default function GeneratorPage() {
     </div>
   );
 }
+
+    
