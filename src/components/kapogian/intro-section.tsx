@@ -3,6 +3,7 @@
 import { BadgeCheck, Box, ShieldCheck, Shirt, CupSoda } from "lucide-react";
 import { useInView } from "@/hooks/use-in-view";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from 'react';
 
 export function IntroSection() {
     const [ref, inView] = useInView({ threshold: 0.5, triggerOnce: false });
@@ -12,6 +13,36 @@ export function IntroSection() {
         { icon: Box, text: "Token-Gated Physical Merch", color: "text-blue-600" },
         { icon: ShieldCheck, text: "Encrypted Shipping Data", color: "text-red-600" },
     ];
+
+    const content = [
+        {
+            title: <>NOT JUST A JPEG. <br/>IT'S REAL STUFF.</>,
+            description: "Kapogian is a manufacturing facility on the blockchain. We mint identity and ship physical goods."
+        },
+        {
+            title: <>FROM PIXELS <br/>TO PARCELS.</>,
+            description: "Your unique digital creation, delivered to your doorstep. Experience the future of collecting."
+        },
+        {
+            title: <>OWN THE CODE. <br/>GET THE GOODS.</>,
+            description: "Every mint is a 1-of-1 digital soul with a physical counterpart. Your identity, made tangible."
+        }
+    ];
+
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [isFading, setIsFading] = useState(false);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setIsFading(true);
+            setTimeout(() => {
+                setCurrentIndex((prevIndex) => (prevIndex + 1) % content.length);
+                setIsFading(false);
+            }, 500); // This should match the transition duration
+        }, 5000); // 5 seconds
+
+        return () => clearInterval(interval);
+    }, [content.length]);
 
     return (
         <div ref={ref} className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
@@ -26,10 +57,12 @@ export function IntroSection() {
             </div>
 
             <div className={`transition-all duration-800 delay-200 ease-premium-ease ${inView ? 'opacity-100' : 'opacity-0'}`}>
-                <h2 className="font-headline text-4xl mb-4">NOT JUST A JPEG. <br/>IT'S REAL STUFF.</h2>
-                <p className="font-medium text-slate-800 mb-6 text-lg">
-                    Kapogian is a manufacturing facility on the blockchain. We mint identity and ship physical goods.
-                </p>
+                <div className={`transition-opacity duration-500 min-h-[180px] ${isFading ? 'opacity-0' : 'opacity-100'}`}>
+                    <h2 className="font-headline text-4xl mb-4">{content[currentIndex].title}</h2>
+                    <p className="font-medium text-slate-800 mb-6 text-lg">
+                        {content[currentIndex].description}
+                    </p>
+                </div>
                 <ul className="space-y-4">
                     {items.map((item, index) => (
                         <li key={index} style={{transitionDelay: `${index * 150}ms`}} className={`flex items-center gap-3 bg-white/50 p-2 rounded-lg border-2 border-black/10 overflow-hidden transition-all duration-500 ease-premium-ease ${inView ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-5'}`}>
