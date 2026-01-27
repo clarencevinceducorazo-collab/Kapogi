@@ -6,38 +6,54 @@ import { WandSparkles } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { IntroSection } from '@/components/kapogian/intro-section';
+import { useInView } from '@/hooks/use-in-view';
 
 export function HeroSection() {
   const [characterName, setCharacterName] = useState('Tzar');
   const [randomFigureId, setRandomFigureId] = useState('????');
+  const [ref, inView] = useInView({ threshold: 0.2, triggerOnce: true });
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    // Generate random figure ID on client to prevent hydration mismatch
     setRandomFigureId(String(Math.floor(Math.random() * 9000) + 1000));
   }, []);
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    const { clientX, clientY, currentTarget } = e;
+    const { left, top, width, height } = currentTarget.getBoundingClientRect();
+    const x = (clientX - left - width / 2) / (width / 2);
+    const y = (clientY - top - height / 2) / (height / 2);
+    setTilt({ x: y * -6, y: x * 6 });
+  };
+
+  const handleMouseLeave = () => {
+    setTilt({ x: 0, y: 0 });
+  };
+
   return (
-    <div className="bg-white comic-border-thick rounded-[2.5rem] overflow-hidden toy-shadow-lg mb-12 relative">
+    <div ref={ref} className="bg-white comic-border-thick rounded-[2.5rem] overflow-hidden toy-shadow-lg mb-12 relative">
       <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-32 h-8 bg-[hsl(var(--brand-yellow))] comic-border rounded-full z-20 flex items-center justify-center">
         <div className="w-16 h-2 bg-black rounded-full"></div>
       </div>
 
       <div className="flex flex-col md:flex-row">
         <div className="w-full md:w-1/2 p-8 md:p-12 md:pr-0 flex flex-col justify-center relative z-10 pt-20">
-          <div className="inline-block self-start bg-black text-white px-3 py-1 text-xs font-bold uppercase tracking-widest rounded mb-4 transform -rotate-2">
+          <div className={`inline-block self-start bg-black text-white px-3 py-1 text-xs font-bold uppercase tracking-widest rounded mb-4 transform -rotate-2 transition-all duration-500 ease-premium-ease ${inView ? 'opacity-100' : 'opacity-0 -translate-y-4'}`}>
             Series 1 • 2026 Edition
           </div>
           <h1 className="text-[5rem] leading-[0.85] text-primary text-outline mb-4 transform -rotate-1 origin-bottom-left"> 
-            KAPO<br/>GIAN
+            <span style={{transitionDelay: '100ms'}} className={`inline-block transition-all duration-500 ease-premium-ease ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>KAPO</span>
+            <br/>
+            <span style={{transitionDelay: '200ms'}} className={`inline-block transition-all duration-500 ease-premium-ease ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>GIAN</span>
           </h1>
-          <p className="font-headline text-2xl text-slate-800 mb-6 max-w-sm leading-tight">
+          <p style={{transitionDelay: '300ms'}} className={`font-headline text-2xl text-slate-800 mb-6 max-w-sm leading-tight transition-all duration-500 ease-premium-ease ${inView ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-5'}`}>
             Your Digital Identity.<br/>
             <span className="text-accent">Now in Physical Reality.</span>
           </p>
-          <p className="font-medium text-slate-600 mb-8 max-w-sm leading-relaxed border-l-4 border-[hsl(var(--brand-yellow))] pl-4">
+          <p style={{transitionDelay: '400ms'}} className={`font-medium text-slate-600 mb-8 max-w-sm leading-relaxed border-l-4 border-[hsl(var(--brand-yellow))] pl-4 transition-all duration-500 ease-premium-ease ${inView ? 'opacity-100' : 'opacity-0'}`}>
             Generate a 1-of-1 character. Mint on SUI. Receive exclusive merchandise delivered to your door.
           </p>
-          <div className="flex gap-4">
+          <div style={{transitionDelay: '500ms'}} className={`flex gap-4 transition-all duration-500 ease-premium-ease ${inView ? 'opacity-100' : 'opacity-0'}`}>
             <Link href="/generate">
               <Button
                 className="bg-[hsl(var(--brand-yellow))] hover:bg-yellow-300 text-black comic-border rounded-xl px-6 py-3 font-headline text-xl toy-shadow flex items-center gap-2 h-auto text-center"
@@ -49,12 +65,19 @@ export function HeroSection() {
           </div>
         </div>
 
-        <div className="w-full md:w-1/2 p-8 md:p-12 relative">
+        <div 
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+          style={{
+            transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale(1)`,
+            transition: 'transform 0.1s linear',
+          }}
+          className={`w-full md:w-1/2 p-8 md:p-12 relative transition-all duration-800 delay-300 ease-premium-ease ${inView ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-95 -rotate-2'}`}>
           <div className="bg-[#f0f4f8] comic-border rounded-[2rem] h-[400px] relative overflow-hidden shadow-inner">
             <div className="absolute inset-0 blister-pack rounded-[1.8rem] z-20 pointer-events-none"></div>
             <div className="absolute inset-0 opacity-10" style={{backgroundImage: "radial-gradient(#000 1px, transparent 1px)", backgroundSize: "15px 15px"}}></div>
             <div className="absolute inset-0 flex items-center justify-center z-10">
-              <div className="sticker-cut bg-white p-2 rounded-3xl comic-border transform rotate-2">
+              <div className="sticker-cut bg-white p-2 rounded-3xl comic-border">
                 <div className="w-48 h-48 bg-slate-100 rounded-2xl flex items-center justify-center overflow-hidden border-2 border-slate-200 relative">
                   <Image src="/images/KPG.png" alt="Kapogian character" width={192} height={192} className="object-cover w-full h-full" />
                 </div>
@@ -64,7 +87,7 @@ export function HeroSection() {
                 </div>
               </div>
             </div>
-            <div className="absolute top-6 right-6 z-30 bg-primary text-white w-20 h-20 rounded-full flex items-center justify-center comic-border shadow-lg transform rotate-12">
+            <div className="absolute top-6 right-6 z-30 bg-primary text-white w-20 h-20 rounded-full flex items-center justify-center comic-border shadow-lg transform rotate-12 animate-spin-subtle">
               <div className="text-center leading-none">
                 <span className="block text-xs font-bold">100%</span>
                 <span className="font-headline text-lg">ON CHAIN</span>

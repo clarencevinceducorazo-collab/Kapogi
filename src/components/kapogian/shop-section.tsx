@@ -1,17 +1,24 @@
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { Mouse, UtensilsCrossed, Gem } from "lucide-react";
 import Image from "next/image";
+import { useInView } from "@/hooks/use-in-view";
 
 const ProductSticker = ({
   icon: Icon,
   name,
   imageUrl,
+  inView,
+  delay
 }: {
   icon?: React.ElementType;
   name: string;
   imageUrl?: string;
+  inView: boolean;
+  delay: number;
 }) => (
-  <div className="bg-white text-black comic-border rounded-2xl p-4 flex flex-col items-center sticker-cut cursor-pointer hover:bg-yellow-50">
+  <div style={{ transitionDelay: `${delay}ms`, transform: `rotate(${Math.random() * 6 - 3}deg)` }} className={`bg-white text-black comic-border rounded-2xl p-4 flex flex-col items-center sticker-cut cursor-pointer hover:bg-yellow-50 transition-all duration-700 ease-premium-ease hover:!scale-105 hover:!rotate-0 group hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${inView ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`}>
     <div className="w-full aspect-square bg-slate-100 rounded-xl mb-3 border-2 border-slate-200 flex items-center justify-center overflow-hidden">
       {imageUrl ? (
         <Image
@@ -25,13 +32,22 @@ const ProductSticker = ({
         Icon && <Icon className="w-12 h-12 text-slate-700" strokeWidth={1.5} />
       )}
     </div>
-    <span className="font-headline text-lg">{name}</span>
+    <span className="font-headline text-lg transition-transform duration-300 group-hover:scale-110">{name}</span>
   </div>
 );
 
 export function ShopSection() {
+  const [ref, inView] = useInView({ threshold: 0.2, triggerOnce: true });
+  
+  const products = [
+      { name: "TEE", imageUrl: "/images/shirt.png" },
+      { name: "MUG", imageUrl: "/images/printmug.png" },
+      { name: "PAD", imageUrl: "/images/pad.png" },
+      { name: "PLATE", imageUrl: "/images/aluminum.png" },
+  ];
+
   return (
-    <div className="bg-accent comic-border-thick rounded-[2.5rem] p-8 md:p-12 mb-12 toy-shadow-lg text-white relative overflow-hidden">
+    <div ref={ref} className="bg-accent comic-border-thick rounded-[2.5rem] p-8 md:p-12 mb-12 toy-shadow-lg text-white relative overflow-hidden">
       <div className="absolute inset-0 opacity-10" style={{backgroundImage: "linear-gradient(45deg, #000 25%, transparent 25%, transparent 50%, #000 50%, #000 75%, transparent 75%, transparent)", backgroundSize: "20px 20px"}}></div>
       
       <div className="relative z-10">
@@ -48,13 +64,13 @@ export function ShopSection() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <ProductSticker imageUrl="/images/shirt.png" name="TEE" />
-          <ProductSticker imageUrl="/images/printmug.png" name="MUG" />
-          <ProductSticker imageUrl="/images/pad.png" name="PAD" />
-          <ProductSticker imageUrl="/images/aluminum.png" name="PLATE" />
+          {products.map((product, index) => (
+            <ProductSticker key={product.name} {...product} inView={inView} delay={index * 120} />
+          ))}
         </div>
 
-        <div className="bg-[hsl(var(--brand-yellow))] text-black comic-border rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+        <div className={`bg-[hsl(var(--brand-yellow))] text-black comic-border rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden transition-all duration-700 ease-premium-ease delay-500 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <div className="absolute top-0 left-0 w-full h-full animate-shine-sweep bg-white/20 pointer-events-none"></div>
           <div className="flex items-center gap-4">
             <div className="bg-white p-3 rounded-xl comic-border">
               <Gem className="w-8 h-8" strokeWidth={1.5} />

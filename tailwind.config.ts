@@ -71,6 +71,9 @@ export default {
         md: 'calc(var(--radius) - 4px)',
         sm: 'calc(var(--radius) - 8px)',
       },
+      transitionTimingFunction: {
+        'premium-ease': 'cubic-bezier(0.22, 1, 0.36, 1)',
+      },
       keyframes: {
         'accordion-down': {
           from: {
@@ -92,11 +95,52 @@ export default {
           '0%': { transform: 'translateX(0%)' },
           '100%': { transform: 'translateX(-100%)' },
         },
+        'slide-down-fade': {
+          '0%': { opacity: '0', transform: 'translateY(-20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'float-y': {
+          '0%, 100%': { transform: 'translateY(-4px)' },
+          '50%': { transform: 'translateY(4px)' },
+        },
+        'soft-pulse': {
+          '0%, 100%': { transform: 'scale(1)', filter: 'brightness(1)' },
+          '50%': { transform: 'scale(1.03)', filter: 'brightness(1.1)' },
+        },
+        'spin-subtle': {
+            '0%, 100%': { transform: 'rotate(-3deg)' },
+            '50%': { transform: 'rotate(3deg)' },
+        },
+        'shine-sweep': {
+            '0%': { transform: 'translateX(-100%) skewX(-15deg)', opacity: 0.4 },
+            '40%': { transform: 'translateX(200%) skewX(-15deg)', opacity: 0.1 },
+            '100%': { transform: 'translateX(200%) skewX(-15deg)', opacity: 0.1 },
+        },
+        'draw-line': {
+            '0%': { transform: 'scaleY(0)' },
+            '100%': { transform: 'scaleY(1)' },
+        },
+        'breathe': {
+            '0%, 100%': { transform: 'scale(1)' },
+            '50%': { transform: 'scale(1.05)' },
+        },
+        'bg-scroll': {
+          '0%': { 'background-position': '0 0' },
+          '100%': { 'background-position': '-20px -20px' },
+        },
       },
       animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
+        'accordion-down': 'accordion-down 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
+        'accordion-up': 'accordion-up 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
         'marquee': 'marquee 25s linear infinite',
+        'slide-down-fade': 'slide-down-fade 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards',
+        'float-y': 'float-y 4s ease-in-out infinite',
+        'soft-pulse': 'soft-pulse 6s cubic-bezier(0.22, 1, 0.36, 1) infinite',
+        'spin-subtle': 'spin-subtle 3s ease-in-out infinite',
+        'shine-sweep': 'shine-sweep 8s ease-in-out infinite',
+        'draw-line': 'draw-line 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards',
+        'breathe': 'breathe 4s ease-in-out infinite',
+        'bg-scroll': 'bg-scroll 1s linear infinite',
       },
     },
   },
