@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { WandSparkles } from "lucide-react";
+import { WandSparkles, FileText } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { CustomConnectButton } from "@/components/kapogian/CustomConnectButton";
@@ -18,7 +18,7 @@ const TickerContent = () => (
     </div>
 );
 
-export function PageHeader() {
+export function PageHeader({ onWhitepaperOpen }: { onWhitepaperOpen: () => void }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
@@ -60,15 +60,26 @@ export function PageHeader() {
       </div>
       <nav className={cn("max-w-7xl mx-auto px-4 transition-all duration-300 ease-premium-ease", isScrolled ? 'py-3' : 'py-6')}>
         <div className="bg-white comic-border rounded-full p-2 flex justify-between items-center toy-shadow relative">
-          <Link href="/generate">
-            <Button
-              className="bg-primary hover:bg-red-500 text-primary-foreground comic-border rounded-full px-6 py-2 font-headline text-lg flex items-center gap-2 h-auto animate-soft-pulse"
-              aria-label="Generate"
-            >
-              <WandSparkles className="w-6 h-6" strokeWidth={2.5} />
-              <span className="hidden sm:inline">GENERATE</span>
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/generate">
+              <Button
+                className="bg-primary hover:bg-red-500 text-primary-foreground comic-border rounded-full px-6 py-2 font-headline text-lg flex items-center gap-2 h-auto animate-soft-pulse"
+                aria-label="Generate"
+              >
+                <WandSparkles className="w-6 h-6" strokeWidth={2.5} />
+                <span className="hidden sm:inline">GENERATE</span>
+              </Button>
+            </Link>
+             <Button
+                onClick={onWhitepaperOpen}
+                variant="outline"
+                className="bg-white hover:bg-slate-100 text-black comic-border rounded-full px-6 py-2 font-headline text-lg flex items-center gap-2 h-auto"
+                aria-label="Whitepaper"
+              >
+                <FileText className="w-5 h-5" strokeWidth={2.5} />
+                <span className="hidden sm:inline">Whitepaper</span>
+              </Button>
+          </div>
 
           <div className="hidden md:flex absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <div className={cn(

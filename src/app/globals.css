@@ -218,7 +218,7 @@
   }
   
   .hover-fill-button .button-text {
-    background-image: linear-gradient(transparent 50%, white 50%);
+    background-image: linear-gradient(transparent 50%, hsl(var(--brand-yellow)) 50%);
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
@@ -230,6 +230,23 @@
   
   .hover-fill-button:hover .button-text {
     background-position: bottom;
+    color: transparent; /* Keep it transparent to show the background fill */
     -webkit-text-stroke-color: black;
+  }
+
+  .whitepaper-content h2 {
+    @apply font-headline text-2xl mt-6 mb-2 text-primary text-outline;
+  }
+  .whitepaper-content h3 {
+    @apply font-headline text-xl mt-4 mb-1;
+  }
+  .whitepaper-content p, .whitepaper-content li {
+    @apply text-slate-700 leading-relaxed;
+  }
+  .whitepaper-content ul {
+    @apply list-disc list-inside pl-4 my-2;
+  }
+  .whitepaper-content strong {
+    @apply font-bold;
   }
 }
