@@ -27,12 +27,13 @@ export function PageHeader() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
+      // Hinge and hide when scrolling down past a threshold
       if (currentScrollY > lastScrollY.current && currentScrollY > 150) {
-        // Scrolling down
-        setIsVisible(false);
-      } else if (currentScrollY < lastScrollY.current) {
-        // Scrolling up
-        setIsVisible(true);
+        if(isVisible) setIsVisible(false);
+      } 
+      // Bounce in ONLY when scrolling up and back in the hero section area
+      else if (currentScrollY < lastScrollY.current && currentScrollY < 150) {
+        if(!isVisible) setIsVisible(true);
       }
       
       setIsScrolled(window.scrollY > 20);
@@ -42,7 +43,7 @@ export function PageHeader() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isVisible]);
 
   return (
     <header className={cn("fixed top-0 left-0 right-0 z-40 transition-all duration-300 ease-premium-ease animate__animated", isScrolled ? 'bg-[hsl(var(--brand-yellow))] shadow-lg' : 'bg-transparent', isVisible ? 'animate__bounceInDown' : 'animate__hinge')}>
