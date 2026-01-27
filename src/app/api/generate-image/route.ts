@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
     const { prompt } = await request.json();
 
     const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    const imageApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-fast-generate-001:predict?key=${apiKey}`;
+    const imageApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
 
     const payload = {
       instances: [{ prompt }],

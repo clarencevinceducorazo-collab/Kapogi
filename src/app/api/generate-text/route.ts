@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
     const { type, prompt } = await request.json();
 
     const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
     const payload = {
       contents: [{
