@@ -54,7 +54,7 @@ const ProductSticker = ({
 };
 
 export function ShopSection() {
-  const [ref, inView] = useInView({ threshold: 0.2, triggerOnce: false });
+  const [ref, inView] = useInView({ threshold: 0.2, triggerOnce: true });
   
   const products = [
       { name: "TEE", imageUrl: "/images/shirt.png" },
@@ -64,7 +64,7 @@ export function ShopSection() {
   ];
 
   return (
-    <div ref={ref} className={cn("bg-accent comic-border-thick rounded-[2.5rem] p-8 md:p-12 mb-12 toy-shadow-lg text-white relative overflow-hidden animate__animated", inView ? "animate__fadeInLeft" : "animate__fadeOutLeft")}>
+    <div ref={ref} className={cn("bg-accent comic-border-thick rounded-[2.5rem] p-8 md:p-12 mb-12 toy-shadow-lg text-white relative overflow-hidden", inView ? "animate__animated animate__fadeInLeft" : "opacity-0")}>
       <div className="absolute inset-0 opacity-10" style={{backgroundImage: "linear-gradient(45deg, #000 25%, transparent 25%, transparent 50%, #000 50%, #000 75%, transparent 75%, transparent)", backgroundSize: "20px 20px"}}></div>
       
       <div className="relative z-10">
