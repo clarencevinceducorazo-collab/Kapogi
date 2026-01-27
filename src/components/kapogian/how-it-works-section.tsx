@@ -5,7 +5,7 @@ import { useInView } from "@/hooks/use-in-view";
 import { cn } from "@/lib/utils";
 
 export function HowItWorksSection() {
-    const [ref, inView] = useInView({ threshold: 0.3, triggerOnce: false });
+    const [ref, inView] = useInView({ threshold: 0.2, triggerOnce: true });
 
     const steps = [
         { icon: Wallet, title: "CONNECT", description: "Link your SUI wallet to access the factory.", delay: 0 },
@@ -14,7 +14,7 @@ export function HowItWorksSection() {
     ];
 
     return (
-        <div ref={ref} className={cn("mb-12 animate__animated", inView ? "animate__lightSpeedInRight" : "animate__lightSpeedOutLeft")}>
+        <div ref={ref} className={cn("mb-12", inView ? "animate__animated animate__lightSpeedInRight" : "opacity-0")}>
             <div className="bg-white px-6 py-2 inline-block comic-border rounded-t-2xl border-b-0 ml-8 relative z-10">
                 <h3 className="font-headline text-2xl">INSTRUCTIONS</h3>
             </div>
