@@ -48,7 +48,7 @@ export function HeroSection() {
             <br/>
             <span className={cn('inline-block opacity-0', inView && 'animate-pop-in')} style={{ animationDelay: '0.2s' }}>GIAN</span>
           </h1>
-          <p className={cn('font-headline text-2xl text-slate-800 mb-6 max-w-sm leading-tight', inView && 'animate__animated animate__tada animate__infinite')} style={{ animationDelay: '0.3s' }}>
+          <p className={cn('font-headline text-2xl text-slate-800 mb-6 max-w-sm leading-tight opacity-0', inView && 'animate-pop-in')} style={{ animationDelay: '0.3s' }}>
             Your Digital Identity.<br/>
             <span className="text-accent">Now in Physical Reality.</span>
           </p>
