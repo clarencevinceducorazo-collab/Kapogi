@@ -12,14 +12,32 @@ import {
 import { User, LogOut, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useEffect, useState } from 'react';
 
 export function CustomConnectButton({ className, connectedClassName }: { className?: string, connectedClassName?: string }) {
+  const [isMounted, setIsMounted] = useState(false);
   const account = useCurrentAccount();
   const { mutate: disconnect } = useDisconnectWallet();
   const { toast } = useToast();
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    // Render a placeholder on the server and initial client render to avoid hydration mismatch.
+    return (
+        <Button 
+            className={cn(className)}
+            disabled
+        >
+            Connect Wallet
+        </Button>
+    );
+  }
+
   if (!account) {
-    // Renders the original ConnectButton for the disconnected state
+    // Renders the original ConnectButton for the disconnected state, only on the client.
     return <ConnectButton className={className} />;
   }
 
