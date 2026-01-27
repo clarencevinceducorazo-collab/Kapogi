@@ -1,63 +1,204 @@
-import { TransactionBlock } from '@mysten/sui.js/transactions';
-import type { WalletContextState } from '@mysten/dapp-kit';
+/**
+ * SUI Blockchain Utilities - FIXED
+ */
 
-interface MintCharacterNFTOptions {
+import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { SuiClient } from '@mysten/sui.js/client';
+import { CONTRACT_ADDRESSES, MODULES, PRICING, NETWORK_CONFIG } from './constants';
+import { WalletContextState } from '@mysten/dapp-kit';
+
+// Initialize SUI client
+export const suiClient = new SuiClient({ url: NETWORK_CONFIG.rpcUrl });
+
+/**
+ * Mint Character NFT with Order Receipt
+ */
+export async function mintCharacterNFT(params: {
   name: string;
   description: string;
   imageUrl: string;
-  attributes: string;
+  attributes: string; // JSON string
   itemsSelected: string;
   encryptedShippingInfo: string;
   encryptionPubkey: string;
   signAndExecute: WalletContextState['signAndExecuteTransaction'];
+}) {
+  try {
+    console.log('🎨 Creating mint transaction...');
+    
+    const tx = new TransactionBlock();
+    
+    // Split 20 SUI for payment (in MIST: 20 * 1,000,000,000)
+    const [coin] = tx.splitCoins(tx.gas, [tx.pure(PRICING.BASE_MINT)]);
+    
+    // Get Clock object (0x6)
+    const clock = tx.object('0x6');
+    
+    // Get shared MintCounter object
+    const mintCounter = tx.object(CONTRACT_ADDRESSES.MINT_COUNTER_ID);
+    
+    // Call mint_character function (NO MintCap needed!)
+    tx.moveCall({
+      target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.CHARACTER_NFT}::mint_character`,
+      arguments: [
+        mintCounter,  // Shared object
+        coin,
+        tx.pure.string(params.name),
+        tx.pure.string(params.description),
+        tx.pure.string(params.imageUrl),
+        tx.pure.string(params.attributes),
+        tx.pure.string(params.itemsSelected),
+        tx.pure.string(params.encryptedShippingInfo),
+        tx.pure.string(params.encryptionPubkey),
+        clock,
+      ],
+    });
+    
+    console.log('📝 Executing transaction...');
+    
+    // Sign and execute with correct format
+    const result = await params.signAndExecute(
+      {
+        transaction: tx,
+        options: {
+            showEffects: true,
+            showObjectChanges: true,
+            showEvents: true,
+        }
+      }
+    );
+    
+    console.log('✅ Mint successful!', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Mint failed:', error);
+    throw error;
+  }
 }
 
-export async function mintCharacterNFT(options: MintCharacterNFTOptions): Promise<{ digest: string }> {
-  const { name, description, imageUrl, attributes, itemsSelected, encryptedShippingInfo, encryptionPubkey, signAndExecute } = options;
-
-  const packageId = process.env.NEXT_PUBLIC_PACKAGE_ID;
-  const mintCounterId = process.env.NEXT_PUBLIC_MINT_COUNTER_ID;
-  const receiptRegistryId = process.env.NEXT_PUBLIC_RECEIPT_REGISTRY_ID;
-  const treasuryWallet = process.env.NEXT_PUBLIC_TREASURY_WALLET;
-  
-  if (!packageId || !mintCounterId || !receiptRegistryId || !treasuryWallet) {
-    throw new Error("SUI contract environment variables are not set.");
-  }
-  
-  const tx = new TransactionBlock();
-
-  // Define the payment coin (10 SUI)
-  const [paymentCoin] = tx.splitCoins(tx.gas, [tx.pure(10_000_000_000)]);
-  
-  // Transfer payment to treasury
-  tx.transferObjects([paymentCoin], tx.pure(treasuryWallet));
-
-  // Call the mint function on the smart contract
-  tx.moveCall({
-    target: `${packageId}::kapogian::mint_to_sender`,
-    arguments: [
-      tx.object(mintCounterId),
-      tx.pure.string(name),
-      tx.pure.string(description),
-      tx.pure.string(imageUrl),
-      tx.pure.string(attributes),
-      tx.pure.string(itemsSelected),
-      tx.pure.string(encryptedShippingInfo),
-      tx.pure.string(encryptionPubkey),
-      tx.object(receiptRegistryId),
-    ],
-  });
-
-  console.log("Constructing SUI transaction...", tx.blockData);
-
+/**
+ * Upgrade to bundle (additional 10 SUI)
+ */
+export async function upgradeToBundleNFT(params: {
+  receiptId: string;
+  newEncryptedShippingInfo: string;
+  signAndExecute: WalletContextState['signAndExecuteTransaction'];
+}) {
   try {
-    const result = await signAndExecute({
-        transaction: tx,
+    console.log('🎁 Creating bundle upgrade transaction...');
+    
+    const tx = new TransactionBlock();
+    
+    // Split 10 SUI for upgrade payment
+    const [coin] = tx.splitCoins(tx.gas, [tx.pure(PRICING.BUNDLE_UPGRADE)]);
+    
+    // Call upgrade_to_bundle function
+    tx.moveCall({
+      target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.CHARACTER_NFT}::upgrade_to_bundle`,
+      arguments: [
+        tx.object(params.receiptId),
+        coin,
+        tx.pure.string(params.newEncryptedShippingInfo),
+      ],
     });
-    console.log("SUI transaction successful!", result);
-    return { digest: result.digest };
-  } catch (err) {
-      console.error('SUI transaction failed:', err);
-      throw err;
+    
+    console.log('📝 Executing upgrade transaction...');
+    
+    const result = await params.signAndExecute(
+      {
+        transaction: tx,
+        options: {
+            showEffects: true,
+            showObjectChanges: true,
+        }
+      }
+    );
+    
+    console.log('✅ Upgrade successful!', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Upgrade failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get owned Character NFTs for a wallet
+ */
+export async function getOwnedCharacters(walletAddress: string) {
+  try {
+    const objects = await suiClient.getOwnedObjects({
+      owner: walletAddress,
+      filter: {
+        StructType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.CHARACTER_NFT}::Character`,
+      },
+      options: {
+        showContent: true,
+        showDisplay: true,
+      },
+    });
+    
+    return objects.data;
+  } catch (error) {
+    console.error('Failed to fetch owned characters:', error);
+    return [];
+  }
+}
+
+/**
+ * Get owned Order Receipts for a wallet
+ */
+export async function getOwnedReceipts(walletAddress: string) {
+  try {
+    const objects = await suiClient.getOwnedObjects({
+      owner: walletAddress,
+      filter: {
+        StructType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ORDER_RECEIPT}::OrderReceipt`,
+      },
+      options: {
+        showContent: true,
+      },
+    });
+    
+    return objects.data;
+  } catch (error) {
+    console.error('Failed to fetch receipts:', error);
+    return [];
+  }
+}
+
+/**
+ * Admin: Mark receipt as shipped
+ */
+export async function markAsShipped(params: {
+  receiptObjectId: string;
+  signAndExecute: WalletContextState['signAndExecuteTransaction'];
+}) {
+  try {
+    const tx = new TransactionBlock();
+    
+    const adminCap = tx.object(CONTRACT_ADDRESSES.ADMIN_CAP_ID);
+    const receipt = tx.object(params.receiptObjectId);
+    const clock = tx.object('0x6');
+    
+    tx.moveCall({
+      target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::mark_as_shipped`,
+      arguments: [adminCap, receipt, clock],
+    });
+    
+    const result = await params.signAndExecute(
+      {
+        transaction: tx,
+        options: {
+            showEffects: true,
+        }
+      }
+    );
+    
+    console.log('✅ Marked as shipped!', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Failed to mark as shipped:', error);
+    throw error;
   }
 }

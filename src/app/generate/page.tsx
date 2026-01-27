@@ -24,6 +24,8 @@ import { uploadCharacterToIPFS } from '@/lib/pinata';
 import { mintCharacterNFT } from '@/lib/sui';
 import { ENCRYPTION_CONFIG } from '@/lib/constants';
 import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
+import { encryptShippingInfo, validateShippingInfo, ShippingInfo } from '@/lib/encryption';
+
 
 interface CharacterData {
   imageBlob: Blob;
@@ -279,45 +281,82 @@ export default function GeneratorPage() {
       setError("Character data or wallet connection is missing.");
       return;
     }
-
+  
+    setMinting(true);
+    setError('');
+  
     try {
-      setMinting(true);
-      setError('');
-      console.log('🚀 Starting mint process...');
-
-      let itemsToMint: string[] = [];
-      if (selection === 'Bundle') {
-          itemsToMint = allMerchItems;
-      } else if (selection) {
-          itemsToMint = [selection];
+      // 1. Validate Shipping Info
+      const shippingInfo: ShippingInfo = {
+        name: shippingName,
+        address: shippingAddress,
+        phone: shippingContact,
+      };
+      const validation = validateShippingInfo(shippingInfo);
+      if (!validation.valid) {
+        setError(validation.errors.join(', '));
+        setMinting(false);
+        return;
       }
-
-      const shippingInfo = JSON.stringify({ name: shippingName, contact: shippingContact, address: shippingAddress });
-      const encryptedShippingInfo = btoa(shippingInfo); // Placeholder encryption
-
+  
+      // 2. Encrypt Shipping Info
+      const encryptedShippingInfo = await encryptShippingInfo(shippingInfo);
+  
+      // 3. Map selection to contract-expected value
+      let itemsSelected = '';
+      switch (selection) {
+        case 'Tee':
+          itemsSelected = 'SHIRT';
+          break;
+        case 'Mug':
+          itemsSelected = 'MUG';
+          break;
+        case 'Pad':
+          itemsSelected = 'MOUSEPAD';
+          break;
+        case 'Plate':
+          itemsSelected = 'PLATE';
+          break;
+        case 'Bundle':
+          itemsSelected = 'ALL_BUNDLE';
+          break;
+        default:
+          setError('Invalid merchandise selection.');
+          setMinting(false);
+          return;
+      }
+  
+      // 4. Upload to IPFS
       console.log('📤 Uploading to IPFS...');
-      const { imageUrl } = await uploadCharacterToIPFS(generatedImageBlob, {
+      const attributes = { cuteness, confidence, tiliFactor, luzon, visayas, mindanao, hairAmount, facialHair, clothingStyle, hairColor, eyewear, skinColor, bodyFat, posture, holdingItem };
+      const { metadataUrl } = await uploadCharacterToIPFS(generatedImageBlob, {
         name: generatedName,
         description: `A Kapogian character from ${originDescription}`,
-        attributes: { cuteness, confidence, tiliFactor, luzon, visayas, mindanao, hairAmount, facialHair, clothingStyle, hairColor, eyewear, skinColor, bodyFat, posture, holdingItem },
+        attributes: attributes,
       });
-      console.log('✅ IPFS upload complete:', imageUrl);
-
+      console.log('✅ IPFS upload complete:', metadataUrl);
+  
+      // 5. Mint on SUI blockchain
       console.log('⛓️ Minting on SUI blockchain...');
       const result = await mintCharacterNFT({
         name: generatedName,
         description: `A Kapogian character from ${originDescription}`,
-        imageUrl,
-        attributes: JSON.stringify({ cuteness, confidence, tiliFactor, luzon, visayas, mindanao, hairAmount, facialHair, clothingStyle, hairColor, eyewear, skinColor, bodyFat, posture, holdingItem }),
-        itemsSelected: JSON.stringify(itemsToMint),
+        imageUrl: metadataUrl, // Pass metadata URL to the contract
+        attributes: JSON.stringify(attributes),
+        itemsSelected: itemsSelected,
         encryptedShippingInfo: encryptedShippingInfo,
         encryptionPubkey: ENCRYPTION_CONFIG.adminPublicKey,
         signAndExecute,
       });
       console.log('✅ Mint successful!', result);
-      
-      setTxHash(result.digest);
-      navigate('page-receipt');
+  
+      if ('digest' in result) {
+        setTxHash(result.digest);
+        navigate('page-receipt');
+      } else {
+        throw new Error('Minting did not return a transaction digest.');
+      }
+  
     } catch (err: any) {
       console.error('❌ Mint failed:', err);
       setError(err.message || 'Failed to mint NFT. Please try again.');
@@ -328,7 +367,7 @@ export default function GeneratorPage() {
 
   const handleSelection = (item: string) => {
     if (selection === item) {
-      setSelection(null); // Toggle off
+      setSelection(null);
     } else {
       setSelection(item);
     }
@@ -534,25 +573,25 @@ export default function GeneratorPage() {
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 relative z-10">
-                        <button onClick={() => handleSelection('Tee')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", (selection === 'Tee' || selection === 'Bundle') && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
+                        <button onClick={() => handleSelection('Tee')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Tee' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
                             <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
                                 <Shirt className="w-10 h-10 text-stone-800" />
                             </div>
                             <span className="font-display font-semibold uppercase">Tee</span>
                         </button>
-                        <button onClick={() => handleSelection('Mug')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", (selection === 'Mug' || selection === 'Bundle') && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
+                        <button onClick={() => handleSelection('Mug')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Mug' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
                             <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
                                 <Coffee className="w-10 h-10 text-stone-800" />
                             </div>
                             <span className="font-display font-semibold uppercase">Mug</span>
                         </button>
-                        <button onClick={() => handleSelection('Pad')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", (selection === 'Pad' || selection === 'Bundle') && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
+                        <button onClick={() => handleSelection('Pad')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Pad' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
                             <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
                                 <MousePointer2 className="w-10 h-10 text-stone-800" />
                             </div>
                             <span className="font-display font-semibold uppercase">Pad</span>
                         </button>
-                        <button onClick={() => handleSelection('Plate')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", (selection === 'Plate' || selection === 'Bundle') && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
+                        <button onClick={() => handleSelection('Plate')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Plate' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
                             <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
                                 <div className="w-10 h-10 rounded-full border-2 border-stone-800"></div>
                             </div>
@@ -677,9 +716,3 @@ export default function GeneratorPage() {
     </div>
   );
 }
-
-    
-
-    
-
-
