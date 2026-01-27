@@ -201,10 +201,6 @@
     transition: color 0.5s ease-in-out;
   }
   
-  .hover-fill-button:hover {
-    color: white;
-  }
-  
   .hover-fill-button::before {
     content: "";
     position: absolute;
@@ -222,7 +218,7 @@
   }
   
   .hover-fill-button .button-text {
-    background-image: linear-gradient(transparent 50%, white 50%);
+    background-image: linear-gradient(transparent 50%, black 50%);
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
@@ -234,6 +230,6 @@
   
   .hover-fill-button:hover .button-text {
     background-position: bottom;
-    -webkit-text-stroke-color: white;
+    -webkit-text-stroke-color: black;
   }
 }
