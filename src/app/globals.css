@@ -218,7 +218,7 @@
   }
   
   .hover-fill-button .button-text {
-    background-image: linear-gradient(transparent 50%, black 50%);
+    background-image: linear-gradient(transparent 50%, white 50%);
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
