@@ -71,8 +71,7 @@ export default function GeneratorPage() {
   const [shippingAddress, setShippingAddress] = useState('');
 
   // Merch selection state
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [isBundle, setIsBundle] = useState(false);
+  const [selection, setSelection] = useState<string | null>(null);
   const allMerchItems = ['Tee', 'Mug', 'Pad', 'Plate'];
 
 
@@ -287,6 +286,13 @@ export default function GeneratorPage() {
       setError('');
       console.log('🚀 Starting mint process...');
 
+      let itemsToMint: string[] = [];
+      if (selection === 'Bundle') {
+          itemsToMint = allMerchItems;
+      } else if (selection) {
+          itemsToMint = [selection];
+      }
+
       const shippingInfo = JSON.stringify({ name: shippingName, contact: shippingContact, address: shippingAddress });
       const encryptedShippingInfo = btoa(shippingInfo); // Placeholder encryption
 
@@ -304,7 +310,7 @@ export default function GeneratorPage() {
         description: `A Kapogian character from ${originDescription}`,
         imageUrl,
         attributes: JSON.stringify({ cuteness, confidence, tiliFactor, luzon, visayas, mindanao, hairAmount, facialHair, clothingStyle, hairColor, eyewear, skinColor, bodyFat, posture, holdingItem }),
-        itemsSelected: JSON.stringify(selectedItems),
+        itemsSelected: JSON.stringify(itemsToMint),
         encryptedShippingInfo: encryptedShippingInfo,
         encryptionPubkey: ENCRYPTION_CONFIG.adminPublicKey,
         signAndExecute,
@@ -321,28 +327,16 @@ export default function GeneratorPage() {
     }
   };
 
-  const handleItemSelect = (item: string) => {
-    const newItems = selectedItems.includes(item)
-      ? selectedItems.filter((i) => i !== item)
-      : [...selectedItems, item];
-    
-    setSelectedItems(newItems);
-    
-    setIsBundle(newItems.length === allMerchItems.length && allMerchItems.every(i => newItems.includes(i)));
-  };
-
-  const handleBundleSelect = () => {
-    const nextIsBundle = !isBundle;
-    setIsBundle(nextIsBundle);
-    if (nextIsBundle) {
-      setSelectedItems(allMerchItems);
+  const handleSelection = (item: string) => {
+    if (selection === item) {
+      setSelection(null); // Toggle off
     } else {
-      setSelectedItems([]);
+      setSelection(item);
     }
   };
 
   const handleContinueToShipping = () => {
-    if (selectedItems.length === 0) {
+    if (!selection) {
       setError("Please select at least one merchandise item or the bundle.");
     } else {
       setError('');
@@ -541,25 +535,25 @@ export default function GeneratorPage() {
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 relative z-10">
-                        <button onClick={() => handleItemSelect('Tee')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selectedItems.includes('Tee') && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
+                        <button onClick={() => handleSelection('Tee')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", (selection === 'Tee' || selection === 'Bundle') && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
                             <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
                                 <Shirt className="w-10 h-10 text-stone-800" />
                             </div>
                             <span className="font-display font-semibold uppercase">Tee</span>
                         </button>
-                        <button onClick={() => handleItemSelect('Mug')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selectedItems.includes('Mug') && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
+                        <button onClick={() => handleSelection('Mug')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", (selection === 'Mug' || selection === 'Bundle') && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
                             <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
                                 <Coffee className="w-10 h-10 text-stone-800" />
                             </div>
                             <span className="font-display font-semibold uppercase">Mug</span>
                         </button>
-                        <button onClick={() => handleItemSelect('Pad')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selectedItems.includes('Pad') && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
+                        <button onClick={() => handleSelection('Pad')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", (selection === 'Pad' || selection === 'Bundle') && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
                             <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
                                 <MousePointer2 className="w-10 h-10 text-stone-800" />
                             </div>
                             <span className="font-display font-semibold uppercase">Pad</span>
                         </button>
-                        <button onClick={() => handleItemSelect('Plate')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selectedItems.includes('Plate') && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
+                        <button onClick={() => handleSelection('Plate')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", (selection === 'Plate' || selection === 'Bundle') && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
                             <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
                                 <div className="w-10 h-10 rounded-full border-2 border-stone-800"></div>
                             </div>
@@ -567,10 +561,10 @@ export default function GeneratorPage() {
                         </button>
                     </div>
 
-                    <button onClick={handleBundleSelect} className={cn("bg-yellow-400 border-4 border-black rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 hard-shadow-sm relative z-10 transition-all", isBundle && "ring-4 ring-offset-2 ring-pink-500")}>
+                    <button onClick={() => handleSelection('Bundle')} className={cn("bg-yellow-400 border-4 border-black rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 hard-shadow-sm relative z-10 transition-all", selection === 'Bundle' && "ring-4 ring-offset-2 ring-pink-500")}>
                         <div className="flex items-center gap-4">
                             <div className="w-8 h-8 bg-white border-4 border-black rounded-md flex items-center justify-center">
-                                {isBundle && <Check className="w-6 h-6 text-black" />}
+                                {selection === 'Bundle' && <Check className="w-6 h-6 text-black" />}
                             </div>
                             <div className="flex flex-col text-left">
                                 <span className="font-display font-semibold text-xl uppercase leading-none">The "All-In" Bundle</span>
@@ -578,7 +572,7 @@ export default function GeneratorPage() {
                             </div>
                         </div>
                         <div className="bg-black text-white font-display font-semibold px-6 py-3 rounded-lg border-2 border-white shadow-[4px_4px_0px_rgba(0,0,0,0.2)] hover:scale-105 transition-transform uppercase text-base">
-                            {isBundle ? 'Selected (+10 SUI)' : 'Upgrade (+10 SUI)'}
+                            {selection === 'Bundle' ? 'Selected (+10 SUI)' : 'Upgrade (+10 SUI)'}
                         </div>
                     </button>
 
