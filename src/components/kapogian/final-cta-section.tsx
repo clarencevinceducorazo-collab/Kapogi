@@ -1,5 +1,8 @@
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { Stars } from "lucide-react";
+import { ConnectButton } from "@mysten/dapp-kit";
 
 export function FinalCtaSection() {
     return (
@@ -8,9 +11,7 @@ export function FinalCtaSection() {
             <div className="relative z-10">
                 <h2 className="font-headline text-5xl md:text-6xl text-white text-outline mb-6">READY TO COLLECT?</h2>
                 <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
-                    <Button className="bg-white text-black comic-border rounded-xl px-8 py-4 font-headline text-xl toy-shadow hover:bg-slate-50 transition-all h-auto">
-                        CONNECT WALLET
-                    </Button>
+                    <ConnectButton className="!bg-white !text-black !comic-border !rounded-xl !px-8 !py-4 !font-headline !text-xl !toy-shadow !hover:bg-slate-50 !transition-all !h-auto" />
                     <Button className="bg-[hsl(var(--brand-yellow))] text-black comic-border rounded-xl px-8 py-4 font-headline text-xl toy-shadow flex items-center justify-center gap-2 hover:bg-[#ffec99] transition-all h-auto">
                         <Stars className="w-7 h-7" />
                         MINT NOW

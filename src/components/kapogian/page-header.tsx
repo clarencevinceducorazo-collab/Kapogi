@@ -1,8 +1,10 @@
+'use client';
+
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { WandSparkles, Wallet } from "lucide-react";
+import { WandSparkles } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { ConnectButton } from "@mysten/dapp-kit";
 
 const TickerContent = () => (
     <div className="flex shrink-0 items-center gap-8 font-headline text-sm tracking-widest">
@@ -43,13 +45,7 @@ export function PageHeader() {
             </div>
           </div>
 
-          <Button
-            className="bg-accent hover:bg-blue-500 text-accent-foreground comic-border rounded-full px-6 py-2 font-headline text-lg flex items-center gap-2 h-auto"
-            aria-label="Connect Wallet"
-          >
-            <span className="hidden md:inline">CONNECT WALLET</span>
-            <Wallet className="w-6 h-6" strokeWidth={2.5} />
-          </Button>
+          <ConnectButton className="!bg-accent !hover:bg-blue-500 !text-accent-foreground !comic-border !rounded-full !px-6 !py-2 !font-headline !text-lg !h-auto" />
         </div>
       </nav>
     </header>

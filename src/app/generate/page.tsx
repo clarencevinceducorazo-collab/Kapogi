@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import {
   Package,
   Sparkles,
@@ -15,38 +16,34 @@ import {
   Utensils,
   ArrowLeft,
   LoaderCircle,
+  UserRound,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { uploadCharacterToIPFS } from '@/lib/pinata';
+import { mintCharacterNFT } from '@/lib/sui';
+import { ENCRYPTION_CONFIG } from '@/lib/constants';
+import { ConnectButton } from '@mysten/dapp-kit';
 
-interface CharacterMetadata {
+interface CharacterData {
+  imageBlob: Blob;
   name: string;
   description: string;
-  attributes: {
-    cuteness: number;
-    confidence: number;
-    tiliFactor: number;
-    luzon: number;
-    visayas: number;
-    mindanao: number;
-    hairAmount: number;
-    facialHair: number;
-    clothingStyle: number;
-    hairColor: number;
-    eyewear: number;
-    skinColor: number;
-    bodyFat: number;
-    posture: number;
-    holdingItem: string;
-  };
+  attributes: any;
+  lore: string;
+  imageUrl?: string;
+  previewUrl?: string;
 }
 
-
 export default function GeneratorPage() {
+  const account = useCurrentAccount();
+  const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
+
   const [page, setPage] = useState('generator');
 
   // Generation State
   const [loading, setLoading] = useState(false);
+  const [minting, setMinting] = useState(false);
   const [error, setError] = useState('');
   
   // Form State
@@ -67,10 +64,18 @@ export default function GeneratorPage() {
   const [posture, setPosture] = useState(25);
   const [holdingItem, setHoldingItem] = useState('None');
   
+  // Shipping State
+  const [shippingName, setShippingName] = useState('');
+  const [shippingContact, setShippingContact] = useState('');
+  const [shippingAddress, setShippingAddress] = useState('');
+
   // Result State
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [generatedImageBlob, setGeneratedImageBlob] = useState<Blob | null>(null);
   const [generatedLore, setGeneratedLore] = useState<string | null>(null);
   const [generatedName, setGeneratedName] = useState<string>('');
+  const [originDescription, setOriginDescription] = useState('');
+  const [txHash, setTxHash] = useState<string>('');
 
 
   const navigate = (targetId: string) => {
@@ -88,9 +93,6 @@ export default function GeneratorPage() {
     return <div dangerouslySetInnerHTML={{ __html: html }} />;
   };
 
-  /**
-   * Generate Filipino name using the API route
-   */
   const generateName = async (): Promise<string> => {
     try {
       const response = await fetch('/api/generate-text', {
@@ -101,9 +103,7 @@ export default function GeneratorPage() {
           prompt: 'Generate a single unique and creative name for a Filipino male character. The name should be a traditional or modern Filipino name. Do not include any other text, just the name.'
         })
       });
-      
       if (!response.ok) throw new Error('Failed to generate name');
-      
       const result = await response.json();
       return result.text?.replace(/["']+/g, '') || "Pogi";
     } catch (e) {
@@ -112,9 +112,6 @@ export default function GeneratorPage() {
     }
   };
 
-  /**
-   * Generate country name using the API route
-   */
   const generateCountry = async (): Promise<string> => {
     try {
       const response = await fetch('/api/generate-text', {
@@ -125,9 +122,7 @@ export default function GeneratorPage() {
           prompt: 'Generate a name of a foreign country, do not include any other text.'
         })
       });
-      
       if (!response.ok) throw new Error('Failed to generate country');
-      
       const result = await response.json();
       return result.text?.replace(/["']+/g, '') || "a foreign land";
     } catch (e) {
@@ -136,9 +131,6 @@ export default function GeneratorPage() {
     }
   };
 
-  /**
-   * Generate lore text using the API route
-   */
   const generateLore = async (name: string, originDesc: string): Promise<string> => {
     try {
       const promptText = `
@@ -158,9 +150,7 @@ export default function GeneratorPage() {
           prompt: promptText
         })
       });
-      
       if (!response.ok) throw new Error('Failed to generate lore');
-      
       const result = await response.json();
       return result.text || 'Failed to generate lore.';
     } catch (e) {
@@ -169,107 +159,65 @@ export default function GeneratorPage() {
     }
   };
 
-  /**
-   * Build character prompt
-   */
   const buildCharacterPrompt = (name: string, originDesc: string): string => {
     let statDescriptors = "";
-    
-    if (cuteness > 75) {
-      statDescriptors += ", large innocent eyes, soft round face";
-    } else if (cuteness < 25) {
-      statDescriptors += ", mischievous smile, slightly narrowed eyes";
-    }
-
-    if (confidence > 75) {
-      statDescriptors += ", a bold and smirking pose, puffed-out chest";
-    } else if (confidence < 25) {
-      statDescriptors += ", a shy and uncertain smile, hands in pockets";
-    }
-
-    if (tiliFactor > 75) {
-      statDescriptors += ", a heart-throb hairstyle, dazzling infectious smile";
-    } else if (tiliFactor < 25) {
-      statDescriptors += ", a subtle, cool expression, reserved vibe";
-    }
-
+    if (cuteness > 75) statDescriptors += ", large innocent eyes, soft round face";
+    else if (cuteness < 25) statDescriptors += ", mischievous smile, slightly narrowed eyes";
+    if (confidence > 75) statDescriptors += ", a bold and smirking pose, puffed-out chest";
+    else if (confidence < 25) statDescriptors += ", a shy and uncertain smile, hands in pockets";
+    if (tiliFactor > 75) statDescriptors += ", a heart-throb hairstyle, dazzling infectious smile";
+    else if (tiliFactor < 25) statDescriptors += ", a subtle, cool expression, reserved vibe";
     let hairDescriptor = "medium length hair";
     if (hairAmount <= 5) hairDescriptor = "bald";
     else if (hairAmount <= 15) hairDescriptor = "short spiky hair";
     else if (hairAmount <= 35) hairDescriptor = "medium length hair";
     else hairDescriptor = "long, flowing hair";
-
     let facialHairDescriptor = "clean shaven";
     if (facialHair > 5) facialHairDescriptor = "light stubble";
     if (facialHair > 20) facialHairDescriptor = "short, neat beard";
     if (facialHair > 40) facialHairDescriptor = "long, full beard and a stylish mustache";
-
     let clothingDescriptor = "casual streetwear";
     if (clothingStyle <= 5) clothingDescriptor = "only a sando and shorts";
     else if (clothingStyle <= 15) clothingDescriptor = "simple t-shirt and shorts";
     else if (clothingStyle <= 30) clothingDescriptor = "stylish streetwear with a hoodie";
     else if (clothingStyle <= 45) clothingDescriptor = "formal attire with a crisp polo";
     else clothingDescriptor = "elegant filipino formal attire, like a barong tagalog";
-    
     let hairColorDescriptor = "black hair";
     if (hairColor > 5) hairColorDescriptor = "dark brown hair";
     if (hairColor > 15) hairColorDescriptor = "light brown hair";
     if (hairColor > 30) hairColorDescriptor = "blonde hair";
     if (hairColor > 45) hairColorDescriptor = "white hair";
-
     let eyewearDescriptor = "no eyewear";
     if (eyewear > 5) eyewearDescriptor = "stylish eyeglasses";
     if (eyewear > 20) eyewearDescriptor = "cool sunglasses";
     if (eyewear > 40) eyewearDescriptor = "futuristic sporty eyewear";
-    
     let skinColorDescriptor = "kayumangi skin";
     if (skinColor > 25) skinColorDescriptor = "dark-skinned, Aeta-like skin color";
-    
     let bodyFatDescriptor = "";
     if (bodyFat <= 15) bodyFatDescriptor = "thin and slender body";
     else if (bodyFat <= 35) bodyFatDescriptor = "average body type";
     else bodyFatDescriptor = "chubby and plump body";
-    
     let postureDescriptor = "";
     if (cuteness > 30 && confidence > 30) {
-      if (posture === 50) {
-        postureDescriptor = "striking a finger heart pose with a proud smile";
-      } else if (posture >= 20) {
-        postureDescriptor = "flexing his muscles and striking a charismatic pose";
-      } else {
-        postureDescriptor = "with a casual, charming pose, slightly flexing";
-      }
+      if (posture === 50) postureDescriptor = "striking a finger heart pose with a proud smile";
+      else if (posture >= 20) postureDescriptor = "flexing his muscles and striking a charismatic pose";
+      else postureDescriptor = "with a casual, charming pose, slightly flexing";
     } else {
-      if (posture === 50) {
-        postureDescriptor = "standing very well-postured and proud";
-      } else if (posture > 20) {
-        postureDescriptor = "with an upright, well-postured stance";
-      } else {
-        postureDescriptor = "with a very casual, relaxed posture";
-      }
+      if (posture === 50) postureDescriptor = "standing very well-postured and proud";
+      else if (posture > 20) postureDescriptor = "with an upright, well-postured stance";
+      else postureDescriptor = "with a very casual, relaxed posture";
     }
-    
     let holdingItemDescriptor = "not holding anything";
     switch (holdingItem) {
-      case 'Cash':
-        holdingItemDescriptor = "holding a wad of cash";
-        break;
-      case 'Random Food':
-        holdingItemDescriptor = "holding a plate of random Filipino food like Chicken Adobo, Pork BBQ, and Lechon";
-        break;
-      case 'Random Bouquet of Flowers':
-        holdingItemDescriptor = "holding a random bouquet of flowers, including roses, tulips, and sunflowers";
-        break;
-      case 'Random Home Utensils':
-        holdingItemDescriptor = "holding a random home utensil, such as a broomstick or a pan";
-        break;
+      case 'Cash': holdingItemDescriptor = "holding a wad of cash"; break;
+      case 'Random Food': holdingItemDescriptor = "holding a plate of random Filipino food like Chicken Adobo, Pork BBQ, and Lechon"; break;
+      case 'Random Bouquet of Flowers': holdingItemDescriptor = "holding a random bouquet of flowers, including roses, tulips, and sunflowers"; break;
+      case 'Random Home Utensils': holdingItemDescriptor = "holding a random home utensil, such as a broomstick or a pan"; break;
     }
-
     return `full body shot of a cute chubby chibi pinoy boy named ${name}, ${originDesc}, with ${skinColorDescriptor}, with ${hairColorDescriptor} and ${hairDescriptor}, ${facialHairDescriptor}, wearing ${clothingDescriptor}, with ${eyewearDescriptor}, ${bodyFatDescriptor}, ${postureDescriptor}, ${holdingItemDescriptor}, showing confident pose, smiling. Kapogian meme, high quality, digital art, 4k, simple white background.`;
   };
   
   const handleGenerate = async () => {
-    // If no character name is provided, generate one using the AI.
     let nameToUse = characterName;
     setLoading(true);
     setError('');
@@ -281,50 +229,38 @@ export default function GeneratorPage() {
       setGeneratedName(nameToUse);
     }
 
-    // Determine the character's origin
-    let originDescription = "Filipino";
+    let originDesc = "Filipino";
     if (luzon === 0 && visayas === 0 && mindanao === 0) {
       const origin = await generateCountry();
-      originDescription = `a naturalized Filipino from ${origin}`;
+      originDesc = `a naturalized Filipino from ${origin}`;
     } else {
-      const origins = [
-        { region: "Luzon", value: luzon },
-        { region: "Visayas", value: visayas },
-        { region: "Mindanao", value: mindanao }
-      ];
+      const origins = [{ region: "Luzon", value: luzon }, { region: "Visayas", value: visayas }, { region: "Mindanao", value: mindanao }];
       origins.sort((a, b) => b.value - a.value);
-      originDescription = `a native of the ${origins[0].region} region of the Philippines`;
+      originDesc = `a native of the ${origins[0].region} region of the Philippines`;
     }
+    setOriginDescription(originDesc);
 
     try {
-      const fullPrompt = buildCharacterPrompt(nameToUse, originDescription);
-
-      const imagePromise = fetch('/api/generate-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: fullPrompt })
-      });
-
-      const lorePromise = generateLore(nameToUse, originDescription);
-
+      const fullPrompt = buildCharacterPrompt(nameToUse, originDesc);
+      const imagePromise = fetch('/api/generate-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: fullPrompt }) });
+      const lorePromise = generateLore(nameToUse, originDesc);
       const [imageResponse, lore] = await Promise.all([imagePromise, lorePromise]);
-
-      if (!imageResponse.ok) {
-        throw new Error('Failed to generate image');
-      }
-
+      if (!imageResponse.ok) throw new Error('Failed to generate image');
       const result = await imageResponse.json();
       const base64Data = result?.base64Image;
+      if (!base64Data) throw new Error('No image data received from the API.');
       
-      if (!base64Data) {
-        throw new Error('No image data received from the API.');
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
       }
-      
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'image/png' });
+      setGeneratedImageBlob(blob);
       setGeneratedImage(`data:image/png;base64,${base64Data}`);
       setGeneratedLore(lore);
-
       navigate('page-preview');
-
     } catch (err: any) {
       console.error('Generation failed:', err);
       setError(err.message || 'Failed to generate character. Please try again.');
@@ -333,6 +269,64 @@ export default function GeneratorPage() {
     }
   };
 
+  const handleMint = async () => {
+    if (!generatedImageBlob || !account) {
+      setError("Character data or wallet connection is missing.");
+      return;
+    }
+
+    try {
+      setMinting(true);
+      setError('');
+      console.log('🚀 Starting mint process...');
+
+      const shippingInfo = JSON.stringify({ name: shippingName, contact: shippingContact, address: shippingAddress });
+      const encryptedShippingInfo = btoa(shippingInfo); // Placeholder encryption
+
+      console.log('📤 Uploading to IPFS...');
+      const { imageUrl } = await uploadCharacterToIPFS(generatedImageBlob, {
+        name: generatedName,
+        description: `A Kapogian character from ${originDescription}`,
+        attributes: { cuteness, confidence, tiliFactor, luzon, visayas, mindanao, hairAmount, facialHair, clothingStyle, hairColor, eyewear, skinColor, bodyFat, posture, holdingItem },
+      });
+      console.log('✅ IPFS upload complete:', imageUrl);
+
+      console.log('⛓️ Minting on SUI blockchain...');
+      const result = await mintCharacterNFT({
+        name: generatedName,
+        description: `A Kapogian character from ${originDescription}`,
+        imageUrl,
+        attributes: JSON.stringify({ cuteness, confidence, tiliFactor, luzon, visayas, mindanao, hairAmount, facialHair, clothingStyle, hairColor, eyewear, skinColor, bodyFat, posture, holdingItem }),
+        itemsSelected: 'bundle', // Placeholder
+        encryptedShippingInfo: encryptedShippingInfo,
+        encryptionPubkey: ENCRYPTION_CONFIG.adminPublicKey,
+        signAndExecute,
+      });
+      console.log('✅ Mint successful!', result);
+      
+      setTxHash(result.digest);
+      navigate('page-receipt');
+    } catch (err: any) {
+      console.error('❌ Mint failed:', err);
+      setError(err.message || 'Failed to mint NFT. Please try again.');
+    } finally {
+      setMinting(false);
+    }
+  };
+
+  if (!account) {
+    return (
+      <div className="generate-page min-h-screen p-4 md:p-8 flex items-center justify-center text-lg text-black antialiased">
+        <main className="relative w-full max-w-md bg-white border-4 border-black rounded-3xl hard-shadow overflow-hidden flex flex-col p-8 text-center">
+            <h2 className="font-display text-3xl font-semibold mb-4">Wallet Required</h2>
+            <p className="text-stone-600 mb-6">Please connect your SUI wallet to generate a Kapogian character.</p>
+            <div className="flex justify-center">
+              <ConnectButton />
+            </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="generate-page min-h-screen p-4 md:p-8 flex items-center justify-center text-lg text-black antialiased">
@@ -379,7 +373,6 @@ export default function GeneratorPage() {
 
                     <div className="space-y-4 p-4 border-4 border-stone-200 border-dashed rounded-xl bg-stone-50">
                         <h3 className="font-display font-semibold text-lg text-stone-500 uppercase">Enchantments</h3>
-                        
                         <div className="space-y-1">
                             <div className="flex justify-between font-semibold text-sm"><span>Cuteness</span><span>{cuteness}</span></div>
                             <input type="range" min="0" max="100" value={cuteness} onChange={(e) => setCuteness(Number(e.target.value))} className="w-full" />
@@ -484,7 +477,6 @@ export default function GeneratorPage() {
           </section>
 
           <section id="page-preview" className={cn('page-section flex flex-col h-full', { 'hidden': page !== 'page-preview' })}>
-                
                 <div className="flex flex-col md:flex-row border-b-4 border-black">
                     <div className="w-full md:w-1/2 p-8 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px]">
                         {loading && <LoaderCircle className="w-16 h-16 animate-spin text-stone-400" />}
@@ -562,47 +554,48 @@ export default function GeneratorPage() {
              <section id="page-shipping" className={cn('page-section p-8 flex flex-col items-center justify-center h-full min-h-[600px] bg-sky-100', { 'hidden': page !== 'page-shipping' })}>
                 <div className="w-full max-w-md bg-white border-4 border-black rounded-2xl p-8 hard-shadow-sm relative">
                     <div className="absolute -top-6 -left-6 bg-red-500 text-white font-display font-semibold px-4 py-2 rotate-[-6deg] border-4 border-black rounded-lg shadow-md uppercase">Fragile!</div>
-
                     <h2 className="font-display text-3xl font-semibold mb-6 border-b-4 border-stone-200 pb-2">Shipping Details</h2>
-                    
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <label className="font-semibold uppercase text-sm tracking-wide">Full Name</label>
-                            <input type="text" className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all" />
+                            <input type="text" value={shippingName} onChange={(e) => setShippingName(e.target.value)} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all" />
                         </div>
                         <div className="space-y-2">
                             <label className="font-semibold uppercase text-sm tracking-wide">Contact Number</label>
-                            <input type="text" className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all" />
+                            <input type="text" value={shippingContact} onChange={(e) => setShippingContact(e.target.value)} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all" />
                         </div>
                         <div className="space-y-2">
                             <label className="font-semibold uppercase text-sm tracking-wide">Full Address</label>
-                            <textarea rows={3} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all resize-none"></textarea>
+                            <textarea rows={3} value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all resize-none"></textarea>
                         </div>
                     </div>
 
-                    <button onClick={() => navigate('page-receipt')} className="mt-8 w-full bg-blue-500 text-white border-4 border-black rounded-xl py-3 text-xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hard-shadow-hover transition-all flex items-center justify-center gap-2">
-                        <Truck className="w-6 h-6" />
-                        Ship It
+                    <button onClick={handleMint} disabled={minting} className="mt-8 w-full bg-blue-500 text-white border-4 border-black rounded-xl py-3 text-xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hard-shadow-hover transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                         {minting ? <LoaderCircle className="w-6 h-6 animate-spin" /> : <Truck className="w-6 h-6" />}
+                         {minting ? 'Minting & Shipping...' : 'Ship It'}
                     </button>
+                     {error && (
+                        <div className="mt-4 text-sm text-center bg-red-100 p-3 rounded-lg border border-red-300 text-red-700">
+                        {error}
+                        </div>
+                    )}
                 </div>
             </section>
 
              <section id="page-receipt" className={cn('page-section p-8 flex flex-col items-center justify-center h-full min-h-[600px] bg-green-200', { 'hidden': page !== 'page-receipt' })}>
                 <div className="w-full max-w-sm bg-white border-x-4 border-t-4 border-b-[12px] border-dotted border-black rounded-t-xl relative p-6 shadow-2xl">
-                    
                     <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-green-200 rounded-full border-4 border-black"></div>
-
                     <div className="text-center mb-6 border-b-2 border-dashed border-stone-300 pb-4">
                         <h2 className="font-display text-3xl font-semibold uppercase tracking-tight">Order Receipt</h2>
-                        <p className="text-stone-500 font-medium text-sm mt-1">Order #KAP-8821</p>
+                        <p className="text-stone-500 font-medium text-sm mt-1">Order #{txHash.substring(0, 8)}</p>
                     </div>
 
                     <div className="flex gap-4 mb-6">
                         <div className="w-20 h-20 bg-stone-100 border-2 border-black rounded-md shrink-0 overflow-hidden">
-                          <Image src="/images/KPG.png" alt="Kapogian Character" width={80} height={80} />
+                          {generatedImage && <Image src={generatedImage} alt="Kapogian Character" width={80} height={80} />}
                         </div>
                         <div className="flex flex-col justify-center">
-                            <span className="font-semibold text-lg">Kapogian #442</span>
+                            <span className="font-semibold text-lg">{generatedName}</span>
                             <span className="text-sm text-stone-500">Includes Digital Asset</span>
                         </div>
                     </div>
@@ -640,4 +633,3 @@ export default function GeneratorPage() {
     </div>
   );
 }
-
