@@ -1,4 +1,4 @@
-import type { SuiTransaction } from '@mysten/sui.js/client';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
 import type { WalletContextState } from '@mysten/dapp-kit';
 
 interface MintCharacterNFTOptions {
@@ -12,42 +12,52 @@ interface MintCharacterNFTOptions {
   signAndExecute: WalletContextState['signAndExecuteTransaction'];
 }
 
-// This is a placeholder for the SUI minting logic.
-// In a real application, this would construct and execute a transaction
-// to call a smart contract on the SUI blockchain.
 export async function mintCharacterNFT(options: MintCharacterNFTOptions): Promise<{ digest: string }> {
-  console.log("Constructing SUI transaction (placeholder)...", options);
+  const { name, description, imageUrl, attributes, itemsSelected, encryptedShippingInfo, encryptionPubkey, signAndExecute } = options;
 
-  // In a real app, you would create a transaction block like this:
-  /*
+  const packageId = process.env.NEXT_PUBLIC_PACKAGE_ID;
+  const mintCounterId = process.env.NEXT_PUBLIC_MINT_COUNTER_ID;
+  const receiptRegistryId = process.env.NEXT_PUBLIC_RECEIPT_REGISTRY_ID;
+  const treasuryWallet = process.env.NEXT_PUBLIC_TREASURY_WALLET;
+  
+  if (!packageId || !mintCounterId || !receiptRegistryId || !treasuryWallet) {
+    throw new Error("SUI contract environment variables are not set.");
+  }
+  
   const tx = new TransactionBlock();
+
+  // Define the payment coin (10 SUI)
+  const [paymentCoin] = tx.splitCoins(tx.gas, [tx.pure(10_000_000_000)]);
+  
+  // Transfer payment to treasury
+  tx.transferObjects([paymentCoin], tx.pure(treasuryWallet));
+
+  // Call the mint function on the smart contract
   tx.moveCall({
-    target: `0xYOUR_PACKAGE_ID::kapogian::mint_character`,
+    target: `${packageId}::kapogian::mint_to_sender`,
     arguments: [
-      tx.pure.string(options.name),
-      tx.pure.string(options.description),
-      tx.pure.string(options.imageUrl),
-      tx.pure.string(options.attributes),
-      tx.pure.string(options.itemsSelected),
-      tx.pure.string(options.encryptedShippingInfo),
-      tx.pure.string(options.encryptionPubkey),
+      tx.object(mintCounterId),
+      tx.pure.string(name),
+      tx.pure.string(description),
+      tx.pure.string(imageUrl),
+      tx.pure.string(attributes),
+      tx.pure.string(itemsSelected),
+      tx.pure.string(encryptedShippingInfo),
+      tx.pure.string(encryptionPubkey),
+      tx.object(receiptRegistryId),
     ],
   });
 
-  const result = await options.signAndExecute({
-      transaction: tx,
-  });
+  console.log("Constructing SUI transaction...", tx.blockData);
 
-  return { digest: result.digest };
-  */
-
-  // For the placeholder, we'll simulate the signing and execution.
-  console.log("Simulating wallet signing and execution...");
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  // Return a placeholder transaction digest.
-  const placeholderDigest = '5Jd2g9qC9xZ4fJ6Z9g8ZfJ6Z9g8ZfJ6Z9g8ZfJ6Z9g8ZfJ6Z9g8ZfJ6Z9g8ZfJ6';
-  console.log("Placeholder transaction digest:", placeholderDigest);
-  
-  return { digest: placeholderDigest };
+  try {
+    const result = await signAndExecute({
+        transaction: tx,
+    });
+    console.log("SUI transaction successful!", result);
+    return { digest: result.digest };
+  } catch (err) {
+      console.error('SUI transaction failed:', err);
+      throw err;
+  }
 }

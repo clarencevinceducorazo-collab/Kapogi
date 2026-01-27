@@ -5,8 +5,11 @@ export async function POST(request: NextRequest) {
   try {
     const { type, prompt } = await request.json();
 
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const url = process.env.NEXT_PUBLIC_GEMINI_TEXT_API;
+
+    if (!url) {
+      throw new Error("Gemini Text API URL is not configured.");
+    }
 
     const payload = {
       contents: [{

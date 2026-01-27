@@ -1,9 +1,9 @@
 export const NETWORK_CONFIG = {
-  network: 'testnet',
+  network: (process.env.NEXT_PUBLIC_SUI_NETWORK as 'testnet' | 'mainnet') ?? 'testnet',
 } as const;
 
 export const ENCRYPTION_CONFIG = {
     // This is a placeholder public key.
     // In a real application, you would use a secure way to manage and retrieve this.
-    adminPublicKey: 'BEX/8n5e2V/rY4j2x30+I/2+Zg6gT/uA4eH/q3f+4A0='
+    adminPublicKey: process.env.NEXT_PUBLIC_ADMIN_PUBLIC_KEY || ''
 };
