@@ -9,7 +9,7 @@ export function FinalCtaSection({ onWhitepaperOpen }: { onWhitepaperOpen: () => 
     const [ref, inView] = useInView({ threshold: 0.4, triggerOnce: false });
     
     return (
-        <div ref={ref} className={`bg-primary comic-border-thick rounded-[3rem] p-10 text-center toy-shadow-lg mb-12 relative overflow-hidden transition-all duration-800 ease-premium-ease ${inView ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+        <div ref={ref} className={`bg-primary comic-border-thick rounded-[3rem] p-10 text-center toy-shadow-lg mb-12 relative overflow-hidden ${inView ? 'animate__animated animate__jackInTheBox' : 'opacity-0'}`}>
             <div className="absolute inset-0 opacity-20 animate-bg-scroll" style={{backgroundImage: "repeating-linear-gradient(45deg, #000 0, #000 2px, transparent 2px, transparent 10px)"}}></div>
             <div className="relative z-10">
                 <h2 className="font-headline text-5xl md:text-6xl text-white text-outline mb-6">READY TO COLLECT?</h2>
