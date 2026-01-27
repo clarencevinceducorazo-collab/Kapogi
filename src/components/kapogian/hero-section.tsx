@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -42,7 +43,7 @@ export function HeroSection() {
           <div className={cn('inline-block self-start bg-black text-white px-3 py-1 text-xs font-bold uppercase tracking-widest rounded mb-4 transform -rotate-2', inView && 'animate__animated animate__pulse animate__infinite')} style={{ animationDelay: '0s' }}>
             Series 1 • 2026 Edition
           </div>
-          <h1 className="text-[5rem] leading-[0.85] text-primary text-outline mb-4 transform -rotate-1 origin-bottom-left"> 
+          <h1 className={cn("text-[5rem] leading-[0.85] text-primary text-outline mb-4 transform -rotate-1 origin-bottom-left", inView && "animate__animated animate__tada animate__infinite")}> 
             <span className={cn('inline-block opacity-0', inView && 'animate-pop-in')} style={{ animationDelay: '0.1s' }}>KAPO</span>
             <br/>
             <span className={cn('inline-block opacity-0', inView && 'animate-pop-in')} style={{ animationDelay: '0.2s' }}>GIAN</span>
