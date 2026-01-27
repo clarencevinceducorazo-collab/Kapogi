@@ -495,7 +495,7 @@ export default function GeneratorPage() {
                         <div className="mb-4">
                             <h2 className="font-display text-2xl font-semibold tracking-tight uppercase border-b-4 border-yellow-300 inline-block">{generatedName}</h2>
                         </div>
-                        <div className="flex-grow bg-stone-50 border-2 border-stone-200 rounded-lg p-4 font-medium text-stone-700">
+                        <div className="flex-grow bg-stone-50 border-2 border-stone-200 rounded-lg p-4 font-medium text-stone-700 max-h-64 overflow-y-auto">
                            {loading && "Generating lore..."}
                            {!loading && generatedLore ? renderMarkdown(generatedLore) : "Lore will appear here. The backstory is generated based on your stats..."}
                         </div>
