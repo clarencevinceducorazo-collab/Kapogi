@@ -57,7 +57,7 @@ export function HeroSection() {
           <div className={cn('flex gap-4 opacity-0', inView && 'animate-pop-in')} style={{ animationDelay: '0.5s' }}>
             <Link href="/generate">
               <Button
-                className="bg-[hsl(var(--brand-yellow))] text-black comic-border rounded-xl px-6 py-3 font-headline text-xl toy-shadow flex items-center gap-2 h-auto hover-fill-button animate__animated animate__rubberBand animate__infinite"
+                className="bg-[hsl(var(--brand-yellow))] text-black comic-border rounded-xl px-6 py-3 font-headline text-xl toy-shadow flex items-center gap-2 h-auto hover-fill-button"
               >
                 <WandSparkles />
                 <span className="button-text">Simulan Ang Pagiging Pogi</span>
@@ -74,7 +74,7 @@ export function HeroSection() {
             transition: 'transform 0.1s linear',
           }}
           className={`w-full md:w-1/2 p-8 md:p-12 relative transition-all duration-800 delay-300 ease-premium-ease ${inView ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-95 -rotate-2'}`}>
-          <div className="bg-[#f0f4f8] comic-border rounded-[2rem] h-[400px] relative overflow-hidden shadow-inner">
+          <div className="bg-[#f0f4f8] comic-border rounded-[2rem] h-[400px] relative overflow-hidden shadow-inner animate__animated animate__bounce animate__infinite">
             <div className="absolute inset-0 blister-pack rounded-[1.8rem] z-20 pointer-events-none"></div>
             <div className="absolute inset-0 opacity-10" style={{backgroundImage: "radial-gradient(#000 1px, transparent 1px)", backgroundSize: "15px 15px"}}></div>
             <div className="absolute inset-0 flex items-center justify-center z-10">
