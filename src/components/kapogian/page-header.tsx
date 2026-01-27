@@ -45,7 +45,7 @@ export function PageHeader() {
   }, []);
 
   return (
-    <header className={cn("fixed top-0 left-0 right-0 z-40 transition-all duration-300 ease-premium-ease animate__animated", isScrolled ? 'bg-[hsl(var(--brand-yellow))] shadow-lg' : 'bg-transparent', isVisible ? 'animate__bounceInDown' : 'animate__bounceOutUp')}>
+    <header className={cn("fixed top-0 left-0 right-0 z-40 transition-all duration-300 ease-premium-ease animate__animated", isScrolled ? 'bg-[hsl(var(--brand-yellow))] shadow-lg' : 'bg-transparent', isVisible ? 'animate__bounceInDown' : 'animate__hinge')}>
       <div className={cn(
           "bg-black text-[hsl(var(--brand-yellow))] overflow-hidden border-b-4 border-black relative z-50 transition-all duration-300 ease-premium-ease",
           isScrolled ? 'py-1' : 'py-3 animate-slide-down-fade'
