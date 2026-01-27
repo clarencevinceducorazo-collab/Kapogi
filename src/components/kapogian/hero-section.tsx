@@ -57,10 +57,10 @@ export function HeroSection() {
           <div className={cn('flex gap-4 opacity-0', inView && 'animate-pop-in')} style={{ animationDelay: '0.5s' }}>
             <Link href="/generate">
               <Button
-                className="bg-[hsl(var(--brand-yellow))] hover:bg-yellow-300 text-black comic-border rounded-xl px-6 py-3 font-headline text-xl toy-shadow flex items-center gap-2 h-auto text-center animate-soft-pulse"
+                className="bg-[hsl(var(--brand-yellow))] text-black comic-border rounded-xl px-6 py-3 font-headline text-xl toy-shadow flex items-center gap-2 h-auto hover-fill-button"
               >
                 <WandSparkles />
-                Simulan Ang Pagiging Pogi
+                <span className="button-text">Simulan Ang Pagiging Pogi</span>
               </Button>
             </Link>
           </div>

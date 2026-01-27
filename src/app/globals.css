@@ -193,4 +193,47 @@
   .generate-page .page-section {
       transition: opacity 0.3s ease-in-out;
   }
+
+  .hover-fill-button {
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    transition: color 0.5s ease-in-out;
+  }
+  
+  .hover-fill-button:hover {
+    color: white;
+  }
+  
+  .hover-fill-button::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 0%;
+    background-color: hsl(var(--primary));
+    transition: height 0.5s ease-in-out;
+    z-index: -1;
+  }
+  
+  .hover-fill-button:hover::before {
+    height: 100%;
+  }
+  
+  .hover-fill-button .button-text {
+    background-image: linear-gradient(transparent 50%, white 50%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-stroke: 1.5px black;
+    background-size: 100% 200%;
+    background-position: top;
+    transition: all 0.5s ease-in-out;
+  }
+  
+  .hover-fill-button:hover .button-text {
+    background-position: bottom;
+    -webkit-text-stroke-color: white;
+  }
 }
