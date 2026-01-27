@@ -43,7 +43,7 @@ export function HeroSection() {
                 className="bg-[hsl(var(--brand-yellow))] hover:bg-yellow-300 text-black comic-border rounded-xl px-6 py-3 font-headline text-xl toy-shadow flex items-center gap-2 h-auto text-center"
               >
                 <WandSparkles />
-                Start
+                Simulan Ang Pagiging Pogi
               </Button>
             </Link>
           </div>
