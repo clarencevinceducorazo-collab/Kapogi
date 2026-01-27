@@ -1,40 +1,59 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { Mouse, UtensilsCrossed, Gem } from "lucide-react";
+import { Gem } from "lucide-react";
 import Image from "next/image";
 import { useInView } from "@/hooks/use-in-view";
+import { useEffect, useState } from "react";
 
 const ProductSticker = ({
   icon: Icon,
   name,
   imageUrl,
   inView,
-  delay
+  delay,
 }: {
   icon?: React.ElementType;
   name: string;
   imageUrl?: string;
   inView: boolean;
   delay: number;
-}) => (
-  <div style={{ transitionDelay: `${delay}ms`, transform: `rotate(${Math.random() * 6 - 3}deg)` }} className={`bg-white text-black comic-border rounded-2xl p-4 flex flex-col items-center sticker-cut cursor-pointer hover:bg-yellow-50 transition-all duration-700 ease-premium-ease hover:!scale-105 hover:!rotate-0 group hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${inView ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`}>
-    <div className="w-full aspect-square bg-slate-100 rounded-xl mb-3 border-2 border-slate-200 flex items-center justify-center overflow-hidden">
-      {imageUrl ? (
-        <Image
-          src={imageUrl}
-          alt={name}
-          width={150}
-          height={150}
-          className="object-contain w-full h-full p-2"
-        />
-      ) : (
-        Icon && <Icon className="w-12 h-12 text-slate-700" strokeWidth={1.5} />
-      )}
+}) => {
+  const [rotation, setRotation] = useState(0);
+
+  useEffect(() => {
+    setRotation(Math.random() * 6 - 3);
+  }, []);
+
+  return (
+    <div
+      style={{
+        transitionDelay: `${delay}ms`,
+        transform: `rotate(${rotation}deg)`,
+      }}
+      className={`bg-white text-black comic-border rounded-2xl p-4 flex flex-col items-center sticker-cut cursor-pointer hover:bg-yellow-50 transition-all duration-700 ease-premium-ease hover:!scale-105 hover:!rotate-0 group hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${
+        inView ? "opacity-100 scale-100" : "opacity-0 scale-75"
+      }`}
+    >
+      <div className="w-full aspect-square bg-slate-100 rounded-xl mb-3 border-2 border-slate-200 flex items-center justify-center overflow-hidden">
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={name}
+            width={150}
+            height={150}
+            className="object-contain w-full h-full p-2"
+          />
+        ) : (
+          Icon && <Icon className="w-12 h-12 text-slate-700" strokeWidth={1.5} />
+        )}
+      </div>
+      <span className="font-headline text-lg transition-transform duration-300 group-hover:scale-110">
+        {name}
+      </span>
     </div>
-    <span className="font-headline text-lg transition-transform duration-300 group-hover:scale-110">{name}</span>
-  </div>
-);
+  );
+};
 
 export function ShopSection() {
   const [ref, inView] = useInView({ threshold: 0.2, triggerOnce: true });
