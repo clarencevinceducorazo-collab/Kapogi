@@ -1,35 +1,20 @@
 
 import { NextRequest, NextResponse } from 'next/server';
+import { generateImage } from '@/ai/flows/generate-image-flow';
 
 export async function POST(request: NextRequest) {
   try {
     const { prompt } = await request.json();
 
-    const imageApiUrl = process.env.NEXT_PUBLIC_GEMINI_IMAGE_API;
+    const result = await generateImage({ prompt });
 
-    if (!imageApiUrl) {
-      throw new Error("Gemini Image API URL is not configured.");
+    if (!result.imageUrl) {
+      throw new Error('No image data received from the generation service.');
     }
-
-    const payload = {
-      instances: [{ prompt }],
-      parameters: { sampleCount: 1 }
-    };
-
-    const response = await fetch(imageApiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('API Error:', errorText);
-      throw new Error(`API error: ${response.status}`);
-    }
-
-    const result = await response.json();
-    const base64Image = result?.predictions?.[0]?.bytesBase64Encoded;
+    
+    // The image URL is a data URI, like `data:image/png;base64,...`
+    // The client expects `base64Image` which is just the base64 part.
+    const base64Image = result.imageUrl.split(',')[1];
 
     if (!base64Image) {
       throw new Error('No image data received');

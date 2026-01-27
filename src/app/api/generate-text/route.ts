@@ -1,38 +1,16 @@
 
 import { NextRequest, NextResponse } from 'next/server';
+import { generateText } from '@/ai/flows/generate-text-flow';
 
 export async function POST(request: NextRequest) {
+  let type = 'unknown';
   try {
-    const { type, prompt } = await request.json();
+    const body = await request.json();
+    const prompt = body.prompt;
+    type = body.type;
 
-    const url = process.env.NEXT_PUBLIC_GEMINI_TEXT_API;
-
-    if (!url) {
-      throw new Error("Gemini Text API URL is not configured.");
-    }
-
-    const payload = {
-      contents: [{
-        parts: [{
-          text: prompt
-        }]
-      }]
-    };
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('API Response:', errorText);
-      throw new Error(`API error: ${response.status}`);
-    }
-
-    const result = await response.json();
-    const generatedText = result?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    const result = await generateText({ prompt });
+    const generatedText = result.text.trim();
 
     let fallback = '';
     if (type === 'name') fallback = 'Pogi';
@@ -45,12 +23,13 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Text generation error:', error);
 
-    const { type } = await request.json().catch(() => ({ type: 'unknown' }));
     let fallback = '';
     if (type === 'name') fallback = 'Pogi';
     else if (type === 'country') fallback = 'a foreign land';
     else if (type === 'lore') fallback = 'Failed to generate lore.';
-
+    
+    // The original code returned 200 status with fallback text on error,
+    // which is what we will do here as well.
     return NextResponse.json({ text: fallback }, { status: 200 });
   }
 }
