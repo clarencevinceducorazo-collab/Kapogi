@@ -2,6 +2,7 @@
 
 import { BadgeCheck, Box, ShieldCheck, Shirt, CupSoda } from "lucide-react";
 import { useInView } from "@/hooks/use-in-view";
+import { cn } from "@/lib/utils";
 
 export function IntroSection() {
     const [ref, inView] = useInView({ threshold: 0.5, triggerOnce: true });
@@ -32,9 +33,9 @@ export function IntroSection() {
                 <ul className="space-y-4">
                     {items.map((item, index) => (
                         <li key={index} style={{transitionDelay: `${index * 150}ms`}} className={`flex items-center gap-3 bg-white/50 p-2 rounded-lg border-2 border-black/10 overflow-hidden transition-all duration-500 ease-premium-ease ${inView ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-5'}`}>
-                            <div className="relative w-6 h-6">
+                            <div className="relative w-6 h-6 flex items-center justify-center">
                                 <div className={`absolute inset-0 bg-white/50 rounded-md transition-all duration-500 ease-premium-ease ${inView ? 'w-full' : 'w-0'}`} style={{transitionDelay: `${200 + index * 150}ms`}}/>
-                                <item.icon className={`${item.color} w-6 h-6 relative transition-transform duration-300 ease-premium-ease ${inView ? 'scale-100' : 'scale-0'}`} style={{transitionDelay: `${350 + index * 150}ms`}} strokeWidth={1.5} />
+                                <item.icon className={cn(`${item.color} w-6 h-6 relative opacity-0`, inView && "animate-icon-bounce")} style={{animationDelay: `${350 + index * 150}ms`}} strokeWidth={1.5} />
                             </div>
                             <span className="font-bold">{item.text}</span>
                         </li>

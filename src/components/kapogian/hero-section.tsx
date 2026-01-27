@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { IntroSection } from '@/components/kapogian/intro-section';
 import { useInView } from '@/hooks/use-in-view';
+import { cn } from '@/lib/utils';
 
 export function HeroSection() {
   const [characterName, setCharacterName] = useState('Tzar');
@@ -38,22 +39,22 @@ export function HeroSection() {
 
       <div className="flex flex-col md:flex-row">
         <div className="w-full md:w-1/2 p-8 md:p-12 md:pr-0 flex flex-col justify-center relative z-10 pt-20">
-          <div className={`inline-block self-start bg-black text-white px-3 py-1 text-xs font-bold uppercase tracking-widest rounded mb-4 transform -rotate-2 transition-all duration-500 ease-premium-ease ${inView ? 'opacity-100' : 'opacity-0 -translate-y-4'}`}>
+          <div className={cn('inline-block self-start bg-black text-white px-3 py-1 text-xs font-bold uppercase tracking-widest rounded mb-4 transform -rotate-2 opacity-0', inView && 'animate-pop-in')} style={{ animationDelay: '0s' }}>
             Series 1 • 2026 Edition
           </div>
           <h1 className="text-[5rem] leading-[0.85] text-primary text-outline mb-4 transform -rotate-1 origin-bottom-left"> 
-            <span style={{transitionDelay: '100ms'}} className={`inline-block transition-all duration-500 ease-premium-ease ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>KAPO</span>
+            <span className={cn('inline-block opacity-0', inView && 'animate-pop-in')} style={{ animationDelay: '0.1s' }}>KAPO</span>
             <br/>
-            <span style={{transitionDelay: '200ms'}} className={`inline-block transition-all duration-500 ease-premium-ease ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>GIAN</span>
+            <span className={cn('inline-block opacity-0', inView && 'animate-pop-in')} style={{ animationDelay: '0.2s' }}>GIAN</span>
           </h1>
-          <p style={{transitionDelay: '300ms'}} className={`font-headline text-2xl text-slate-800 mb-6 max-w-sm leading-tight transition-all duration-500 ease-premium-ease ${inView ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-5'}`}>
+          <p className={cn('font-headline text-2xl text-slate-800 mb-6 max-w-sm leading-tight opacity-0', inView && 'animate-pop-in')} style={{ animationDelay: '0.3s' }}>
             Your Digital Identity.<br/>
             <span className="text-accent">Now in Physical Reality.</span>
           </p>
-          <p style={{transitionDelay: '400ms'}} className={`font-medium text-slate-600 mb-8 max-w-sm leading-relaxed border-l-4 border-[hsl(var(--brand-yellow))] pl-4 transition-all duration-500 ease-premium-ease ${inView ? 'opacity-100' : 'opacity-0'}`}>
+          <p className={cn('font-medium text-slate-600 mb-8 max-w-sm leading-relaxed border-l-4 border-[hsl(var(--brand-yellow))] pl-4 opacity-0', inView && 'animate-pop-in')} style={{ animationDelay: '0.4s' }}>
             Generate a 1-of-1 character. Mint on SUI. Receive exclusive merchandise delivered to your door.
           </p>
-          <div style={{transitionDelay: '500ms'}} className={`flex gap-4 transition-all duration-500 ease-premium-ease ${inView ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={cn('flex gap-4 opacity-0', inView && 'animate-pop-in')} style={{ animationDelay: '0.5s' }}>
             <Link href="/generate">
               <Button
                 className="bg-[hsl(var(--brand-yellow))] hover:bg-yellow-300 text-black comic-border rounded-xl px-6 py-3 font-headline text-xl toy-shadow flex items-center gap-2 h-auto text-center"
