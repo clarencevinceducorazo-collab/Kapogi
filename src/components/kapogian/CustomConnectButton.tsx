@@ -1,0 +1,74 @@
+'use client';
+import { useCurrentAccount, useDisconnectWallet, ConnectButton } from '@mysten/dapp-kit';
+import { Button } from '@/components/ui/button';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator
+} from '@/components/ui/dropdown-menu';
+import { User, LogOut, Copy } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+
+export function CustomConnectButton({ className, connectedClassName }: { className?: string, connectedClassName?: string }) {
+  const account = useCurrentAccount();
+  const { mutate: disconnect } = useDisconnectWallet();
+  const { toast } = useToast();
+
+  if (!account) {
+    // Renders the original ConnectButton for the disconnected state
+    return <ConnectButton className={className} />;
+  }
+
+  // Renders custom UI for the connected state
+  const truncateAddress = (address: string) => `${address.slice(0, 6)}...${address.slice(-4)}`;
+
+  const copyAddress = () => {
+    if(!account) return;
+    navigator.clipboard.writeText(account.address);
+    toast({
+      title: "Address Copied!",
+      description: "Your SUI wallet address has been copied to the clipboard.",
+    });
+  };
+  
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button 
+            className={cn(
+                "comic-border rounded-full px-4 py-2 font-headline text-lg h-auto flex items-center gap-2 toy-shadow",
+                "bg-green-400 text-black hover:bg-green-500",
+                connectedClassName
+            )}
+        >
+          <User className="w-5 h-5" />
+          <span>{truncateAddress(account.address)}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="comic-border bg-white rounded-xl p-2 toy-shadow w-56 font-body">
+        <DropdownMenuLabel className="font-headline text-base px-2 py-1.5">
+          {truncateAddress(account.address)}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator className="bg-border/50" />
+        <DropdownMenuItem 
+            onClick={copyAddress}
+            className="font-semibold text-sm cursor-pointer hover:!bg-slate-100 !rounded-lg flex items-center gap-2 p-2"
+        >
+          <Copy className="w-4 h-4" />
+          Copy Address
+        </DropdownMenuItem>
+        <DropdownMenuItem 
+            onClick={() => disconnect()}
+            className="font-semibold text-sm cursor-pointer hover:!bg-red-100 !text-red-600 focus:!text-red-600 focus:!bg-red-100 !rounded-lg flex items-center gap-2 p-2"
+        >
+          <LogOut className="w-4 h-4" />
+          Disconnect
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

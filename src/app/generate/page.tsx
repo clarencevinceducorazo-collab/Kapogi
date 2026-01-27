@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -24,7 +23,7 @@ import Image from 'next/image';
 import { uploadCharacterToIPFS } from '@/lib/pinata';
 import { mintCharacterNFT } from '@/lib/sui';
 import { ENCRYPTION_CONFIG } from '@/lib/constants';
-import { ConnectButton } from '@mysten/dapp-kit';
+import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
 
 interface CharacterData {
   imageBlob: Blob;
@@ -352,7 +351,7 @@ export default function GeneratorPage() {
             <h2 className="font-display text-3xl font-semibold mb-4">Wallet Required</h2>
             <p className="text-stone-600 mb-6">Please connect your SUI wallet to generate a Kapogian character.</p>
             <div className="flex justify-center">
-              <ConnectButton />
+              <CustomConnectButton className="!bg-accent !hover:bg-blue-500 !text-accent-foreground !comic-border !rounded-full !px-6 !py-2 !font-headline !text-lg !h-auto" />
             </div>
         </main>
       </div>
@@ -676,3 +675,4 @@ export default function GeneratorPage() {
     
 
     
+

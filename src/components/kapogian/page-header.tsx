@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { WandSparkles } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { ConnectButton } from "@mysten/dapp-kit";
+import { CustomConnectButton } from "@/components/kapogian/CustomConnectButton";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -64,7 +64,10 @@ export function PageHeader() {
             </div>
           </div>
 
-          <ConnectButton className="!bg-accent !hover:bg-blue-500 !text-accent-foreground !comic-border !rounded-full !px-6 !py-2 !font-headline !text-lg !h-auto" />
+          <CustomConnectButton 
+            className="!bg-accent !hover:bg-blue-500 !text-accent-foreground !comic-border !rounded-full !px-6 !py-2 !font-headline !text-lg !h-auto"
+            connectedClassName="!bg-accent !hover:!bg-blue-500 !text-accent-foreground"
+          />
         </div>
       </nav>
     </header>

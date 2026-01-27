@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Stars } from "lucide-react";
-import { ConnectButton } from "@mysten/dapp-kit";
+import { CustomConnectButton } from "@/components/kapogian/CustomConnectButton";
 import { useInView } from "@/hooks/use-in-view";
 
 export function FinalCtaSection() {
@@ -14,7 +14,10 @@ export function FinalCtaSection() {
             <div className="relative z-10">
                 <h2 className="font-headline text-5xl md:text-6xl text-white text-outline mb-6">READY TO COLLECT?</h2>
                 <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
-                    <ConnectButton className="!bg-white !text-black !comic-border !rounded-xl !px-8 !py-4 !font-headline !text-xl !toy-shadow !hover:bg-slate-50 !transition-all !h-auto active:!scale-95 active:!shadow-none" />
+                    <CustomConnectButton
+                        className="!bg-white !text-black !comic-border !rounded-xl !px-8 !py-4 !font-headline !text-xl !toy-shadow !hover:bg-slate-50 !transition-all !h-auto active:!scale-95 active:!shadow-none"
+                        connectedClassName="!bg-white !text-black !toy-shadow !hover:!bg-slate-100 !rounded-xl !px-8 !py-4"
+                    />
                     <Button className="bg-[hsl(var(--brand-yellow))] text-black comic-border rounded-xl px-8 py-4 font-headline text-xl toy-shadow flex items-center justify-center gap-2 hover:bg-[#ffec99] transition-all h-auto animate-breathe active:scale-95 active:shadow-none">
                         <Stars className="w-7 h-7" />
                         MINT NOW
