@@ -5,7 +5,7 @@ import { WandSparkles } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { CustomConnectButton } from "@/components/kapogian/CustomConnectButton";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 const TickerContent = () => (
@@ -20,18 +20,32 @@ const TickerContent = () => (
 
 export function PageHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > lastScrollY.current && currentScrollY > 150) {
+        // Scrolling down
+        setIsVisible(false);
+      } else if (currentScrollY < lastScrollY.current) {
+        // Scrolling up
+        setIsVisible(true);
+      }
+      
       setIsScrolled(window.scrollY > 20);
+      lastScrollY.current = currentScrollY;
     };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // Initial check
+    
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
-    <header className={cn("fixed top-0 left-0 right-0 z-40 transition-all duration-300 ease-premium-ease", isScrolled ? 'bg-[hsl(var(--brand-yellow))] shadow-lg' : 'bg-transparent')}>
+    <header className={cn("fixed top-0 left-0 right-0 z-40 transition-all duration-300 ease-premium-ease animate__animated", isScrolled ? 'bg-[hsl(var(--brand-yellow))] shadow-lg' : 'bg-transparent', isVisible ? 'animate__bounceInDown' : 'animate__bounceOutUp')}>
       <div className={cn(
           "bg-black text-[hsl(var(--brand-yellow))] overflow-hidden border-b-4 border-black relative z-50 transition-all duration-300 ease-premium-ease",
           isScrolled ? 'py-1' : 'py-3 animate-slide-down-fade'
