@@ -39,7 +39,7 @@ export function HeroSection() {
 
       <div className="flex flex-col md:flex-row">
         <div className="w-full md:w-1/2 p-8 md:p-12 md:pr-0 flex flex-col justify-center relative z-10 pt-20">
-          <div className={cn('inline-block self-start bg-black text-white px-3 py-1 text-xs font-bold uppercase tracking-widest rounded mb-4 transform -rotate-2 opacity-0', inView && 'animate-pop-in')} style={{ animationDelay: '0s' }}>
+          <div className={cn('inline-block self-start bg-black text-white px-3 py-1 text-xs font-bold uppercase tracking-widest rounded mb-4 transform -rotate-2', inView && 'animate__animated animate__pulse animate__infinite')} style={{ animationDelay: '0s' }}>
             Series 1 • 2026 Edition
           </div>
           <h1 className="text-[5rem] leading-[0.85] text-primary text-outline mb-4 transform -rotate-1 origin-bottom-left"> 
@@ -47,7 +47,7 @@ export function HeroSection() {
             <br/>
             <span className={cn('inline-block opacity-0', inView && 'animate-pop-in')} style={{ animationDelay: '0.2s' }}>GIAN</span>
           </h1>
-          <p className={cn('font-headline text-2xl text-slate-800 mb-6 max-w-sm leading-tight opacity-0', inView && 'animate-pop-in')} style={{ animationDelay: '0.3s' }}>
+          <p className={cn('font-headline text-2xl text-slate-800 mb-6 max-w-sm leading-tight', inView && 'animate__animated animate__tada animate__infinite')} style={{ animationDelay: '0.3s' }}>
             Your Digital Identity.<br/>
             <span className="text-accent">Now in Physical Reality.</span>
           </p>
