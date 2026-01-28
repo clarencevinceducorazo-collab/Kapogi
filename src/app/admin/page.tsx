@@ -88,26 +88,34 @@ export default function AdminPage() {
     }
   };
 
-  const handleDecrypt = async (receipt: Receipt) => {
-    if (!adminPrivateKey) {
-      alert('Please enter the Admin Private Key first!');
-      return;
-    }
+  const handleToggleDecrypt = async (receipt: Receipt) => {
+    const isDecrypted = decryptedCards.some(card => card.id === receipt.objectId);
 
-    try {
-      const decryptedInfo = await decryptShippingInfo(receipt.encryptedShippingInfo, adminPrivateKey);
+    if (isDecrypted) {
+      // If it's already decrypted, remove it from the list to "encrypt" (hide) it.
+      setDecryptedCards(decryptedCards.filter(card => card.id !== receipt.objectId));
+    } else {
+      // If it's not decrypted, decrypt it and add it to the list.
+      if (!adminPrivateKey) {
+        alert('Please enter the Admin Private Key first!');
+        return;
+      }
 
-      const newCard: DecryptedCard = {
-        id: receipt.objectId,
-        ...decryptedInfo,
-      };
+      try {
+        const decryptedInfo = await decryptShippingInfo(receipt.encryptedShippingInfo, adminPrivateKey);
 
-      const existingCards = decryptedCards.filter(card => card.id !== receipt.objectId);
-      setDecryptedCards([newCard, ...existingCards]);
-      setError('');
-    } catch (e) {
-      console.error(e);
-      alert('Decryption failed. Please check your private key and try again.');
+        const newCard: DecryptedCard = {
+          id: receipt.objectId,
+          ...decryptedInfo,
+        };
+
+        // Add the new card to the list.
+        setDecryptedCards(prev => [newCard, ...prev]);
+        setError('');
+      } catch (e) {
+        console.error(e);
+        alert('Decryption failed. Please check your private key and try again.');
+      }
     }
   };
 
@@ -231,43 +239,53 @@ export default function AdminPage() {
                       </tr>
                     </thead>
                     <tbody className="text-base font-bold">
-                      {receipts.map((receipt) => (
-                        <tr key={receipt.objectId} className="group border-b-2 border-gray-200 hover:bg-yellow-50 transition-colors last:border-b-0">
-                          <td className="p-4 px-6 font-mono" title={receipt.nftId}>{receipt.nftId.slice(0, 6)}...{receipt.nftId.slice(-4)}</td>
-                          <td className="p-4 px-6">
-                            <div className="flex flex-wrap gap-2">
-                              {receipt.itemsSelected.split(',').map(item => (
-                                <span key={item} className={`px-2 py-1 border-2 border-black rounded shadow-hard-xs text-xs font-black ${item === 'ALL_BUNDLE' ? 'bg-primary text-white' : 'bg-white'}`}>{item}</span>
-                              ))}
-                            </div>
-                          </td>
-                          <td className="p-4 px-6">
-                            {receipt.status === ORDER_STATUS.PENDING ? (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-black bg-yellow-300 text-black text-xs font-black uppercase shadow-sm">
-                                <span className="w-2 h-2 bg-black rounded-full animate-pulse"></span>
-                                Pending
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-black bg-accent text-white text-xs font-black uppercase shadow-sm">
-                                <CheckCircle className="w-4 h-4" />
-                                Shipped
-                              </span>
-                            )}
-                          </td>
-                          <td className="p-4 px-6 text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button onClick={() => handleDecrypt(receipt)} className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-1.5 rounded-lg border-2 border-black shadow-hard-sm shadow-hard-hover active:shadow-hard-active transition-brutal text-sm font-black flex items-center gap-2 h-auto">
-                                <LockOpen className="w-4 h-4" />
-                                Decrypt
-                              </Button>
-                              <Button onClick={() => handleMarkShipped(receipt.objectId)} disabled={receipt.status !== ORDER_STATUS.PENDING} className="bg-accent hover:bg-blue-600 text-white px-4 py-1.5 rounded-lg border-2 border-black shadow-hard-sm shadow-hard-hover active:shadow-hard-active transition-brutal text-sm font-black flex items-center gap-2 h-auto disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:border-gray-400 disabled:shadow-none disabled:hover:bg-gray-300">
-                                <Truck className="w-4 h-4" />
-                                Ship
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                      {receipts.map((receipt) => {
+                        const isDecrypted = decryptedCards.some(card => card.id === receipt.objectId);
+                        return (
+                          <tr key={receipt.objectId} className="group border-b-2 border-gray-200 hover:bg-yellow-50 transition-colors last:border-b-0">
+                            <td className="p-4 px-6 font-mono" title={receipt.nftId}>{receipt.nftId.slice(0, 6)}...{receipt.nftId.slice(-4)}</td>
+                            <td className="p-4 px-6">
+                              <div className="flex flex-wrap gap-2">
+                                {receipt.itemsSelected.split(',').map(item => (
+                                  <span key={item} className={`px-2 py-1 border-2 border-black rounded shadow-hard-xs text-xs font-black ${item === 'ALL_BUNDLE' ? 'bg-primary text-white' : 'bg-white'}`}>{item}</span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="p-4 px-6">
+                              {receipt.status === ORDER_STATUS.PENDING ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-black bg-yellow-300 text-black text-xs font-black uppercase shadow-sm">
+                                  <span className="w-2 h-2 bg-black rounded-full animate-pulse"></span>
+                                  Pending
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-black bg-accent text-white text-xs font-black uppercase shadow-sm">
+                                  <CheckCircle className="w-4 h-4" />
+                                  Shipped
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-4 px-6 text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  onClick={() => handleToggleDecrypt(receipt)}
+                                  className={`
+                                    text-white px-4 py-1.5 rounded-lg border-2 border-black shadow-hard-sm shadow-hard-hover 
+                                    active:shadow-hard-active transition-brutal text-sm font-black flex items-center gap-2 h-auto
+                                    ${isDecrypted ? 'bg-red-500 hover:bg-red-600' : 'bg-purple-500 hover:bg-purple-600'}
+                                  `}
+                                >
+                                  {isDecrypted ? <LockKeyhole className="w-4 h-4" /> : <LockOpen className="w-4 h-4" />}
+                                  {isDecrypted ? 'Encrypt' : 'Decrypt'}
+                                </Button>
+                                <Button onClick={() => handleMarkShipped(receipt.objectId)} disabled={receipt.status !== ORDER_STATUS.PENDING} className="bg-accent hover:bg-blue-600 text-white px-4 py-1.5 rounded-lg border-2 border-black shadow-hard-sm shadow-hard-hover active:shadow-hard-active transition-brutal text-sm font-black flex items-center gap-2 h-auto disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:border-gray-400 disabled:shadow-none disabled:hover:bg-gray-300">
+                                  <Truck className="w-4 h-4" />
+                                  Ship
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
