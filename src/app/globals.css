@@ -82,12 +82,17 @@
   }
   body {
     @apply text-slate-900 antialiased overflow-x-hidden pb-20 selection:bg-black selection:text-[hsl(var(--brand-yellow))];
+    --mouse-x: 50%;
+    --mouse-y: 50%;
     background-color: hsl(var(--brand-yellow));
     background-image: 
+        /* This gradient will follow the mouse */
+        radial-gradient(circle at var(--mouse-x) var(--mouse-y), hsla(var(--primary) / 0.2), transparent 30vw),
+        /* These are the static dots */
         radial-gradient(hsl(var(--primary)) 20%, transparent 20%), 
         radial-gradient(hsl(var(--primary)) 20%, transparent 20%);
-    background-size: 30px 30px;
-    background-position: 0 0, 15px 15px;
+    background-size: cover, 30px 30px, 30px 30px;
+    background-position: 0 0, 0 0, 15px 15px;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline;

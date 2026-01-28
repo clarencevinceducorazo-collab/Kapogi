@@ -12,13 +12,8 @@ import { cn } from '@/lib/utils';
 
 export function HeroSection() {
   const [characterName, setCharacterName] = useState('Tzar');
-  const [randomFigureId, setRandomFigureId] = useState('????');
   const [ref, inView] = useInView({ threshold: 0.2, triggerOnce: true });
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    setRandomFigureId(String(Math.floor(Math.random() * 9000) + 1000));
-  }, []);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     const { clientX, clientY, currentTarget } = e;
@@ -43,7 +38,7 @@ export function HeroSection() {
           <div className={cn('inline-block self-start bg-black text-white px-3 py-1 text-xs font-bold uppercase tracking-widest rounded mb-4 transform -rotate-2', inView && 'animate__animated animate__pulse animate__infinite')} style={{ animationDelay: '0s' }}>
             Series 1 • 2026 Edition
           </div>
-          <h1 className={cn("text-[5rem] leading-[0.85] text-primary text-outline mb-4 transform -rotate-1 origin-bottom-left", inView && "animate__animated animate__tada animate__infinite")}> 
+          <h1 className={cn("text-[5rem] leading-[0.85] text-primary text-outline mb-4 transform -rotate-1 origin-bottom-left transition-transform duration-300 hover:scale-105", inView && "animate__animated animate__tada animate__infinite")}> 
             <span className={cn('inline-block opacity-0', inView && 'animate-pop-in')} style={{ animationDelay: '0.1s' }}>KAPO</span>
             <br/>
             <span className={cn('inline-block opacity-0', inView && 'animate-pop-in')} style={{ animationDelay: '0.2s' }}>GIAN</span>
@@ -85,7 +80,7 @@ export function HeroSection() {
                 </div>
                 <div className="mt-2 text-center">
                   <span className="font-headline text-xl block">{characterName}</span>
-                  <span className="text-xs font-bold uppercase text-slate-400">Figure #{randomFigureId}</span>
+                  <span className="text-xs font-bold uppercase text-slate-400">Figure #5327</span>
                 </div>
               </div>
             </div>

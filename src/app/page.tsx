@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/kapogian/page-header';
 import { HeroSection } from '@/components/kapogian/hero-section';
 import { HowItWorksSection } from '@/components/kapogian/how-it-works-section';
@@ -13,6 +13,24 @@ import { WhitepaperModal } from '@/components/kapogian/whitepaper-modal';
 
 export default function Home() {
   const [isWhitepaperOpen, setIsWhitepaperOpen] = useState(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const { clientX, clientY } = e;
+      const x = Math.round((clientX / window.innerWidth) * 100);
+      const y = Math.round((clientY / window.innerHeight) * 100);
+      document.body.style.setProperty('--mouse-x', `${x}%`);
+      document.body.style.setProperty('--mouse-y', `${y}%`);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      document.body.style.removeProperty('--mouse-x');
+      document.body.style.removeProperty('--mouse-y');
+    };
+  }, []);
 
   return (
     <>
