@@ -397,6 +397,17 @@ export default function GeneratorPage() {
 
   return (
     <div className="generate-page min-h-screen p-4 md:p-8 flex items-center justify-center text-lg text-black antialiased">
+        {loading && page === 'generator' && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+                <div className="bg-white border-4 border-black rounded-3xl p-8 shadow-hard text-center max-w-md w-full animate__animated animate__tada">
+                    <div className="w-24 h-24 mx-auto mb-4 bg-yellow-300 rounded-full border-4 border-black flex items-center justify-center animate-spin-slow">
+                        <Image src="/images/KPG.png" alt="Loading..." width={80} height={80} className="rounded-full" />
+                    </div>
+                    <h2 className="font-headline text-3xl mb-2">Generating your Pogi...</h2>
+                    <p className="font-body text-slate-600">Unleashing maximum Kapogian levels!</p>
+                </div>
+            </div>
+        )}
       <main className="relative w-full max-w-4xl bg-white border-4 border-black rounded-3xl hard-shadow overflow-hidden flex flex-col">
         <header className="bg-black text-white p-4 border-b-4 border-black flex justify-between items-center">
           <div className="w-1/3">
@@ -714,3 +725,5 @@ export default function GeneratorPage() {
     </div>
   );
 }
+
+  
