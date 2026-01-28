@@ -470,7 +470,7 @@ export default function GeneratorPage() {
           </div>
           <div className="w-1/3 flex justify-center items-center gap-2">
             <Package className="w-6 h-6 text-yellow-400" />
-            <span className="font-display font-semibold tracking-tight text-xl text-yellow-400">KAPOGIAN WORLD</span>
+            <span className="font-display font-semibold tracking-tight text-xl text-yellow-400">KAPOGIAN CUSTOMIZATION</span>
           </div>
           <div className="w-1/3 flex justify-end gap-2">
             <div className="w-4 h-4 rounded-full bg-red-500 border-2 border-white"></div>
