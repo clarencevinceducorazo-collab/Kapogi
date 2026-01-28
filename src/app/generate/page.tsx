@@ -203,7 +203,7 @@ export default function GeneratorPage() {
       case 'Random Home Utensils': holdingItemDescriptor = "holding a random home utensil, such as a broomstick or a pan"; break;
     }
     
-    return `2D vector art, sticker style, of a cute chubby chibi pinoy boy named ${name}, ${originDesc}, with ${skinColorDescriptor}, with ${hairColorDescriptor} and ${hairDescriptor}, ${facialHairDescriptor}, wearing ${clothingDescriptor}, with ${eyewearDescriptor}, ${bodyFatDescriptor}, ${postureDescriptor}, ${holdingItemDescriptor}, showing confident pose, smiling. High quality, thick outlines, flat colors, simple white background, no 3D shading or rendering.`;
+    return `full body shot of a cute chubby chibi pinoy boy named ${name}, ${originDesc}, with ${skinColorDescriptor}, with ${hairColorDescriptor} and ${hairDescriptor}, ${facialHairDescriptor}, wearing ${clothingDescriptor}, with ${eyewearDescriptor}, ${bodyFatDescriptor}, ${postureDescriptor}, ${holdingItemDescriptor}, showing confident pose, smiling. Kapogian meme, high quality, 2D vector art, sticker style, thick outlines, flat colors, no 3D shading or rendering, simple white background.`;
   };
   
   const handleGenerate = async () => {
@@ -559,8 +559,8 @@ export default function GeneratorPage() {
                 <div className="flex flex-col md:flex-row border-b-4 border-black">
                     <div className="w-full md:w-1/2 p-8 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px]">
                         {loading && <LoaderCircle className="w-16 h-16 animate-spin text-stone-400" />}
-                        {!loading && generatedImage && <Image src={generatedImage} alt="Kapogian Character" width={256} height={256} className="rounded-full border-4 border-black hard-shadow" />}
-                        {!loading && !generatedImage && <Image src="/images/KPG.png" alt="Kapogian Character" width={256} height={256} className="rounded-full border-4 border-black hard-shadow" />}
+                        {!loading && generatedImage && <Image src={generatedImage} alt="Kapogian Character" width={256} height={256} className="rounded-2xl border-4 border-black hard-shadow" />}
+                        {!loading && !generatedImage && <Image src="/images/KPG.png" alt="Kapogian Character" width={256} height={256} className="rounded-2xl border-4 border-black hard-shadow" />}
                     </div>
                     <div className="w-full md:w-1/2 p-8 bg-white flex flex-col">
                         <div className="mb-4">
