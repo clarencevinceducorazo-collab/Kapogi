@@ -70,7 +70,7 @@ export function IntroSection() {
                                 <div className={`absolute inset-0 bg-white/50 rounded-md transition-all duration-500 ease-premium-ease ${inView ? 'w-full' : 'w-0'}`} style={{transitionDelay: `${200 + index * 150}ms`}}/>
                                 <item.icon className={cn(`${item.color} w-6 h-6 relative opacity-0`, inView && "animate-icon-bounce")} style={{animationDelay: `${350 + index * 150}ms`}} strokeWidth={1.5} />
                             </div>
-                            <span className="font-bold">{item.text}</span>
+                            <span className={cn("font-bold opacity-0", inView && "animate__animated animate__fadeInUp")} style={{animationDelay: `${450 + index * 150}ms`}}>{item.text}</span>
                         </li>
                     ))}
                 </ul>
