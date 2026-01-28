@@ -149,61 +149,112 @@ export default function GeneratorPage() {
 
   const buildCharacterPrompt = (name: string, originDesc: string): string => {
     let statDescriptors = "";
-    if (cuteness > 75) statDescriptors += ", large innocent eyes, soft round face";
-    else if (cuteness < 25) statDescriptors += ", mischievous smile, slightly narrowed eyes";
-    if (confidence > 75) statDescriptors += ", a bold and smirking pose, puffed-out chest";
-    else if (confidence < 25) statDescriptors += ", a shy and uncertain smile, hands in pockets";
-    if (tiliFactor > 75) statDescriptors += ", a heart-throb hairstyle, dazzling infectious smile";
-    else if (tiliFactor < 25) statDescriptors += ", a subtle, cool expression, reserved vibe";
+    // Cuteness
+    if (cuteness > 75) {
+      statDescriptors += ", large innocent eyes, soft round face";
+    } else if (cuteness < 25) {
+      statDescriptors += ", mischievous smile, slightly narrowed eyes";
+    }
+
+    // Confidence
+    if (confidence > 75) {
+      statDescriptors += ", a bold and smirking pose, puffed-out chest";
+    } else if (confidence < 25) {
+      statDescriptors += ", a shy and uncertain smile, hands in pockets";
+    }
+
+    // Tili Factor
+    if (tiliFactor > 75) {
+      statDescriptors += ", a heart-throb hairstyle, dazzling infectious smile";
+    } else if (tiliFactor < 25) {
+      statDescriptors += ", a subtle, cool expression, reserved vibe";
+    }
+
+    // NEW LOGIC: Based on new slider values
+    // Hair Amount
     let hairDescriptor = "medium length hair";
     if (hairAmount <= 5) hairDescriptor = "bald";
     else if (hairAmount <= 15) hairDescriptor = "short spiky hair";
     else if (hairAmount <= 35) hairDescriptor = "medium length hair";
     else hairDescriptor = "long, flowing hair";
+
+    // Facial Hair
     let facialHairDescriptor = "clean shaven";
     if (facialHair > 5) facialHairDescriptor = "light stubble";
     if (facialHair > 20) facialHairDescriptor = "short, neat beard";
     if (facialHair > 40) facialHairDescriptor = "long, full beard and a stylish mustache";
+
+    // Clothing
     let clothingDescriptor = "casual streetwear";
     if (clothingStyle <= 5) clothingDescriptor = "only a sando and shorts";
     else if (clothingStyle <= 15) clothingDescriptor = "simple t-shirt and shorts";
     else if (clothingStyle <= 30) clothingDescriptor = "stylish streetwear with a hoodie";
     else if (clothingStyle <= 45) clothingDescriptor = "formal attire with a crisp polo";
     else clothingDescriptor = "elegant filipino formal attire, like a barong tagalog";
+    
+    // Hair Color
     let hairColorDescriptor = "black hair";
     if (hairColor > 5) hairColorDescriptor = "dark brown hair";
     if (hairColor > 15) hairColorDescriptor = "light brown hair";
     if (hairColor > 30) hairColorDescriptor = "blonde hair";
     if (hairColor > 45) hairColorDescriptor = "white hair";
+
+    // Eyewear
     let eyewearDescriptor = "no eyewear";
     if (eyewear > 5) eyewearDescriptor = "stylish eyeglasses";
     if (eyewear > 20) eyewearDescriptor = "cool sunglasses";
     if (eyewear > 40) eyewearDescriptor = "futuristic sporty eyewear";
+    
+    // Skin Color
     let skinColorDescriptor = "kayumangi skin";
     if (skinColor > 25) skinColorDescriptor = "dark-skinned, Aeta-like skin color";
+    
+    // Body Fat
     let bodyFatDescriptor = "";
     if (bodyFat <= 15) bodyFatDescriptor = "thin and slender body";
     else if (bodyFat <= 35) bodyFatDescriptor = "average body type";
     else bodyFatDescriptor = "chubby and plump body";
+    
+    // Posture
     let postureDescriptor = "";
+    // New logic for flexing cute looks and confidence
     if (cuteness > 30 && confidence > 30) {
-      if (posture === 50) postureDescriptor = "striking a finger heart pose with a proud smile";
-      else if (posture >= 20) postureDescriptor = "flexing his muscles and striking a charismatic pose";
-      else postureDescriptor = "with a casual, charming pose, slightly flexing";
+      if (posture === 50) {
+        postureDescriptor = "striking a finger heart pose with a proud smile";
+      } else if (posture >= 20) {
+        postureDescriptor = "flexing his muscles and striking a charismatic pose";
+      } else {
+        postureDescriptor = "with a casual, charming pose, slightly flexing";
+      }
     } else {
-      if (posture === 50) postureDescriptor = "standing very well-postured and proud";
-      else if (posture > 20) postureDescriptor = "with an upright, well-postured stance";
-      else postureDescriptor = "with a very casual, relaxed posture";
-    }
-    let holdingItemDescriptor = "not holding anything";
-    switch (holdingItem) {
-      case 'Cash': holdingItemDescriptor = "holding a wad of cash"; break;
-      case 'Random Food': holdingItemDescriptor = "holding a plate of random Filipino food like Chicken Adobo, Pork BBQ, and Lechon"; break;
-      case 'Random Bouquet of Flowers': holdingItemDescriptor = "holding a random bouquet of flowers, including roses, tulips, and sunflowers"; break;
-      case 'Random Home Utensils': holdingItemDescriptor = "holding a random home utensil, such as a broomstick or a pan"; break;
+      // Standard poses if the "pogi flex" conditions are not met.
+      if (posture === 50) {
+        postureDescriptor = "standing very well-postured and proud";
+      } else if (posture > 20) {
+        postureDescriptor = "with an upright, well-postured stance";
+      } else {
+        postureDescriptor = "with a very casual, relaxed posture";
+      }
     }
     
-    return `full body shot of a cute chubby chibi pinoy boy named ${name}, ${originDesc}, with ${skinColorDescriptor}, with ${hairColorDescriptor} and ${hairDescriptor}, ${facialHairDescriptor}, wearing ${clothingDescriptor}, with ${eyewearDescriptor}, ${bodyFatDescriptor}, ${postureDescriptor}, ${holdingItemDescriptor}, showing confident pose, smiling. Kapogian meme, high quality, 2D vector art, sticker style, thick outlines, flat colors, no 3D shading or rendering, simple white background.`;
+    // Holding Item - New
+    let holdingItemDescriptor = "not holding anything";
+    switch (holdingItem) {
+      case 'Cash':
+        holdingItemDescriptor = "holding a wad of cash";
+        break;
+      case 'Random Food':
+        holdingItemDescriptor = "holding a plate of random Filipino food like Chicken Adobo, Pork BBQ, and Lechon";
+        break;
+      case 'Random Bouquet of Flowers':
+        holdingItemDescriptor = "holding a random bouquet of flowers, including roses, tulips, and sunflowers";
+        break;
+      case 'Random Home Utensils':
+        holdingItemDescriptor = "holding a random home utensil, such as a broomstick or a pan";
+        break;
+    }
+
+    return `full body shot of a cute chubby chibi pinoy boy named ${name}, ${originDesc}, with ${skinColorDescriptor}, with ${hairColorDescriptor} and ${hairDescriptor}, ${facialHairDescriptor}, wearing ${clothingDescriptor}, with ${eyewearDescriptor}, ${bodyFatDescriptor}, ${postureDescriptor}, ${holdingItemDescriptor}, showing confident pose, smiling. Kapogian meme, high quality, digital art, 4k, simple white background.`;
   };
   
   const handleGenerate = async () => {
@@ -398,7 +449,7 @@ export default function GeneratorPage() {
 
   return (
     <div className="generate-page min-h-screen p-4 md:p-8 flex items-center justify-center text-lg text-black antialiased">
-        {loading && page === 'generator' && (
+        {loading && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
                 <div className="bg-white border-4 border-black rounded-3xl p-8 shadow-hard text-center max-w-md w-full animate__animated animate__tada">
                     <div className="w-24 h-24 mx-auto mb-4 bg-yellow-300 rounded-full border-4 border-black flex items-center justify-center animate-spin-slow">
@@ -559,7 +610,7 @@ export default function GeneratorPage() {
                 <div className="flex flex-col md:flex-row border-b-4 border-black">
                     <div className="w-full md:w-1/2 p-8 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px]">
                         {loading && <LoaderCircle className="w-16 h-16 animate-spin text-stone-400" />}
-                        {!loading && generatedImage && <Image src={generatedImage} alt="Kapogian Character" width={256} height={256} className="rounded-2xl border-4 border-black hard-shadow" />}
+                        {!loading && generatedImage && <Image src={generatedImage} alt="Kapogian Character" width={512} height={512} className="rounded-2xl border-4 border-black hard-shadow" />}
                         {!loading && !generatedImage && <Image src="/images/KPG.png" alt="Kapogian Character" width={256} height={256} className="rounded-2xl border-4 border-black hard-shadow" />}
                     </div>
                     <div className="w-full md:w-1/2 p-8 bg-white flex flex-col">
