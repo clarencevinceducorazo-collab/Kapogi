@@ -7,6 +7,8 @@ import Image from "next/image";
 import { CustomConnectButton } from "@/components/kapogian/CustomConnectButton";
 import { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { useCurrentAccount } from "@mysten/dapp-kit";
+import { ADMIN_ADDRESS } from "@/lib/constants";
 
 const TickerContent = () => (
     <div className="flex shrink-0 items-center gap-8 font-headline text-sm tracking-widest">
@@ -22,6 +24,8 @@ export function PageHeader({ onWhitepaperOpen }: { onWhitepaperOpen: () => void 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
+  const account = useCurrentAccount();
+  const isAdmin = account?.address === ADMIN_ADDRESS;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -79,16 +83,18 @@ export function PageHeader({ onWhitepaperOpen }: { onWhitepaperOpen: () => void 
                 <FileText className="w-5 h-5" strokeWidth={2.5} />
                 <span className="hidden sm:inline">Whitepaper</span>
               </Button>
-              <Link href="/admin">
-                <Button
-                    variant="outline"
-                    className="bg-white hover:bg-slate-100 text-black comic-border rounded-full px-6 py-2 font-headline text-lg flex items-center gap-2 h-auto"
-                    aria-label="Admin"
-                >
-                    <UserCog className="w-5 h-5" strokeWidth={2.5} />
-                    <span className="hidden sm:inline">Admin</span>
-                </Button>
-              </Link>
+              {isAdmin && (
+                <Link href="/admin">
+                  <Button
+                      variant="outline"
+                      className="bg-white hover:bg-slate-100 text-black comic-border rounded-full px-6 py-2 font-headline text-lg flex items-center gap-2 h-auto"
+                      aria-label="Admin"
+                  >
+                      <UserCog className="w-5 h-5" strokeWidth={2.5} />
+                      <span className="hidden sm:inline">Admin</span>
+                  </Button>
+                </Link>
+              )}
           </div>
 
           <div className="hidden md:flex absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
