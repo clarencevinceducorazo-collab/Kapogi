@@ -52,12 +52,12 @@ export default function GeneratorPage() {
   
   // Form State
   const [characterName, setCharacterName] = useState('');
-  const [cuteness, setCuteness] = useState(85);
-  const [confidence, setConfidence] = useState(40);
-  const [tiliFactor, setTiliFactor] = useState(92);
-  const [luzon, setLuzon] = useState(60);
-  const [visayas, setVisayas] = useState(20);
-  const [mindanao, setMindanao] = useState(20);
+  const [cuteness, setCuteness] = useState(50);
+  const [confidence, setConfidence] = useState(50);
+  const [tiliFactor, setTiliFactor] = useState(50);
+  const [luzon, setLuzon] = useState(0);
+  const [visayas, setVisayas] = useState(0);
+  const [mindanao, setMindanao] = useState(0);
   const [hairAmount, setHairAmount] = useState(25);
   const [facialHair, setFacialHair] = useState(0);
   const [clothingStyle, setClothingStyle] = useState(25);
@@ -202,7 +202,8 @@ export default function GeneratorPage() {
       case 'Random Bouquet of Flowers': holdingItemDescriptor = "holding a random bouquet of flowers, including roses, tulips, and sunflowers"; break;
       case 'Random Home Utensils': holdingItemDescriptor = "holding a random home utensil, such as a broomstick or a pan"; break;
     }
-    return `full body shot of a cute chubby chibi pinoy boy named ${name}, ${originDesc}, with ${skinColorDescriptor}, with ${hairColorDescriptor} and ${hairDescriptor}, ${facialHairDescriptor}, wearing ${clothingDescriptor}, with ${eyewearDescriptor}, ${bodyFatDescriptor}, ${postureDescriptor}, ${holdingItemDescriptor}, showing confident pose, smiling. Kapogian meme, high quality, digital art, 4k, simple white background.`;
+    
+    return `2D vector art, sticker style, of a cute chubby chibi pinoy boy named ${name}, ${originDesc}, with ${skinColorDescriptor}, with ${hairColorDescriptor} and ${hairDescriptor}, ${facialHairDescriptor}, wearing ${clothingDescriptor}, with ${eyewearDescriptor}, ${bodyFatDescriptor}, ${postureDescriptor}, ${holdingItemDescriptor}, showing confident pose, smiling. High quality, thick outlines, flat colors, simple white background, no 3D shading or rendering.`;
   };
   
   const handleGenerate = async () => {
@@ -725,5 +726,3 @@ export default function GeneratorPage() {
     </div>
   );
 }
-
-  
