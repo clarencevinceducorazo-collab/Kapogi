@@ -29,6 +29,7 @@ import { generateImage } from '@/ai/flows/generate-image-flow';
 import { generateText } from '@/ai/flows/generate-text-flow';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTypewriter } from '@/hooks/use-typewriter';
+import { useEasterEgg } from '@/hooks/useEasterEgg';
 
 
 interface CharacterData {
@@ -49,6 +50,7 @@ export default function GeneratorPage() {
 
   // Generation State
   const [loading, setLoading] = useState(false);
+  const [showExitLoader, setShowExitLoader] = useState(false);
   const [minting, setMinting] = useState(false);
   const [error, setError] = useState('');
   
@@ -91,6 +93,13 @@ export default function GeneratorPage() {
   const displayedLore = useTypewriter(generatedLore || '', 20);
   const isLoreTyping = generatedLore && displayedLore.length < generatedLore.length;
 
+  // ── Easter Egg Detection ──
+  const activeEgg = useEasterEgg({
+    cuteness, confidence, tiliFactor,
+    luzon, visayas, mindanao,
+    hairAmount, facialHair, clothingStyle,
+    hairColor, eyewear, skinColor,
+  });
 
   const navigate = (targetId: string) => {
     setPage(targetId);
@@ -264,6 +273,7 @@ export default function GeneratorPage() {
   
   const handleGenerate = async () => {
     setLoading(true);
+    setShowExitLoader(false);
     setError('');
     setGeneratedImage(null);
     setGeneratedLore(null);
@@ -273,6 +283,21 @@ export default function GeneratorPage() {
     setTxHash('');
 
     navigate('page-preview');
+
+    // ── Easter Egg Short-Circuit ──
+    if (activeEgg) {
+      setGeneratedName(activeEgg.name);
+      setGeneratedLore(activeEgg.lore);
+      setGeneratedImage(activeEgg.imagePath);
+      setGeneratedImageBlob(null); // no blob needed for local images
+      setOriginDescription('a legend of the Kapogian realm');
+      setShowExitLoader(true);
+      setTimeout(() => {
+        setLoading(false);
+        setShowExitLoader(false);
+      }, 2500); // Duration for exit GIF
+      return; // skip all AI generation
+    }
 
     try {
       let nameToUse = characterName;
@@ -313,11 +338,18 @@ export default function GeneratorPage() {
       setGeneratedImageBlob(blob);
       setGeneratedImage(imageUrl);
       setGeneratedLore(lore);
+
+      setShowExitLoader(true);
+      setTimeout(() => {
+        setLoading(false);
+        setShowExitLoader(false);
+      }, 2500); // Duration for exit GIF
+
     } catch (err: any) {
       console.error('Generation failed:', err);
       setError(err.message || 'Failed to generate character. Please try again.');
-    } finally {
       setLoading(false);
+      setShowExitLoader(false);
     }
   };
 
@@ -611,13 +643,22 @@ export default function GeneratorPage() {
           <section id="page-preview" className={cn('page-section flex flex-col h-full', { 'hidden': page !== 'page-preview' })}>
               <div className="flex flex-col md:flex-row border-b-4 border-black">
                   <div className="w-full md:w-1/2 p-8 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px]">
-                    {(loading || !generatedImage) ? (
-                      <div className="flex flex-col items-center gap-4 text-stone-500">
-                          <Image src="/images/loadingscreen.gif" alt="Generating..." width={400} height={400} className="rounded-2xl" unoptimized />
-                          <p className="font-semibold mt-2">Generating image...</p>
-                      </div>
+                    {loading ? (
+                      showExitLoader ? (
+                        <Image src="/images/exitloading.gif" alt="Finishing up..." width={300} height={300} className="rounded-2xl" unoptimized />
+                      ) : (
+                        <div className="flex flex-col items-center gap-4 text-stone-500">
+                            <Image src="/images/loadscreens.gif" alt="Generating..." width={300} height={300} className="rounded-2xl" unoptimized />
+                            <p className="font-semibold mt-2">Generating image...</p>
+                        </div>
+                      )
+                    ) : generatedImage ? (
+                      <Image src={generatedImage} alt="Kapogian Character" width={512} height={512} className="rounded-2xl border-4 border-black hard-shadow animate__animated animate__zoomIn" />
                     ) : (
-                      <Image src={generatedImage} alt="Kapogian Character" width={512} height={512} className="rounded-2xl border-4 border-black hard-shadow" />
+                      <div className="flex flex-col items-center gap-4 text-stone-500">
+                          <Image src="/images/loadscreens.gif" alt="Generating..." width={300} height={300} className="rounded-2xl" unoptimized />
+                          <p className="font-semibold mt-2">Preparing to generate...</p>
+                      </div>
                     )}
                   </div>
                   <div className="w-full md:w-1/2 p-8 bg-white flex flex-col">
