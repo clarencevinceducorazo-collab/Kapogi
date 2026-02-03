@@ -254,7 +254,7 @@ export default function GeneratorPage() {
         break;
     }
 
-    return `full body shot of a cute chubby chibi pinoy boy named ${name}, ${originDesc}, with ${skinColorDescriptor}, with ${hairColorDescriptor} and ${hairDescriptor}, ${facialHairDescriptor}, wearing ${clothingDescriptor}, with ${eyewearDescriptor}, ${bodyFatDescriptor}, ${postureDescriptor}, ${holdingItemDescriptor}, showing confident pose, smiling. Kapogian meme, high quality, digital art, 4k, simple white background. `;
+    return `full body shot of a cute chubby chibi pinoy boy named ${name}, ${originDesc}, with ${skinColorDescriptor}, with ${hairColorDescriptor} and ${hairDescriptor}, ${facialHairDescriptor}, wearing ${clothingDescriptor}, with ${eyewearDescriptor}, ${bodyFatDescriptor}, ${postureDescriptor}, ${holdingItemDescriptor}, showing confident pose, smiling. Chibi character art, clean vector line art, cel-shaded, vibrant, digital illustration, sticker style, on a simple white background.`;
   };
   
   const handleGenerate = async () => {
@@ -451,8 +451,8 @@ export default function GeneratorPage() {
     <div className="generate-page min-h-screen p-4 md:p-8 flex items-center justify-center text-lg text-black antialiased">
         {loading && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-                <div className="bg-white border-4 border-black rounded-3xl p-8 shadow-hard text-center max-w-md w-full animate__animated animate__tada">
-                    <div className="w-24 h-24 mx-auto mb-4 bg-yellow-300 rounded-full border-4 border-black flex items-center justify-center animate-spin-slow">
+                <div className="bg-white border-4 border-black rounded-3xl p-8 shadow-hard text-center max-w-md w-full">
+                    <div className="w-24 h-24 mx-auto mb-4 bg-yellow-300 rounded-full border-4 border-black flex items-center justify-center">
                         <Image src="/images/KPG.png" alt="Loading..." width={80} height={80} className="rounded-full" />
                     </div>
                     <h2 className="font-headline text-3xl mb-2">Generating your Pogi...</h2>
