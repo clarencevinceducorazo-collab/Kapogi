@@ -8,9 +8,14 @@ import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
+import { useCurrentAccount } from '@mysten/dapp-kit';
+import { ADMIN_ADDRESS } from '@/lib/constants';
 
 export const PageHeader = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const account = useCurrentAccount();
+  const isAdmin = account?.address === ADMIN_ADDRESS;
+
   const navLinks = [
     { name: 'HOME', href: '/' },
     { name: 'GENERATE', href: '/generate' },
@@ -48,6 +53,11 @@ export const PageHeader = () => {
                 {link.name}
               </Link>
             ))}
+            {isAdmin && (
+              <Link href="/admin" className="transition-colors hover:text-accent/80">
+                ADMIN
+              </Link>
+            )}
           </nav>
           <div className="pr-2 flex items-center gap-2">
             <div className="hidden md:block">
@@ -72,6 +82,15 @@ export const PageHeader = () => {
                         {link.name}
                       </Link>
                     ))}
+                     {isAdmin && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setIsSheetOpen(false)}
+                        className="text-3xl font-bold transition-colors hover:text-accent"
+                      >
+                        ADMIN
+                      </Link>
+                    )}
                   </nav>
                    <div className="mt-12 flex justify-center">
                     <CustomConnectButton />

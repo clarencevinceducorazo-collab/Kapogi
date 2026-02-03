@@ -475,9 +475,9 @@ export default function GeneratorPage() {
             <span className="font-display font-semibold tracking-tight text-xl text-yellow-400">KAPOGIAN CUSTOMIZATION</span>
           </div>
           <div className="w-1/3 flex justify-end gap-2">
-            <div className="w-4 h-4 rounded-full bg-red-500 border-2 border-white"></div>
-            <div className="w-4 h-4 rounded-full bg-yellow-400 border-2 border-white"></div>
-            <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-white"></div>
+            <div className="w-4 h-4 rounded-full bg-red-500 border-2 border-white animate-pulse"></div>
+            <div className="w-4 h-4 rounded-full bg-yellow-400 border-2 border-white animate-pulse" style={{ animationDelay: '200ms' }}></div>
+            <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-white animate-pulse" style={{ animationDelay: '400ms' }}></div>
           </div>
         </header>
 
