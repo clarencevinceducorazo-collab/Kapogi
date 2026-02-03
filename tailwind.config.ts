@@ -146,6 +146,9 @@ export default {
           '0%': { transform: 'translateX(110vw) scaleX(-1)' },
           '100%': { transform: 'translateX(-100%) scaleX(-1)' },
         },
+        'blink': {
+          '50%': { opacity: '0' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.4s ease-out',
@@ -163,6 +166,7 @@ export default {
         'icon-bounce': 'icon-bounce 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards',
         drive: 'drive 15s linear infinite',
         'drive-reverse': 'drive-reverse 20s linear infinite',
+        'blink': 'blink 1s step-end infinite',
       },
     },
   },

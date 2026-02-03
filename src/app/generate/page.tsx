@@ -28,6 +28,7 @@ import { encryptShippingInfo, validateShippingInfo, ShippingInfo } from '@/lib/e
 import { generateImage } from '@/ai/flows/generate-image-flow';
 import { generateText } from '@/ai/flows/generate-text-flow';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTypewriter } from '@/hooks/use-typewriter';
 
 
 interface CharacterData {
@@ -86,6 +87,9 @@ export default function GeneratorPage() {
   const [generatedName, setGeneratedName] = useState<string>('');
   const [originDescription, setOriginDescription] = useState('');
   const [txHash, setTxHash] = useState<string>('');
+
+  const displayedLore = useTypewriter(generatedLore || '', 20);
+  const isLoreTyping = generatedLore && displayedLore.length < generatedLore.length;
 
 
   const navigate = (targetId: string) => {
@@ -631,7 +635,14 @@ export default function GeneratorPage() {
                                 <Skeleton className="h-4 w-full" />
                                 <Skeleton className="h-4 w-[70%]" />
                             </div>
-                        ) : renderMarkdown(generatedLore)}
+                        ) : isLoreTyping ? (
+                          <div style={{ whiteSpace: 'pre-wrap' }}>
+                            {displayedLore}
+                            <span className="inline-block w-0.5 h-4 bg-stone-700 animate-blink ml-1"></span>
+                          </div>
+                        ) : (
+                            renderMarkdown(generatedLore)
+                        )}
                       </div>
                   </div>
               </div>
