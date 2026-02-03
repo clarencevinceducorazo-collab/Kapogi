@@ -613,7 +613,7 @@ export default function GeneratorPage() {
                   <div className="w-full md:w-1/2 p-8 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px]">
                     {(loading || !generatedImage) ? (
                       <div className="flex flex-col items-center gap-4 text-stone-500">
-                          <Skeleton className="h-[256px] w-[256px] md:h-[400px] md:w-[400px] rounded-2xl" />
+                          <Image src="/images/loadingscreen.gif" alt="Generating..." width={400} height={400} className="rounded-2xl" unoptimized />
                           <p className="font-semibold mt-2">Generating image...</p>
                       </div>
                     ) : (
