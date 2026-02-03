@@ -85,7 +85,6 @@ export default function GeneratorPage() {
   // Result State
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [generatedImageBlob, setGeneratedImageBlob] = useState<Blob | null>(null);
-  const [generatedLore, setGeneratedLore] = useState<string | null>(null);
   const [generatedName, setGeneratedName] = useState<string>('');
   const [originDescription, setOriginDescription] = useState('');
   const [txHash, setTxHash] = useState<string>('');
@@ -295,7 +294,7 @@ export default function GeneratorPage() {
       setTimeout(() => {
         setLoading(false);
         setShowExitLoader(false);
-      }, 6000); // Duration for exit GIF
+      }, 9000); // Duration for exit GIF
       return; // skip all AI generation
     }
 
@@ -645,10 +644,10 @@ export default function GeneratorPage() {
                   <div className="w-full md:w-1/2 p-8 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px]">
                     {loading ? (
                       showExitLoader ? (
-                        <Image src="/images/exitloading.gif" alt="Finishing up..." width={300} height={300} className="rounded-2xl" unoptimized />
+                        <Image src="/images/exitloading.gif" alt="Finishing up..." width={400} height={400} className="rounded-2xl" unoptimized />
                       ) : (
                         <div className="flex flex-col items-center gap-4 text-stone-500">
-                            <Image src="/images/loadscreens.gif" alt="Generating..." width={300} height={300} className="rounded-2xl" unoptimized />
+                            <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="rounded-2xl" unoptimized />
                             <p className="font-semibold mt-2">Generating image...</p>
                         </div>
                       )
@@ -656,7 +655,7 @@ export default function GeneratorPage() {
                       <Image src={generatedImage} alt="Kapogian Character" width={512} height={512} className="rounded-2xl border-4 border-black hard-shadow animate__animated animate__zoomIn" />
                     ) : (
                       <div className="flex flex-col items-center gap-4 text-stone-500">
-                          <Image src="/images/loadscreens.gif" alt="Generating..." width={300} height={300} className="rounded-2xl" unoptimized />
+                          <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="rounded-2xl" unoptimized />
                           <p className="font-semibold mt-2">Preparing to generate...</p>
                       </div>
                     )}
