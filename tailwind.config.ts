@@ -137,7 +137,15 @@ export default {
             '60%': { opacity: '1', transform: 'scale(1.1)'},
             '80%': { transform: 'scale(0.95)'},
             '100%': { opacity: '1', transform: 'scale(1)'},
-        }
+        },
+        drive: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(110vw)' },
+        },
+        'drive-reverse': {
+          '0%': { transform: 'translateX(110vw) scaleX(-1)' },
+          '100%': { transform: 'translateX(-100%) scaleX(-1)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.4s ease-out',
@@ -153,6 +161,8 @@ export default {
         'bg-scroll': 'bg-scroll 1s linear infinite',
         'pop-in': 'pop-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards',
         'icon-bounce': 'icon-bounce 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards',
+        drive: 'drive 15s linear infinite',
+        'drive-reverse': 'drive-reverse 20s linear infinite',
       },
     },
   },

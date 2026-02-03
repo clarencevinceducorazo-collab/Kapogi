@@ -1,21 +1,51 @@
-'use client';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Twitter, Instagram, Youtube } from 'lucide-react';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
-import Link from "next/link";
-import { useInView } from "@/hooks/use-in-view";
+export const PageFooter = () => {
+  const avatar = PlaceHolderImages.find((img) => img.id === 'header-avatar');
+  const socialLinks = [
+    { icon: <Twitter className="h-6 w-6" />, href: '#' },
+    { icon: <Instagram className="h-6 w-6" />, href: '#' },
+    { icon: <Youtube className="h-6 w-6" />, href: '#' },
+  ];
 
-export function PageFooter() {
-    const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: false });
-
-    return (
-        <footer ref={ref} className={`text-center font-bold text-slate-800 pb-8 max-w-6xl mx-auto px-4 transition-all duration-700 ease-premium-ease ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <div className="bg-white inline-block px-6 py-2 rounded-full comic-border mb-4 toy-shadow animate__animated animate__heartBeat animate__infinite">
-                © 2026 KAPOGIAN
-            </div>
-            <div className="flex justify-center gap-6 text-sm">
-                <Link href="#" className="hover:underline">TERMS</Link>
-                <Link href="#" className="hover:underline">PRIVACY</Link>
-                <Link href="#" className="hover:underline">SMART CONTRACT</Link>
-            </div>
-        </footer>
-    );
-}
+  return (
+    <footer className="bg-primary text-primary-foreground py-12">
+      <div className="container mx-auto text-center">
+        <div className="flex flex-col items-center gap-6">
+          {avatar && (
+            <Link href="/" aria-label="Kapogian Home">
+              <Image
+                src="https://picsum.photos/seed/kpgLogo/80/80"
+                alt={avatar.description}
+                width={80}
+                height={80}
+                className="rounded-full border-2 border-primary-foreground/50"
+                data-ai-hint={avatar.imageHint}
+              />
+            </Link>
+          )}
+          <p className="text-lg font-bold">
+            Collect Digital Magic, Get Real Rewards
+          </p>
+          <div className="flex items-center gap-6">
+            {socialLinks.map((link, index) => (
+              <Link
+                key={index}
+                href={link.href}
+                className="transition-colors hover:text-accent"
+              >
+                {link.icon}
+              </Link>
+            ))}
+          </div>
+          <p className="text-white/60 text-sm">
+            &copy; {new Date().getFullYear()} Kapogian. All Rights Reserved.
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+};

@@ -1,0 +1,112 @@
+{
+  "placeholderImages": [
+    {
+      "id": "about-main-character",
+      "description": "Main character for about section",
+      "imageUrl": "https://images.unsplash.com/photo-1641302109095-da46fffa3d75?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjYXJ0b29uJTIwY2hhcmFjdGVyfGVufDB8fHx8MTc3MDA5MTY3MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cartoon character"
+    },
+    {
+      "id": "about-bottom-characters",
+      "description": "Small character on the bottom right of about section",
+      "imageUrl": "https://images.unsplash.com/photo-1690041638836-f1bf53ae66d6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzbWFsbCUyMGNoYXJhY3RlcnxlbnwwfHx8fDE3NzAwOTE2NzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "small character"
+    },
+    {
+      "id": "how-it-works-explosion",
+      "description": "Explosion or sun graphic for how-it-works section",
+      "imageUrl": "https://images.unsplash.com/photo-1613060800375-a02e17b3915b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c3VuJTIwY2FydG9vbnxlbnwwfHx8fDE3NzAwOTE2NzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sun cartoon"
+    },
+    {
+      "id": "how-it-works-scooter",
+      "description": "Scooter animation for how-it-works section",
+      "imageUrl": "https://images.unsplash.com/photo-1681060988145-ab099489e3b6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzY29vdGVyJTIwZ2lmfGVufDB8fHx8MTc3MDA5MTY3MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "scooter gif"
+    },
+    {
+      "id": "how-it-works-connect",
+      "description": "Connect wallet step illustration",
+      "imageUrl": "https://images.unsplash.com/photo-1640661060277-7c6d52cbf823?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx3YWxsZXQlMjBjYXJ0b29ufGVufDB8fHx8MTc3MDA5MTY3Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "wallet cartoon"
+    },
+    {
+      "id": "how-it-works-generate",
+      "description": "Generate step illustration",
+      "imageUrl": "https://images.unsplash.com/photo-1551269901-5c5e14c25df7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxtYWdpYyUyMHdhbmR8ZW58MHx8fHwxNzcwMDkxNjcxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "magic wand"
+    },
+    {
+      "id": "how-it-works-mint",
+      "description": "Mint step illustration",
+      "imageUrl": "https://images.unsplash.com/photo-1643393668594-8d2fb086cbe8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxjb2luJTIwbWludHxlbnwwfHx8fDE3NzAwOTE2NzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "coin mint"
+    },
+    {
+      "id": "how-it-works-preview",
+      "description": "Preview step illustration",
+      "imageUrl": "https://images.unsplash.com/photo-1626148749358-5b3b3f45b41a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxtYWduaWZ5aW5nJTIwZ2xhc3N8ZW58MHx8fHwxNzcwMDkxNjcxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "magnifying glass"
+    },
+    {
+      "id": "how-it-works-select",
+      "description": "Select merch step illustration",
+      "imageUrl": "https://images.unsplash.com/photo-1664455340023-214c33a9d0bd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzaG9wcGluZyUyMGNhcnR8ZW58MHx8fHwxNzcwMDA3MjUxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "shopping cart"
+    },
+    {
+      "id": "stylist-shop-avatar",
+      "description": "Avatar for stylist shop header",
+      "imageUrl": "https://images.unsplash.com/photo-1754835801683-8085c6f2b2f4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxsb2dvJTIwYXZhdGFyfGVufDB8fHx8MTc3MDA5MTY3Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "logo avatar"
+    },
+    {
+      "id": "stylist-shop-char-left",
+      "description": "Character on the left of stylist shop",
+      "imageUrl": "https://images.unsplash.com/photo-1714628120669-8667c902ca30?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxjYXJ0b29uJTIwY2hhcmFjdGVyfGVufDB8fHx8MTc3MDA5MTY3MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cartoon character"
+    },
+    {
+      "id": "stylist-shop-char-right",
+      "description": "Character on the right of stylist shop",
+      "imageUrl": "https://images.unsplash.com/photo-1606663889134-b1dedb5ed8b7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjYXJ0b29uJTIwY2hhcmFjdGVyfGVufDB8fHx8MTc3MDA5MTY3MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cartoon character"
+    },
+    {
+      "id": "stylist-shop-tee",
+      "description": "Tee shirt product image",
+      "imageUrl": "https://images.unsplash.com/photo-1759572095317-3a96f9a98e2b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHx0LXNoaXJ0fGVufDB8fHx8MTc3MDAwOTE3Nnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "t-shirt"
+    },
+    {
+      "id": "stylist-shop-mug",
+      "description": "Mug product image",
+      "imageUrl": "https://images.unsplash.com/photo-1643946404043-178456b0e3f8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxtdWd8ZW58MHx8fHwxNzcwMDkxNjcyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mug"
+    },
+    {
+      "id": "stylist-shop-pad",
+      "description": "Mouse pad product image",
+      "imageUrl": "https://images.unsplash.com/photo-1631098983935-5363b8e50edb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtb3VzZSUyMHBhZHxlbnwwfHx8fDE3NzAwNDU1NTV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mouse pad"
+    },
+    {
+      "id": "stylist-shop-hoodie",
+      "description": "Hoodie product image",
+      "imageUrl": "https://images.unsplash.com/photo-1601063476271-a159c71ab0b3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxob29kaWV8ZW58MHx8fHwxNzcwMDkxNjcxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "hoodie"
+    },
+    {
+      "id": "security-roadmap-char",
+      "description": "Character for security and roadmap section",
+      "imageUrl": "https://images.unsplash.com/photo-1661258867297-7869804bb19e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjb29sJTIwY2hhcmFjdGVyfGVufDB8fHx8MTc3MDA5MTY3MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cool character"
+    },
+    {
+      "id": "header-avatar",
+      "description": "Logo avatar for footer",
+      "imageUrl": "https://images.unsplash.com/photo-1615915468538-0fbd857888ca?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bG9nb3xlbnwwfHx8fDE3NzAwNDExNDd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "logo"
+    }
+  ]
+}
