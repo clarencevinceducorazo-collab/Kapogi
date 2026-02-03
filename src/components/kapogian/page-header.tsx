@@ -1,117 +1,87 @@
 'use client';
 
-import { Button } from "@/components/ui/button";
-import { WandSparkles, FileText, UserCog } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
-import { CustomConnectButton } from "@/components/kapogian/CustomConnectButton";
-import { useEffect, useState, useRef } from "react";
-import { cn } from "@/lib/utils";
-import { useCurrentAccount } from "@mysten/dapp-kit";
-import { ADMIN_ADDRESS } from "@/lib/constants";
+import { useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Menu } from 'lucide-react';
 
-const TickerContent = () => (
-    <div className="flex shrink-0 items-center gap-8 font-headline text-sm tracking-widest">
-        <span>★ OFFICIAL KAPOGIAN MERCHANDISE ★</span>
-        <span className="text-black">MINTING LIVE</span>
-        <span>SERIES 1</span>
-        <span className="text-black">PHYSICAL + DIGITAL</span>
-        <span>SECURE SHIPPING</span>
-    </div>
-);
+export const PageHeader = () => {
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const navLinks = [
+    { name: 'HOME', href: '/' },
+    { name: 'GENERATE', href: '/generate' },
+    { name: 'SHIPMENT', href: '#' },
+  ];
 
-export function PageHeader({ onWhitepaperOpen }: { onWhitepaperOpen: () => void }) {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
-  const lastScrollY = useRef(0);
-  const account = useCurrentAccount();
-  const isAdmin = account?.address === ADMIN_ADDRESS;
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      // Hinge and hide when scrolling down past a threshold
-      if (currentScrollY > lastScrollY.current && currentScrollY > 150) {
-        if(isVisible) setIsVisible(false);
-      } 
-      // Bounce in ONLY when scrolling up and back in the hero section area
-      else if (currentScrollY < lastScrollY.current && currentScrollY < 150) {
-        if(!isVisible) setIsVisible(true);
-      }
-      
-      setIsScrolled(window.scrollY > 20);
-      lastScrollY.current = currentScrollY;
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [isVisible]);
+  const avatar = PlaceHolderImages.find((img) => img.id === 'header-avatar');
 
   return (
-    <header className={cn("fixed top-0 left-0 right-0 z-40 transition-all duration-300 ease-premium-ease animate__animated", isScrolled ? 'bg-[hsl(var(--brand-yellow))] shadow-lg' : 'bg-transparent', isVisible ? 'animate__bounceInDown' : 'animate__hinge')}>
-      <div className={cn(
-          "bg-black text-[hsl(var(--brand-yellow))] overflow-hidden border-b-4 border-black relative z-50 transition-all duration-300 ease-premium-ease",
-          isScrolled ? 'py-1' : 'py-3 animate-slide-down-fade'
-        )}>
-        <div className="flex animate-marquee">
-          <TickerContent />
-          <TickerContent />
-          <TickerContent />
-          <TickerContent />
-        </div>
-      </div>
-      <nav className={cn("max-w-7xl mx-auto px-4 transition-all duration-300 ease-premium-ease", isScrolled ? 'py-3' : 'py-6')}>
-        <div className="bg-white comic-border rounded-full p-2 flex justify-between items-center toy-shadow relative">
-          <div className="flex items-center gap-2">
-            <Link href="/generate">
-              <Button
-                className="bg-primary hover:bg-red-500 text-primary-foreground comic-border rounded-full px-6 py-2 font-headline text-lg flex items-center gap-2 h-auto animate-soft-pulse"
-                aria-label="Generate"
-              >
-                <WandSparkles className="w-6 h-6" strokeWidth={2.5} />
-                <span className="hidden sm:inline">GENERATE</span>
-              </Button>
-            </Link>
-             <Button
-                onClick={onWhitepaperOpen}
-                variant="outline"
-                className="bg-white hover:bg-slate-100 text-black comic-border rounded-full px-6 py-2 font-headline text-lg flex items-center gap-2 h-auto"
-                aria-label="Whitepaper"
-              >
-                <FileText className="w-5 h-5" strokeWidth={2.5} />
-                <span className="hidden sm:inline">Whitepaper</span>
-              </Button>
-              {isAdmin && (
-                <Link href="/admin">
-                  <Button
-                      variant="outline"
-                      className="bg-white hover:bg-slate-100 text-black comic-border rounded-full px-6 py-2 font-headline text-lg flex items-center gap-2 h-auto"
-                      aria-label="Admin"
-                  >
-                      <UserCog className="w-5 h-5" strokeWidth={2.5} />
-                      <span className="hidden sm:inline">Admin</span>
-                  </Button>
-                </Link>
-              )}
+    <header className="absolute top-0 left-0 right-0 z-50 p-4">
+      <div className="container mx-auto">
+        <div className="flex h-20 items-center justify-between rounded-full bg-primary/90 backdrop-blur-sm p-2 border-2 border-primary-foreground/20 shadow-lg">
+          <div className="flex items-center gap-4 pl-2">
+            {avatar && (
+              <Link href="/" aria-label="Kapogian Home">
+                <Image
+                  src="https://picsum.photos/seed/kpgLogo/64/64"
+                  alt={avatar.description}
+                  width={64}
+                  height={64}
+                  className="rounded-full border-2 border-primary-foreground/50"
+                  data-ai-hint={avatar.imageHint}
+                />
+                
+              </Link>
+            )}
           </div>
-
-          <div className="hidden md:flex absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <div className={cn(
-              "bg-white comic-border rounded-full flex items-center justify-center toy-shadow rotate-3 z-10 overflow-hidden animate-float-y transition-all duration-300 ease-premium-ease",
-              isScrolled ? 'w-12 h-12' : 'w-20 h-20'
-            )}>
-                <Image src="/images/Kapogian.webp" alt="Kapogian Logo" width={80} height={80} />
+          <nav className="hidden md:flex items-center gap-6 lg:gap-10 text-lg font-bold text-primary-foreground">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                className="transition-colors hover:text-accent/80"
+              >
+                {link.name}
+              </Link>
+            ))}
+          </nav>
+          <div className="pr-2 flex items-center gap-2">
+            <div className="hidden md:block">
+              <CustomConnectButton />
+            </div>
+            <div className="md:hidden">
+               <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-white/10">
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="bg-primary/95 text-primary-foreground border-l-primary-foreground/20 pt-20">
+                  <nav className="flex flex-col items-center gap-8">
+                    {navLinks.map((link) => (
+                      <Link
+                        key={link.name}
+                        href={link.href}
+                        onClick={() => setIsSheetOpen(false)}
+                        className="text-3xl font-bold transition-colors hover:text-accent"
+                      >
+                        {link.name}
+                      </Link>
+                    ))}
+                  </nav>
+                   <div className="mt-12 flex justify-center">
+                    <CustomConnectButton />
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
-
-          <CustomConnectButton 
-            className="!bg-accent !hover:bg-blue-500 !text-accent-foreground !comic-border !rounded-full !px-6 !py-2 !font-headline !text-lg !h-auto"
-            connectedClassName="!bg-accent !hover:!bg-blue-500 !text-accent-foreground"
-          />
         </div>
-      </nav>
+      </div>
     </header>
   );
-}
+};

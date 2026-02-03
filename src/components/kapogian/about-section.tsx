@@ -14,7 +14,7 @@ export const AboutSection = () => {
   return (
     <section className="relative text-primary-foreground py-20 overflow-hidden">
       <Image
-        src="https://picsum.photos/seed/aboutBg/1920/1080"
+        src="/images/aboutbg.png"
         alt="About background"
         fill
         className="object-cover"
@@ -25,7 +25,7 @@ export const AboutSection = () => {
         <div className="md:col-span-3 flex justify-center">
           {mainCharacter && (
             <Image
-              src="https://picsum.photos/seed/pogiPng/450/450"
+              src="/images/pogi.png"
               alt={mainCharacter.description}
               width={450}
               height={450}
@@ -63,7 +63,7 @@ export const AboutSection = () => {
       <div className="absolute bottom-0 right-0 z-0 w-[25%] md:w-[15%] max-w-[300px]">
         {bottomCharacters && (
           <Image
-            src="https://picsum.photos/seed/richkid/300/150"
+            src="/images/richkid.png"
             alt={bottomCharacters.description}
             width={300}
             height={150}
