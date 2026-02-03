@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { generateImage } from './generate-image-flow';
 
 const GenerateUniqueCharacterInputSchema = z.object({
   prompt: z.string().describe('A prompt describing the desired character.'),
@@ -26,19 +27,19 @@ export async function generateUniqueCharacter(input: GenerateUniqueCharacterInpu
   return generateUniqueCharacterFlow(input);
 }
 
-const characterPrompt = ai.definePrompt({
-  name: 'characterPrompt',
-  input: {schema: GenerateUniqueCharacterInputSchema},
-  output: {schema: GenerateUniqueCharacterOutputSchema},
+// A prompt specifically for generating the character's description.
+const characterDescriptionPrompt = ai.definePrompt({
+  name: 'characterDescriptionPrompt',
+  input: {schema: z.object({ prompt: z.string() })},
+  output: {schema: z.object({ characterDescription: z.string() })},
   prompt: `You are an AI artist who specializes in creating unique characters.
 
-  Based on the prompt: "{{prompt}}", generate a detailed description of the character and create an image of the character. Return the image as a data URI.
+  Based on the prompt: "{{prompt}}", generate a detailed description of the character.
   The description should include details about the character's appearance, personality, and background.
   Make sure that this character is unique, and unlike existing characters.
-  The image should be a full-body shot of the character.
-
-  Ensure the output matches the schema exactly.`
+  The output should only be the description.`,
 });
+
 
 const generateUniqueCharacterFlow = ai.defineFlow(
   {
@@ -46,8 +47,27 @@ const generateUniqueCharacterFlow = ai.defineFlow(
     inputSchema: GenerateUniqueCharacterInputSchema,
     outputSchema: GenerateUniqueCharacterOutputSchema,
   },
-  async input => {
-    const {output} = await characterPrompt(input);
-    return output!;
+  async (input) => {
+    // Step 1: Generate the detailed character description using the text model.
+    const { output: descriptionOutput } = await characterDescriptionPrompt(input);
+    if (!descriptionOutput?.characterDescription) {
+      throw new Error('Failed to generate character description.');
+    }
+
+    const { characterDescription } = descriptionOutput;
+
+    // Step 2: Generate the image using the detailed description as the prompt.
+    const imageOutput = await generateImage({ prompt: characterDescription });
+    if (!imageOutput?.imageUrl) {
+        throw new Error('Failed to generate character image.');
+    }
+
+    const { imageUrl } = imageOutput;
+
+    // Step 3: Combine the results and return.
+    return {
+      characterDescription,
+      imageUrl,
+    };
   }
 );
