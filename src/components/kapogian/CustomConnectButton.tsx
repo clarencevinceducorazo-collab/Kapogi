@@ -24,11 +24,16 @@ export function CustomConnectButton({ className, connectedClassName }: { classNa
     setIsMounted(true);
   }, []);
 
+  const defaultStyles = cn(
+    "comic-border rounded-full px-4 py-2 font-headline text-lg h-auto flex items-center justify-center gap-2 toy-shadow",
+    "bg-[#FFC83D] text-black hover:bg-[#EAC35F]"
+  );
+
   if (!isMounted) {
     // Render a placeholder on the server and initial client render to avoid hydration mismatch.
     return (
         <Button 
-            className={cn(className)}
+            className={cn(defaultStyles, className)}
             disabled
         >
             Connect Wallet
@@ -38,7 +43,7 @@ export function CustomConnectButton({ className, connectedClassName }: { classNa
 
   if (!account) {
     // Renders the original ConnectButton for the disconnected state, only on the client.
-    return <ConnectButton className={className} />;
+    return <ConnectButton className={cn(defaultStyles, className)} />;
   }
 
   // Renders custom UI for the connected state
@@ -58,8 +63,7 @@ export function CustomConnectButton({ className, connectedClassName }: { classNa
       <DropdownMenuTrigger asChild>
         <Button 
             className={cn(
-                "comic-border rounded-full px-4 py-2 font-headline text-lg h-auto flex items-center gap-2 toy-shadow",
-                "bg-green-400 text-black hover:bg-green-500",
+                defaultStyles,
                 connectedClassName
             )}
         >
