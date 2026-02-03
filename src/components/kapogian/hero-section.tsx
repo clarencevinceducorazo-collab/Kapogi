@@ -21,7 +21,7 @@ export const HeroSection = () => {
 
       <div className="relative z-20 container mx-auto grid lg:grid-cols-2 gap-10 items-center">
         <div className="text-center lg:text-left space-y-4">
-          <div className="inline-flex items-center gap-2 bg-accent text-accent-foreground px-4 py-1 rounded-full text-sm font-bold ml-0 lg:ml-2">
+          <div className="inline-flex items-center gap-2 bg-[#FFC83D] text-black px-4 py-1 rounded-full text-sm font-bold ml-0 lg:ml-2">
             <span className="relative flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
@@ -44,7 +44,7 @@ export const HeroSection = () => {
             <Link href="/generate">
               <Button
                 size="lg"
-                className="rounded-full bg-accent text-accent-foreground hover:bg-accent/90 font-bold text-lg px-8 py-7"
+                className="rounded-full bg-[#FFC83D] text-black hover:bg-[#EAC35F] font-bold text-lg px-8 py-7"
               >
                 <Sparkles className="mr-2 h-5 w-5" />
                 Generate Kapogian

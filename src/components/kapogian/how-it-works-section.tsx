@@ -123,8 +123,8 @@ export const HowItWorksSection = () => {
                 src="/images/bluerayder.gif"
                 alt={scooter.description}
                 style={{ transform: "scaleX(-1)" }}
-                width={150}
-                height={150}
+                width={170}
+                height={170}
                 className="object-contain"
                 data-ai-hint={scooter.imageHint}
                 unoptimized
