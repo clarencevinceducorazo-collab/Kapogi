@@ -27,6 +27,7 @@ import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
 import { encryptShippingInfo, validateShippingInfo, ShippingInfo } from '@/lib/encryption';
 import { generateImage } from '@/ai/flows/generate-image-flow';
 import { generateText } from '@/ai/flows/generate-text-flow';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 interface CharacterData {
@@ -258,33 +259,42 @@ export default function GeneratorPage() {
   };
   
   const handleGenerate = async () => {
-    let nameToUse = characterName;
     setLoading(true);
     setError('');
+    setGeneratedImage(null);
+    setGeneratedLore(null);
+    setGeneratedImageBlob(null);
+    setGeneratedName('');
+    setOriginDescription('');
+    setTxHash('');
 
-    if (!nameToUse) {
-      nameToUse = await generateName();
-      setGeneratedName(nameToUse);
-    } else {
-      setGeneratedName(nameToUse);
-    }
-
-    let originDesc = "Filipino";
-    if (luzon === 0 && visayas === 0 && mindanao === 0) {
-      const origin = await generateCountry();
-      originDesc = `a naturalized Filipino from ${origin}`;
-    } else {
-      const origins = [{ region: "Luzon", value: luzon }, { region: "Visayas", value: visayas }, { region: "Mindanao", value: mindanao }];
-      origins.sort((a, b) => b.value - a.value);
-      originDesc = `a native of the ${origins[0].region} region of the Philippines`;
-    }
-    setOriginDescription(originDesc);
+    navigate('page-preview');
 
     try {
+      let nameToUse = characterName;
+      if (!nameToUse) {
+        nameToUse = await generateName();
+      }
+      setGeneratedName(nameToUse);
+
+      let originDesc = "Filipino";
+      if (luzon === 0 && visayas === 0 && mindanao === 0) {
+        const origin = await generateCountry();
+        originDesc = `a naturalized Filipino from ${origin}`;
+      } else {
+        const origins = [{ region: "Luzon", value: luzon }, { region: "Visayas", value: visayas }, { region: "Mindanao", value: mindanao }];
+        origins.sort((a, b) => b.value - a.value);
+        originDesc = `a native of the ${origins[0].region} region of the Philippines`;
+      }
+      setOriginDescription(originDesc);
+
       const fullPrompt = buildCharacterPrompt(nameToUse, originDesc);
+      
       const imagePromise = generateImage({ prompt: fullPrompt });
       const lorePromise = generateLore(nameToUse, originDesc);
+
       const [imageResult, lore] = await Promise.all([imagePromise, lorePromise]);
+      
       const imageUrl = imageResult?.imageUrl;
       if (!imageUrl) throw new Error('No image data received from the API.');
       
@@ -299,7 +309,6 @@ export default function GeneratorPage() {
       setGeneratedImageBlob(blob);
       setGeneratedImage(imageUrl);
       setGeneratedLore(lore);
-      navigate('page-preview');
     } catch (err: any) {
       console.error('Generation failed:', err);
       setError(err.message || 'Failed to generate character. Please try again.');
@@ -449,17 +458,6 @@ export default function GeneratorPage() {
 
   return (
     <div className="generate-page min-h-screen p-4 md:p-8 flex items-center justify-center text-lg text-black antialiased">
-        {loading && (
-            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-                <div className="bg-white border-4 border-black rounded-3xl p-8 shadow-hard text-center max-w-md w-full">
-                    <div className="w-24 h-24 mx-auto mb-4 bg-yellow-300 rounded-full border-4 border-black flex items-center justify-center">
-                        <Image src="/images/KPG.png" alt="Loading..." width={80} height={80} className="rounded-full" />
-                    </div>
-                    <h2 className="font-headline text-3xl mb-2">Generating your Pogi...</h2>
-                    <p className="font-body text-slate-600">Unleashing maximum Kapogian levels!</p>
-                </div>
-            </div>
-        )}
       <main className="relative w-full max-w-4xl bg-white border-4 border-black rounded-3xl hard-shadow overflow-hidden flex flex-col">
         <header className="bg-black text-white p-4 border-b-4 border-black flex justify-between items-center">
           <div className="w-1/3">
@@ -607,22 +605,36 @@ export default function GeneratorPage() {
           </section>
 
           <section id="page-preview" className={cn('page-section flex flex-col h-full', { 'hidden': page !== 'page-preview' })}>
-                <div className="flex flex-col md:flex-row border-b-4 border-black">
-                    <div className="w-full md:w-1/2 p-8 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px]">
-                        {loading && <LoaderCircle className="w-16 h-16 animate-spin text-stone-400" />}
-                        {!loading && generatedImage && <Image src={generatedImage} alt="Kapogian Character" width={512} height={512} className="rounded-2xl border-4 border-black hard-shadow" />}
-                        {!loading && !generatedImage && <Image src="/images/KPG.png" alt="Kapogian Character" width={256} height={256} className="rounded-2xl border-4 border-black hard-shadow" />}
-                    </div>
-                    <div className="w-full md:w-1/2 p-8 bg-white flex flex-col">
-                        <div className="mb-4">
-                            <h2 className="font-display text-2xl font-semibold tracking-tight uppercase border-b-4 border-yellow-300 inline-block">{generatedName}</h2>
-                        </div>
-                        <div className="flex-grow bg-stone-50 border-2 border-stone-200 rounded-lg p-4 font-medium text-stone-700 max-h-64 overflow-y-auto">
-                           {loading && "Generating lore..."}
-                           {!loading && generatedLore ? renderMarkdown(generatedLore) : "Lore will appear here. The backstory is generated based on your stats..."}
-                        </div>
-                    </div>
-                </div>
+              <div className="flex flex-col md:flex-row border-b-4 border-black">
+                  <div className="w-full md:w-1/2 p-8 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px]">
+                    {(loading || !generatedImage) ? (
+                      <div className="flex flex-col items-center gap-4 text-stone-500">
+                          <Skeleton className="h-[256px] w-[256px] md:h-[400px] md:w-[400px] rounded-2xl" />
+                          <p className="font-semibold mt-2">Generating image...</p>
+                      </div>
+                    ) : (
+                      <Image src={generatedImage} alt="Kapogian Character" width={512} height={512} className="rounded-2xl border-4 border-black hard-shadow" />
+                    )}
+                  </div>
+                  <div className="w-full md:w-1/2 p-8 bg-white flex flex-col">
+                      <div className="mb-4">
+                          <h2 className="font-display text-2xl font-semibold tracking-tight uppercase border-b-4 border-yellow-300 inline-block">
+                            {generatedName || '...'}
+                          </h2>
+                      </div>
+                      <div className="flex-grow bg-stone-50 border-2 border-stone-200 rounded-lg p-4 font-medium text-stone-700 max-h-64 overflow-y-auto">
+                        {(loading || !generatedLore) ? (
+                            <div className="space-y-3">
+                                <p className="mb-4 text-sm text-stone-500">Generating lore...</p>
+                                <Skeleton className="h-4 w-[90%]" />
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-4 w-[70%]" />
+                            </div>
+                        ) : renderMarkdown(generatedLore)}
+                      </div>
+                  </div>
+              </div>
 
                 <div className="stripe-bg p-6 md:p-8 flex-grow flex flex-col justify-center relative border-t-4 border-black">
                     <div className="flex justify-between items-end mb-6 relative z-10">
