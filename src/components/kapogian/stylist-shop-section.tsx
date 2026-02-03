@@ -29,7 +29,7 @@ export const StylistShopSection = () => {
   );
 
   return (
-    <section className="relative bg-accent pt-20 pb-48 lg:pb-56">
+    <section className="relative bg-gradient-to-b from-[#FFC83D] to-[#EAC35F] pt-20 pb-48 lg:pb-56">
       <div className="container mx-auto relative z-10 text-center">
         <h2
           className="font-headline text-6xl md:text-8xl font-bold text-white uppercase mb-16"
