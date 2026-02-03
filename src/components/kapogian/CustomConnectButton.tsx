@@ -1,5 +1,5 @@
 'use client';
-import { useCurrentAccount, useDisconnectWallet, ConnectButton } from '@mysten/dapp-kit';
+import { useCurrentAccount, useDisconnectWallet, useConnectWallet } from '@mysten/dapp-kit';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -18,6 +18,7 @@ export function CustomConnectButton({ className, connectedClassName }: { classNa
   const [isMounted, setIsMounted] = useState(false);
   const account = useCurrentAccount();
   const { mutate: disconnect } = useDisconnectWallet();
+  const { mutate: connect } = useConnectWallet();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -42,8 +43,15 @@ export function CustomConnectButton({ className, connectedClassName }: { classNa
   }
 
   if (!account) {
-    // Renders the original ConnectButton for the disconnected state, only on the client.
-    return <ConnectButton className={cn(defaultStyles, className)} />;
+    // Renders a custom button that opens the wallet connection modal.
+    return (
+      <Button
+        onClick={() => connect()}
+        className={cn(defaultStyles, className)}
+      >
+        Connect Wallet
+      </Button>
+    );
   }
 
   // Renders custom UI for the connected state
