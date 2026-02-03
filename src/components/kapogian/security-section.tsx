@@ -40,7 +40,7 @@ export const SecuritySection = () => {
             {roadmapChar && (
               <div className="absolute top-[-330px] left-1/2 -translate-x-1/2 z-0 w-[600px] h-[600px] hidden lg:block">
                 <Image
-                  src="https://picsum.photos/seed/rihee/600/600"
+                  src="/images/rihee.png"
                   alt={roadmapChar.description}
                   fill
                   className="object-contain"
@@ -92,7 +92,7 @@ export const SecuritySection = () => {
             {roadmapChar && (
               <div className="absolute top-[-330px] left-1/2 -translate-x-1/2 z-30 w-[700px] h-[700px] hidden lg:block">
                 <Image
-                  src="https://picsum.photos/seed/rihe/700/700"
+                  src="/images/rihe.png"
                   alt={roadmapChar.description}
                   fill
                   className="object-contain"

@@ -8,12 +8,12 @@ import React from 'react';
 
 export const HowItWorksSection = () => {
   const steps = [
-    { id: 'how-it-works-connect', label: 'CONNECT WALLET', image: 'https://picsum.photos/seed/connectwallet/240/240' },
-    { id: 'how-it-works-generate', label: 'GENERATE', image: 'https://picsum.photos/seed/gen/240/240' },
-    { id: 'how-it-works-mint', label: 'MINT', image: 'https://picsum.photos/seed/mint/240/240' },
-    { id: 'how-it-works-preview', label: 'PREVIEW', image: 'https://picsum.photos/seed/preview/240/240' },
-    { id: 'how-it-works-select', label: 'SELECT MERCH', image: 'https://picsum.photos/seed/merch/240/240' },
-    { id: 'how-it-works-scooter', label: 'DELIVERED', image: 'https://picsum.photos/seed/delivered/240/240' },
+    { id: 'how-it-works-connect', label: 'CONNECT WALLET', image: '/images/connectwallet.png' },
+    { id: 'how-it-works-generate', label: 'GENERATE', image: '/images/gen.png' },
+    { id: 'how-it-works-mint', label: 'MINT', image: '/images/mint.png' },
+    { id: 'how-it-works-preview', label: 'PREVIEW', image: '/images/preview.png' },
+    { id: 'how-it-works-select', label: 'SELECT MERCH', image: '/images/merch.png' },
+    { id: 'how-it-works-scooter', label: 'DELIVERED', image: '/images/DELIVERED.png' },
   ];
 
   const explosion = PlaceHolderImages.find((img) => img.id === 'how-it-works-explosion');
@@ -46,7 +46,7 @@ export const HowItWorksSection = () => {
         {explosion && (
             <div className="absolute top-0 left-0 w-1/4 md:w-1/6 z-0">
                 <Image
-               src="https://picsum.photos/seed/sunPng/300/300"
+               src="/images/sun.png"
                 alt={explosion.description}
                 width={300}
                 height={300}
@@ -106,8 +106,9 @@ export const HowItWorksSection = () => {
         <div className="absolute bottom-0 right-full w-32 md:w-48 z-20 animate-drive">
           {scooter && (
              <Image
-                src="https://picsum.photos/seed/drive/150/150"
+                src="/images/drive.gif"
                 alt={scooter.description}
+                style={{ transform: "scaleX(-1)" }}
                 width={150}
                 height={150}
                 className="object-contain"
@@ -119,8 +120,9 @@ export const HowItWorksSection = () => {
         <div className="absolute bottom-0 right-full w-32 md:w-48 z-20 animate-drive" style={{ animationDelay: '7.5s' }}>
           {scooter && (
              <Image
-                src="https://picsum.photos/seed/drive/150/150"
+                src="/images/bluerayder.gif"
                 alt={scooter.description}
+                style={{ transform: "scaleX(-1)" }}
                 width={150}
                 height={150}
                 className="object-contain"
@@ -132,7 +134,7 @@ export const HowItWorksSection = () => {
         <div className="absolute bottom-0 right-full w-32 md:w-48 z-20 animate-drive-reverse" style={{ animationDelay: '5s' }}>
           {scooter && (
              <Image
-                src="https://picsum.photos/seed/drive/150/150"
+                src="/images/drive.gif"
                 alt={scooter.description}
                 width={150}
                 height={150}

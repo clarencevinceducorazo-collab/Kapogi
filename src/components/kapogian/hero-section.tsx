@@ -7,7 +7,7 @@ export const HeroSection = () => {
   return (
     <section className="relative w-full min-h-dvh flex items-center justify-center text-white overflow-hidden py-28 lg:py-20">
       <Image
-        src="https://picsum.photos/seed/heroBg/1920/1080"
+        src="/images/herobg.png"
         alt="Kapogian hero background"
         fill
         className="object-cover"
@@ -62,7 +62,7 @@ export const HeroSection = () => {
 
         <div className="relative flex justify-center items-end">
           <Image
-            src="https://picsum.photos/seed/kpgWebp/500/500"
+            src="/images/KPG.webp"
             alt="Kapogian Character"
             width={500}
             height={500}

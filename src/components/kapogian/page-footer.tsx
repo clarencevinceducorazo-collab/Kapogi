@@ -18,7 +18,7 @@ export const PageFooter = () => {
           {avatar && (
             <Link href="/" aria-label="Kapogian Home">
               <Image
-                src="https://picsum.photos/seed/kpgLogo/80/80"
+                src="/images/KapogianLogo.webp"
                 alt={avatar.description}
                 width={80}
                 height={80}

@@ -22,12 +22,12 @@ export const PageHeader = () => {
   return (
     <header className="absolute top-0 left-0 right-0 z-50 p-4">
       <div className="container mx-auto">
-        <div className="flex h-20 items-center justify-between rounded-full bg-primary/90 backdrop-blur-sm p-2 border-2 border-primary-foreground/20 shadow-lg">
-          <div className="flex items-center gap-4 pl-2">
+      <div className="flex h-20 items-center justify-between rounded-full bg-primary/90 backdrop-blur-sm p-2 border-2 border-primary-foreground/20 shadow-lg">
+      <div className="flex items-center gap-4 pl-2">
             {avatar && (
               <Link href="/" aria-label="Kapogian Home">
                 <Image
-                  src="https://picsum.photos/seed/kpgLogo/64/64"
+                  src="/images/KapogianLogo.webp"
                   alt={avatar.description}
                   width={64}
                   height={64}

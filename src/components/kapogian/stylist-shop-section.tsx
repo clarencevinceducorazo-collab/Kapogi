@@ -12,10 +12,10 @@ export const StylistShopSection = () => {
   ];
 
   const productImages = [
-    'https://picsum.photos/seed/shirt/150/150',
-    'https://picsum.photos/seed/mug/150/150',
-    'https://picsum.photos/seed/mouse/150/150',
-    'https://picsum.photos/seed/hoodie/150/150',
+    "/images/shirt.png",
+    "/images/mug.png",
+    "/images/mouse.png",
+    "/images/hoodie.png"
   ];
 
   const avatar = PlaceHolderImages.find(
@@ -45,7 +45,7 @@ export const StylistShopSection = () => {
               style={{ transform: 'translateX(-20%)' }}
             >
               <Image
-                src="https://picsum.photos/seed/long/300/450"
+                src="/images/long.png"
                 alt={charLeft.description}
                 width={300}
                 height={450}
@@ -63,7 +63,7 @@ export const StylistShopSection = () => {
               <div className="flex items-center gap-4">
                 {avatar && (
                   <Image
-                    src="https://picsum.photos/seed/kpgLogo/50/50"
+                    src="/images/KapogianLogo.webp"
                     alt={avatar.description}
                     width={50}
                     height={50}
@@ -139,7 +139,7 @@ export const StylistShopSection = () => {
               style={{ transform: 'translateX(20%)' }}
             >
               <Image
-                src="https://picsum.photos/seed/longs/300/450"
+                src="/images/longs.png"
                 alt={charRight.description}
                 width={300}
                 height={450}
