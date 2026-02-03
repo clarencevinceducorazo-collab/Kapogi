@@ -42,7 +42,7 @@ export const HowItWorksSection = () => {
   };
 
   return (
-    <section className="relative bg-accent text-accent-foreground pt-20 pb-16 overflow-hidden">
+    <section className="relative bg-[#FFC83D] text-black pt-20 pb-16 overflow-hidden">
         {explosion && (
             <div className="absolute top-0 left-0 w-1/4 md:w-1/6 z-0">
                 <Image
