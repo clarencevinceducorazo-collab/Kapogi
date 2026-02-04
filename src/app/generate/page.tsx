@@ -295,7 +295,7 @@ export default function GeneratorPage() {
       setTimeout(() => {
         setLoading(false);
         setShowExitLoader(false);
-      }, 6000); // Duration for exit GIF
+      }, 6500); // Duration for exit GIF
       return; // skip all AI generation
     }
 
@@ -343,7 +343,7 @@ export default function GeneratorPage() {
       setTimeout(() => {
         setLoading(false);
         setShowExitLoader(false);
-      }, 6000); // Duration for exit GIF
+      }, 6500); // Duration for exit GIF
 
     } catch (err: any) {
       console.error('Generation failed:', err);

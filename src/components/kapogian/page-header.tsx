@@ -19,7 +19,7 @@ export const PageHeader = () => {
   const navLinks = [
     { name: 'HOME', href: '/' },
     { name: 'GENERATE', href: '/generate' },
-    { name: 'SHIPMENT', href: '#' },
+    { name: 'LEADERBOARDS', href: '/leaderboard' },
   ];
 
   const avatar = PlaceHolderImages.find((img) => img.id === 'header-avatar');
