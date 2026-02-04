@@ -32,7 +32,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useTypewriter } from '@/hooks/use-typewriter';
 import { useEasterEgg } from '@/hooks/useEasterEgg';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PSGC_DATA, type Province, type City, type Barangay } from '@/lib/psgc';
 import { Input } from '@/components/ui/input';
 
 
@@ -45,6 +44,16 @@ interface CharacterData {
   imageUrl?: string;
   previewUrl?: string;
 }
+
+// PSGC API data types
+interface PsgcRegion {
+  code: string;
+  name: string;
+}
+type Province = PsgcRegion;
+type City = PsgcRegion;
+type Barangay = PsgcRegion;
+
 
 export default function GeneratorPage() {
   const account = useCurrentAccount();
@@ -82,14 +91,18 @@ export default function GeneratorPage() {
   const [shippingContact, setShippingContact] = useState('');
   
   // New PSGC-based address state
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [barangays, setBarangays] = useState<Barangay[]>([]);
+
   const [selectedProvince, setSelectedProvince] = useState<Province | null>(null);
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
   const [selectedBarangay, setSelectedBarangay] = useState<Barangay | null>(null);
   const [streetAddress, setStreetAddress] = useState('');
 
-  // Derived state for dropdown options
-  const [cities, setCities] = useState<City[]>([]);
-  const [barangays, setBarangays] = useState<Barangay[]>([]);
+  const [provincesLoading, setProvincesLoading] = useState(true);
+  const [citiesLoading, setCitiesLoading] = useState(false);
+  const [barangaysLoading, setBarangaysLoading] = useState(false);
 
   // Merch selection state
   const [selection, setSelection] = useState<string | null>(null);
@@ -141,22 +154,73 @@ export default function GeneratorPage() {
     };
   }, [loading, showExitLoader, loadingSteps.length]);
 
+  // Fetch provinces on mount
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      setProvincesLoading(true);
+      try {
+        const response = await fetch('https://psgc.gitlab.io/api/api/v1/province');
+        const data = await response.json();
+        setProvinces(data.sort((a: Province, b: Province) => a.name.localeCompare(b.name)));
+      } catch (error) {
+        console.error("Failed to fetch provinces", error);
+        setError("Could not load province data. Please try refreshing.");
+      } finally {
+        setProvincesLoading(false);
+      }
+    };
+    fetchProvinces();
+  }, []);
+
+  // Fetch cities when province changes
   useEffect(() => {
     if (selectedProvince) {
-      setCities(PSGC_DATA.cities[selectedProvince.code as keyof typeof PSGC_DATA.cities] || []);
-      setSelectedCity(null); // Reset city
-      setSelectedBarangay(null); // Reset barangay
+      const fetchCities = async () => {
+        setCitiesLoading(true);
+        setCities([]);
+        setSelectedCity(null);
+        setBarangays([]);
+        setSelectedBarangay(null);
+        try {
+          const response = await fetch(`https://psgc.gitlab.io/api/api/v1/province/${selectedProvince.code}/cities-municipalities`);
+          const data = await response.json();
+          setCities(data.sort((a: City, b: City) => a.name.localeCompare(b.name)));
+        } catch (error) {
+          console.error("Failed to fetch cities", error);
+          setError("Could not load city data.");
+        } finally {
+          setCitiesLoading(false);
+        }
+      };
+      fetchCities();
     } else {
       setCities([]);
+      setSelectedCity(null);
     }
   }, [selectedProvince]);
 
+  // Fetch barangays when city changes
   useEffect(() => {
     if (selectedCity) {
-      setBarangays(PSGC_DATA.barangays[selectedCity.code as keyof typeof PSGC_DATA.barangays] || []);
-      setSelectedBarangay(null); // Reset barangay
+      const fetchBarangays = async () => {
+        setBarangaysLoading(true);
+        setBarangays([]);
+        setSelectedBarangay(null);
+        try {
+          const response = await fetch(`https://psgc.gitlab.io/api/api/v1/city/${selectedCity.code}/barangays`);
+          const data = await response.json();
+          setBarangays(data.sort((a: Barangay, b: Barangay) => a.name.localeCompare(b.name)));
+        } catch (error) {
+          console.error("Failed to fetch barangays", error);
+          setError("Could not load barangay data.");
+        } finally {
+          setBarangaysLoading(false);
+        }
+      };
+      fetchBarangays();
     } else {
       setBarangays([]);
+      setSelectedBarangay(null);
     }
   }, [selectedCity]);
 
@@ -434,9 +498,9 @@ export default function GeneratorPage() {
         full_name: shippingName,
         contact_number: shippingContact,
         address: {
-            province: selectedProvince || { name: '', psgc_code: '' },
-            city: selectedCity || { name: '', psgc_code: '' },
-            barangay: selectedBarangay || { name: '', psgc_code: '' },
+            province: selectedProvince ? { name: selectedProvince.name, psgc_code: selectedProvince.code } : { name: '', psgc_code: '' },
+            city: selectedCity ? { name: selectedCity.name, psgc_code: selectedCity.code } : { name: '', psgc_code: '' },
+            barangay: selectedBarangay ? { name: selectedBarangay.name, psgc_code: selectedBarangay.code } : { name: '', psgc_code: '' },
             street_address: streetAddress,
         }
       };
@@ -546,7 +610,7 @@ export default function GeneratorPage() {
   };
 
   const handleProvinceChange = (provinceCode: string) => {
-    const province = PSGC_DATA.provinces.find(p => p.code === provinceCode) || null;
+    const province = provinces.find(p => p.code === provinceCode) || null;
     setSelectedProvince(province);
   };
 
@@ -859,12 +923,12 @@ export default function GeneratorPage() {
                         </div>
                          <div className="space-y-2">
                             <label className="font-semibold uppercase text-sm tracking-wide">Province</label>
-                            <Select onValueChange={handleProvinceChange} value={selectedProvince?.code}>
+                            <Select onValueChange={handleProvinceChange} value={selectedProvince?.code} disabled={provincesLoading}>
                                 <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto">
-                                    <SelectValue placeholder="Select Province" />
+                                    <SelectValue placeholder={provincesLoading ? "Loading provinces..." : "Select Province"} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {PSGC_DATA.provinces.map(p => (
+                                    {provinces.map(p => (
                                     <SelectItem key={p.code} value={p.code}>{p.name}</SelectItem>
                                     ))}
                                 </SelectContent>
@@ -872,9 +936,9 @@ export default function GeneratorPage() {
                         </div>
                          <div className="space-y-2">
                             <label className="font-semibold uppercase text-sm tracking-wide">City / Municipality</label>
-                            <Select onValueChange={handleCityChange} value={selectedCity?.code} disabled={!selectedProvince}>
-                                <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" disabled={!selectedProvince}>
-                                    <SelectValue placeholder="Select City/Municipality" />
+                            <Select onValueChange={handleCityChange} value={selectedCity?.code} disabled={!selectedProvince || citiesLoading}>
+                                <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" disabled={!selectedProvince || citiesLoading}>
+                                    <SelectValue placeholder={citiesLoading ? "Loading cities..." : "Select City/Municipality"} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {cities.map(c => (
@@ -885,9 +949,9 @@ export default function GeneratorPage() {
                         </div>
                         <div className="space-y-2">
                             <label className="font-semibold uppercase text-sm tracking-wide">Barangay</label>
-                            <Select onValueChange={handleBarangayChange} value={selectedBarangay?.code} disabled={!selectedCity}>
-                                <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" disabled={!selectedCity}>
-                                    <SelectValue placeholder="Select Barangay" />
+                            <Select onValueChange={handleBarangayChange} value={selectedBarangay?.code} disabled={!selectedCity || barangaysLoading}>
+                                <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" disabled={!selectedCity || barangaysLoading}>
+                                    <SelectValue placeholder={barangaysLoading ? "Loading barangays..." : "Select Barangay"} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {barangays.map(b => (
@@ -967,3 +1031,4 @@ export default function GeneratorPage() {
 }
 
     
+
