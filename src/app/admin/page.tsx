@@ -440,7 +440,7 @@ export default function AdminPage() {
                   <p className="text-sm">Enter your Private Key and click "Decrypt" on an order.</p>
                 </div>
               ) : (
-                <div id="cardsContainer" className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div id="cardsContainer" className="grid grid-cols-1 gap-4">
                   {decryptedCards.map(card => (
                     <div key={card.id} className="bg-yellow-100/50 border-2 border-black rounded-xl p-4 shadow-hard-xs relative animate-fadeIn transition-colors flex flex-col md:flex-row gap-4">
                       <div className="absolute -top-3 -right-3 bg-purple-500 text-white border-2 border-black rounded-full w-8 h-8 flex items-center justify-center z-10 font-bold text-xs shadow-sm">
