@@ -116,6 +116,7 @@ export default function MyOrdersPage() {
     if (carrierUpper.includes('UPS')) {
       return `https://www.ups.com/track?tracknum=${trackingNumber}`;
     }
+    
     if (carrierUpper.includes('FEDEX')) {
       return `https://www.fedex.com/fedextrack/?trknbr=${trackingNumber}`;
     }

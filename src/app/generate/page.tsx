@@ -507,11 +507,18 @@ export default function GeneratorPage() {
   
     try {
       // 1. Validate Shipping Info
-      const validation = validateShippingInfo({
-        full_name: shippingName,
-        contact_number: shippingContact,
-        address: [streetAddress, selectedBarangay?.name, selectedCity?.name, selectedProvince?.name].filter(Boolean).join(', '),
-      });
+      const validation = validateShippingInfo(
+        {
+          full_name: shippingName,
+          contact_number: shippingContact,
+        },
+        {
+          province: selectedProvince,
+          city: selectedCity,
+          barangay: selectedBarangay,
+          street_address: streetAddress,
+        }
+      );
 
       if (!validation.valid) {
         setError(validation.errors.join(', '));

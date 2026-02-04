@@ -70,6 +70,36 @@ export async function decryptShippingInfo(
     return shippingInfo;
   } catch (error) {
     console.error('❌ Decryption failed:', error);
+    // Allow for old data format
+    if (error instanceof SyntaxError) {
+      try {
+        const encrypted = EthCrypto.cipher.parse(encryptedString);
+        const decryptedString = await EthCrypto.decryptWithPrivateKey(
+          privateKey,
+          encrypted
+        );
+        const oldData = JSON.parse(decryptedString);
+        
+        const fullAddress = [
+          oldData.address.street_address,
+          oldData.address.barangay?.name,
+          oldData.address.city?.name,
+          oldData.address.province?.name,
+        ].filter(Boolean).join(', ');
+
+        const convertedInfo: ShippingInfo = {
+          full_name: oldData.full_name,
+          contact_number: oldData.contact_number,
+          address: fullAddress,
+        }
+        console.log('✅ Shipping info decrypted successfully (legacy format)');
+        return convertedInfo;
+
+      } catch (nestedError) {
+         console.error('❌ Decryption failed on retry:', nestedError);
+         throw new Error('Failed to decrypt shipping information');
+      }
+    }
     throw new Error('Failed to decrypt shipping information');
   }
 }
@@ -85,7 +115,7 @@ export function validateShippingInfo(
     barangay: { name: string; code: string } | null;
     street_address: string;
   }
-): { valid: boolean; errors: string[] } {
+): { valid: boolean; errors: string[], fullAddress: string } {
   const errors: string[] = [];
   
   // Validate Full Name
@@ -119,9 +149,19 @@ export function validateShippingInfo(
     errors.push('Please provide a street address (at least 5 characters).');
   }
 
+  const fullAddress = [
+    addressParts.street_address,
+    addressParts.barangay?.name,
+    addressParts.city?.name,
+    addressParts.province?.name,
+  ]
+    .filter(Boolean)
+    .join(', ');
+
   return {
     valid: errors.length === 0,
     errors,
+    fullAddress: fullAddress
   };
 }
 
