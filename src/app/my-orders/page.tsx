@@ -116,12 +116,14 @@ export default function MyOrdersPage() {
     if (carrierUpper.includes('UPS')) {
       return `https://www.ups.com/track?tracknum=${trackingNumber}`;
     }
-    
     if (carrierUpper.includes('FEDEX')) {
       return `https://www.fedex.com/fedextrack/?trknbr=${trackingNumber}`;
     }
     if (carrierUpper.includes('LBC')) {
         return `https://www.lbcexpress.com/track/?tracking_no=${trackingNumber}`;
+    }
+    if (carrierUpper.includes('J&T')) {
+        return `https://jtexpress.ph/tracking/${trackingNumber}`;
     }
     // Add more carriers as needed
     return '';

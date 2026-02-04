@@ -24,6 +24,7 @@ import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-ki
 import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import { suiClient, getAllReceipts, markAsShipped, addTrackingInfo, markAsDelivered } from '@/lib/sui';
 import { decryptShippingInfo, type ShippingInfo } from '@/lib/encryption';
@@ -335,7 +336,7 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
-             <div id="decryptedSection" className="bg-white border-4 border-black rounded-3xl p-6 shadow-hard relative min-h-[200px] transition-all duration-300">
+             <div id="decryptedSection" className="lg:col-span-full bg-white border-4 border-black rounded-3xl p-6 shadow-hard relative min-h-[200px] transition-all duration-300">
               <div className="flex items-center gap-3 mb-6 border-b-2 border-dashed border-gray-300 pb-4">
                 <div className="w-10 h-10 bg-purple-500 rounded-full border-2 border-black flex items-center justify-center text-white">
                   <FileText size={24} />
@@ -516,7 +517,17 @@ export default function AdminPage() {
             </div>
             <div className="space-y-2">
                 <label className="font-bold">Carrier</label>
-                <Input value={carrier} onChange={e => setCarrier(e.target.value)} placeholder="e.g. UPS, FedEx, LBC" className="border-2 border-black rounded-lg" />
+                <Select onValueChange={setCarrier} value={carrier}>
+                  <SelectTrigger className="border-2 border-black rounded-lg">
+                    <SelectValue placeholder="Select a carrier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="UPS">UPS</SelectItem>
+                    <SelectItem value="FedEx">FedEx</SelectItem>
+                    <SelectItem value="J&T Express">J&T Express</SelectItem>
+                    <SelectItem value="LBC">LBC</SelectItem>
+                  </SelectContent>
+                </Select>
             </div>
             <div className="space-y-2">
                 <label className="font-bold">Estimated Delivery Date</label>
