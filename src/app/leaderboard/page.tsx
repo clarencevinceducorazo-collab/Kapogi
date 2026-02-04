@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Home, LoaderCircle, Trophy, Crown, Medal, ShieldAlert } from 'lucide-react';
 import { suiClient } from '@/lib/sui';
 import { CONTRACT_ADDRESSES } from '@/lib/constants';
@@ -75,8 +76,15 @@ export default function LeaderboardPage() {
   };
 
   return (
-    <div className="bg-pattern font-body text-gray-900 min-h-screen p-4 md:p-8 antialiased selection:bg-black selection:text-white">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="relative font-body min-h-screen p-4 md:p-8 antialiased selection:bg-black selection:text-white">
+      <Image
+        src="/images/herobg.png"
+        alt="Leaderboard background"
+        fill
+        className="object-cover -z-10"
+        priority
+      />
+      <div className="max-w-4xl mx-auto space-y-8 relative">
         <header className="bg-white border-4 border-black rounded-full p-3 px-6 flex flex-col md:flex-row justify-between items-center shadow-hard gap-4">
           <div className="flex items-center gap-3">
             <div className="bg-black text-white p-2 rounded-full flex items-center justify-center">
@@ -84,7 +92,7 @@ export default function LeaderboardPage() {
             </div>
             <h1 className="font-headline text-3xl tracking-tight text-black uppercase">Leaderboards</h1>
           </div>
-          <Link href="/" className="font-headline text-lg flex items-center gap-2 hover:underline">
+          <Link href="/" className="font-headline text-lg flex items-center gap-2 hover:underline text-black">
             <Home className="w-6 h-6" /> Home
           </Link>
           <CustomConnectButton
@@ -94,7 +102,7 @@ export default function LeaderboardPage() {
         </header>
 
         {loading ? (
-            <div className="flex justify-center items-center p-20 text-lg gap-3 font-bold text-gray-600">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl flex justify-center items-center p-20 text-lg gap-3 font-bold text-gray-800 shadow-hard">
                 <LoaderCircle size={32} className="animate-spin" />
                 <p>Loading Leaderboards...</p>
             </div>
@@ -106,7 +114,7 @@ export default function LeaderboardPage() {
             </div>
         ) : (
           <>
-            <div className="bg-primary text-white border-4 border-black rounded-3xl p-8 text-center shadow-hard transform -rotate-1 hover:rotate-0 transition-transform">
+            <div className="bg-primary/80 backdrop-blur-sm text-white border-4 border-black rounded-3xl p-8 text-center shadow-hard transform -rotate-1 hover:rotate-0 transition-transform">
               <h2 className="font-headline text-2xl opacity-80 uppercase">Total Kapogians Minted</h2>
               <p className="font-headline text-7xl font-bold tracking-tighter" style={{textShadow: '4px 4px 0 #000'}}>
                 {totalMinted !== null ? totalMinted.toLocaleString() : '...'}
@@ -115,7 +123,7 @@ export default function LeaderboardPage() {
 
             <div className="bg-white border-4 border-black rounded-3xl shadow-hard overflow-hidden">
                 <div className="p-5 border-b-4 border-black">
-                    <h2 className="font-headline text-2xl tracking-tight">Top Collectors</h2>
+                    <h2 className="font-headline text-2xl tracking-tight text-black">Top Collectors</h2>
                 </div>
                 {leaderboard.length === 0 ? (
                     <p className="p-10 text-center text-gray-500 font-bold">No collectors yet. Be the first!</p>
@@ -129,7 +137,7 @@ export default function LeaderboardPage() {
                                 <th className="p-4 px-6 text-right">NFTs Owned</th>
                             </tr>
                             </thead>
-                            <tbody className="text-base font-bold">
+                            <tbody className="text-base font-bold text-black">
                             {leaderboard.map((entry, index) => (
                                 <tr key={entry.address} className="group border-b-2 border-gray-200 hover:bg-yellow-50 transition-colors last:border-b-0">
                                     <td className="p-4 px-6 text-center">
