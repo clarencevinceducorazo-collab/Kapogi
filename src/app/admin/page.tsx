@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   Box,
   LockKeyhole,
@@ -14,6 +15,7 @@ import {
   Home,
   LoaderCircle,
   ClipboardList,
+  Download,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,9 +24,10 @@ import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
-import { getOwnedReceipts, markAsShipped, addTrackingInfo } from '@/lib/sui';
+import { suiClient, getAllReceipts, markAsShipped, addTrackingInfo } from '@/lib/sui';
 import { decryptShippingInfo, type ShippingInfo } from '@/lib/encryption';
 import { ADMIN_ADDRESS, ORDER_STATUS } from '@/lib/constants';
+import { getIPFSGatewayUrl } from '@/lib/pinata';
 
 interface Receipt {
   objectId: string;
@@ -35,14 +38,21 @@ interface Receipt {
   status: number;
   paymentAmount: number;
   createdAt: number;
-  // New tracking fields
   trackingNumber: string;
   carrier: string;
   estimatedDelivery: number;
+  character?: {
+    name: string;
+    imageUrl: string;
+  };
 }
 
 type DecryptedCard = ShippingInfo & {
   id: string; // Using receipt objectId as id
+  character?: {
+    name: string;
+    imageUrl: string;
+  };
 };
 
 export default function AdminPage() {
@@ -76,10 +86,16 @@ export default function AdminPage() {
     try {
       setLoading(true);
       setError('');
-      // Using the admin wallet to fetch all receipts.
-      const owned = await getOwnedReceipts(ADMIN_ADDRESS);
+      // Using the new function to fetch ALL receipts via events.
+      const allReceiptObjects = await getAllReceipts();
 
-      const parsed: Receipt[] = owned
+      if (allReceiptObjects.length === 0) {
+        setReceipts([]);
+        setLoading(false);
+        return;
+      }
+      
+      const parsedReceipts: Omit<Receipt, 'character'>[] = allReceiptObjects
         .map((obj: any) => ({
           objectId: obj.data.objectId,
           nftId: obj.data.content.fields.nft_id,
@@ -95,7 +111,31 @@ export default function AdminPage() {
         }))
         .sort((a, b) => b.createdAt - a.createdAt); // Sort by most recent
 
-      setReceipts(parsed);
+      // Fetch associated NFT data
+      const nftIds = parsedReceipts.map(r => r.nftId);
+      const nftObjects = await suiClient.multiGetObjects({
+        ids: nftIds,
+        options: { showDisplay: true },
+      });
+
+      const nftsMap = new Map(
+        nftObjects
+          .filter(obj => obj.data)
+          .map(obj => [
+            obj.data?.objectId,
+            {
+              imageUrl: (obj.data?.display?.data as any)?.image_url,
+              name: (obj.data?.display?.data as any)?.name,
+            },
+          ])
+      );
+
+      const combinedReceipts: Receipt[] = parsedReceipts.map(receipt => ({
+        ...receipt,
+        character: nftsMap.get(receipt.nftId),
+      }));
+
+      setReceipts(combinedReceipts);
     } catch (err) {
       console.error('Failed to load receipts:', err);
       setError('Failed to load orders. Please refresh.');
@@ -150,7 +190,11 @@ export default function AdminPage() {
       }
       try {
         const decryptedInfo = await decryptShippingInfo(receipt.encryptedShippingInfo, adminPrivateKey);
-        const newCard: DecryptedCard = { id: receipt.objectId, ...decryptedInfo };
+        const newCard: DecryptedCard = { 
+            id: receipt.objectId, 
+            ...decryptedInfo,
+            character: receipt.character
+        };
         setDecryptedCards(prev => [newCard, ...prev]);
         setError('');
       } catch (e) {
@@ -171,6 +215,29 @@ export default function AdminPage() {
     }
   };
   
+  const handleDownloadImage = async (imageUrl: string, characterName: string) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      const safeFilename = characterName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      link.download = `kapogian_${safeFilename}.png`;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Image download failed:", error);
+      alert("Could not download the image. Please try saving it manually.");
+      window.open(imageUrl, '_blank');
+    }
+  };
+
     if (!account) {
         return (
             <div className="bg-pattern font-body text-gray-900 min-h-screen p-4 md:p-8 antialiased selection:bg-black selection:text-white flex items-center justify-center">
@@ -354,27 +421,47 @@ export default function AdminPage() {
               ) : (
                 <div id="cardsContainer" className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {decryptedCards.map(card => (
-                    <div key={card.id} className="bg-yellow-100/50 border-2 border-black rounded-xl p-5 shadow-hard-xs relative animate-fadeIn hover:bg-yellow-100/80 transition-colors">
+                    <div key={card.id} className="bg-yellow-100/50 border-2 border-black rounded-xl p-4 shadow-hard-xs relative animate-fadeIn transition-colors flex flex-col md:flex-row gap-4">
                       <div className="absolute -top-3 -right-3 bg-purple-500 text-white border-2 border-black rounded-full w-8 h-8 flex items-center justify-center z-10 font-bold text-xs shadow-sm">
                         #{card.id.slice(2, 6)}
                       </div>
-                      <div className="space-y-3 font-mono text-sm md:text-base">
-                        <div className="flex flex-col">
-                          <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Name:</span>
-                          <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1">{card.full_name}</span>
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Address:</span>
-                          <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1 leading-tight">
-                            {card.address}
-                          </span>
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Phone:</span>
-                          <span className="font-bold text-gray-900 pb-1">{card.contact_number}</span>
-                        </div>
+                      
+                      {card.character?.imageUrl && (
+                          <div className="flex-shrink-0 w-full md:w-32">
+                              <Image 
+                                  src={getIPFSGatewayUrl(card.character.imageUrl)}
+                                  alt={card.character.name || 'Character Image'}
+                                  width={128}
+                                  height={128}
+                                  className="rounded-lg border-2 border-black object-cover w-full aspect-square"
+                              />
+                               <Button 
+                                  onClick={() => handleDownloadImage(getIPFSGatewayUrl(card.character!.imageUrl), card.character!.name)}
+                                  className="w-full mt-2 bg-gray-700 hover:bg-black text-white text-xs h-auto py-1.5 px-2 font-bold flex items-center gap-1"
+                                  size="sm"
+                              >
+                                  <Download className="w-3 h-3"/> Download
+                              </Button>
+                          </div>
+                      )}
+
+                      <div className="space-y-3 font-mono text-sm md:text-base flex-grow">
+                          <div className="flex flex-col">
+                              <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Name:</span>
+                              <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1">{card.full_name}</span>
+                          </div>
+                          <div className="flex flex-col">
+                              <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Address:</span>
+                              <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1 leading-tight break-words">
+                                {card.address}
+                              </span>
+                          </div>
+                          <div className="flex flex-col">
+                              <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Phone:</span>
+                              <span className="font-bold text-gray-900 pb-1">{card.contact_number}</span>
+                          </div>
                       </div>
-                    </div>
+                  </div>
                   ))}
                 </div>
               )}

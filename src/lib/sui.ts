@@ -167,6 +167,46 @@ export async function getOwnedReceipts(walletAddress: string) {
 }
 
 /**
+ * Admin: Get all Order Receipts from events for the admin dashboard
+ */
+export async function getAllReceipts() {
+  try {
+    console.log('🔍 Fetching all order creation events...');
+    const allEvents = await suiClient.queryEvents({
+      query: { MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ORDER_RECEIPT}::ReceiptCreated` },
+      order: 'ascending', // Fetch all events
+    });
+
+    const receiptIds = allEvents.data.map(event => (event.parsedJson as any)?.receipt_id).filter(Boolean);
+    
+    if (receiptIds.length === 0) {
+      return [];
+    }
+
+    console.log(`✨ Found ${receiptIds.length} receipt events. Fetching object details...`);
+
+    // Fetch objects in chunks to avoid overwhelming the RPC
+    const receipts = [];
+    const chunkSize = 50; // Sui's multiGetObjects has a limit of 50
+    for (let i = 0; i < receiptIds.length; i += chunkSize) {
+        const chunk = receiptIds.slice(i, i + chunkSize);
+        const chunkReceipts = await suiClient.multiGetObjects({
+            ids: chunk,
+            options: { showContent: true }
+        });
+        receipts.push(...chunkReceipts);
+    }
+    
+    return receipts.filter(r => r.data); // Filter out any that failed to fetch or were deleted
+
+  } catch (error) {
+    console.error('Failed to fetch all receipts via events:', error);
+    return [];
+  }
+}
+
+
+/**
  * Admin: Mark receipt as shipped
  */
 export async function markAsShipped(params: {
