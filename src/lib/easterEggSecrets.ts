@@ -214,6 +214,7 @@ export interface EasterEggSliders {
       id: 'secret_12',
       sliders: {
         cuteness: 1, confidence: 99, tiliFactor: 1,
+        
         luzon: 1, visayas: 1, mindanao: 49,
         hairAmount: 1, facialHair: 49, clothingStyle: 1,
         hairColor: 1, eyewear: 49, skinColor: 49,
