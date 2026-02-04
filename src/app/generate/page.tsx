@@ -132,6 +132,7 @@ export default function GeneratorPage() {
     luzon, visayas, mindanao,
     hairAmount, facialHair, clothingStyle,
     hairColor, eyewear, skinColor,
+    bodyFat, posture,
   });
 
   const loadingSteps = [
@@ -954,7 +955,7 @@ export default function GeneratorPage() {
                         </div>
                     )}
 
-                    <button onClick={() => handleSelection('Bundle')} className={cn("bg-yellow-400 border-4 border-black rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 hard-shadow-sm relative z-10 transition-all", selection === 'Bundle' && "ring-4 ring-offset-2 ring-pink-500")}>
+                    <button onClick={() => handleSelection('Bundle')} className={cn("bg-[#FFC83D] border-4 border-black rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 hard-shadow-sm relative z-10 transition-all", selection === 'Bundle' && "ring-4 ring-offset-2 ring-pink-500")}>
                         <div className="flex items-center gap-4">
                             <div className="w-8 h-8 bg-white border-4 border-black rounded-md flex items-center justify-center">
                                 {selection === 'Bundle' && <Check className="w-6 h-6 text-black" />}
@@ -1110,4 +1111,6 @@ export default function GeneratorPage() {
     </div>
   );
 }
+    
+
     

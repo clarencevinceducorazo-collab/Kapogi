@@ -100,13 +100,18 @@ export const HowItWorksSection = () => {
         </Splide>
       </div>
       <div className="absolute bottom-0 left-0 right-0 w-full z-10">
-        <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" className="w-full h-auto">
-            <path d="M0 50 C 480 60, 960 40, 1440 50 V 60 H 0 Z" fill="rgba(145, 145, 145, 0.72)" />
-        </svg>
+ 
+        <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" className="w-full h-auto -translate-y-[30px]">
+        <path
+    d="M0 45 C 480 55, 960 35, 1440 45 V 60 H 0 Z"
+    fill="rgba(145, 145, 145, 0.72)"
+  />
+</svg>
+
         <div className="absolute bottom-0 right-full w-32 md:w-48 z-20 animate-drive">
           {scooter && (
              <Image
-                src="/images/drive.gif"
+                src="/images/lbcrider.gif"
                 alt={scooter.description}
                 style={{ transform: "scaleX(-1)" }}
                 width={150}
@@ -117,10 +122,10 @@ export const HowItWorksSection = () => {
             />
           )}
         </div>
-        <div className="absolute bottom-0 right-full w-32 md:w-48 z-20 animate-drive" style={{ animationDelay: '7.5s' }}>
+        <div className="absolute bottom-96 right-full w-32 md:w-48 z-20 animate-drive" style={{ animationDelay: '7.5s' }}>
           {scooter && (
              <Image
-                src="/images/bluerayder.gif"
+               src="/images/balloony.gif"
                 alt={scooter.description}
                 style={{ transform: "scaleX(-1)" }}
                 width={170}
@@ -131,10 +136,11 @@ export const HowItWorksSection = () => {
             />
           )}
         </div>
+       
         <div className="absolute bottom-0 right-full w-32 md:w-48 z-20 animate-drive-reverse" style={{ animationDelay: '5s' }}>
           {scooter && (
              <Image
-                src="/images/drive.gif"
+               src="/images/lbcrider.gif"
                 alt={scooter.description}
                 width={150}
                 height={150}
