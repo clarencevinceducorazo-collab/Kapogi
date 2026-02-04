@@ -67,7 +67,7 @@ export interface EasterEggSliders {
       reveal: {
         name: 'Dito Man',
         lore: '**Dito Man** is the legendary guardian of the Kapogian realm — the one who was always there, even before the others knew. Born under the golden light of Luzon\'s peak, he carries an aura so pure that even the stars tilt toward him.\n\nHe never sought fame, yet fame found him at every corner. His smile disarms enemies, and his presence alone turns chaos into calm. They say if you set the stars just right, he will appear — not because he wants to be found, but because *you finally looked.*',
-        imagePath: '/images/easter-eggs/secret_1.png',
+        imagePath: '/images/easter-eggs/rave.png',
       },
     },
     {

@@ -642,27 +642,23 @@ export default function GeneratorPage() {
 
           <section id="page-preview" className={cn('page-section flex flex-col h-full', { 'hidden': page !== 'page-preview' })}>
               <div className="flex flex-col md:flex-row border-b-4 border-black">
-                  <div className="w-full md:w-1/2 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px] relative">
+                  <div className="w-full md:w-1/2 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px]">
                     {loading ? (
                       showExitLoader ? (
-                        <Image src="/images/finalexit.gif" alt="Finishing up..." fill className="object-cover" unoptimized />
+                        <Image src="/images/finalexit.gif" alt="Finishing up..." width={400} height={400} className="rounded-2xl" unoptimized />
                       ) : (
-                        <>
-                            <Image src="/images/loadscreens.gif" alt="Generating..." fill className="object-cover" unoptimized />
-                            <div className="absolute bottom-5 w-full text-center">
-                                <p className="inline-block bg-black/70 text-white font-semibold py-2 px-4 rounded-lg">Generating image...</p>
-                            </div>
-                        </>
+                        <div className="flex flex-col items-center gap-2 text-stone-500">
+                            <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="rounded-2xl" unoptimized />
+                            <p className="font-semibold">Generating image...</p>
+                        </div>
                       )
                     ) : generatedImage ? (
                       <Image src={generatedImage} alt="Kapogian Character" width={512} height={512} className="rounded-2xl border-4 border-black hard-shadow animate__animated animate__zoomIn" />
                     ) : (
-                      <>
-                          <Image src="/images/loadscreens.gif" alt="Preparing..." fill className="object-cover" unoptimized />
-                          <div className="absolute bottom-5 w-full text-center">
-                              <p className="inline-block bg-black/70 text-white font-semibold py-2 px-4 rounded-lg">Preparing to generate...</p>
-                          </div>
-                      </>
+                      <div className="flex flex-col items-center gap-2 text-stone-500">
+                          <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="rounded-2xl" unoptimized />
+                          <p className="font-semibold">Preparing to generate...</p>
+                      </div>
                     )}
                   </div>
                   <div className="w-full md:w-1/2 p-8 bg-white flex flex-col">
@@ -845,5 +841,7 @@ export default function GeneratorPage() {
     </div>
   );
 }
+
+    
 
     
