@@ -259,6 +259,42 @@ export async function markAsShipped(params: {
 }
 
 /**
+ * Admin: Mark receipt as delivered
+ */
+export async function markAsDelivered(params: {
+  receiptObjectId: string;
+  signAndExecute: any;
+}) {
+  try {
+    const tx = new Transaction();
+
+    const adminCap = tx.object(CONTRACT_ADDRESSES.ADMIN_CAP_ID);
+    const receipt = tx.object(params.receiptObjectId);
+    const clock = tx.object('0x6');
+
+    tx.moveCall({
+      target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::mark_as_delivered`,
+      arguments: [adminCap, receipt, clock],
+    });
+
+    const result = await params.signAndExecute(
+      {
+        transaction: tx,
+      },
+      {
+        showEffects: true,
+      }
+    );
+
+    console.log('✅ Marked as delivered!', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Failed to mark as delivered:', error);
+    throw error;
+  }
+}
+
+/**
  * Admin: Add tracking information to an order receipt
  */
 export async function addTrackingInfo(params: {

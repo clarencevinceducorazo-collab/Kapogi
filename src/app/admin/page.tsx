@@ -16,6 +16,7 @@ import {
   LoaderCircle,
   ClipboardList,
   Download,
+  ShoppingBag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,7 +25,7 @@ import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
-import { suiClient, getAllReceipts, markAsShipped, addTrackingInfo } from '@/lib/sui';
+import { suiClient, getAllReceipts, markAsShipped, addTrackingInfo, markAsDelivered } from '@/lib/sui';
 import { decryptShippingInfo, type ShippingInfo } from '@/lib/encryption';
 import { ADMIN_ADDRESS, ORDER_STATUS } from '@/lib/constants';
 import { getIPFSGatewayUrl } from '@/lib/pinata';
@@ -47,8 +48,9 @@ interface Receipt {
   };
 }
 
-type DecryptedCard = ShippingInfo & {
+interface DecryptedCard extends ShippingInfo {
   id: string; // Using receipt objectId as id
+  itemsSelected: string;
   character?: {
     name: string;
     imageUrl: string;
@@ -124,7 +126,7 @@ export default function AdminPage() {
           .map(obj => [
             obj.data?.objectId,
             {
-              imageUrl: (obj.data?.display?.data as any)?.image_url,
+              imageUrl: getIPFSGatewayUrl((obj.data?.display?.data as any)?.image_url),
               name: (obj.data?.display?.data as any)?.name,
             },
           ])
@@ -193,6 +195,7 @@ export default function AdminPage() {
         const newCard: DecryptedCard = { 
             id: receipt.objectId, 
             ...decryptedInfo,
+            itemsSelected: receipt.itemsSelected,
             character: receipt.character
         };
         setDecryptedCards(prev => [newCard, ...prev]);
@@ -212,6 +215,18 @@ export default function AdminPage() {
     } catch (e) {
       console.error(e);
       alert('Failed to mark as shipped. Please try again.');
+    }
+  };
+
+  const handleMarkDelivered = async (receiptId: string) => {
+    if (!confirm('Are you sure you want to mark this order as delivered? This cannot be undone.')) return;
+    try {
+      await markAsDelivered({ receiptObjectId: receiptId, signAndExecute });
+      alert('Order status updated to Delivered!');
+      loadReceipts();
+    } catch (e) {
+      console.error(e);
+      alert('Failed to mark as delivered. Please try again.');
     }
   };
   
@@ -351,7 +366,7 @@ export default function AdminPage() {
                         const isDecrypted = decryptedCards.some(card => card.id === receipt.objectId);
                         return (
                           <tr key={receipt.objectId} className="group border-b-2 border-gray-200 hover:bg-yellow-50 transition-colors last:border-b-0">
-                            <td className="p-4 px-6 font-mono" title={receipt.nftId}>{receipt.nftId.slice(0, 6)}...{receipt.nftId.slice(-4)}</td>
+                            <td className="p-4 px-6 font-mono" title={receipt.nftId}>{receipt.character?.name || `${receipt.nftId.slice(0, 6)}...${receipt.nftId.slice(-4)}`}</td>
                             <td className="p-4 px-6">
                               <div className="flex flex-wrap gap-2">
                                 {receipt.itemsSelected.split(',').map(item => (
@@ -388,6 +403,10 @@ export default function AdminPage() {
                                 <Button onClick={() => handleMarkShipped(receipt.objectId)} disabled={receipt.status !== ORDER_STATUS.PENDING} className="bg-accent hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg border-2 border-black shadow-hard-sm shadow-hard-hover active:shadow-hard-active transition-brutal text-sm font-black flex items-center gap-2 h-auto disabled:bg-gray-300 disabled:cursor-not-allowed">
                                   <Truck className="w-4 h-4" />
                                   Ship
+                                </Button>
+                                <Button onClick={() => handleMarkDelivered(receipt.objectId)} disabled={receipt.status !== ORDER_STATUS.SHIPPED} className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg border-2 border-black shadow-hard-sm shadow-hard-hover active:shadow-hard-active transition-brutal text-sm font-black flex items-center gap-2 h-auto disabled:bg-gray-300 disabled:cursor-not-allowed">
+                                  <CheckCircle className="w-4 h-4" />
+                                  Deliver
                                 </Button>
                                 <Button onClick={() => handleOpenTrackingModal(receipt)} disabled={receipt.status === ORDER_STATUS.PENDING} className="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1.5 rounded-lg border-2 border-black shadow-hard-sm shadow-hard-hover active:shadow-hard-active transition-brutal text-sm font-black flex items-center gap-2 h-auto disabled:bg-gray-300 disabled:cursor-not-allowed">
                                   <ClipboardList className="w-4 h-4" />
@@ -429,14 +448,14 @@ export default function AdminPage() {
                       {card.character?.imageUrl && (
                           <div className="flex-shrink-0 w-full md:w-32">
                               <Image 
-                                  src={getIPFSGatewayUrl(card.character.imageUrl)}
+                                  src={card.character.imageUrl}
                                   alt={card.character.name || 'Character Image'}
                                   width={128}
                                   height={128}
                                   className="rounded-lg border-2 border-black object-cover w-full aspect-square"
                               />
                                <Button 
-                                  onClick={() => handleDownloadImage(getIPFSGatewayUrl(card.character!.imageUrl), card.character!.name)}
+                                  onClick={() => handleDownloadImage(card.character!.imageUrl, card.character!.name)}
                                   className="w-full mt-2 bg-gray-700 hover:bg-black text-white text-xs h-auto py-1.5 px-2 font-bold flex items-center gap-1"
                                   size="sm"
                               >
@@ -456,9 +475,17 @@ export default function AdminPage() {
                                 {card.address}
                               </span>
                           </div>
-                          <div className="flex flex-col">
+                           <div className="flex flex-col">
                               <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Phone:</span>
-                              <span className="font-bold text-gray-900 pb-1">{card.contact_number}</span>
+                              <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1">{card.contact_number}</span>
+                          </div>
+                           <div className="flex flex-col">
+                              <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Items Ordered:</span>
+                               <div className="font-bold text-gray-900 flex flex-wrap gap-x-2">
+                                  {card.itemsSelected.split(',').map(item => (
+                                    <span key={item} className={`px-1.5 py-0.5 border-2 border-black rounded shadow-hard-xs text-xs font-black ${item === 'ALL_BUNDLE' ? 'bg-primary text-white' : 'bg-white'}`}>{item}</span>
+                                  ))}
+                                </div>
                           </div>
                       </div>
                   </div>
