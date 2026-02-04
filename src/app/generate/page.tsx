@@ -46,13 +46,20 @@ interface CharacterData {
 }
 
 // PSGC API data types
-interface PsgcRegion {
+interface Province {
   code: string;
   name: string;
 }
-type Province = PsgcRegion;
-type City = PsgcRegion;
-type Barangay = PsgcRegion;
+interface City {
+  code: string;
+  name: string;
+  provinceCode: string;
+}
+interface Barangay {
+  code: string;
+  name: string;
+  cityCode: string;
+}
 
 
 export default function GeneratorPage() {
@@ -159,7 +166,7 @@ export default function GeneratorPage() {
     const fetchProvinces = async () => {
       setProvincesLoading(true);
       try {
-        const response = await fetch('https://psgc.gitlab.io/api/api/v1/province');
+        const response = await fetch('https://raw.githubusercontent.com/jeffreybernadas/psgc-api/master/data/province.json');
         const data = await response.json();
         setProvinces(data.sort((a: Province, b: Province) => a.name.localeCompare(b.name)));
       } catch (error) {
@@ -182,9 +189,10 @@ export default function GeneratorPage() {
         setBarangays([]);
         setSelectedBarangay(null);
         try {
-          const response = await fetch(`https://psgc.gitlab.io/api/api/v1/province/${selectedProvince.code}/cities-municipalities`);
+          const response = await fetch(`https://raw.githubusercontent.com/jeffreybernadas/psgc-api/master/data/city.json`);
           const data = await response.json();
-          setCities(data.sort((a: City, b: City) => a.name.localeCompare(b.name)));
+          const filteredCities = data.filter((city: City) => city.provinceCode === selectedProvince.code);
+          setCities(filteredCities.sort((a: City, b: City) => a.name.localeCompare(b.name)));
         } catch (error) {
           console.error("Failed to fetch cities", error);
           setError("Could not load city data.");
@@ -207,9 +215,10 @@ export default function GeneratorPage() {
         setBarangays([]);
         setSelectedBarangay(null);
         try {
-          const response = await fetch(`https://psgc.gitlab.io/api/api/v1/city/${selectedCity.code}/barangays`);
+          const response = await fetch(`https://raw.githubusercontent.com/jeffreybernadas/psgc-api/master/data/barangay.json`);
           const data = await response.json();
-          setBarangays(data.sort((a: Barangay, b: Barangay) => a.name.localeCompare(b.name)));
+          const filteredBarangays = data.filter((barangay: Barangay) => barangay.cityCode === selectedCity.code);
+          setBarangays(filteredBarangays.sort((a: Barangay, b: Barangay) => a.name.localeCompare(b.name)));
         } catch (error) {
           console.error("Failed to fetch barangays", error);
           setError("Could not load barangay data.");
@@ -411,10 +420,10 @@ export default function GeneratorPage() {
     // ── Easter Egg Short-Circuit ──
     if (activeEgg) {
       setGeneratedName(activeEgg.name);
-      setGeneratedLore(activeEgg.lore);
+      setOriginDescription('a legend of the Kapogian realm');
       setGeneratedImage(activeEgg.imagePath);
       setGeneratedImageBlob(null); // no blob needed for local images
-      setOriginDescription('a legend of the Kapogian realm');
+      setGeneratedLore(activeEgg.lore);
       setShowExitLoader(true);
       setTimeout(() => {
         setLoading(false);
@@ -1031,4 +1040,5 @@ export default function GeneratorPage() {
 }
 
     
+
 
