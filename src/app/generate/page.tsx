@@ -99,12 +99,12 @@ export default function GeneratorPage() {
   
   // New PSGC-based address state
   const [provinces, setProvinces] = useState<Province[]>([]);
-  const [cities, setCities] = useState<City[]>([]);
-  const [barangays, setBarangays] = useState<Barangay[]>([]);
+  const [cities, setCities] = useState<any[]>([]);
+  const [barangays, setBarangays] = useState<any[]>([]);
 
   const [selectedProvince, setSelectedProvince] = useState<Province | null>(null);
-  const [selectedCity, setSelectedCity] = useState<City | null>(null);
-  const [selectedBarangay, setSelectedBarangay] = useState<Barangay | null>(null);
+  const [selectedCity, setSelectedCity] = useState<any | null>(null);
+  const [selectedBarangay, setSelectedBarangay] = useState<any | null>(null);
   const [streetAddress, setStreetAddress] = useState('');
 
   const [provincesLoading, setProvincesLoading] = useState(true);
@@ -166,9 +166,10 @@ export default function GeneratorPage() {
     const fetchProvinces = async () => {
       setProvincesLoading(true);
       try {
-        const response = await fetch('https://raw.githubusercontent.com/jeffreybernadas/psgc-api/master/data/province.json');
+        const response = await fetch('https://raw.githubusercontent.com/jeffreybernadas/psgc-api/master/data/provinces.json');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
-        setProvinces(data.sort((a: Province, b: Province) => a.name.localeCompare(b.name)));
+        setProvinces(Object.values(data).sort((a: any, b: any) => a.name.localeCompare(b.name)));
       } catch (error) {
         console.error("Failed to fetch provinces", error);
         setError("Could not load province data. Please try refreshing.");
@@ -189,10 +190,11 @@ export default function GeneratorPage() {
         setBarangays([]);
         setSelectedBarangay(null);
         try {
-          const response = await fetch(`https://raw.githubusercontent.com/jeffreybernadas/psgc-api/master/data/city.json`);
+          const response = await fetch(`https://raw.githubusercontent.com/jeffreybernadas/psgc-api/master/data/cities.json`);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           const data = await response.json();
-          const filteredCities = data.filter((city: City) => city.provinceCode === selectedProvince.code);
-          setCities(filteredCities.sort((a: City, b: City) => a.name.localeCompare(b.name)));
+          const filteredCities = Object.values(data).filter((city: any) => city.province === selectedProvince.code);
+          setCities(filteredCities.sort((a: any, b: any) => a.name.localeCompare(b.name)));
         } catch (error) {
           console.error("Failed to fetch cities", error);
           setError("Could not load city data.");
@@ -215,10 +217,11 @@ export default function GeneratorPage() {
         setBarangays([]);
         setSelectedBarangay(null);
         try {
-          const response = await fetch(`https://raw.githubusercontent.com/jeffreybernadas/psgc-api/master/data/barangay.json`);
+          const response = await fetch(`https://raw.githubusercontent.com/jeffreybernadas/psgc-api/master/data/barangays.json`);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           const data = await response.json();
-          const filteredBarangays = data.filter((barangay: Barangay) => barangay.cityCode === selectedCity.code);
-          setBarangays(filteredBarangays.sort((a: Barangay, b: Barangay) => a.name.localeCompare(b.name)));
+          const filteredBarangays = Object.values(data).filter((barangay: any) => barangay.city === selectedCity.code);
+          setBarangays(filteredBarangays.sort((a: any, b: any) => a.name.localeCompare(b.name)));
         } catch (error) {
           console.error("Failed to fetch barangays", error);
           setError("Could not load barangay data.");
@@ -419,32 +422,37 @@ export default function GeneratorPage() {
 
     // ── Easter Egg Short-Circuit ──
     if (activeEgg) {
-      setGeneratedName(activeEgg.name);
-      setOriginDescription('a legend of the Kapogian realm');
-      setGeneratedImage(activeEgg.imagePath);
-      setGeneratedImageBlob(null); // no blob needed for local images
-      setGeneratedLore(activeEgg.lore);
-      setShowExitLoader(true);
-      setTimeout(() => {
-        setLoading(false);
-        setShowExitLoader(false);
-      }, 6500); // Duration for exit GIF
-      return; // skip all AI generation
+        setGeneratedName(activeEgg.name);
+        setOriginDescription('a legend of the Kapogian realm');
+        setGeneratedLore(activeEgg.lore);
+        // This is a local image, no blob needed, but we do need to set the image for display
+        setGeneratedImage(activeEgg.imagePath);
+        setGeneratedImageBlob(null);
+      
+        setShowExitLoader(true);
+        setTimeout(() => {
+            setLoading(false);
+            setShowExitLoader(false);
+        }, 6500);
+        return;
     }
 
     try {
-      // Step 1: Determine name and origin description first
-      const nameToUse = characterName || await generateName();
+      // Step 1: Generate name and origin description
+      const namePromise = characterName ? Promise.resolve(characterName) : generateName();
+      
+      const originPromise = (async () => {
+        if (luzon === 0 && visayas === 0 && mindanao === 0) {
+          const country = await generateCountry();
+          return `a naturalized Filipino from ${country}`;
+        } else {
+          const origins = [{ region: "Luzon", value: luzon }, { region: "Visayas", value: visayas }, { region: "Mindanao", value: mindanao }];
+          origins.sort((a, b) => b.value - a.value);
+          return `a native of the ${origins[0].region} region of the Philippines`;
+        }
+      })();
 
-      let originDesc: string;
-      if (luzon === 0 && visayas === 0 && mindanao === 0) {
-        const origin = await generateCountry();
-        originDesc = `a naturalized Filipino from ${origin}`;
-      } else {
-        const origins = [{ region: "Luzon", value: luzon }, { region: "Visayas", value: visayas }, { region: "Mindanao", value: mindanao }];
-        origins.sort((a, b) => b.value - a.value);
-        originDesc = `a native of the ${origins[0].region} region of the Philippines`;
-      }
+      const [nameToUse, originDesc] = await Promise.all([namePromise, originPromise]);
       
       // Step 2: Build prompt and run image/lore generation in parallel
       const fullPrompt = buildCharacterPrompt(nameToUse, originDesc);
@@ -452,9 +460,9 @@ export default function GeneratorPage() {
       const imagePromise = generateImage({ prompt: fullPrompt });
       const lorePromise = generateLore(nameToUse, originDesc);
 
-      const [imageResult, lore] = await Promise.all([imagePromise, lorePromise]);
+      const [imageResult, loreResult] = await Promise.all([imagePromise, lorePromise]);
 
-      // Step 3: Process results
+      // Step 3: Process image result
       const imageUrl = imageResult?.imageUrl;
       if (!imageUrl) throw new Error('No image data received from the API.');
       
@@ -472,7 +480,7 @@ export default function GeneratorPage() {
       setOriginDescription(originDesc);
       setGeneratedImageBlob(blob);
       setGeneratedImage(imageUrl);
-      setGeneratedLore(lore);
+      setGeneratedLore(loreResult);
 
       // Step 5: Trigger the exit animation
       setShowExitLoader(true);
@@ -490,9 +498,13 @@ export default function GeneratorPage() {
   };
 
   const handleMint = async () => {
-    if (!generatedImageBlob || !account) {
-      setError("Character data or wallet connection is missing.");
+    if (!generatedImageBlob && !activeEgg) { // activeEgg won't have a blob
+      setError("Character data is missing.");
       return;
+    }
+    if (!account) {
+        setError("Wallet connection is missing.");
+        return;
     }
   
     setMinting(true);
@@ -549,28 +561,30 @@ export default function GeneratorPage() {
           return;
       }
   
-      // 4. Upload to IPFS
-      console.log('📤 Uploading to IPFS...');
-      const attributes = { cuteness, confidence, tiliFactor, luzon, visayas, mindanao, hairAmount, facialHair, clothingStyle, hairColor, eyewear, skinColor, bodyFat, posture, holdingItem };
-      const { imageUrl, imageHash: imgHash, metadataHash: metaHash } = await uploadCharacterToIPFS(generatedImageBlob, {
-        name: generatedName,
-        description: `A Kapogian character from ${originDescription}`,
-        attributes: attributes,
-      });
-
-      // Store hashes for potential cleanup
-      imageHash = imgHash;
-      metadataHash = metaHash;
-      
-      console.log('✅ IPFS upload complete:', imageUrl);
+      // 4. Upload to IPFS (only if it was an AI generated image)
+      let finalImageUrl = generatedImage;
+      if (generatedImageBlob) {
+        console.log('📤 Uploading to IPFS...');
+        const attributes = { cuteness, confidence, tiliFactor, luzon, visayas, mindanao, hairAmount, facialHair, clothingStyle, hairColor, eyewear, skinColor, bodyFat, posture, holdingItem };
+        const { imageUrl, imageHash: imgHash, metadataHash: metaHash } = await uploadCharacterToIPFS(generatedImageBlob, {
+          name: generatedName,
+          description: `A Kapogian character from ${originDescription}`,
+          attributes: attributes,
+        });
+        
+        finalImageUrl = imageUrl;
+        imageHash = imgHash;
+        metadataHash = metaHash;
+        console.log('✅ IPFS upload complete:', finalImageUrl);
+      }
   
       // 5. Mint on SUI blockchain
       console.log('⛓️ Minting on SUI blockchain...');
       const result = await mintCharacterNFT({
         name: generatedName,
         description: `A Kapogian character from ${originDescription}`,
-        imageUrl: imageUrl, // Use the direct image URL from IPFS
-        attributes: JSON.stringify(attributes),
+        imageUrl: finalImageUrl!, // Use the direct image URL from IPFS or the local one for easter eggs
+        attributes: JSON.stringify({ cuteness, confidence, tiliFactor, luzon, visayas, mindanao, hairAmount, facialHair, clothingStyle, hairColor, eyewear, skinColor, bodyFat, posture, holdingItem }),
         itemsSelected: itemsSelected,
         encryptedShippingInfo: encryptedShippingInfo,
         encryptionPubkey: ENCRYPTION_CONFIG.adminPublicKey,
@@ -1040,5 +1054,3 @@ export default function GeneratorPage() {
 }
 
     
-
-
