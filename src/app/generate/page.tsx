@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import {
@@ -53,6 +54,7 @@ export default function GeneratorPage() {
   const [showExitLoader, setShowExitLoader] = useState(false);
   const [minting, setMinting] = useState(false);
   const [error, setError] = useState('');
+  const [loadingStepIndex, setLoadingStepIndex] = useState(0);
   
   // Form State
   const [characterName, setCharacterName] = useState('');
@@ -100,6 +102,32 @@ export default function GeneratorPage() {
     hairAmount, facialHair, clothingStyle,
     hairColor, eyewear, skinColor,
   });
+
+  const loadingSteps = [
+    'Preparing clothing style',
+    'Generating hairstyle',
+    'Refining facial features',
+    'Adjusting skin tone',
+    'Configuring accessories',
+    'Balancing body proportions',
+    'Finalizing character pose',
+  ];
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | undefined;
+    if (loading && !showExitLoader) {
+      interval = setInterval(() => {
+        setLoadingStepIndex(prevIndex =>
+          (prevIndex + 1) % loadingSteps.length
+        );
+      }, 1200); // Cycle every 1.2 seconds
+    }
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [loading, showExitLoader, loadingSteps.length]);
 
   const navigate = (targetId: string) => {
     setPage(targetId);
@@ -281,6 +309,7 @@ export default function GeneratorPage() {
     setGeneratedName('');
     setOriginDescription('');
     setTxHash('');
+    setLoadingStepIndex(0);
 
     navigate('page-preview');
 
@@ -649,7 +678,7 @@ export default function GeneratorPage() {
                       ) : (
                         <div className="flex flex-col items-center gap-2 text-stone-500">
                             <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="rounded-2xl" unoptimized />
-                            <p className="font-semibold">Generating image...</p>
+                            <p key={loadingStepIndex} className="font-semibold h-6 animate__animated animate__fadeIn">{loadingSteps[loadingStepIndex]}...</p>
                         </div>
                       )
                     ) : generatedImage ? (
@@ -841,7 +870,5 @@ export default function GeneratorPage() {
     </div>
   );
 }
-
-    
 
     
