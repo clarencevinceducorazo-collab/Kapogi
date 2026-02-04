@@ -406,7 +406,7 @@ export default function AdminPage() {
                                 </Button>
                                 <Button onClick={() => handleMarkDelivered(receipt.objectId)} disabled={receipt.status !== ORDER_STATUS.SHIPPED} className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg border-2 border-black shadow-hard-sm shadow-hard-hover active:shadow-hard-active transition-brutal text-sm font-black flex items-center gap-2 h-auto disabled:bg-gray-300 disabled:cursor-not-allowed">
                                   <CheckCircle className="w-4 h-4" />
-                                  Deliver
+                                  Delivered
                                 </Button>
                                 <Button onClick={() => handleOpenTrackingModal(receipt)} disabled={receipt.status === ORDER_STATUS.PENDING} className="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1.5 rounded-lg border-2 border-black shadow-hard-sm shadow-hard-hover active:shadow-hard-active transition-brutal text-sm font-black flex items-center gap-2 h-auto disabled:bg-gray-300 disabled:cursor-not-allowed">
                                   <ClipboardList className="w-4 h-4" />

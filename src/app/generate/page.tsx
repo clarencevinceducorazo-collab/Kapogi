@@ -111,6 +111,8 @@ export default function GeneratorPage() {
 
   // Merch selection state
   const [selection, setSelection] = useState<string | null>(null);
+  const [shirtSize, setShirtSize] = useState<string>('');
+  const SIZES = ['S', 'M', 'L', 'XL'];
 
   // Result State
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
@@ -505,49 +507,32 @@ export default function GeneratorPage() {
   
     try {
       // 1. Validate Shipping Info
-      const validation = validateShippingInfo(
-        {
-          full_name: shippingName,
-          contact_number: shippingContact,
-        },
-        {
-          province: selectedProvince,
-          city: selectedCity,
-          barangay: selectedBarangay,
-          street_address: streetAddress,
-        }
-      );
+      const validation = validateShippingInfo({
+        full_name: shippingName,
+        contact_number: shippingContact,
+        address: [streetAddress, selectedBarangay?.name, selectedCity?.name, selectedProvince?.name].filter(Boolean).join(', '),
+      });
+
       if (!validation.valid) {
         setError(validation.errors.join(', '));
         setMinting(false);
         return;
       }
-      
-      // 2. Construct final merged address string
-      const fullAddress = [
-        streetAddress,
-        selectedBarangay?.name,
-        selectedCity?.name,
-        selectedProvince?.name,
-      ].filter(Boolean).join(', ');
-
-      // 3. Create final shipping info object for encryption
-      const shippingInfo: ShippingInfo = {
+  
+      // 2. Encrypt Shipping Info
+      console.log('🔐 Encrypting shipping information...');
+      const encryptedShippingInfo = await encryptShippingInfo({
         full_name: shippingName,
         contact_number: shippingContact,
-        address: fullAddress,
-      };
-  
-      // 4. Encrypt Shipping Info
-      console.log('🔐 Encrypting shipping information...');
-      const encryptedShippingInfo = await encryptShippingInfo(shippingInfo);
+        address: validation.fullAddress,
+      });
       console.log('✅ Shipping info encrypted successfully');
   
-      // 5. Map selection to contract-expected value
+      // 3. Map selection to contract-expected value
       let itemsSelected = '';
       switch (selection) {
         case 'Tee':
-          itemsSelected = 'SHIRT';
+          itemsSelected = `SHIRT-${shirtSize}`;
           break;
         case 'Mug':
           itemsSelected = 'MUG';
@@ -559,7 +544,7 @@ export default function GeneratorPage() {
           itemsSelected = 'PLATE';
           break;
         case 'Bundle':
-          itemsSelected = 'ALL_BUNDLE';
+          itemsSelected = `ALL_BUNDLE,SHIRT-${shirtSize}`;
           break;
         default:
           setError('Invalid merchandise selection.');
@@ -567,7 +552,7 @@ export default function GeneratorPage() {
           return;
       }
   
-      // 6. Upload to IPFS (only if it was an AI generated image)
+      // 4. Upload to IPFS (only if it was an AI generated image)
       let finalImageUrl = generatedImage;
       if (generatedImageBlob) {
         console.log('📤 Uploading to IPFS...');
@@ -584,7 +569,7 @@ export default function GeneratorPage() {
         console.log('✅ IPFS upload complete:', finalImageUrl);
       }
   
-      // 7. Mint on SUI blockchain
+      // 5. Mint on SUI blockchain
       console.log('⛓️ Minting on SUI blockchain...');
       const result = await mintCharacterNFT({
         name: generatedName,
@@ -624,18 +609,28 @@ export default function GeneratorPage() {
   const handleSelection = (item: string) => {
     if (selection === item) {
       setSelection(null);
+      if (item === 'Tee' || item === 'Bundle') {
+        setShirtSize('');
+      }
     } else {
       setSelection(item);
+      if (item !== 'Tee' && item !== 'Bundle') {
+        setShirtSize('');
+      }
     }
   };
 
   const handleContinueToShipping = () => {
     if (!selection) {
       setError("Please select at least one merchandise item or the bundle.");
-    } else {
-      setError('');
-      navigate('page-shipping');
+      return;
     }
+    if ((selection === 'Tee' || selection === 'Bundle') && !shirtSize) {
+      setError("Please select a T-shirt size.");
+      return;
+    }
+    setError('');
+    navigate('page-shipping');
   };
 
   const handleProvinceChange = (provinceCode: string) => {
@@ -903,6 +898,26 @@ export default function GeneratorPage() {
                         </button>
                     </div>
 
+                    {(selection === 'Tee' || selection === 'Bundle') && (
+                        <div className="mb-6 bg-white border-4 border-black rounded-xl p-4 hard-shadow-sm relative z-10 animate__animated animate__fadeIn">
+                            <h3 className="font-display font-semibold text-xl mb-3 text-center">Select T-Shirt Size</h3>
+                            <div className="flex justify-center gap-2">
+                                {SIZES.map(size => (
+                                    <button 
+                                        key={size}
+                                        onClick={() => setShirtSize(size)}
+                                        className={cn(
+                                            "w-14 h-14 font-display font-semibold text-lg border-4 border-black rounded-lg hard-shadow-sm hard-shadow-hover transition-all",
+                                            shirtSize === size ? "bg-pink-500 text-white" : "bg-white text-black"
+                                        )}
+                                    >
+                                        {size}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     <button onClick={() => handleSelection('Bundle')} className={cn("bg-yellow-400 border-4 border-black rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 hard-shadow-sm relative z-10 transition-all", selection === 'Bundle' && "ring-4 ring-offset-2 ring-pink-500")}>
                         <div className="flex items-center gap-4">
                             <div className="w-8 h-8 bg-white border-4 border-black rounded-md flex items-center justify-center">
@@ -1059,3 +1074,4 @@ export default function GeneratorPage() {
     </div>
   );
 }
+
