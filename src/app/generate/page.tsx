@@ -13,10 +13,8 @@ import {
   MousePointer2,
   ArrowRight,
   Truck,
-  Utensils,
   ArrowLeft,
   LoaderCircle,
-  UserRound,
   Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -113,8 +111,6 @@ export default function GeneratorPage() {
 
   // Merch selection state
   const [selection, setSelection] = useState<string | null>(null);
-  const allMerchItems = ['Tee', 'Mug', 'Pad', 'Plate'];
-
 
   // Result State
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
@@ -693,7 +689,7 @@ export default function GeneratorPage() {
           </div>
         </header>
 
-        <div className="p-0 bg-stone-50 min-h-[600px] relative">
+        <div className="bg-stone-50 min-h-[600px] relative">
           <section id="page-generator" className={cn('page-section p-6 md:p-8 flex flex-col gap-8 h-full', { 'hidden': page !== 'generator' })}>
             <div className="text-center space-y-2">
                 <h1 className="font-display text-4xl font-semibold tracking-tight uppercase">Kapogian Image Generator</h1>
@@ -790,8 +786,7 @@ export default function GeneratorPage() {
                         <div className="space-y-1 pt-2">
                             <label className="text-sm font-semibold">Held Item (Food/Flower)</label>
                              <div className="relative">
-                                <Utensils className="absolute left-3 top-3 w-5 h-5 text-stone-400" />
-                                <select value={holdingItem} onChange={(e) => setHoldingItem(e.target.value)} className="w-full border-2 border-black rounded-lg p-2 pl-10 bg-white font-medium">
+                                <select value={holdingItem} onChange={(e) => setHoldingItem(e.target.value)} className="w-full border-2 border-black rounded-lg p-2 bg-white font-medium">
                                     <option value="None">Nothing</option>
                                     <option value="Cash">Cash</option>
                                     <option value="Random Food">Filipino Food</option>
@@ -822,15 +817,15 @@ export default function GeneratorPage() {
 
           <section id="page-preview" className={cn('page-section flex flex-col h-full', { 'hidden': page !== 'page-preview' })}>
               <div className="flex flex-col md:flex-row border-b-4 border-black">
-                   <div className="relative w-full md:w-1/2 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px]">
+                  <div className="relative w-full md:w-1/2 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px]">
                       {loading ? (
                           showExitLoader ? (
                             <div className="relative w-full h-full flex items-center justify-center">
-                              <Image src="/images/finalexit.gif" alt="Finishing up..." width="400" height="400" className="object-contain" unoptimized />
+                              <Image src="/images/finalexit.gif" alt="Finishing up..." width={400} height={400} className="object-contain" unoptimized />
                             </div>
                           ) : (
                             <div className="relative w-full h-full flex flex-col items-center justify-center">
-                                <Image src="/images/loadscreens.gif" alt="Generating..." width="400" height="400" className="object-contain" unoptimized />
+                                <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="object-contain" unoptimized />
                                 <p key={loadingStepIndex} className="font-semibold h-6 animate__animated animate__fadeIn mt-2 text-stone-600">{loadingSteps[loadingStepIndex]}...</p>
                             </div>
                           )
@@ -845,9 +840,11 @@ export default function GeneratorPage() {
                   </div>
                   <div className="w-full md:w-1/2 p-8 bg-white flex flex-col">
                       <div className="mb-4">
+                        {loading ? <Skeleton className="h-8 w-48" /> :
                           <h2 className="font-display text-2xl font-semibold tracking-tight uppercase border-b-4 border-yellow-300 inline-block">
                             {generatedName || '...'}
                           </h2>
+                        }
                       </div>
                       <div className="flex-grow bg-stone-50 border-2 border-stone-200 rounded-lg p-4 font-medium text-stone-700 max-h-64 overflow-y-auto">
                         {(loading || !generatedLore) ? (
@@ -1062,8 +1059,3 @@ export default function GeneratorPage() {
     </div>
   );
 }
-
-    
-
-    
-

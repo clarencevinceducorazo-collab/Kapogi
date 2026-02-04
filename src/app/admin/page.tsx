@@ -320,7 +320,19 @@ export default function AdminPage() {
                         </div>
                         <div className="flex flex-col">
                           <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Address:</span>
-                          <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1 leading-tight">{card.address}</span>
+                          <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1 leading-tight">
+                            {
+                                // Handle both old (object) and new (string) address formats to prevent crashes
+                                typeof card.address === 'string'
+                                ? card.address
+                                : [
+                                    (card.address as any)?.street_address,
+                                    (card.address as any)?.barangay?.name,
+                                    (card.address as any)?.city?.name,
+                                    (card.address as any)?.province?.name,
+                                    ].filter(Boolean).join(', ')
+                            }
+                          </span>
                         </div>
                         <div className="flex flex-col">
                           <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Phone:</span>
