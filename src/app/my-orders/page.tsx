@@ -131,8 +131,15 @@ export default function MyOrdersPage() {
 
   if (!account) {
     return (
-      <div className="bg-pattern font-body text-gray-900 min-h-screen p-4 md:p-8 flex items-center justify-center">
-        <div className="bg-white border-4 border-black rounded-3xl p-8 shadow-hard text-center max-w-md w-full">
+      <div className="relative font-body text-gray-900 min-h-screen p-4 md:p-8 flex items-center justify-center antialiased selection:bg-black selection:text-white">
+        <Image
+            src="/images/herobg.png"
+            alt="My Orders background"
+            fill
+            className="object-cover -z-10"
+            priority
+        />
+        <div className="bg-white border-4 border-black rounded-3xl p-8 shadow-hard text-center max-w-md w-full relative">
           <Wallet size={48} className="mx-auto mb-4" />
           <h2 className="font-headline text-3xl mb-4">Connect Your Wallet</h2>
           <p className="mb-6">Please connect your wallet to view your orders.</p>
@@ -143,8 +150,15 @@ export default function MyOrdersPage() {
   }
 
   return (
-    <div className="bg-pattern font-body text-gray-900 min-h-screen p-4 md:p-8 antialiased selection:bg-black selection:text-white">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="relative font-body text-gray-900 min-h-screen p-4 md:p-8 antialiased selection:bg-black selection:text-white">
+       <Image
+        src="/images/herobg.png"
+        alt="My Orders background"
+        fill
+        className="object-cover -z-10"
+        priority
+      />
+      <div className="max-w-4xl mx-auto space-y-8 relative">
         <header className="bg-white border-4 border-black rounded-full p-3 px-6 flex flex-col md:flex-row justify-between items-center shadow-hard gap-4">
           <div className="flex items-center gap-3">
             <div className="bg-black text-white p-2 rounded-full flex items-center justify-center">
@@ -162,7 +176,7 @@ export default function MyOrdersPage() {
         </header>
 
         {loading ? (
-          <div className="flex justify-center items-center p-20 text-lg gap-3 font-bold text-gray-600">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl flex justify-center items-center p-20 text-lg gap-3 font-bold text-gray-800 shadow-hard">
             <LoaderCircle size={32} className="animate-spin" />
             <p>Loading Your Orders...</p>
           </div>
