@@ -329,13 +329,10 @@ export default function GeneratorPage() {
     }
 
     try {
-      let nameToUse = characterName;
-      if (!nameToUse) {
-        nameToUse = await generateName();
-      }
-      setGeneratedName(nameToUse);
+      // Step 1: Determine name and origin description first
+      const nameToUse = characterName || await generateName();
 
-      let originDesc = "Filipino";
+      let originDesc: string;
       if (luzon === 0 && visayas === 0 && mindanao === 0) {
         const origin = await generateCountry();
         originDesc = `a naturalized Filipino from ${origin}`;
@@ -344,15 +341,16 @@ export default function GeneratorPage() {
         origins.sort((a, b) => b.value - a.value);
         originDesc = `a native of the ${origins[0].region} region of the Philippines`;
       }
-      setOriginDescription(originDesc);
-
+      
+      // Step 2: Build prompt and run image/lore generation in parallel
       const fullPrompt = buildCharacterPrompt(nameToUse, originDesc);
       
       const imagePromise = generateImage({ prompt: fullPrompt });
       const lorePromise = generateLore(nameToUse, originDesc);
 
       const [imageResult, lore] = await Promise.all([imagePromise, lorePromise]);
-      
+
+      // Step 3: Process results
       const imageUrl = imageResult?.imageUrl;
       if (!imageUrl) throw new Error('No image data received from the API.');
       
@@ -364,10 +362,15 @@ export default function GeneratorPage() {
       }
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: 'image/png' });
+      
+      // Step 4: Update state all at once to ensure synchronized display
+      setGeneratedName(nameToUse);
+      setOriginDescription(originDesc);
       setGeneratedImageBlob(blob);
       setGeneratedImage(imageUrl);
       setGeneratedLore(lore);
 
+      // Step 5: Trigger the exit animation
       setShowExitLoader(true);
       setTimeout(() => {
         setLoading(false);
@@ -671,7 +674,7 @@ export default function GeneratorPage() {
 
           <section id="page-preview" className={cn('page-section flex flex-col h-full', { 'hidden': page !== 'page-preview' })}>
               <div className="flex flex-col md:flex-row border-b-4 border-black">
-                  <div className="w-full md:w-1/2 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px]">
+                  <div className="w-full md:w-1/2 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px] relative">
                     {loading ? (
                       showExitLoader ? (
                         <Image src="/images/finalexit.gif" alt="Finishing up..." width={400} height={400} className="rounded-2xl" unoptimized />
@@ -684,9 +687,11 @@ export default function GeneratorPage() {
                     ) : generatedImage ? (
                       <Image src={generatedImage} alt="Kapogian Character" width={512} height={512} className="rounded-2xl border-4 border-black hard-shadow animate__animated animate__zoomIn" />
                     ) : (
-                      <div className="flex flex-col items-center gap-2 text-stone-500">
-                          <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="rounded-2xl" unoptimized />
-                          <p className="font-semibold">Preparing to generate...</p>
+                      <div className="flex flex-col items-center justify-center w-full h-full bg-stone-200">
+                          <div className="flex flex-col items-center gap-2 text-stone-500">
+                              <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="rounded-2xl" unoptimized />
+                              <p className="font-semibold">Preparing to generate...</p>
+                          </div>
                       </div>
                     )}
                   </div>
