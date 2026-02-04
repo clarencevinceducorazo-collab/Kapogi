@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -1067,9 +1068,9 @@ export default function GeneratorPage() {
                         <span className="text-xs font-bold uppercase text-stone-500 tracking-widest">Status: Pending</span>
                     </div>
 
-                    <button onClick={() => navigate('page-generator')} className="w-full bg-white text-black border-4 border-black rounded-xl py-3 text-lg font-display font-semibold uppercase tracking-tight hover:bg-stone-100 transition-all">
+                    <a href="/generate" className="block text-center w-full bg-white text-black border-4 border-black rounded-xl py-3 text-lg font-display font-semibold uppercase tracking-tight hover:bg-stone-100 transition-all">
                         Make Another
-                    </button>
+                    </a>
 
                     <div className="absolute bottom-20 right-4 border-4 border-red-500 text-red-500 rounded-full w-24 h-24 flex items-center justify-center font-bold text-xl uppercase rotate-[-20deg] opacity-80 pointer-events-none" style={{mixBlendMode: 'multiply'}}>
                         PAID
@@ -1081,4 +1082,5 @@ export default function GeneratorPage() {
     </div>
   );
 }
+
 
