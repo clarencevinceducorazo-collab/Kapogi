@@ -31,6 +31,9 @@ import { generateText } from '@/ai/flows/generate-text-flow';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTypewriter } from '@/hooks/use-typewriter';
 import { useEasterEgg } from '@/hooks/useEasterEgg';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PSGC_DATA, type Province, type City, type Barangay } from '@/lib/psgc';
+import { Input } from '@/components/ui/input';
 
 
 interface CharacterData {
@@ -77,7 +80,16 @@ export default function GeneratorPage() {
   // Shipping State
   const [shippingName, setShippingName] = useState('');
   const [shippingContact, setShippingContact] = useState('');
-  const [shippingAddress, setShippingAddress] = useState('');
+  
+  // New PSGC-based address state
+  const [selectedProvince, setSelectedProvince] = useState<Province | null>(null);
+  const [selectedCity, setSelectedCity] = useState<City | null>(null);
+  const [selectedBarangay, setSelectedBarangay] = useState<Barangay | null>(null);
+  const [streetAddress, setStreetAddress] = useState('');
+
+  // Derived state for dropdown options
+  const [cities, setCities] = useState<City[]>([]);
+  const [barangays, setBarangays] = useState<Barangay[]>([]);
 
   // Merch selection state
   const [selection, setSelection] = useState<string | null>(null);
@@ -128,6 +140,25 @@ export default function GeneratorPage() {
       }
     };
   }, [loading, showExitLoader, loadingSteps.length]);
+
+  useEffect(() => {
+    if (selectedProvince) {
+      setCities(PSGC_DATA.cities[selectedProvince.code as keyof typeof PSGC_DATA.cities] || []);
+      setSelectedCity(null); // Reset city
+      setSelectedBarangay(null); // Reset barangay
+    } else {
+      setCities([]);
+    }
+  }, [selectedProvince]);
+
+  useEffect(() => {
+    if (selectedCity) {
+      setBarangays(PSGC_DATA.barangays[selectedCity.code as keyof typeof PSGC_DATA.barangays] || []);
+      setSelectedBarangay(null); // Reset barangay
+    } else {
+      setBarangays([]);
+    }
+  }, [selectedCity]);
 
   const navigate = (targetId: string) => {
     setPage(targetId);
@@ -400,9 +431,14 @@ export default function GeneratorPage() {
     try {
       // 1. Validate Shipping Info
       const shippingInfo: ShippingInfo = {
-        name: shippingName,
-        address: shippingAddress,
-        phone: shippingContact,
+        full_name: shippingName,
+        contact_number: shippingContact,
+        address: {
+            province: selectedProvince || { name: '', psgc_code: '' },
+            city: selectedCity || { name: '', psgc_code: '' },
+            barangay: selectedBarangay || { name: '', psgc_code: '' },
+            street_address: streetAddress,
+        }
       };
       const validation = validateShippingInfo(shippingInfo);
       if (!validation.valid) {
@@ -507,6 +543,21 @@ export default function GeneratorPage() {
       setError('');
       navigate('page-shipping');
     }
+  };
+
+  const handleProvinceChange = (provinceCode: string) => {
+    const province = PSGC_DATA.provinces.find(p => p.code === provinceCode) || null;
+    setSelectedProvince(province);
+  };
+
+  const handleCityChange = (cityCode: string) => {
+    const city = cities.find(c => c.code === cityCode) || null;
+    setSelectedCity(city);
+  };
+
+  const handleBarangayChange = (barangayCode: string) => {
+    const barangay = barangays.find(b => b.code === barangayCode) || null;
+    setSelectedBarangay(barangay);
   };
 
 
@@ -800,15 +851,54 @@ export default function GeneratorPage() {
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <label className="font-semibold uppercase text-sm tracking-wide">Full Name</label>
-                            <input type="text" value={shippingName} onChange={(e) => setShippingName(e.target.value)} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all" />
+                            <Input type="text" value={shippingName} onChange={(e) => setShippingName(e.target.value)} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" />
                         </div>
                         <div className="space-y-2">
                             <label className="font-semibold uppercase text-sm tracking-wide">Contact Number</label>
-                            <input type="text" value={shippingContact} onChange={(e) => setShippingContact(e.target.value)} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all" />
+                            <Input type="text" value={shippingContact} onChange={(e) => setShippingContact(e.target.value)} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" placeholder="09123456789"/>
+                        </div>
+                         <div className="space-y-2">
+                            <label className="font-semibold uppercase text-sm tracking-wide">Province</label>
+                            <Select onValueChange={handleProvinceChange} value={selectedProvince?.code}>
+                                <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto">
+                                    <SelectValue placeholder="Select Province" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {PSGC_DATA.provinces.map(p => (
+                                    <SelectItem key={p.code} value={p.code}>{p.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                         <div className="space-y-2">
+                            <label className="font-semibold uppercase text-sm tracking-wide">City / Municipality</label>
+                            <Select onValueChange={handleCityChange} value={selectedCity?.code} disabled={!selectedProvince}>
+                                <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" disabled={!selectedProvince}>
+                                    <SelectValue placeholder="Select City/Municipality" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {cities.map(c => (
+                                        <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
-                            <label className="font-semibold uppercase text-sm tracking-wide">Full Address</label>
-                            <textarea rows={3} value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all resize-none"></textarea>
+                            <label className="font-semibold uppercase text-sm tracking-wide">Barangay</label>
+                            <Select onValueChange={handleBarangayChange} value={selectedBarangay?.code} disabled={!selectedCity}>
+                                <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" disabled={!selectedCity}>
+                                    <SelectValue placeholder="Select Barangay" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {barangays.map(b => (
+                                        <SelectItem key={b.code} value={b.code}>{b.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="font-semibold uppercase text-sm tracking-wide">Street Address, House/Bldg No.</label>
+                            <Input type="text" value={streetAddress} onChange={(e) => setStreetAddress(e.target.value)} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" />
                         </div>
                     </div>
 

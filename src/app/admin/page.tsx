@@ -36,7 +36,16 @@ interface Receipt {
 }
 
 type DecryptedCard = ShippingInfo & {
-  id: string; // Using receipt objectId as id
+  id: string;
+  nftData?: {
+    name: string;
+    description: string;
+    imageUrl: string;
+    attributes: string;
+    edition: number;
+  } | null;
+  itemsSelected?: string;
+  paymentAmount?: number;
 };
 
 export default function AdminPage() {
@@ -90,26 +99,48 @@ export default function AdminPage() {
 
   const handleToggleDecrypt = async (receipt: Receipt) => {
     const isDecrypted = decryptedCards.some(card => card.id === receipt.objectId);
-
+  
     if (isDecrypted) {
-      // If it's already decrypted, remove it from the list to "encrypt" (hide) it.
       setDecryptedCards(decryptedCards.filter(card => card.id !== receipt.objectId));
     } else {
-      // If it's not decrypted, decrypt it and add it to the list.
       if (!adminPrivateKey) {
         alert('Please enter the Admin Private Key first!');
         return;
       }
-
+  
       try {
-        const decryptedInfo = await decryptShippingInfo(receipt.encryptedShippingInfo, adminPrivateKey);
-
+        // 1. Decrypt shipping info
+        const decryptedInfo = await decryptShippingInfo(
+          receipt.encryptedShippingInfo, 
+          adminPrivateKey
+        );
+  
+        // 2. Fetch the NFT object to get image and metadata
+        const nftObj = await suiClient.getObject({
+          id: receipt.nftId,
+          options: { showContent: true },
+        });
+  
+        let nftData = null;
+        if (nftObj.data?.content?.dataType === 'moveObject') {
+          const fields = nftObj.data.content.fields as any;
+          nftData = {
+            name: fields.name,
+            description: fields.description,
+            imageUrl: fields.image_url, // IPFS URL
+            attributes: fields.attributes,
+            edition: fields.edition,
+          };
+        }
+  
         const newCard: DecryptedCard = {
           id: receipt.objectId,
           ...decryptedInfo,
+          nftData, // Add NFT data
+          itemsSelected: receipt.itemsSelected, // Add items ordered
+          paymentAmount: receipt.paymentAmount, // Add payment info
         };
-
-        // Add the new card to the list.
+  
         setDecryptedCards(prev => [newCard, ...prev]);
         setError('');
       } catch (e) {
@@ -309,26 +340,78 @@ export default function AdminPage() {
               ) : (
                 <div id="cardsContainer" className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {decryptedCards.map(card => (
-                    <div key={card.id} className="bg-yellow-100/50 border-2 border-black rounded-xl p-5 shadow-hard-xs relative animate-fadeIn hover:bg-yellow-100/80 transition-colors">
-                      <div className="absolute -top-3 -right-3 bg-purple-500 text-white border-2 border-black rounded-full w-8 h-8 flex items-center justify-center z-10 font-bold text-xs shadow-sm">
-                        #{card.id.slice(2, 6)}
-                      </div>
-                      <div className="space-y-3 font-mono text-sm md:text-base">
-                        <div className="flex flex-col">
-                          <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Name:</span>
-                          <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1">{card.name}</span>
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Address:</span>
-                          <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1 leading-tight">{card.address}</span>
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Phone:</span>
-                          <span className="font-bold text-gray-900 pb-1">{card.phone}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    <div key={card.id} className="bg-gradient-to-br from-yellow-50 to-white border-4 border-black rounded-2xl shadow-hard overflow-hidden animate-fadeIn">
+  {/* NFT Image Header */}
+  {card.nftData && (
+    <div className="relative h-48 bg-gray-900 border-b-4 border-black">
+      <img 
+        src={card.nftData.imageUrl.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/')} 
+        alt={card.nftData.name}
+        className="w-full h-full object-cover"
+      />
+      <div className="absolute top-3 right-3 bg-primary text-white px-3 py-1 rounded-full border-2 border-black font-black text-sm shadow-hard-xs">
+        #{card.nftData.edition}
+      </div>
+    </div>
+  )}
+
+  <div className="p-5 space-y-4">
+    {/* NFT Info */}
+    {card.nftData && (
+      <div className="pb-4 border-b-2 border-dashed border-gray-300">
+        <h3 className="font-headline text-xl mb-2">{card.nftData.name}</h3>
+        <p className="text-sm text-gray-600 font-bold">{card.nftData.description}</p>
+      </div>
+    )}
+
+    {/* Order Details */}
+    <div className="bg-blue-50 border-2 border-black rounded-xl p-4">
+      <h4 className="font-black text-xs uppercase text-gray-600 mb-2">Order Details</h4>
+      <div className="flex flex-wrap gap-2 mb-2">
+        {card.itemsSelected?.split(',').map(item => (
+          <span key={item} className="px-2 py-1 bg-white border-2 border-black rounded text-xs font-black shadow-sm">
+            {item}
+          </span>
+        ))}
+      </div>
+      <p className="text-sm font-bold text-gray-700">
+        Total Paid: <span className="text-primary">{(card.paymentAmount || 0) / 1_000_000_000} SUI</span>
+      </p>
+    </div>
+
+    {/* Shipping Info */}
+    <div className="space-y-3 font-mono text-sm">
+      <div className="flex flex-col">
+        <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Name:</span>
+        <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1">{card.name}</span>
+      </div>
+      <div className="flex flex-col">
+        <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Address:</span>
+        <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1 leading-tight">{card.address}</span>
+      </div>
+      <div className="flex flex-col">
+        <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Phone:</span>
+        <span className="font-bold text-gray-900 pb-1">{card.phone}</span>
+      </div>
+    </div>
+
+    {/* Download Button */}
+    {card.nftData && (
+      <Button
+        onClick={() => {
+          const ipfsUrl = card.nftData!.imageUrl.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
+          window.open(ipfsUrl, '_blank');
+        }}
+        className="w-full bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg border-2 border-black shadow-hard-sm transition-brutal text-sm font-black flex items-center justify-center gap-2"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        Download NFT Image
+      </Button>
+    )}
+  </div>
+</div>}
                 </div>
               )}
             </div>
