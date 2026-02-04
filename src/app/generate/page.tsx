@@ -17,6 +17,7 @@ import {
   ArrowLeft,
   LoaderCircle,
   Check,
+  Shuffle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -401,6 +402,27 @@ export default function GeneratorPage() {
     }
 
     return `full body shot of a cute chubby chibi pinoy boy named ${name}, ${originDesc}, with ${skinColorDescriptor}, with ${hairColorDescriptor} and ${hairDescriptor}, ${facialHairDescriptor}, wearing ${clothingDescriptor}, with ${eyewearDescriptor}, ${bodyFatDescriptor}, ${postureDescriptor}, ${holdingItemDescriptor}, showing confident pose, smiling. Chibi character art, clean vector line art, cel-shaded, sticker style, simple white background.`;
+  };
+
+  const handleShuffle = () => {
+    setCuteness(Math.floor(Math.random() * 101));
+    setConfidence(Math.floor(Math.random() * 101));
+    setTiliFactor(Math.floor(Math.random() * 101));
+    setLuzon(Math.floor(Math.random() * 51));
+    setVisayas(Math.floor(Math.random() * 51));
+    setMindanao(Math.floor(Math.random() * 51));
+    setHairAmount(Math.floor(Math.random() * 51));
+    setFacialHair(Math.floor(Math.random() * 51));
+    setClothingStyle(Math.floor(Math.random() * 51));
+    setHairColor(Math.floor(Math.random() * 51));
+    setEyewear(Math.floor(Math.random() * 51));
+    setSkinColor(Math.floor(Math.random() * 51));
+    setBodyFat(Math.floor(Math.random() * 51));
+    setPosture(Math.floor(Math.random() * 51));
+
+    const items = ['None', 'Cash', 'Random Food', 'Random Bouquet of Flowers', 'Random Home Utensils'];
+    const randomItem = items[Math.floor(Math.random() * items.length)];
+    setHoldingItem(randomItem);
   };
   
   const handleGenerate = async () => {
@@ -800,13 +822,20 @@ export default function GeneratorPage() {
                         </div>
                     </div>
 
-                    <div className="pt-4 flex justify-end">
+                    <div className="pt-4 flex justify-end gap-4 items-stretch">
+                        <button
+                            onClick={handleShuffle}
+                            disabled={loading}
+                            className="bg-yellow-400 text-black border-4 border-black rounded-xl py-4 px-6 text-xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hard-shadow-hover transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <Shuffle className="w-7 h-7" />
+                            Shuffle
+                        </button>
                         <button 
                             onClick={handleGenerate} 
                             disabled={loading}
-                            className="w-full bg-green-400 text-black border-4 border-black rounded-xl py-4 px-6 text-2xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hard-shadow-hover transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
+                            className="flex-grow bg-green-400 text-black border-4 border-black rounded-xl py-4 px-6 text-2xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hard-shadow-hover transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
                             {loading ? <LoaderCircle className="w-8 h-8 animate-spin" /> : <Sparkles className="w-8 h-8" />}
-                            {loading ? 'Generating...' : 'Generate Character'}
+                            {loading ? 'Generating...' : 'Generate'}
                         </button>
                     </div>
                      {error && (
@@ -1084,3 +1113,6 @@ export default function GeneratorPage() {
 }
 
 
+
+
+    
