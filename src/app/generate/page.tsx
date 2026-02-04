@@ -708,9 +708,9 @@ export default function GeneratorPage() {
             <span className="font-display font-semibold tracking-tight text-xl text-yellow-400">KAPOGIAN CUSTOMIZATION</span>
           </div>
           <div className="w-1/3 flex justify-end gap-2">
-            <div className="w-4 h-4 rounded-full bg-red-500 border-2 border-white animate-pulse"></div>
-            <div className="w-4 h-4 rounded-full bg-yellow-400 border-2 border-white animate-pulse" style={{ animationDelay: '200ms' }}></div>
-            <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-white animate-pulse" style={{ animationDelay: '400ms' }}></div>
+            <div className="w-4 h-4 rounded-full bg-red-500 border-2 border-white animate-pulse shadow-[0_0_10px_#ef4444]"></div>
+            <div className="w-4 h-4 rounded-full bg-yellow-400 border-2 border-white animate-pulse shadow-[0_0_10px_#facc15]" style={{ animationDelay: '200ms' }}></div>
+            <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-white animate-pulse shadow-[0_0_10px_#22c55e]" style={{ animationDelay: '400ms' }}></div>
           </div>
         </header>
 
@@ -911,25 +911,25 @@ export default function GeneratorPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 relative z-10">
                         <button onClick={() => handleSelection('Tee')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Tee' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
                             <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
-                                <Image src="/images/shirtrot.gif" alt="Tee" width={128} height={128} className="object-contain" />
+                                <Image src="/images/shirt.png" alt="Tee" width={128} height={128} className="object-contain" />
                             </div>
                             <span className="font-display font-semibold uppercase">Tee</span>
                         </button>
                         <button onClick={() => handleSelection('Mug')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Mug' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
                             <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
-                                <Image src="/images/mugzrot.gif" alt="Mug" width={128} height={128} className="object-contain" />
+                                <Image src="/images/printmug.png" alt="Mug" width={128} height={128} className="object-contain" />
                             </div>
                             <span className="font-display font-semibold uppercase">Mug</span>
                         </button>
                         <button onClick={() => handleSelection('Pad')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Pad' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
                             <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
-                                 <Image src="/images/padrot.gif" alt="Mouse Pad" width={128} height={128} className="object-contain" />
+                                 <Image src="/images/pad.png" alt="Mouse Pad" width={128} height={128} className="object-contain" />
                             </div>
                             <span className="font-display font-semibold uppercase">Pad</span>
                         </button>
                         <button onClick={() => handleSelection('Plate')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Plate' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
                             <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
-                                <Image src="/images/platerot.gif" alt="Aluminum Plate" width={128} height={128} className="object-contain" />
+                                <Image src="/images/aluminum.png" alt="Aluminum Plate" width={128} height={128} className="object-contain" />
                             </div>
                             <span className="font-display font-semibold uppercase">Plate</span>
                         </button>
@@ -1111,6 +1111,8 @@ export default function GeneratorPage() {
     </div>
   );
 }
+    
+
     
 
     
