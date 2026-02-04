@@ -172,24 +172,40 @@ export async function getOwnedReceipts(walletAddress: string) {
 export async function getAllReceipts() {
   try {
     console.log('🔍 Fetching all order creation events...');
-    const allEvents = await suiClient.queryEvents({
-      query: { MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ORDER_RECEIPT}::ReceiptCreated` },
-      order: 'ascending', // Fetch all events
-    });
+    let allReceiptIds: string[] = [];
+    let hasNextPage = true;
+    let cursor: string | null = null;
 
-    const receiptIds = allEvents.data.map(event => (event.parsedJson as any)?.receipt_id).filter(Boolean);
+    // Paginate through all events to find every single receipt
+    while (hasNextPage) {
+      const page: any = await suiClient.queryEvents({
+        query: { MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ORDER_RECEIPT}::ReceiptCreated` },
+        cursor: cursor,
+        order: 'ascending',
+      });
+
+      const pageReceiptIds = page.data.map((event: any) => event.parsedJson?.receipt_id).filter(Boolean);
+      allReceiptIds.push(...pageReceiptIds);
+      
+      if (page.hasNextPage && page.nextCursor) {
+        cursor = page.nextCursor;
+      } else {
+        hasNextPage = false;
+      }
+    }
     
-    if (receiptIds.length === 0) {
+    if (allReceiptIds.length === 0) {
+      console.log('No ReceiptCreated events found.');
       return [];
     }
 
-    console.log(`✨ Found ${receiptIds.length} receipt events. Fetching object details...`);
+    console.log(`✨ Found ${allReceiptIds.length} total receipt events. Fetching object details...`);
 
     // Fetch objects in chunks to avoid overwhelming the RPC
     const receipts = [];
     const chunkSize = 50; // Sui's multiGetObjects has a limit of 50
-    for (let i = 0; i < receiptIds.length; i += chunkSize) {
-        const chunk = receiptIds.slice(i, i + chunkSize);
+    for (let i = 0; i < allReceiptIds.length; i += chunkSize) {
+        const chunk = allReceiptIds.slice(i, i + chunkSize);
         const chunkReceipts = await suiClient.multiGetObjects({
             ids: chunk,
             options: { showContent: true }
