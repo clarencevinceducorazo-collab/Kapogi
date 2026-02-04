@@ -910,20 +910,20 @@ export default function GeneratorPage() {
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 relative z-10">
                         <button onClick={() => handleSelection('Tee')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Tee' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
-                            <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
-                                <Shirt className="w-10 h-10 text-stone-800" />
+                            <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
+                                <Image src="/images/shirt.png" alt="Tee" width={128} height={128} className="object-contain" />
                             </div>
                             <span className="font-display font-semibold uppercase">Tee</span>
                         </button>
                         <button onClick={() => handleSelection('Mug')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Mug' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
-                            <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
-                                <Coffee className="w-10 h-10 text-stone-800" />
+                            <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
+                                <Image src="/images/printmug.png" alt="Mug" width={128} height={128} className="object-contain" />
                             </div>
                             <span className="font-display font-semibold uppercase">Mug</span>
                         </button>
                         <button onClick={() => handleSelection('Pad')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Pad' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
-                            <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
-                                <MousePointer2 className="w-10 h-10 text-stone-800" />
+                            <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
+                                 <Image src="/images/pad.png" alt="Mouse Pad" width={128} height={128} className="object-contain" />
                             </div>
                             <span className="font-display font-semibold uppercase">Pad</span>
                         </button>
@@ -1114,5 +1114,7 @@ export default function GeneratorPage() {
 
 
 
+
+    
 
     
