@@ -166,10 +166,10 @@ export default function GeneratorPage() {
     const fetchProvinces = async () => {
       setProvincesLoading(true);
       try {
-        const response = await fetch('https://raw.githubusercontent.com/jeffreybernadas/psgc-api/master/data/provinces.json');
+        const response = await fetch('https://psgc.gitlab.io/api/api/v1/province');
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
-        setProvinces(Object.values(data).sort((a: any, b: any) => a.name.localeCompare(b.name)));
+        setProvinces(data);
       } catch (error) {
         console.error("Failed to fetch provinces", error);
         setError("Could not load province data. Please try refreshing.");
@@ -190,11 +190,10 @@ export default function GeneratorPage() {
         setBarangays([]);
         setSelectedBarangay(null);
         try {
-          const response = await fetch(`https://raw.githubusercontent.com/jeffreybernadas/psgc-api/master/data/cities.json`);
+          const response = await fetch(`https://psgc.gitlab.io/api/api/v1/province/${selectedProvince.code}/cities-municipalities`);
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           const data = await response.json();
-          const filteredCities = Object.values(data).filter((city: any) => city.province === selectedProvince.code);
-          setCities(filteredCities.sort((a: any, b: any) => a.name.localeCompare(b.name)));
+          setCities(data);
         } catch (error) {
           console.error("Failed to fetch cities", error);
           setError("Could not load city data.");
@@ -217,11 +216,10 @@ export default function GeneratorPage() {
         setBarangays([]);
         setSelectedBarangay(null);
         try {
-          const response = await fetch(`https://raw.githubusercontent.com/jeffreybernadas/psgc-api/master/data/barangays.json`);
+          const response = await fetch(`https://psgc.gitlab.io/api/api/v1/city-municipality/${selectedCity.code}/barangays`);
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           const data = await response.json();
-          const filteredBarangays = Object.values(data).filter((barangay: any) => barangay.city === selectedCity.code);
-          setBarangays(filteredBarangays.sort((a: any, b: any) => a.name.localeCompare(b.name)));
+          setBarangays(data);
         } catch (error) {
           console.error("Failed to fetch barangays", error);
           setError("Could not load barangay data.");
@@ -812,26 +810,26 @@ export default function GeneratorPage() {
 
           <section id="page-preview" className={cn('page-section flex flex-col h-full', { 'hidden': page !== 'page-preview' })}>
               <div className="flex flex-col md:flex-row border-b-4 border-black">
-                  <div className="w-full md:w-1/2 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px] relative">
-                    {loading ? (
-                      showExitLoader ? (
-                        <Image src="/images/finalexit.gif" alt="Finishing up..." width={400} height={400} className="rounded-2xl" unoptimized />
+                  <div className="relative w-full md:w-1/2 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px]">
+                      {loading ? (
+                          showExitLoader ? (
+                              <Image src="/images/finalexit.gif" alt="Finishing up..." width={400} height={400} className="rounded-2xl" unoptimized />
+                          ) : (
+                              <div className="flex flex-col items-center gap-2 text-stone-500">
+                                  <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="rounded-2xl" unoptimized />
+                                  <p key={loadingStepIndex} className="font-semibold h-6 animate__animated animate__fadeIn">{loadingSteps[loadingStepIndex]}...</p>
+                              </div>
+                          )
+                      ) : generatedImage ? (
+                          <Image src={generatedImage} alt="Kapogian Character" width={512} height={512} className="rounded-2xl border-4 border-black hard-shadow animate__animated animate__zoomIn" />
                       ) : (
-                        <div className="flex flex-col items-center gap-2 text-stone-500">
-                            <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="rounded-2xl" unoptimized />
-                            <p key={loadingStepIndex} className="font-semibold h-6 animate__animated animate__fadeIn">{loadingSteps[loadingStepIndex]}...</p>
-                        </div>
-                      )
-                    ) : generatedImage ? (
-                      <Image src={generatedImage} alt="Kapogian Character" width={512} height={512} className="rounded-2xl border-4 border-black hard-shadow animate__animated animate__zoomIn" />
-                    ) : (
-                      <div className="flex flex-col items-center justify-center w-full h-full bg-stone-200">
-                          <div className="flex flex-col items-center gap-2 text-stone-500">
-                              <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="rounded-2xl" unoptimized />
-                              <p className="font-semibold">Preparing to generate...</p>
+                          <div className="flex flex-col items-center justify-center w-full h-full bg-stone-200">
+                              <div className="flex flex-col items-center gap-2 text-stone-500">
+                                  <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="rounded-2xl" unoptimized />
+                                  <p className="font-semibold">Preparing to generate...</p>
+                              </div>
                           </div>
-                      </div>
-                    )}
+                      )}
                   </div>
                   <div className="w-full md:w-1/2 p-8 bg-white flex flex-col">
                       <div className="mb-4">
@@ -1052,5 +1050,7 @@ export default function GeneratorPage() {
     </div>
   );
 }
+
+    
 
     
