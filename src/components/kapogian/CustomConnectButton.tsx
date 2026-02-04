@@ -22,7 +22,7 @@ export function CustomConnectButton({ className, connectedClassName }: { classNa
       // ensuring style consistency after connection.
       connectedClassName={cn(
         baseStyle,
-        connectedClassName || className
+        connectedClassName
       )}
     />
   );

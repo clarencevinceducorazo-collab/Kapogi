@@ -166,7 +166,7 @@ export default function GeneratorPage() {
     const fetchProvinces = async () => {
       setProvincesLoading(true);
       try {
-        const response = await fetch('https://psgc.gitlab.io/api/api/v1/province');
+        const response = await fetch('https://psgc.gitlab.io/api/provinces/');
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         setProvinces(data);
@@ -190,7 +190,7 @@ export default function GeneratorPage() {
         setBarangays([]);
         setSelectedBarangay(null);
         try {
-          const response = await fetch(`https://psgc.gitlab.io/api/api/v1/province/${selectedProvince.code}/cities-municipalities`);
+          const response = await fetch(`https://psgc.gitlab.io/api/provinces/${selectedProvince.code}/cities-municipalities/`);
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           const data = await response.json();
           setCities(data);
@@ -216,7 +216,7 @@ export default function GeneratorPage() {
         setBarangays([]);
         setSelectedBarangay(null);
         try {
-          const response = await fetch(`https://psgc.gitlab.io/api/api/v1/city-municipality/${selectedCity.code}/barangays`);
+          const response = await fetch(`https://psgc.gitlab.io/api/cities-municipalities/${selectedCity.code}/barangays/`);
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           const data = await response.json();
           setBarangays(data);
@@ -810,24 +810,22 @@ export default function GeneratorPage() {
 
           <section id="page-preview" className={cn('page-section flex flex-col h-full', { 'hidden': page !== 'page-preview' })}>
               <div className="flex flex-col md:flex-row border-b-4 border-black">
-                  <div className="relative w-full md:w-1/2 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px]">
+                   <div className="relative w-full md:w-1/2 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px]">
                       {loading ? (
                           showExitLoader ? (
                               <Image src="/images/finalexit.gif" alt="Finishing up..." width={400} height={400} className="rounded-2xl" unoptimized />
                           ) : (
-                              <div className="flex flex-col items-center gap-2 text-stone-500">
-                                  <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="rounded-2xl" unoptimized />
-                                  <p key={loadingStepIndex} className="font-semibold h-6 animate__animated animate__fadeIn">{loadingSteps[loadingStepIndex]}...</p>
+                              <div className="flex flex-col items-center justify-center w-full h-full">
+                                <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="rounded-2xl" unoptimized />
+                                <p key={loadingStepIndex} className="font-semibold h-6 animate__animated animate__fadeIn mt-2">{loadingSteps[loadingStepIndex]}...</p>
                               </div>
                           )
                       ) : generatedImage ? (
                           <Image src={generatedImage} alt="Kapogian Character" width={512} height={512} className="rounded-2xl border-4 border-black hard-shadow animate__animated animate__zoomIn" />
                       ) : (
-                          <div className="flex flex-col items-center justify-center w-full h-full bg-stone-200">
-                              <div className="flex flex-col items-center gap-2 text-stone-500">
-                                  <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="rounded-2xl" unoptimized />
-                                  <p className="font-semibold">Preparing to generate...</p>
-                              </div>
+                          <div className="flex flex-col items-center justify-center w-full h-full text-stone-500">
+                              <Ghost size={48} className="mb-2" />
+                              <p className="font-semibold">Generation failed or not started</p>
                           </div>
                       )}
                   </div>
