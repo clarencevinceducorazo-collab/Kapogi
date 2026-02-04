@@ -20,6 +20,7 @@ export const PageHeader = () => {
     { name: 'HOME', href: '/' },
     { name: 'GENERATE', href: '/generate' },
     { name: 'LEADERBOARDS', href: '/leaderboard' },
+    { name: 'MY ORDERS', href: '/my-orders' },
   ];
 
   const avatar = PlaceHolderImages.find((img) => img.id === 'header-avatar');

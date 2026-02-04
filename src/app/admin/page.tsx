@@ -13,14 +13,16 @@ import {
   FileText,
   Home,
   LoaderCircle,
+  ClipboardList,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
 import Link from 'next/link';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
-import { getOwnedReceipts, markAsShipped } from '@/lib/sui';
+import { getOwnedReceipts, markAsShipped, addTrackingInfo } from '@/lib/sui';
 import { decryptShippingInfo, type ShippingInfo } from '@/lib/encryption';
 import { ADMIN_ADDRESS, ORDER_STATUS } from '@/lib/constants';
 
@@ -33,6 +35,10 @@ interface Receipt {
   status: number;
   paymentAmount: number;
   createdAt: number;
+  // New tracking fields
+  trackingNumber: string;
+  carrier: string;
+  estimatedDelivery: number;
 }
 
 type DecryptedCard = ShippingInfo & {
@@ -50,6 +56,14 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // State for Add Tracking modal
+  const [trackingModalOpen, setTrackingModalOpen] = useState(false);
+  const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [carrier, setCarrier] = useState('');
+  const [estDeliveryDate, setEstDeliveryDate] = useState('');
+  const [isSavingTracking, setIsSavingTracking] = useState(false);
+
   useEffect(() => {
     if (isAdmin) {
       loadReceipts();
@@ -62,8 +76,7 @@ export default function AdminPage() {
     try {
       setLoading(true);
       setError('');
-      // Using the admin wallet to fetch all receipts. In a real-world scenario with many receipts,
-      // this would be replaced with a more scalable indexer-based solution.
+      // Using the admin wallet to fetch all receipts.
       const owned = await getOwnedReceipts(ADMIN_ADDRESS);
 
       const parsed: Receipt[] = owned
@@ -76,6 +89,9 @@ export default function AdminPage() {
           status: Number(obj.data.content.fields.status),
           paymentAmount: Number(obj.data.content.fields.payment_amount),
           createdAt: Number(obj.data.content.fields.created_at),
+          trackingNumber: obj.data.content.fields.tracking_number || '',
+          carrier: obj.data.content.fields.carrier || '',
+          estimatedDelivery: Number(obj.data.content.fields.estimated_delivery || 0),
         }))
         .sort((a, b) => b.createdAt - a.createdAt); // Sort by most recent
 
@@ -88,28 +104,53 @@ export default function AdminPage() {
     }
   };
 
+  const handleOpenTrackingModal = (receipt: Receipt) => {
+    setSelectedReceipt(receipt);
+    setTrackingNumber(receipt.trackingNumber || '');
+    setCarrier(receipt.carrier || '');
+    setEstDeliveryDate(receipt.estimatedDelivery ? new Date(receipt.estimatedDelivery).toISOString().split('T')[0] : '');
+    setTrackingModalOpen(true);
+  };
+  
+  const handleSaveTracking = async () => {
+    if (!selectedReceipt || !trackingNumber || !carrier || !estDeliveryDate) {
+      alert("All tracking fields are required.");
+      return;
+    }
+    
+    setIsSavingTracking(true);
+    try {
+      await addTrackingInfo({
+        receiptObjectId: selectedReceipt.objectId,
+        trackingNumber,
+        carrier,
+        estimatedDelivery: new Date(estDeliveryDate).getTime(),
+        signAndExecute,
+      });
+      alert('Tracking information saved successfully!');
+      setTrackingModalOpen(false);
+      loadReceipts(); // Refresh the list
+    } catch (e) {
+      console.error(e);
+      alert('Failed to save tracking info. Please try again.');
+    } finally {
+      setIsSavingTracking(false);
+    }
+  };
+
   const handleToggleDecrypt = async (receipt: Receipt) => {
     const isDecrypted = decryptedCards.some(card => card.id === receipt.objectId);
 
     if (isDecrypted) {
-      // If it's already decrypted, remove it from the list to "encrypt" (hide) it.
       setDecryptedCards(decryptedCards.filter(card => card.id !== receipt.objectId));
     } else {
-      // If it's not decrypted, decrypt it and add it to the list.
       if (!adminPrivateKey) {
         alert('Please enter the Admin Private Key first!');
         return;
       }
-
       try {
         const decryptedInfo = await decryptShippingInfo(receipt.encryptedShippingInfo, adminPrivateKey);
-
-        const newCard: DecryptedCard = {
-          id: receipt.objectId,
-          ...decryptedInfo,
-        };
-
-        // Add the new card to the list.
+        const newCard: DecryptedCard = { id: receipt.objectId, ...decryptedInfo };
         setDecryptedCards(prev => [newCard, ...prev]);
         setError('');
       } catch (e) {
@@ -123,7 +164,7 @@ export default function AdminPage() {
     try {
       await markAsShipped({ receiptObjectId: receiptId, signAndExecute });
       alert('Order status updated to Shipped!');
-      loadReceipts(); // Refresh receipts list
+      loadReceipts();
     } catch (e) {
       console.error(e);
       alert('Failed to mark as shipped. Please try again.');
@@ -257,10 +298,15 @@ export default function AdminPage() {
                                   <span className="w-2 h-2 bg-black rounded-full animate-pulse"></span>
                                   Pending
                                 </span>
-                              ) : (
+                              ) : receipt.status === ORDER_STATUS.SHIPPED ? (
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-black bg-accent text-white text-xs font-black uppercase shadow-sm">
-                                  <CheckCircle className="w-4 h-4" />
+                                  <Truck className="w-4 h-4" />
                                   Shipped
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-black bg-green-500 text-white text-xs font-black uppercase shadow-sm">
+                                  <CheckCircle className="w-4 h-4" />
+                                  Delivered
                                 </span>
                               )}
                             </td>
@@ -268,18 +314,17 @@ export default function AdminPage() {
                               <div className="flex justify-end gap-2">
                                 <Button
                                   onClick={() => handleToggleDecrypt(receipt)}
-                                  className={`
-                                    text-white px-4 py-1.5 rounded-lg border-2 border-black shadow-hard-sm shadow-hard-hover 
-                                    active:shadow-hard-active transition-brutal text-sm font-black flex items-center gap-2 h-auto
-                                    ${isDecrypted ? 'bg-red-500 hover:bg-red-600' : 'bg-purple-500 hover:bg-purple-600'}
-                                  `}
-                                >
+                                  className={`text-white px-3 py-1.5 rounded-lg border-2 border-black shadow-hard-sm shadow-hard-hover active:shadow-hard-active transition-brutal text-sm font-black flex items-center gap-2 h-auto ${isDecrypted ? 'bg-red-500 hover:bg-red-600' : 'bg-purple-500 hover:bg-purple-600'}`}>
                                   {isDecrypted ? <LockKeyhole className="w-4 h-4" /> : <LockOpen className="w-4 h-4" />}
-                                  {isDecrypted ? 'Encrypt' : 'Decrypt'}
+                                  {isDecrypted ? 'Hide' : 'Decrypt'}
                                 </Button>
-                                <Button onClick={() => handleMarkShipped(receipt.objectId)} disabled={receipt.status !== ORDER_STATUS.PENDING} className="bg-accent hover:bg-blue-600 text-white px-4 py-1.5 rounded-lg border-2 border-black shadow-hard-sm shadow-hard-hover active:shadow-hard-active transition-brutal text-sm font-black flex items-center gap-2 h-auto disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:border-gray-400 disabled:shadow-none disabled:hover:bg-gray-300">
+                                <Button onClick={() => handleMarkShipped(receipt.objectId)} disabled={receipt.status !== ORDER_STATUS.PENDING} className="bg-accent hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg border-2 border-black shadow-hard-sm shadow-hard-hover active:shadow-hard-active transition-brutal text-sm font-black flex items-center gap-2 h-auto disabled:bg-gray-300 disabled:cursor-not-allowed">
                                   <Truck className="w-4 h-4" />
                                   Ship
+                                </Button>
+                                <Button onClick={() => handleOpenTrackingModal(receipt)} disabled={receipt.status === ORDER_STATUS.PENDING} className="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1.5 rounded-lg border-2 border-black shadow-hard-sm shadow-hard-hover active:shadow-hard-active transition-brutal text-sm font-black flex items-center gap-2 h-auto disabled:bg-gray-300 disabled:cursor-not-allowed">
+                                  <ClipboardList className="w-4 h-4" />
+                                  Tracking
                                 </Button>
                               </div>
                             </td>
@@ -321,17 +366,7 @@ export default function AdminPage() {
                         <div className="flex flex-col">
                           <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Address:</span>
                           <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1 leading-tight">
-                            {
-                                // Handle both old (object) and new (string) address formats to prevent crashes
-                                typeof card.address === 'string'
-                                ? card.address
-                                : [
-                                    (card.address as any)?.street_address,
-                                    (card.address as any)?.barangay?.name,
-                                    (card.address as any)?.city?.name,
-                                    (card.address as any)?.province?.name,
-                                    ].filter(Boolean).join(', ')
-                            }
+                            {card.address}
                           </span>
                         </div>
                         <div className="flex flex-col">
@@ -347,6 +382,38 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
+      
+      {/* Add Tracking Modal */}
+      <Dialog open={trackingModalOpen} onOpenChange={setTrackingModalOpen}>
+        <DialogContent className="sm:max-w-md bg-white border-4 border-black rounded-2xl shadow-hard">
+          <DialogHeader>
+            <DialogTitle className="font-headline text-2xl">Add/Edit Tracking Info</DialogTitle>
+            <DialogDescription>
+              For Order #{selectedReceipt?.objectId.slice(0, 6)}...
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+                <label className="font-bold">Tracking Number</label>
+                <Input value={trackingNumber} onChange={e => setTrackingNumber(e.target.value)} placeholder="e.g. 1Z999AA10123456784" className="border-2 border-black rounded-lg" />
+            </div>
+            <div className="space-y-2">
+                <label className="font-bold">Carrier</label>
+                <Input value={carrier} onChange={e => setCarrier(e.target.value)} placeholder="e.g. UPS, FedEx, LBC" className="border-2 border-black rounded-lg" />
+            </div>
+            <div className="space-y-2">
+                <label className="font-bold">Estimated Delivery Date</label>
+                <Input type="date" value={estDeliveryDate} onChange={e => setEstDeliveryDate(e.target.value)} className="border-2 border-black rounded-lg" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setTrackingModalOpen(false)} variant="outline" className="border-2 border-black rounded-lg shadow-hard-sm">Cancel</Button>
+            <Button onClick={handleSaveTracking} disabled={isSavingTracking} className="bg-teal-500 hover:bg-teal-600 text-white border-2 border-black rounded-lg shadow-hard-sm">
+                {isSavingTracking ? <LoaderCircle className="animate-spin" /> : 'Save Tracking'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

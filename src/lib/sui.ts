@@ -201,3 +201,53 @@ export async function markAsShipped(params: {
     throw error;
   }
 }
+
+/**
+ * Admin: Add tracking information to an order receipt
+ */
+export async function addTrackingInfo(params: {
+  receiptObjectId: string;
+  trackingNumber: string;
+  carrier: string;
+  estimatedDelivery: number; // as timestamp
+  signAndExecute: any;
+}) {
+  try {
+    console.log('🚚 Adding tracking info transaction...');
+
+    const tx = new Transaction();
+
+    const adminCap = tx.object(CONTRACT_ADDRESSES.ADMIN_CAP_ID);
+    const receipt = tx.object(params.receiptObjectId);
+    const clock = tx.object('0x6');
+
+    tx.moveCall({
+      target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::add_tracking_information`,
+      arguments: [
+        adminCap,
+        receipt,
+        tx.pure.string(params.trackingNumber),
+        tx.pure.string(params.carrier),
+        tx.pure.u64(params.estimatedDelivery),
+        clock,
+      ],
+    });
+
+    console.log('📝 Executing tracking info transaction...');
+
+    const result = await params.signAndExecute(
+      {
+        transaction: tx,
+      },
+      {
+        showEffects: true,
+      }
+    );
+
+    console.log('✅ Tracking info added!', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Failed to add tracking info:', error);
+    throw error;
+  }
+}
