@@ -12,12 +12,7 @@ import { ENCRYPTION_CONFIG } from './constants';
 export interface ShippingInfo {
   full_name: string;
   contact_number: string;
-  address: {
-    province: { name: string; psgc_code: string };
-    city: { name: string; psgc_code: string };
-    barangay: { name: string; psgc_code: string };
-    street_address: string;
-  };
+  address: string;
 }
 
 /**
@@ -82,7 +77,15 @@ export async function decryptShippingInfo(
 /**
  * Validate shipping information before encryption
  */
-export function validateShippingInfo(info: ShippingInfo): { valid: boolean; errors: string[] } {
+export function validateShippingInfo(
+  info: Omit<ShippingInfo, 'address'>,
+  addressParts: {
+    province: { name: string; code: string } | null;
+    city: { name: string; code: string } | null;
+    barangay: { name: string; code: string } | null;
+    street_address: string;
+  }
+): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
   
   // Validate Full Name
@@ -103,16 +106,16 @@ export function validateShippingInfo(info: ShippingInfo): { valid: boolean; erro
   }
   
   // Validate Address
-  if (!info.address.province?.psgc_code) {
+  if (!addressParts.province?.code) {
     errors.push('Please select a province.');
   }
-  if (!info.address.city?.psgc_code) {
+  if (!addressParts.city?.code) {
     errors.push('Please select a city/municipality.');
   }
-  if (!info.address.barangay?.psgc_code) {
+  if (!addressParts.barangay?.code) {
     errors.push('Please select a barangay.');
   }
-  if (!info.address.street_address || info.address.street_address.trim().length < 5) {
+  if (!addressParts.street_address || addressParts.street_address.trim().length < 5) {
     errors.push('Please provide a street address (at least 5 characters).');
   }
 

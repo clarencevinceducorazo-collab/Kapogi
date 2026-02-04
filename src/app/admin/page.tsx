@@ -316,7 +316,7 @@ export default function AdminPage() {
                       <div className="space-y-3 font-mono text-sm md:text-base">
                         <div className="flex flex-col">
                           <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Name:</span>
-                          <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1">{card.name}</span>
+                          <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1">{card.full_name}</span>
                         </div>
                         <div className="flex flex-col">
                           <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Address:</span>
@@ -324,7 +324,7 @@ export default function AdminPage() {
                         </div>
                         <div className="flex flex-col">
                           <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Phone:</span>
-                          <span className="font-bold text-gray-900 pb-1">{card.phone}</span>
+                          <span className="font-bold text-gray-900 pb-1">{card.contact_number}</span>
                         </div>
                       </div>
                     </div>

@@ -420,18 +420,16 @@ export default function GeneratorPage() {
 
     // ── Easter Egg Short-Circuit ──
     if (activeEgg) {
-        setGeneratedName(activeEgg.name);
-        setOriginDescription('a legend of the Kapogian realm');
-        setGeneratedLore(activeEgg.lore);
-        // This is a local image, no blob needed, but we do need to set the image for display
-        setGeneratedImage(activeEgg.imagePath);
-        setGeneratedImageBlob(null);
-      
         setShowExitLoader(true);
         setTimeout(() => {
+            setGeneratedName(activeEgg.name);
+            setOriginDescription('a legend of the Kapogian realm');
+            setGeneratedLore(activeEgg.lore);
+            setGeneratedImage(activeEgg.imagePath);
+            setGeneratedImageBlob(null);
             setLoading(false);
             setShowExitLoader(false);
-        }, 6500);
+        }, 6000);
         return;
     }
 
@@ -473,19 +471,17 @@ export default function GeneratorPage() {
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: 'image/png' });
       
-      // Step 4: Update state all at once to ensure synchronized display
-      setGeneratedName(nameToUse);
-      setOriginDescription(originDesc);
-      setGeneratedImageBlob(blob);
-      setGeneratedImage(imageUrl);
-      setGeneratedLore(loreResult);
-
-      // Step 5: Trigger the exit animation
+      // Step 4: Trigger the exit animation then update state
       setShowExitLoader(true);
       setTimeout(() => {
+        setGeneratedName(nameToUse);
+        setOriginDescription(originDesc);
+        setGeneratedImageBlob(blob);
+        setGeneratedImage(imageUrl);
+        setGeneratedLore(loreResult);
         setLoading(false);
         setShowExitLoader(false);
-      }, 6500); // Duration for exit GIF
+      }, 6000); // Duration for exit GIF
 
     } catch (err: any) {
       console.error('Generation failed:', err);
@@ -513,29 +509,45 @@ export default function GeneratorPage() {
   
     try {
       // 1. Validate Shipping Info
-      const shippingInfo: ShippingInfo = {
-        full_name: shippingName,
-        contact_number: shippingContact,
-        address: {
-            province: selectedProvince ? { name: selectedProvince.name, psgc_code: selectedProvince.code } : { name: '', psgc_code: '' },
-            city: selectedCity ? { name: selectedCity.name, psgc_code: selectedCity.code } : { name: '', psgc_code: '' },
-            barangay: selectedBarangay ? { name: selectedBarangay.name, psgc_code: selectedBarangay.code } : { name: '', psgc_code: '' },
-            street_address: streetAddress,
+      const validation = validateShippingInfo(
+        {
+          full_name: shippingName,
+          contact_number: shippingContact,
+        },
+        {
+          province: selectedProvince,
+          city: selectedCity,
+          barangay: selectedBarangay,
+          street_address: streetAddress,
         }
-      };
-      const validation = validateShippingInfo(shippingInfo);
+      );
       if (!validation.valid) {
         setError(validation.errors.join(', '));
         setMinting(false);
         return;
       }
+      
+      // 2. Construct final merged address string
+      const fullAddress = [
+        streetAddress,
+        selectedBarangay?.name,
+        selectedCity?.name,
+        selectedProvince?.name,
+      ].filter(Boolean).join(', ');
+
+      // 3. Create final shipping info object for encryption
+      const shippingInfo: ShippingInfo = {
+        full_name: shippingName,
+        contact_number: shippingContact,
+        address: fullAddress,
+      };
   
-      // 2. Encrypt Shipping Info
+      // 4. Encrypt Shipping Info
       console.log('🔐 Encrypting shipping information...');
       const encryptedShippingInfo = await encryptShippingInfo(shippingInfo);
       console.log('✅ Shipping info encrypted successfully');
   
-      // 3. Map selection to contract-expected value
+      // 5. Map selection to contract-expected value
       let itemsSelected = '';
       switch (selection) {
         case 'Tee':
@@ -559,7 +571,7 @@ export default function GeneratorPage() {
           return;
       }
   
-      // 4. Upload to IPFS (only if it was an AI generated image)
+      // 6. Upload to IPFS (only if it was an AI generated image)
       let finalImageUrl = generatedImage;
       if (generatedImageBlob) {
         console.log('📤 Uploading to IPFS...');
@@ -576,7 +588,7 @@ export default function GeneratorPage() {
         console.log('✅ IPFS upload complete:', finalImageUrl);
       }
   
-      // 5. Mint on SUI blockchain
+      // 7. Mint on SUI blockchain
       console.log('⛓️ Minting on SUI blockchain...');
       const result = await mintCharacterNFT({
         name: generatedName,
@@ -813,12 +825,14 @@ export default function GeneratorPage() {
                    <div className="relative w-full md:w-1/2 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px]">
                       {loading ? (
                           showExitLoader ? (
-                              <Image src="/images/finalexit.gif" alt="Finishing up..." width={400} height={400} className="rounded-2xl" unoptimized />
+                            <div className="relative w-full h-full flex items-center justify-center">
+                              <Image src="/images/finalexit.gif" alt="Finishing up..." width="400" height="400" className="object-contain" unoptimized />
+                            </div>
                           ) : (
-                              <div className="flex flex-col items-center justify-center w-full h-full">
-                                <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="rounded-2xl" unoptimized />
-                                <p key={loadingStepIndex} className="font-semibold h-6 animate__animated animate__fadeIn mt-2">{loadingSteps[loadingStepIndex]}...</p>
-                              </div>
+                            <div className="relative w-full h-full flex flex-col items-center justify-center">
+                                <Image src="/images/loadscreens.gif" alt="Generating..." width="400" height="400" className="object-contain" unoptimized />
+                                <p key={loadingStepIndex} className="font-semibold h-6 animate__animated animate__fadeIn mt-2 text-stone-600">{loadingSteps[loadingStepIndex]}...</p>
+                            </div>
                           )
                       ) : generatedImage ? (
                           <Image src={generatedImage} alt="Kapogian Character" width={512} height={512} className="rounded-2xl border-4 border-black hard-shadow animate__animated animate__zoomIn" />
@@ -1052,3 +1066,4 @@ export default function GeneratorPage() {
     
 
     
+
