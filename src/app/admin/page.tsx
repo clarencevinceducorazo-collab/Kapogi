@@ -335,6 +335,76 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
+             <div id="decryptedSection" className="bg-white border-4 border-black rounded-3xl p-6 shadow-hard relative min-h-[200px] transition-all duration-300">
+              <div className="flex items-center gap-3 mb-6 border-b-2 border-dashed border-gray-300 pb-4">
+                <div className="w-10 h-10 bg-purple-500 rounded-full border-2 border-black flex items-center justify-center text-white">
+                  <FileText size={24} />
+                </div>
+                <h2 className="font-headline text-2xl tracking-tight">Decrypted Shipping Information</h2>
+              </div>
+
+              {decryptedCards.length === 0 ? (
+                <div id="emptyState" className="flex flex-col items-center justify-center py-8 text-gray-400">
+                  <ShieldAlert size={48} className="mb-2" />
+                  <p className="font-bold text-lg">No data decrypted yet.</p>
+                  <p className="text-sm">Enter your Private Key and click "Decrypt" on an order.</p>
+                </div>
+              ) : (
+                <div id="cardsContainer" className="grid grid-cols-1 gap-4">
+                  {decryptedCards.map(card => (
+                    <div key={card.id} className="bg-yellow-100/50 border-2 border-black rounded-xl p-4 shadow-hard-xs relative animate-fadeIn transition-colors flex flex-col md:flex-row gap-4">
+                      <div className="absolute -top-3 -right-3 bg-purple-500 text-white border-2 border-black rounded-full w-8 h-8 flex items-center justify-center z-10 font-bold text-xs shadow-sm">
+                        #{card.id.slice(2, 6)}
+                      </div>
+                      
+                      {card.character?.imageUrl && (
+                          <div className="flex-shrink-0 w-full md:w-32">
+                              <Image 
+                                  src={card.character.imageUrl}
+                                  alt={card.character.name || 'Character Image'}
+                                  width={128}
+                                  height={128}
+                                  className="rounded-lg border-2 border-black object-cover w-full aspect-square"
+                              />
+                               <Button 
+                                  onClick={() => handleDownloadImage(card.character!.imageUrl, card.character!.name)}
+                                  className="w-full mt-2 bg-gray-700 hover:bg-black text-white text-xs h-auto py-1.5 px-2 font-bold flex items-center gap-1"
+                                  size="sm"
+                              >
+                                  <Download className="w-3 h-3"/> Download
+                              </Button>
+                          </div>
+                      )}
+
+                      <div className="space-y-3 font-mono text-sm md:text-base flex-grow">
+                          <div className="flex flex-col">
+                              <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Name:</span>
+                              <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1">{card.full_name}</span>
+                          </div>
+                          <div className="flex flex-col">
+                              <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Address:</span>
+                              <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1 leading-tight break-words">
+                                {card.address}
+                              </span>
+                          </div>
+                           <div className="flex flex-col">
+                              <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Phone:</span>
+                              <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1">{card.contact_number}</span>
+                          </div>
+                           <div className="flex flex-col">
+                              <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Items Ordered:</span>
+                               <div className="font-bold text-gray-900 flex flex-wrap gap-x-2">
+                                  {card.itemsSelected.split(',').map(item => (
+                                    <span key={item} className={`px-1.5 py-0.5 border-2 border-black rounded shadow-hard-xs text-xs font-black ${item === 'ALL_BUNDLE' ? 'bg-primary text-white' : 'bg-white'}`}>{item}</span>
+                                  ))}
+                                </div>
+                          </div>
+                      </div>
+                  </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="lg:col-span-8 space-y-8">
@@ -353,7 +423,7 @@ export default function AdminPage() {
               ) : receipts.length === 0 ? (
                 <div className="p-12 text-center text-gray-500">No orders to display.</div>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="overflow-auto max-h-[800px]">
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-gray-50 text-gray-500 border-b-4 border-black text-sm uppercase font-black tracking-wider">
@@ -425,76 +495,7 @@ export default function AdminPage() {
               )}
             </div>
 
-            <div id="decryptedSection" className="bg-white border-4 border-black rounded-3xl p-6 shadow-hard relative min-h-[200px] transition-all duration-300">
-              <div className="flex items-center gap-3 mb-6 border-b-2 border-dashed border-gray-300 pb-4">
-                <div className="w-10 h-10 bg-purple-500 rounded-full border-2 border-black flex items-center justify-center text-white">
-                  <FileText size={24} />
-                </div>
-                <h2 className="font-headline text-2xl tracking-tight">Decrypted Shipping Information</h2>
-              </div>
-
-              {decryptedCards.length === 0 ? (
-                <div id="emptyState" className="flex flex-col items-center justify-center py-8 text-gray-400">
-                  <ShieldAlert size={48} className="mb-2" />
-                  <p className="font-bold text-lg">No data decrypted yet.</p>
-                  <p className="text-sm">Enter your Private Key and click "Decrypt" on an order.</p>
-                </div>
-              ) : (
-                <div id="cardsContainer" className="grid grid-cols-1 gap-4">
-                  {decryptedCards.map(card => (
-                    <div key={card.id} className="bg-yellow-100/50 border-2 border-black rounded-xl p-4 shadow-hard-xs relative animate-fadeIn transition-colors flex flex-col md:flex-row gap-4">
-                      <div className="absolute -top-3 -right-3 bg-purple-500 text-white border-2 border-black rounded-full w-8 h-8 flex items-center justify-center z-10 font-bold text-xs shadow-sm">
-                        #{card.id.slice(2, 6)}
-                      </div>
-                      
-                      {card.character?.imageUrl && (
-                          <div className="flex-shrink-0 w-full md:w-32">
-                              <Image 
-                                  src={card.character.imageUrl}
-                                  alt={card.character.name || 'Character Image'}
-                                  width={128}
-                                  height={128}
-                                  className="rounded-lg border-2 border-black object-cover w-full aspect-square"
-                              />
-                               <Button 
-                                  onClick={() => handleDownloadImage(card.character!.imageUrl, card.character!.name)}
-                                  className="w-full mt-2 bg-gray-700 hover:bg-black text-white text-xs h-auto py-1.5 px-2 font-bold flex items-center gap-1"
-                                  size="sm"
-                              >
-                                  <Download className="w-3 h-3"/> Download
-                              </Button>
-                          </div>
-                      )}
-
-                      <div className="space-y-3 font-mono text-sm md:text-base flex-grow">
-                          <div className="flex flex-col">
-                              <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Name:</span>
-                              <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1">{card.full_name}</span>
-                          </div>
-                          <div className="flex flex-col">
-                              <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Address:</span>
-                              <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1 leading-tight break-words">
-                                {card.address}
-                              </span>
-                          </div>
-                           <div className="flex flex-col">
-                              <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Phone:</span>
-                              <span className="font-bold text-gray-900 border-b border-black border-dashed pb-1">{card.contact_number}</span>
-                          </div>
-                           <div className="flex flex-col">
-                              <span className="font-black text-xs uppercase text-gray-500 mb-0.5">Items Ordered:</span>
-                               <div className="font-bold text-gray-900 flex flex-wrap gap-x-2">
-                                  {card.itemsSelected.split(',').map(item => (
-                                    <span key={item} className={`px-1.5 py-0.5 border-2 border-black rounded shadow-hard-xs text-xs font-black ${item === 'ALL_BUNDLE' ? 'bg-primary text-white' : 'bg-white'}`}>{item}</span>
-                                  ))}
-                                </div>
-                          </div>
-                      </div>
-                  </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            
           </div>
         </div>
       </div>
