@@ -184,8 +184,10 @@ export default function AdminPage() {
     const isDecrypted = decryptedCards.some(card => card.id === receipt.objectId);
 
     if (isDecrypted) {
-      setDecryptedCards(decryptedCards.filter(card => card.id !== receipt.objectId));
+      // If the currently shown card is clicked, hide it.
+      setDecryptedCards([]);
     } else {
+      // If a new card is clicked (or no card is shown), decrypt and show it, replacing any other.
       if (!adminPrivateKey) {
         alert('Please enter the Admin Private Key first!');
         return;
@@ -198,7 +200,7 @@ export default function AdminPage() {
             itemsSelected: receipt.itemsSelected,
             character: receipt.character
         };
-        setDecryptedCards(prev => [newCard, ...prev]);
+        setDecryptedCards([newCard]);
         setError('');
       } catch (e) {
         console.error(e);
