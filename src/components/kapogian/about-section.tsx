@@ -80,7 +80,7 @@ export const AboutSection = () => {
                                     alt={bottomCharacters.description}
                                     width={292}
                                     height={292}
-                                    className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity transform rotate-[-10deg]"
+                                    className="w-full h-auto opacity-100 hover:opacity-100 transition-opacity transform rotate-[-10deg]"
                                     data-ai-hint={bottomCharacters.imageHint}
                                 />
                             </div>

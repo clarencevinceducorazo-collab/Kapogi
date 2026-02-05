@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Sparkles, FileText } from 'lucide-react';
@@ -96,6 +98,16 @@ export const HeroSection = ({
             "
           />
         </div>
+      </div>
+      
+      {/* MOBILE Image: Positioned absolutely at the bottom, only visible on mobile */}
+      <div className="lg:hidden absolute bottom-0 left-1/2 -translate-x-1/2 w-[90%] max-w-md h-[45vh] z-10">
+        <Image
+          src="/images/kpgs.png"
+          alt="Kapogian Character"
+          fill
+          className="object-contain object-top"
+        />
       </div>
     </section>
   );
