@@ -34,11 +34,24 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/ipfs/**',
       },
+      // ADD THESE:
       {
         protocol: 'https',
-        hostname: '*.mypinata.cloud',
+        hostname: 'crimson-near-lark-649.mypinata.cloud',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ipfs.io',
         port: '',
         pathname: '/ipfs/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.mypinata.cloud', // Wildcard for all your Pinata gateways
+        port: '',
+        pathname: '/**',
       },
     ],
   },
