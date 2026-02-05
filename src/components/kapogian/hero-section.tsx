@@ -9,7 +9,7 @@ export const HeroSection = ({
   onWhitepaperOpen: () => void;
 }) => {
   return (
-    <section className="relative w-full min-h-dvh flex items-start lg:items-center justify-center text-white overflow-hidden py-28 lg:py-20">
+    <section className="relative w-full min-h-dvh flex items-center justify-center text-white overflow-hidden py-28 lg:py-20">
       {/* Desktop Background */}
       <div className="hidden md:block absolute inset-0">
         <Image
