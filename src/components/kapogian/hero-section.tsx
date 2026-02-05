@@ -10,14 +10,29 @@ export const HeroSection = ({
 }) => {
   return (
     <section className="relative w-full min-h-dvh flex items-center justify-center text-white overflow-hidden py-28 lg:py-20">
-      <Image
-        src="/images/herobg.png"
-        alt="Kapogian hero background"
-        fill
-        className="object-cover"
-        priority
-        data-ai-hint="fantasy background"
-      />
+      {/* Desktop Background */}
+      <div className="hidden md:block absolute inset-0">
+        <Image
+          src="/images/herobg.png"
+          alt="Kapogian hero background"
+          fill
+          className="object-cover"
+          priority
+          data-ai-hint="fantasy background"
+        />
+      </div>
+
+      {/* Mobile Background */}
+      <div className="block md:hidden absolute inset-0">
+        <Image
+          src="/images/mobilebg.png"
+          alt="Kapogian hero background mobile"
+          fill
+          className="object-cover"
+          priority
+          data-ai-hint="fantasy background mobile"
+        />
+      </div>
 
       {/* Foreground Foliage - Decorative */}
       <div className="absolute bottom-0 left-0 w-1/3 z-10"></div>
@@ -65,19 +80,18 @@ export const HeroSection = ({
           </div>
         </div>
 
-        <div className="relative flex justify-center items-end h-[500px] lg:h-[650px]">
+        <div className="relative flex justify-center items-center mt-8 lg:mt-0 h-[50vh] sm:h-[60vh] lg:h-[650px] lg:items-end">
           <Image
             src="/images/kpgs.png"
             alt="Kapogian Character"
             width={800}
             height={800}
             className="
-      object-contain
-      w-[420px]
-      lg:w-[600px]
-      absolute
-      top-0
-    "
+              object-contain
+              h-full
+              w-auto
+              max-w-full
+            "
           />
         </div>
       </div>
