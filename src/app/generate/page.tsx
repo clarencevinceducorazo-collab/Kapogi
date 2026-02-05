@@ -333,7 +333,7 @@ export default function GeneratorPage() {
 
     // Clothing
     let clothingDescriptor = "casual streetwear";
-    if (clothingStyle <= 5) clothingDescriptor = "only a sando and shorts";
+    if (clothingStyle <= 5) clothingDescriptor = "only a Sleeveless colored SHirt and shorts";
     else if (clothingStyle <= 15) clothingDescriptor = "simple t-shirt and shorts";
     else if (clothingStyle <= 30) clothingDescriptor = "stylish streetwear with a hoodie";
     else if (clothingStyle <= 45) clothingDescriptor = "formal attire with a crisp polo";
@@ -714,7 +714,7 @@ export default function GeneratorPage() {
             className="object-cover -z-10"
             priority
         />
-        <main className="relative w-full max-w-4xl bg-white border-4 border-black rounded-3xl hard-shadow overflow-hidden flex flex-col">
+        <main className="generate-page relative w-full max-w-4xl bg-white border-4 border-black rounded-3xl hard-shadow overflow-hidden flex flex-col">
           <header className="bg-black text-white p-4 border-b-4 border-black flex justify-between items-center">
             <div className="w-1/3">
               {/* Home button removed, handled by PageHeader */}
@@ -1137,3 +1137,4 @@ export default function GeneratorPage() {
     
 
     
+
