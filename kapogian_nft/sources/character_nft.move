@@ -1,6 +1,6 @@
 module kapogian_nft::character_nft {
     use sui::tx_context::TxContext;
-    use sui::object::{UID, ID};
+    use sui::object::{Self, UID, ID};
     use sui::transfer;
     use sui::coin::{Self, Coin};
     use sui::sui::SUI;
@@ -60,7 +60,7 @@ module kapogian_nft::character_nft {
         // Create Publisher for collection
         let publisher = package::claim(otw, ctx);
 
-        // Create Display standard for Tradeport
+        // Create NFT Display standard for individual NFTs
         let mut display = display::new<Character>(&publisher, ctx);
         
         display::add(&mut display, string::utf8(b"name"), string::utf8(b"{name}"));
@@ -72,9 +72,31 @@ module kapogian_nft::character_nft {
         
         display::update_version(&mut display);
 
-        // Transfer Publisher and Display to deployer
+        // Create COLLECTION Display for Tradeport collection icon
+        let mut collection_display = display::new<Character>(&publisher, ctx);
+        
+        display::add(&mut collection_display, string::utf8(b"name"), 
+            string::utf8(b"Kapogian Characters"));
+        
+        display::add(&mut collection_display, string::utf8(b"description"), 
+            string::utf8(b"Unique AI-generated characters with physical collectibles from Kapogian"));
+        
+        // Collection icon image - this shows up on Tradeport listings
+        display::add(&mut collection_display, string::utf8(b"image_url"), 
+            string::utf8(b"https://crimson-near-lark-649.mypinata.cloud/ipfs/bafkreiceerf363jbvpkuyuinx35xbvgpofvgu25m4tyqftof4oj52aweyq?pinataGatewayToken=CjMdgiXWi6IT630WLd3ljqGb6W7dkWDndC2LJjdvl_ER0Q45m3sB1dUv-RfeqdZ8"));
+        
+        display::add(&mut collection_display, string::utf8(b"project_url"), 
+            string::utf8(b"https://kapogian.xyz"));
+        
+        display::add(&mut collection_display, string::utf8(b"creator"), 
+            string::utf8(b"Kapogian Team"));
+        
+        display::update_version(&mut collection_display);
+
+        // Transfer Publisher and both Displays to deployer
         transfer::public_transfer(publisher, ctx.sender());
         transfer::public_transfer(display, ctx.sender());
+        transfer::public_transfer(collection_display, ctx.sender());
 
         // Create SHARED MintCounter (accessible by everyone)
         let mint_counter = MintCounter {
