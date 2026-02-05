@@ -49,7 +49,7 @@ export const HowItWorksSection = () => {
         {explosion && (
             <div className="absolute top-0 left-0 w-1/4 md:w-1/6 z-0">
                 <Image
-               src="/images/sun.png"
+               src="/images/sunny.gif"
                 alt={explosion.description}
                 width={300}
                 height={300}

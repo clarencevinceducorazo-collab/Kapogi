@@ -101,7 +101,7 @@ export const HeroSection = ({
       </div>
       
       {/* MOBILE Image: Positioned absolutely at the bottom, only visible on mobile */}
-      <div className="lg:hidden absolute bottom-[-5vh] left-1/2 -translate-x-1/2 w-full max-w-xl h-[65vh] z-10">
+      <div className="lg:hidden absolute bottom-[-30vh] left-1/2 -translate-x-1/2 w-full max-w-xl h-[75vh] z-10">
         <Image
           src="/images/kpgs.png"
           alt="Kapogian Character"
