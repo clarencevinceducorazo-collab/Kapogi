@@ -125,20 +125,26 @@ export const HowItWorksSection = () => {
             />
           )}
         </div>
-        <div className="absolute bottom-96 right-full w-32 md:w-48 z-20 animate-drive" style={{ animationDelay: '7.5s' }}>
-          {scooter && (
-             <Image
-               src="/images/balloony.gif"
-                alt={scooter.description}
-                style={{ transform: "scaleX(-1)" }}
-                width={170}
-                height={170}
-                className="object-contain"
-                data-ai-hint={scooter.imageHint}
-                unoptimized
-            />
-          )}
-        </div>
+<div className="relative">
+  {/* ibang content */}
+
+  <div className="absolute bottom-96 right-full w-32 md:w-48 z-50 animate-drive"
+       style={{ animationDelay: '7.5s' }}>
+    {scooter && (
+      <Image
+        src="/images/balloony.gif"
+        alt={scooter.description}
+        style={{ transform: "scaleX(-1)" }}
+        width={170}
+        height={170}
+        className="object-contain"
+        data-ai-hint={scooter.imageHint}
+        unoptimized
+      />
+    )}
+  </div>
+</div>
+
        
         <div className="absolute bottom-0 right-full w-32 md:w-48 z-20 animate-drive-reverse" style={{ animationDelay: '5s' }}>
           {scooter && (
