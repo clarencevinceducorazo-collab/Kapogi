@@ -3,7 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
-export const HeroSection = () => {
+export const HeroSection = ({
+  onWhitepaperOpen,
+}: {
+  onWhitepaperOpen: () => void;
+}) => {
   return (
     <section className="relative w-full min-h-dvh flex items-center justify-center text-white overflow-hidden py-28 lg:py-20">
       <Image
@@ -54,20 +58,26 @@ export const HeroSection = () => {
               size="lg"
               variant="secondary"
               className="rounded-full bg-white/80 text-black hover:bg-white font-bold text-lg px-8 py-7"
+              onClick={onWhitepaperOpen}
             >
-              About Kapogian
+              Whitepaper
             </Button>
           </div>
         </div>
 
-        <div className="relative flex justify-center items-end">
+        <div className="relative flex justify-center items-end h-[500px] lg:h-[650px]">
           <Image
-            src="/images/KPG.webp"
+            src="/images/kpgs.png"
             alt="Kapogian Character"
-            width={500}
-            height={500}
-            className="object-contain w-full max-w-[400px] lg:max-w-none mx-auto"
-            data-ai-hint="cool character"
+            width={800}
+            height={800}
+            className="
+      object-contain
+      w-[420px]
+      lg:w-[600px]
+      absolute
+      top-0
+    "
           />
         </div>
       </div>

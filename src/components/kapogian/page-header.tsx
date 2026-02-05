@@ -10,11 +10,9 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { ADMIN_ADDRESS } from '@/lib/constants';
-import { WhitepaperModal } from '@/components/kapogian/whitepaper-modal';
 
 export const PageHeader = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [isWhitepaperOpen, setIsWhitepaperOpen] = useState(false);
   const account = useCurrentAccount();
   const isAdmin = account?.address === ADMIN_ADDRESS;
 
@@ -56,12 +54,6 @@ export const PageHeader = () => {
                   {link.name}
                 </Link>
               ))}
-              <button
-                onClick={() => setIsWhitepaperOpen(true)}
-                className="transition-colors hover:text-accent/80"
-              >
-                WHITEPAPER
-              </button>
               {isAdmin && (
                 <Link
                   href="/admin"
@@ -101,15 +93,6 @@ export const PageHeader = () => {
                           {link.name}
                         </Link>
                       ))}
-                      <button
-                        onClick={() => {
-                          setIsWhitepaperOpen(true);
-                          setIsSheetOpen(false);
-                        }}
-                        className="text-3xl font-bold transition-colors hover:text-accent"
-                      >
-                        WHITEPAPER
-                      </button>
                       {isAdmin && (
                         <Link
                           href="/admin"
@@ -130,10 +113,6 @@ export const PageHeader = () => {
           </div>
         </div>
       </header>
-      <WhitepaperModal
-        isOpen={isWhitepaperOpen}
-        onOpenChange={setIsWhitepaperOpen}
-      />
     </>
   );
 };
