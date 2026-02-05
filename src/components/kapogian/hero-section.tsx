@@ -80,22 +80,21 @@ export const HeroSection = ({
           </div>
         </div>
 
-        <div className="relative flex justify-center items-end h-[500px] lg:h-[650px]">
-  <Image
-    src="/images/kpgs.png"
-    alt="Kapogian Character"
-    width={800}
-    height={800}
-    className="
-      object-contain
-      w-[420px]
-      lg:w-[600px]
-      absolute
-      top-0
-    "
-  />
-</div>
-
+        <div className="hidden lg:flex relative justify-center items-end h-[500px] lg:h-[650px]">
+          <Image
+            src="/images/kpgs.png"
+            alt="Kapogian Character"
+            width={800}
+            height={800}
+            className="
+              object-contain
+              w-[420px]
+              lg:w-[600px]
+              absolute
+              top-0
+            "
+          />
+        </div>
       </div>
     </section>
   );

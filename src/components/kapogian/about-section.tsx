@@ -12,7 +12,7 @@ export const AboutSection = () => {
     );
 
     return (
-        <section className="relative w-full bg-slate-900 text-slate-300 flex items-center justify-center overflow-hidden py-24 lg:py-32">
+        <section className="relative w-full bg-slate-500 text-slate-700 flex items-center justify-center overflow-hidden py-24 lg:py-32">
         
             {/* Ambient Background Effects */}
             <div className="absolute inset-0 z-0 pointer-events-none">
@@ -79,20 +79,18 @@ export const AboutSection = () => {
                                 Explore Collection
                                 <ArrowRight className="h-4 w-4 stroke-[2] transition-transform group-hover:translate-x-1" />
                             </Link>
-                            <span className="text-sm text-slate-500 font-medium">
-                                Minting now on SUI
-                            </span>
+
                         </div>
 
                         {/* Secondary Small Character (Absolute positioned for flair) */}
                          {bottomCharacters && (
                             <div className="hidden lg:block absolute -bottom-32 -right-12 xl:-right-24 w-48 animate-float-y">
                                 <Image 
-                                    src="/images/richkid.png"
+                                    src="/images/balloony.gif"
                                     alt={bottomCharacters.description}
-                                    width={192}
-                                    height={192}
-                                    className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity grayscale hover:grayscale-0 transform rotate-[-10deg]"
+                                    width={292}
+                                    height={292}
+                                    className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity transform rotate-[-10deg]"
                                     data-ai-hint={bottomCharacters.imageHint}
                                 />
                             </div>
