@@ -4,76 +4,106 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ArrowRight } from 'lucide-react';
 
 export const AboutSection = () => {
-  const mainCharacter = PlaceHolderImages.find(
-    (img) => img.id === 'about-main-character'
-  );
-  const bottomCharacters = PlaceHolderImages.find(
-    (img) => img.id === 'about-bottom-characters'
-  );
+    const mainCharacter = PlaceHolderImages.find(
+        (img) => img.id === 'about-main-character'
+    );
+    const bottomCharacters = PlaceHolderImages.find(
+        (img) => img.id === 'about-bottom-characters'
+    );
 
-  return (
-    <section className="relative text-primary-foreground py-16 md:py-20 overflow-hidden">
-      <Image
-        src="/images/aboutbg.png"
-        alt="About background"
-        fill
-        className="object-cover"
-        data-ai-hint="abstract background"
-      />
+    return (
+        <section className="relative w-full bg-slate-900 text-slate-300 flex items-center justify-center overflow-hidden py-24 lg:py-32">
+        
+            {/* Ambient Background Effects */}
+            <div className="absolute inset-0 z-0 pointer-events-none">
+                {/* Central Blue Glow */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent/10 rounded-full blur-[120px] opacity-40"></div>
+                
+                {/* Grid Pattern Overlay */}
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20"></div>
+            </div>
 
-      <div className="container mx-auto relative z-10 grid md:grid-cols-10 items-center gap-8 md:gap-12">
-        <div className="md:col-span-3 flex justify-center">
-          {mainCharacter && (
-            <Image
-              src="/images/pogi.png"
-              alt={mainCharacter.description}
-              width={450}
-              height={450}
-              className="object-contain w-full max-w-[280px] md:max-w-full"
-              data-ai-hint={mainCharacter.imageHint}
-            />
-          )}
-        </div>
-        <div className="md:col-span-7 space-y-6 text-center md:text-left">
-          <h2
-            className="font-headline text-5xl sm:text-6xl md:text-7xl font-bold text-white uppercase"
-            style={{ textShadow: '3px 3px 0 #000' }}
-          >
-            A Magical Universe <br /> Powered by Web3
-          </h2>
-          <p className="font-bold text-accent tracking-widest uppercase">
-            About Kapogian
-          </p>
-          <p className="text-lg max-w-2xl mx-auto md:mx-0">
-            Kapogian is a magical character universe powered by Web3. Every
-            Kapogian is strictly 1-of-1, algorithmically generated, permanently
-            stored on IPFS, and minted on the SUI Network. But Kapogian
-            isn&apos;t just digital.
-          </p>
-          <p className="text-lg max-w-2xl mx-auto md:mx-0">
-            Every mint unlocks real world merchandise, turning your character
-            into something you can actually hold.
-          </p>
-          <Link
-            href="#"
-            className="inline-flex items-center gap-2 font-bold text-lg hover:text-accent transition-colors"
-          >
-            EXPLORE COLLECTION <ArrowRight />
-          </Link>
-        </div>
-      </div>
-      <div className="absolute bottom-0 right-0 z-0 w-1/3 md:w-[15%] max-w-[250px]">
-        {bottomCharacters && (
-          <Image
-            src="/images/richkid.png"
-            alt={bottomCharacters.description}
-            width={300}
-            height={150}
-            className="object-contain w-full h-auto"
-            data-ai-hint={bottomCharacters.imageHint}
-          />
-        )}
-      </div>
-    </section>
-  );
+            <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
+                    
+                    {/* Left Column: Character Visual */}
+                    <div className="lg:col-span-5 relative group order-2 lg:order-1 flex justify-center">
+                        {/* Decorative back glow for character */}
+                        <div className="absolute inset-0 bg-gradient-to-tr from-accent/20 to-primary/20 rounded-full blur-3xl transform scale-75 opacity-0 transition-opacity duration-700 group-hover:opacity-100"></div>
+                        
+                        {/* Main Character */}
+                         {mainCharacter && (
+                            <div className="relative w-full max-w-md aspect-[4/5] flex items-end justify-center">
+                                <Image 
+                                    src="/images/pogi.png"
+                                    alt={mainCharacter.description}
+                                    fill
+                                    className="object-contain drop-shadow-2xl filter brightness-95 hover:brightness-100 transition-all duration-500 transform hover:scale-[1.02]"
+                                    data-ai-hint={mainCharacter.imageHint}
+                                />
+                                {/* Reflection/Shadow at feet */}
+                                <div className="absolute -bottom-6 w-3/4 h-4 bg-black/40 blur-xl rounded-[100%]"></div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right Column: Content */}
+                    <div className="lg:col-span-7 order-1 lg:order-2 flex flex-col relative text-center lg:text-left">
+                        
+                        {/* Tagline */}
+                        <div className="mb-6">
+                            <span className="inline-flex items-center rounded-full border border-accent/20 bg-accent/10 px-3 py-1 text-xs font-bold text-accent tracking-widest uppercase shadow-[0_0_15px_rgba(77,171,247,0.3)]">
+                                About Kapogian
+                            </span>
+                        </div>
+
+                        {/* Headline */}
+                        <h1 className="font-headline text-4xl sm:text-5xl lg:text-6xl tracking-tight text-white leading-[1.1] mb-8">
+                            A magical universe <br className="hidden lg:block" />
+                            powered by <span className="text-accent">Web3</span>.
+                        </h1>
+
+                        {/* Body Text */}
+                        <div className="space-y-6 text-lg lg:text-xl text-slate-400 font-body leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                             <p>
+                                Kapogian is a magical character universe powered by Web3. Every Kapogian is strictly <strong className="text-slate-200 font-medium">1-of-1</strong>, algorithmically generated, permanently stored on IPFS, and minted on the <strong className="text-slate-200 font-medium">SUI Network</strong>. But Kapogian isn't just digital.
+                            </p>
+                            <p>
+                                Every mint unlocks real world merchandise, turning your character into something you can actually hold.
+                            </p>
+                        </div>
+
+                        {/* CTA Section */}
+                        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-6">
+                            <Link href="/generate" className="group inline-flex items-center justify-center gap-2 rounded-lg bg-white px-6 py-3.5 text-sm font-medium text-slate-900 transition-all hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-900">
+                                Explore Collection
+                                <ArrowRight className="h-4 w-4 stroke-[2] transition-transform group-hover:translate-x-1" />
+                            </Link>
+                            <span className="text-sm text-slate-500 font-medium">
+                                Minting now on SUI
+                            </span>
+                        </div>
+
+                        {/* Secondary Small Character (Absolute positioned for flair) */}
+                         {bottomCharacters && (
+                            <div className="hidden lg:block absolute -bottom-32 -right-12 xl:-right-24 w-48 animate-float-y">
+                                <Image 
+                                    src="/images/richkid.png"
+                                    alt={bottomCharacters.description}
+                                    width={192}
+                                    height={192}
+                                    className="w-full h-auto opacity-80 hover:opacity-100 transition-opacity grayscale hover:grayscale-0 transform rotate-[-10deg]"
+                                    data-ai-hint={bottomCharacters.imageHint}
+                                />
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Decorative Bottom Gradient */}
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-slate-900 to-transparent z-20 pointer-events-none"></div>
+
+        </section>
+    );
 };
