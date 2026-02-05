@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import {
   Package,
@@ -32,6 +31,7 @@ import { useTypewriter } from '@/hooks/use-typewriter';
 import { useEasterEgg } from '@/hooks/useEasterEgg';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { PageHeader } from '@/components/kapogian/page-header';
 
 
 interface CharacterData {
@@ -694,421 +694,421 @@ export default function GeneratorPage() {
   }
 
   return (
-    <div className="generate-page min-h-screen p-4 md:p-8 flex items-center justify-center text-lg text-black antialiased">
-      <main className="relative w-full max-w-4xl bg-white border-4 border-black rounded-3xl hard-shadow overflow-hidden flex flex-col">
-        <header className="bg-black text-white p-4 border-b-4 border-black flex justify-between items-center">
-          <div className="w-1/3">
-            <Link href="/" className="flex items-center gap-2 text-white hover:text-yellow-400 transition-colors">
-                <ArrowLeft className="w-6 h-6" />
-                <span className="font-display font-semibold tracking-tight text-lg hidden md:inline">Home</span>
-            </Link>
-          </div>
-          <div className="w-1/3 flex justify-center items-center gap-2">
-            <Package className="w-6 h-6 text-yellow-400" />
-            <span className="font-display font-semibold tracking-tight text-xl text-yellow-400">KAPOGIAN CUSTOMIZATION</span>
-          </div>
-          <div className="w-1/3 flex justify-end gap-2">
-            <div className="w-4 h-4 rounded-full bg-red-500 border-2 border-white animate-pulse shadow-[0_0_10px_#ef4444]"></div>
-            <div className="w-4 h-4 rounded-full bg-yellow-400 border-2 border-white animate-pulse shadow-[0_0_10px_#facc15]" style={{ animationDelay: '200ms' }}></div>
-            <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-white animate-pulse shadow-[0_0_10px_#22c55e]" style={{ animationDelay: '400ms' }}></div>
-          </div>
-        </header>
-
-        <div className="bg-stone-50 min-h-[600px] relative">
-          <section id="page-generator" className={cn('page-section p-6 md:p-8 flex flex-col gap-8 h-full', { 'hidden': page !== 'generator' })}>
-            <div className="text-center space-y-2">
-                <h1 className="font-display text-4xl font-semibold tracking-tight uppercase">Kapogian Image Generator</h1>
-                <p className="text-xl text-stone-600 font-medium max-w-lg mx-auto">Generate a unique character image and its corresponding lore for your collection.</p>
+    <>
+      <PageHeader />
+      <div className="generate-page min-h-screen p-4 md:p-8 flex items-center justify-center text-lg text-black antialiased pt-28 md:pt-32">
+        <main className="relative w-full max-w-4xl bg-white border-4 border-black rounded-3xl hard-shadow overflow-hidden flex flex-col">
+          <header className="bg-black text-white p-4 border-b-4 border-black flex justify-between items-center">
+            <div className="w-1/3">
+              {/* Home button removed, handled by PageHeader */}
             </div>
-
-            <div className="border-4 border-black rounded-2xl bg-white hard-shadow-sm p-6 grid grid-cols-1 md:grid-cols-2 gap-8 relative overflow-hidden">
-                <div className="absolute top-2 right-2 rotate-12 bg-yellow-400 text-black text-xs font-bold px-2 py-1 border-2 border-black rounded shadow-[2px_2px_0px_#000]">NEW!</div>
-
-                <div className="space-y-6">
-                    <div className="space-y-2">
-                        <label className="font-display font-semibold text-xl uppercase">Character Name</label>
-                        <input 
-                            type="text" 
-                            placeholder="Leave blank for random..." 
-                            className="w-full border-4 border-black rounded-lg p-3 text-lg font-medium outline-none focus:ring-4 ring-yellow-300 transition-all placeholder:text-stone-400"
-                            value={characterName}
-                            onChange={(e) => setCharacterName(e.target.value)}
-                        />
-                    </div>
-
-                    <div className="space-y-4 p-4 border-4 border-stone-200 border-dashed rounded-xl bg-stone-50">
-                        <h3 className="font-display font-semibold text-lg text-stone-500 uppercase">Enchantments</h3>
-                        <div className="space-y-1">
-                            <div className="flex justify-between font-semibold text-sm"><span>Cuteness</span><span>{cuteness}</span></div>
-                            <input type="range" min="0" max="100" value={cuteness} onChange={(e) => setCuteness(Number(e.target.value))} className="w-full" />
-                        </div>
-                        <div className="space-y-1">
-                            <div className="flex justify-between font-semibold text-sm"><span>Confidence</span><span>{confidence}</span></div>
-                            <input type="range" min="0" max="100" value={confidence} onChange={(e) => setConfidence(Number(e.target.value))} className="w-full" />
-                        </div>
-                        <div className="space-y-1">
-                            <div className="flex justify-between font-semibold text-sm"><span>Tili Factor</span><span>{tiliFactor}</span></div>
-                            <input type="range" min="0" max="100" value={tiliFactor} onChange={(e) => setTiliFactor(Number(e.target.value))} className="w-full" />
-                        </div>
-                    </div>
-
-                     <div className="space-y-4 p-4 border-4 border-stone-200 border-dashed rounded-xl bg-stone-50">
-                        <h3 className="font-display font-semibold text-lg text-stone-500 uppercase">Origin Stats</h3>
-                        <div className="space-y-1">
-                            <div className="flex justify-between font-semibold text-sm"><span>Luzon</span><span>{luzon}</span></div>
-                            <input type="range" min="0" max="50" value={luzon} onChange={(e) => setLuzon(Number(e.target.value))} className="w-full" />
-                        </div>
-                        <div className="space-y-1">
-                            <div className="flex justify-between font-semibold text-sm"><span>Visayas</span><span>{visayas}</span></div>
-                            <input type="range" min="0" max="50" value={visayas} onChange={(e) => setVisayas(Number(e.target.value))} className="w-full" />
-                        </div>
-                        <div className="space-y-1">
-                            <div className="flex justify-between font-semibold text-sm"><span>Mindanao</span><span>{mindanao}</span></div>
-                            <input type="range" min="0" max="50" value={mindanao} onChange={(e) => setMindanao(Number(e.target.value))} className="w-full" />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="space-y-6">
-                    <div className="border-4 border-black bg-blue-50 rounded-xl p-5 space-y-4 relative">
-                        <div className="absolute -top-4 left-4 bg-black text-white px-3 py-1 font-display font-semibold text-sm border-2 border-white rounded-full">PORMA CONTROLS</div>
-                        
-                        <div className="grid grid-cols-2 gap-4 mt-2">
-                             <div className="space-y-1">
-                                <label className="text-sm font-semibold">Clothing Style: {clothingStyle}</label>
-                                <input type="range" min="0" max="50" value={clothingStyle} onChange={(e) => setClothingStyle(Number(e.target.value))} className="w-full" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-semibold">Hair Amount: {hairAmount}</label>
-                                <input type="range" min="0" max="50" value={hairAmount} onChange={(e) => setHairAmount(Number(e.target.value))} className="w-full" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-semibold">Hair Color: {hairColor}</label>
-                                <input type="range" min="0" max="50" value={hairColor} onChange={(e) => setHairColor(Number(e.target.value))} className="w-full" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-semibold">Facial Hair: {facialHair}</label>
-                                <input type="range" min="0" max="50" value={facialHair} onChange={(e) => setFacialHair(Number(e.target.value))} className="w-full" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-semibold">Eyewear: {eyewear}</label>
-                                <input type="range" min="0" max="50" value={eyewear} onChange={(e) => setEyewear(Number(e.target.value))} className="w-full" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-semibold">Skin Tone: {skinColor}</label>
-                                <input type="range" min="0" max="50" value={skinColor} onChange={(e) => setSkinColor(Number(e.target.value))} className="w-full" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-semibold">Body Fat: {bodyFat}</label>
-                                <input type="range" min="0" max="50" value={bodyFat} onChange={(e) => setBodyFat(Number(e.target.value))} className="w-full" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-semibold">Posture: {posture}</label>
-                                <input type="range" min="0" max="50" value={posture} onChange={(e) => setPosture(Number(e.target.value))} className="w-full" />
-                            </div>
-                        </div>
-                    
-                        <div className="space-y-1 pt-2">
-                            <label className="text-sm font-semibold">Held Item (Food/Flower)</label>
-                             <div className="relative">
-                                <select value={holdingItem} onChange={(e) => setHoldingItem(e.target.value)} className="w-full border-2 border-black rounded-lg p-2 bg-white font-medium">
-                                    <option value="None">Nothing</option>
-                                    <option value="Cash">Cash</option>
-                                    <option value="Random Food">Filipino Food</option>
-                                    <option value="Random Bouquet of Flowers">Flowers</option>
-                                    <option value="Random Home Utensils">Home Utensils</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="pt-4 flex justify-end gap-4 items-stretch">
-                        <button
-                            onClick={handleShuffle}
-                            disabled={loading}
-                            className="bg-yellow-400 text-black border-4 border-black rounded-xl py-4 px-6 text-xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hard-shadow-hover transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <Shuffle className="w-7 h-7" />
-                            Shuffle
-                        </button>
-                        <button 
-                            onClick={handleGenerate} 
-                            disabled={loading}
-                            className="flex-grow bg-green-400 text-black border-4 border-black rounded-xl py-4 px-6 text-2xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hard-shadow-hover transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
-                            {loading ? <LoaderCircle className="w-8 h-8 animate-spin" /> : <Sparkles className="w-8 h-8" />}
-                            {loading ? 'Generating...' : 'Generate'}
-                        </button>
-                    </div>
-                     {error && (
-                        <div className="mt-4 text-sm text-center bg-red-100 p-3 rounded-lg border border-red-300 text-red-700">
-                        {error}
-                        </div>
-                    )}
-                </div>
+            <div className="w-1/3 flex justify-center items-center gap-2">
+              <Package className="w-6 h-6 text-yellow-400" />
+              <span className="font-display font-semibold tracking-tight text-xl text-yellow-400">KAPOGIAN CUSTOMIZATION</span>
             </div>
-          </section>
+            <div className="w-1/3 flex justify-end gap-2">
+              <div className="w-4 h-4 rounded-full bg-red-500 border-2 border-white animate-pulse"></div>
+              <div className="w-4 h-4 rounded-full bg-yellow-400 border-2 border-white animate-pulse" style={{ animationDelay: '200ms' }}></div>
+              <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-white animate-pulse" style={{ animationDelay: '400ms' }}></div>
+            </div>
+          </header>
 
-          <section id="page-preview" className={cn('page-section flex flex-col h-full', { 'hidden': page !== 'page-preview' })}>
-              <div className="flex flex-col md:flex-row border-b-4 border-black">
-                  <div className="relative w-full md:w-1/2 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px]">
-                      {loading ? (
-                          showExitLoader ? (
-                            <div className="relative w-full h-full flex items-center justify-center">
-                              <Image src="/images/finalexit.gif" alt="Finishing up..." width={400} height={400} className="object-contain" unoptimized />
-                            </div>
-                          ) : (
-                            <div className="relative w-full h-full flex flex-col items-center justify-center">
-                                <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="object-contain" unoptimized />
-                                <p key={loadingStepIndex} className="font-semibold h-6 animate__animated animate__fadeIn mt-2 text-stone-600">{loadingSteps[loadingStepIndex]}...</p>
-                            </div>
-                          )
-                      ) : generatedImage ? (
-                          <Image src={generatedImage} alt="Kapogian Character" width={512} height={512} className="rounded-2xl border-4 border-black hard-shadow animate__animated animate__zoomIn" />
-                      ) : (
-                          <div className="flex flex-col items-center justify-center w-full h-full text-stone-500">
-                              <Ghost size={48} className="mb-2" />
-                              <p className="font-semibold">Generation failed or not started</p>
+          <div className="bg-stone-50 min-h-[600px] relative">
+            <section id="page-generator" className={cn('page-section p-6 md:p-8 flex flex-col gap-8 h-full', { 'hidden': page !== 'generator' })}>
+              <div className="text-center space-y-2">
+                  <h1 className="font-display text-4xl font-semibold tracking-tight uppercase">Kapogian Image Generator</h1>
+                  <p className="text-xl text-stone-600 font-medium max-w-lg mx-auto">Generate a unique character image and its corresponding lore for your collection.</p>
+              </div>
+
+              <div className="border-4 border-black rounded-2xl bg-white hard-shadow-sm p-6 grid grid-cols-1 md:grid-cols-2 gap-8 relative overflow-hidden">
+                  <div className="absolute top-2 right-2 rotate-12 bg-yellow-400 text-black text-xs font-bold px-2 py-1 border-2 border-black rounded shadow-[2px_2px_0px_#000]">NEW!</div>
+
+                  <div className="space-y-6">
+                      <div className="space-y-2">
+                          <label className="font-display font-semibold text-xl uppercase">Character Name</label>
+                          <input 
+                              type="text" 
+                              placeholder="Leave blank for random..." 
+                              className="w-full border-4 border-black rounded-lg p-3 text-lg font-medium outline-none focus:ring-4 ring-yellow-300 transition-all placeholder:text-stone-400"
+                              value={characterName}
+                              onChange={(e) => setCharacterName(e.target.value)}
+                          />
+                      </div>
+
+                      <div className="space-y-4 p-4 border-4 border-stone-200 border-dashed rounded-xl bg-stone-50">
+                          <h3 className="font-display font-semibold text-lg text-stone-500 uppercase">Enchantments</h3>
+                          <div className="space-y-1">
+                              <div className="flex justify-between font-semibold text-sm"><span>Cuteness</span><span>{cuteness}</span></div>
+                              <input type="range" min="0" max="100" value={cuteness} onChange={(e) => setCuteness(Number(e.target.value))} className="w-full" />
+                          </div>
+                          <div className="space-y-1">
+                              <div className="flex justify-between font-semibold text-sm"><span>Confidence</span><span>{confidence}</span></div>
+                              <input type="range" min="0" max="100" value={confidence} onChange={(e) => setConfidence(Number(e.target.value))} className="w-full" />
+                          </div>
+                          <div className="space-y-1">
+                              <div className="flex justify-between font-semibold text-sm"><span>Tili Factor</span><span>{tiliFactor}</span></div>
+                              <input type="range" min="0" max="100" value={tiliFactor} onChange={(e) => setTiliFactor(Number(e.target.value))} className="w-full" />
+                          </div>
+                      </div>
+
+                       <div className="space-y-4 p-4 border-4 border-stone-200 border-dashed rounded-xl bg-stone-50">
+                          <h3 className="font-display font-semibold text-lg text-stone-500 uppercase">Origin Stats</h3>
+                          <div className="space-y-1">
+                              <div className="flex justify-between font-semibold text-sm"><span>Luzon</span><span>{luzon}</span></div>
+                              <input type="range" min="0" max="50" value={luzon} onChange={(e) => setLuzon(Number(e.target.value))} className="w-full" />
+                          </div>
+                          <div className="space-y-1">
+                              <div className="flex justify-between font-semibold text-sm"><span>Visayas</span><span>{visayas}</span></div>
+                              <input type="range" min="0" max="50" value={visayas} onChange={(e) => setVisayas(Number(e.target.value))} className="w-full" />
+                          </div>
+                          <div className="space-y-1">
+                              <div className="flex justify-between font-semibold text-sm"><span>Mindanao</span><span>{mindanao}</span></div>
+                              <input type="range" min="0" max="50" value={mindanao} onChange={(e) => setMindanao(Number(e.target.value))} className="w-full" />
+                          </div>
+                      </div>
+                  </div>
+
+                  <div className="space-y-6">
+                      <div className="border-4 border-black bg-blue-50 rounded-xl p-5 space-y-4 relative">
+                          <div className="absolute -top-4 left-4 bg-black text-white px-3 py-1 font-display font-semibold text-sm border-2 border-white rounded-full">PORMA CONTROLS</div>
+                          
+                          <div className="grid grid-cols-2 gap-4 mt-2">
+                               <div className="space-y-1">
+                                  <label className="text-sm font-semibold">Clothing Style: {clothingStyle}</label>
+                                  <input type="range" min="0" max="50" value={clothingStyle} onChange={(e) => setClothingStyle(Number(e.target.value))} className="w-full" />
+                              </div>
+                              <div className="space-y-1">
+                                  <label className="text-sm font-semibold">Hair Amount: {hairAmount}</label>
+                                  <input type="range" min="0" max="50" value={hairAmount} onChange={(e) => setHairAmount(Number(e.target.value))} className="w-full" />
+                              </div>
+                              <div className="space-y-1">
+                                  <label className="text-sm font-semibold">Hair Color: {hairColor}</label>
+                                  <input type="range" min="0" max="50" value={hairColor} onChange={(e) => setHairColor(Number(e.target.value))} className="w-full" />
+                              </div>
+                              <div className="space-y-1">
+                                  <label className="text-sm font-semibold">Facial Hair: {facialHair}</label>
+                                  <input type="range" min="0" max="50" value={facialHair} onChange={(e) => setFacialHair(Number(e.target.value))} className="w-full" />
+                              </div>
+                              <div className="space-y-1">
+                                  <label className="text-sm font-semibold">Eyewear: {eyewear}</label>
+                                  <input type="range" min="0" max="50" value={eyewear} onChange={(e) => setEyewear(Number(e.target.value))} className="w-full" />
+                              </div>
+                              <div className="space-y-1">
+                                  <label className="text-sm font-semibold">Skin Tone: {skinColor}</label>
+                                  <input type="range" min="0" max="50" value={skinColor} onChange={(e) => setSkinColor(Number(e.target.value))} className="w-full" />
+                              </div>
+                              <div className="space-y-1">
+                                  <label className="text-sm font-semibold">Body Fat: {bodyFat}</label>
+                                  <input type="range" min="0" max="50" value={bodyFat} onChange={(e) => setBodyFat(Number(e.target.value))} className="w-full" />
+                              </div>
+                              <div className="space-y-1">
+                                  <label className="text-sm font-semibold">Posture: {posture}</label>
+                                  <input type="range" min="0" max="50" value={posture} onChange={(e) => setPosture(Number(e.target.value))} className="w-full" />
+                              </div>
+                          </div>
+                      
+                          <div className="space-y-1 pt-2">
+                              <label className="text-sm font-semibold">Held Item (Food/Flower)</label>
+                               <div className="relative">
+                                  <select value={holdingItem} onChange={(e) => setHoldingItem(e.target.value)} className="w-full border-2 border-black rounded-lg p-2 bg-white font-medium">
+                                      <option value="None">Nothing</option>
+                                      <option value="Cash">Cash</option>
+                                      <option value="Random Food">Filipino Food</option>
+                                      <option value="Random Bouquet of Flowers">Flowers</option>
+                                      <option value="Random Home Utensils">Home Utensils</option>
+                                  </select>
+                              </div>
+                          </div>
+                      </div>
+
+                      <div className="pt-4 flex justify-end gap-4 items-stretch">
+                          <button
+                              onClick={handleShuffle}
+                              disabled={loading}
+                              className="bg-yellow-400 text-black border-4 border-black rounded-xl py-4 px-6 text-xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hard-shadow-hover transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
+                              <Shuffle className="w-7 h-7" />
+                              Shuffle
+                          </button>
+                          <button 
+                              onClick={handleGenerate} 
+                              disabled={loading}
+                              className="flex-grow bg-green-400 text-black border-4 border-black rounded-xl py-4 px-6 text-2xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hard-shadow-hover transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
+                              {loading ? <LoaderCircle className="w-8 h-8 animate-spin" /> : <Sparkles className="w-8 h-8" />}
+                              {loading ? 'Generating...' : 'Generate'}
+                          </button>
+                      </div>
+                       {error && (
+                          <div className="mt-4 text-sm text-center bg-red-100 p-3 rounded-lg border border-red-300 text-red-700">
+                          {error}
                           </div>
                       )}
                   </div>
-                  <div className="w-full md:w-1/2 p-8 bg-white flex flex-col">
-                      <div className="mb-4">
-                        {loading ? <Skeleton className="h-8 w-48" /> :
-                          <h2 className="font-display text-2xl font-semibold tracking-tight uppercase border-b-4 border-yellow-300 inline-block">
-                            {generatedName || '...'}
-                          </h2>
-                        }
-                      </div>
-                      <div className="flex-grow bg-stone-50 border-2 border-stone-200 rounded-lg p-4 font-medium text-stone-700 max-h-64 overflow-y-auto">
-                        {(loading || !generatedLore) ? (
-                            <div className="space-y-3">
-                                <p className="mb-4 text-sm text-stone-500">Generating lore...</p>
-                                <Skeleton className="h-4 w-[90%]" />
-                                <Skeleton className="h-4 w-full" />
-                                <Skeleton className="h-4 w-full" />
-                                <Skeleton className="h-4 w-[70%]" />
-                            </div>
-                        ) : isLoreTyping ? (
-                          <div style={{ whiteSpace: 'pre-wrap' }}>
-                            {displayedLore}
-                            <span className="inline-block w-0.5 h-4 bg-stone-700 animate-blink ml-1"></span>
-                          </div>
+              </div>
+            </section>
+
+            <section id="page-preview" className={cn('page-section flex flex-col h-full', { 'hidden': page !== 'page-preview' })}>
+                <div className="flex flex-col md:flex-row border-b-4 border-black">
+                    <div className="relative w-full md:w-1/2 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px]">
+                        {loading ? (
+                            showExitLoader ? (
+                              <div className="relative w-full h-full flex items-center justify-center">
+                                <Image src="/images/finalexit.gif" alt="Finishing up..." width={400} height={400} className="object-contain" unoptimized />
+                              </div>
+                            ) : (
+                              <div className="relative w-full h-full flex flex-col items-center justify-center">
+                                  <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="object-contain" unoptimized />
+                                  <p key={loadingStepIndex} className="font-semibold h-6 animate__animated animate__fadeIn mt-2 text-stone-600">{loadingSteps[loadingStepIndex]}...</p>
+                              </div>
+                            )
+                        ) : generatedImage ? (
+                            <Image src={generatedImage} alt="Kapogian Character" width={512} height={512} className="rounded-2xl border-4 border-black hard-shadow animate__animated animate__zoomIn" />
                         ) : (
-                            renderMarkdown(generatedLore)
+                            <div className="flex flex-col items-center justify-center w-full h-full text-stone-500">
+                                <Ghost size={48} className="mb-2" />
+                                <p className="font-semibold">Generation failed or not started</p>
+                            </div>
                         )}
+                    </div>
+                    <div className="w-full md:w-1/2 p-8 bg-white flex flex-col">
+                        <div className="mb-4">
+                          {loading ? <Skeleton className="h-8 w-48" /> :
+                            <h2 className="font-display text-2xl font-semibold tracking-tight uppercase border-b-4 border-yellow-300 inline-block">
+                              {generatedName || '...'}
+                            </h2>
+                          }
+                        </div>
+                        <div className="flex-grow bg-stone-50 border-2 border-stone-200 rounded-lg p-4 font-medium text-stone-700 max-h-64 overflow-y-auto">
+                          {(loading || !generatedLore) ? (
+                              <div className="space-y-3">
+                                  <p className="mb-4 text-sm text-stone-500">Generating lore...</p>
+                                  <Skeleton className="h-4 w-[90%]" />
+                                  <Skeleton className="h-4 w-full" />
+                                  <Skeleton className="h-4 w-full" />
+                                  <Skeleton className="h-4 w-[70%]" />
+                              </div>
+                          ) : isLoreTyping ? (
+                            <div style={{ whiteSpace: 'pre-wrap' }}>
+                              {displayedLore}
+                              <span className="inline-block w-0.5 h-4 bg-stone-700 animate-blink ml-1"></span>
+                            </div>
+                          ) : (
+                              renderMarkdown(generatedLore)
+                          )}
+                        </div>
+                    </div>
+                </div>
+
+                  <div className="stripe-bg p-6 md:p-8 flex-grow flex flex-col justify-center relative border-t-4 border-black">
+                      <div className="flex justify-between items-end mb-6 relative z-10">
+                          <div>
+                              <h2 className="font-display text-4xl font-semibold text-white tracking-tight drop-shadow-[4px_4px_0_#000]" style={{WebkitTextStroke: '1.5px black'}}>THE STYLIST SHOP</h2>
+                              <div className="bg-white border-2 border-black px-2 py-0.5 rounded text-xs font-bold inline-block mt-1 uppercase tracking-wide shadow-[2px_2px_0px_rgba(0,0,0,1)]">Holders Only Access</div>
+                          </div>
+                          <span className="font-display font-semibold text-white text-lg drop-shadow-md">FALL COLLECTION</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 relative z-10">
+                          <button onClick={() => handleSelection('Tee')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Tee' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
+                              <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
+                                  <Image src="/images/shirt.png" alt="Tee" width={128} height={128} className="object-contain" />
+                              </div>
+                              <span className="font-display font-semibold uppercase">Tee</span>
+                          </button>
+                          <button onClick={() => handleSelection('Mug')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Mug' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
+                              <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
+                                  <Image src="/images/printmug.png" alt="Mug" width={128} height={128} className="object-contain" />
+                              </div>
+                              <span className="font-display font-semibold uppercase">Mug</span>
+                          </button>
+                          <button onClick={() => handleSelection('Pad')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Pad' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
+                              <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
+                                   <Image src="/images/pad.png" alt="Mouse Pad" width={128} height={128} className="object-contain" />
+                              </div>
+                              <span className="font-display font-semibold uppercase">Pad</span>
+                          </button>
+                          <button onClick={() => handleSelection('Plate')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Plate' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
+                              <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
+                                  <Image src="/images/aluminum.png" alt="Aluminum Plate" width={128} height={128} className="object-contain" />
+                              </div>
+                              <span className="font-display font-semibold uppercase">Plate</span>
+                          </button>
+                      </div>
+
+                      {(selection === 'Tee' || selection === 'Bundle') && (
+                          <div className="mb-6 bg-white border-4 border-black rounded-xl p-4 hard-shadow-sm relative z-10 animate__animated animate__fadeIn">
+                              <h3 className="font-display font-semibold text-xl mb-3 text-center">Select T-Shirt Size</h3>
+                              <div className="flex justify-center gap-2">
+                                  {SIZES.map(size => (
+                                      <button 
+                                          key={size}
+                                          onClick={() => setShirtSize(size)}
+                                          className={cn(
+                                              "w-14 h-14 font-display font-semibold text-lg border-4 border-black rounded-lg hard-shadow-sm hard-shadow-hover transition-all",
+                                              shirtSize === size ? "bg-pink-500 text-white" : "bg-white text-black"
+                                          )}
+                                      >
+                                          {size}
+                                      </button>
+                                  ))}
+                              </div>
+                          </div>
+                      )}
+
+                      <button onClick={() => handleSelection('Bundle')} className={cn("bg-[#FFC83D] border-4 border-black rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 hard-shadow-sm relative z-10 transition-all", selection === 'Bundle' && "ring-4 ring-offset-2 ring-pink-500")}>
+                          <div className="flex items-center gap-4">
+                              <div className="w-8 h-8 bg-white border-4 border-black rounded-md flex items-center justify-center">
+                                  {selection === 'Bundle' && <Check className="w-6 h-6 text-black" />}
+                              </div>
+                              <div className="flex flex-col text-left">
+                                  <span className="font-display font-semibold text-xl uppercase leading-none">The "All-In" Bundle</span>
+                                  <span className="text-sm font-medium leading-tight">Save 20% when you grab the whole set.</span>
+                              </div>
+                          </div>
+                          <div className="bg-black text-white font-display font-semibold px-6 py-3 rounded-lg border-2 border-white shadow-[4px_4px_0px_rgba(0,0,0,0.2)] hover:scale-105 transition-transform uppercase text-base">
+                              {selection === 'Bundle' ? 'Selected (+10 SUI)' : 'Upgrade (+10 SUI)'}
+                          </div>
+                      </button>
+
+                      {error && (
+                        <div className="mt-4 text-sm text-center bg-red-100 p-3 rounded-lg border border-red-300 text-red-700 relative z-10">
+                          {error}
+                        </div>
+                      )}
+                      
+                      <div className="absolute -bottom-4 -left-4 z-20">
+                           <button onClick={() => navigate('generator')} className="bg-white text-black border-4 border-black rounded-full w-20 h-20 flex items-center justify-center hard-shadow hover:-rotate-12 transition-transform">
+                              <ArrowLeft className="w-10 h-10 stroke-[2.5]" />
+                          </button>
+                      </div>
+
+                      <div className="absolute -bottom-4 -right-4 z-20">
+                           <button onClick={handleContinueToShipping} className="bg-pink-500 text-white border-4 border-black rounded-full w-20 h-20 flex items-center justify-center hard-shadow hover:rotate-12 transition-transform">
+                              <ArrowRight className="w-10 h-10 stroke-[2.5]" />
+                          </button>
                       </div>
                   </div>
-              </div>
+              </section>
 
-                <div className="stripe-bg p-6 md:p-8 flex-grow flex flex-col justify-center relative border-t-4 border-black">
-                    <div className="flex justify-between items-end mb-6 relative z-10">
-                        <div>
-                            <h2 className="font-display text-4xl font-semibold text-white tracking-tight drop-shadow-[4px_4px_0_#000]" style={{WebkitTextStroke: '1.5px black'}}>THE STYLIST SHOP</h2>
-                            <div className="bg-white border-2 border-black px-2 py-0.5 rounded text-xs font-bold inline-block mt-1 uppercase tracking-wide shadow-[2px_2px_0px_rgba(0,0,0,1)]">Holders Only Access</div>
-                        </div>
-                        <span className="font-display font-semibold text-white text-lg drop-shadow-md">FALL COLLECTION</span>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 relative z-10">
-                        <button onClick={() => handleSelection('Tee')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Tee' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
-                            <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
-                                <Image src="/images/shirt.png" alt="Tee" width={128} height={128} className="object-contain" />
-                            </div>
-                            <span className="font-display font-semibold uppercase">Tee</span>
-                        </button>
-                        <button onClick={() => handleSelection('Mug')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Mug' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
-                            <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
-                                <Image src="/images/printmug.png" alt="Mug" width={128} height={128} className="object-contain" />
-                            </div>
-                            <span className="font-display font-semibold uppercase">Mug</span>
-                        </button>
-                        <button onClick={() => handleSelection('Pad')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Pad' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
-                            <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
-                                 <Image src="/images/pad.png" alt="Mouse Pad" width={128} height={128} className="object-contain" />
-                            </div>
-                            <span className="font-display font-semibold uppercase">Pad</span>
-                        </button>
-                        <button onClick={() => handleSelection('Plate')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Plate' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
-                            <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
-                                <Image src="/images/aluminum.png" alt="Aluminum Plate" width={128} height={128} className="object-contain" />
-                            </div>
-                            <span className="font-display font-semibold uppercase">Plate</span>
-                        </button>
-                    </div>
-
-                    {(selection === 'Tee' || selection === 'Bundle') && (
-                        <div className="mb-6 bg-white border-4 border-black rounded-xl p-4 hard-shadow-sm relative z-10 animate__animated animate__fadeIn">
-                            <h3 className="font-display font-semibold text-xl mb-3 text-center">Select T-Shirt Size</h3>
-                            <div className="flex justify-center gap-2">
-                                {SIZES.map(size => (
-                                    <button 
-                                        key={size}
-                                        onClick={() => setShirtSize(size)}
-                                        className={cn(
-                                            "w-14 h-14 font-display font-semibold text-lg border-4 border-black rounded-lg hard-shadow-sm hard-shadow-hover transition-all",
-                                            shirtSize === size ? "bg-pink-500 text-white" : "bg-white text-black"
-                                        )}
-                                    >
-                                        {size}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    <button onClick={() => handleSelection('Bundle')} className={cn("bg-[#FFC83D] border-4 border-black rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 hard-shadow-sm relative z-10 transition-all", selection === 'Bundle' && "ring-4 ring-offset-2 ring-pink-500")}>
-                        <div className="flex items-center gap-4">
-                            <div className="w-8 h-8 bg-white border-4 border-black rounded-md flex items-center justify-center">
-                                {selection === 'Bundle' && <Check className="w-6 h-6 text-black" />}
-                            </div>
-                            <div className="flex flex-col text-left">
-                                <span className="font-display font-semibold text-xl uppercase leading-none">The "All-In" Bundle</span>
-                                <span className="text-sm font-medium leading-tight">Save 20% when you grab the whole set.</span>
-                            </div>
-                        </div>
-                        <div className="bg-black text-white font-display font-semibold px-6 py-3 rounded-lg border-2 border-white shadow-[4px_4px_0px_rgba(0,0,0,0.2)] hover:scale-105 transition-transform uppercase text-base">
-                            {selection === 'Bundle' ? 'Selected (+10 SUI)' : 'Upgrade (+10 SUI)'}
-                        </div>
-                    </button>
-
-                    {error && (
-                      <div className="mt-4 text-sm text-center bg-red-100 p-3 rounded-lg border border-red-300 text-red-700 relative z-10">
-                        {error}
+               <section id="page-shipping" className={cn('page-section p-8 flex flex-col items-center justify-center h-full min-h-[600px] bg-sky-100', { 'hidden': page !== 'page-shipping' })}>
+                  <div className="w-full max-w-md bg-white border-4 border-black rounded-2xl p-8 hard-shadow-sm relative">
+                      <div className="absolute -top-6 -left-6 bg-red-500 text-white font-display font-semibold px-4 py-2 rotate-[-6deg] border-4 border-black rounded-lg shadow-md uppercase">Fragile!</div>
+                      <h2 className="font-display text-3xl font-semibold mb-6 border-b-4 border-stone-200 pb-2">Shipping Details</h2>
+                      <div className="space-y-4">
+                          <div className="space-y-2">
+                              <label className="font-semibold uppercase text-sm tracking-wide">Full Name</label>
+                              <Input type="text" value={shippingName} onChange={(e) => setShippingName(e.target.value)} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" />
+                          </div>
+                          <div className="space-y-2">
+                              <label className="font-semibold uppercase text-sm tracking-wide">Contact Number</label>
+                              <Input type="text" value={shippingContact} onChange={(e) => setShippingContact(e.target.value)} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" placeholder="09123456789"/>
+                          </div>
+                           <div className="space-y-2">
+                              <label className="font-semibold uppercase text-sm tracking-wide">Province</label>
+                              <Select onValueChange={handleProvinceChange} value={selectedProvince?.code} disabled={provincesLoading}>
+                                  <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto">
+                                      <SelectValue placeholder={provincesLoading ? "Loading provinces..." : "Select Province"} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                      {provinces.map(p => (
+                                      <SelectItem key={p.code} value={p.code}>{p.name}</SelectItem>
+                                      ))}
+                                  </SelectContent>
+                              </Select>
+                          </div>
+                           <div className="space-y-2">
+                              <label className="font-semibold uppercase text-sm tracking-wide">City / Municipality</label>
+                              <Select onValueChange={handleCityChange} value={selectedCity?.code} disabled={!selectedProvince || citiesLoading}>
+                                  <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" disabled={!selectedProvince || citiesLoading}>
+                                      <SelectValue placeholder={citiesLoading ? "Loading cities..." : "Select City/Municipality"} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                      {cities.map(c => (
+                                          <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                                      ))}
+                                  </SelectContent>
+                              </Select>
+                          </div>
+                          <div className="space-y-2">
+                              <label className="font-semibold uppercase text-sm tracking-wide">Barangay</label>
+                              <Select onValueChange={handleBarangayChange} value={selectedBarangay?.code} disabled={!selectedCity || barangaysLoading}>
+                                  <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" disabled={!selectedCity || barangaysLoading}>
+                                      <SelectValue placeholder={barangaysLoading ? "Loading barangays..." : "Select Barangay"} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                      {barangays.map(b => (
+                                          <SelectItem key={b.code} value={b.code}>{b.name}</SelectItem>
+                                      ))}
+                                  </SelectContent>
+                              </Select>
+                          </div>
+                          <div className="space-y-2">
+                              <label className="font-semibold uppercase text-sm tracking-wide">Street Address, House/Bldg No.</label>
+                              <Input type="text" value={streetAddress} onChange={(e) => setStreetAddress(e.target.value)} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" />
+                          </div>
                       </div>
-                    )}
-                    
-                    <div className="absolute -bottom-4 -left-4 z-20">
-                         <button onClick={() => navigate('generator')} className="bg-white text-black border-4 border-black rounded-full w-20 h-20 flex items-center justify-center hard-shadow hover:-rotate-12 transition-transform">
-                            <ArrowLeft className="w-10 h-10 stroke-[2.5]" />
-                        </button>
-                    </div>
 
-                    <div className="absolute -bottom-4 -right-4 z-20">
-                         <button onClick={handleContinueToShipping} className="bg-pink-500 text-white border-4 border-black rounded-full w-20 h-20 flex items-center justify-center hard-shadow hover:rotate-12 transition-transform">
-                            <ArrowRight className="w-10 h-10 stroke-[2.5]" />
-                        </button>
-                    </div>
-                </div>
-            </section>
+                      <button onClick={handleMint} disabled={minting} className="mt-8 w-full bg-blue-500 text-white border-4 border-black rounded-xl py-3 text-xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hard-shadow-hover transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                           {minting ? <LoaderCircle className="w-6 h-6 animate-spin" /> : <Truck className="w-6 h-6" />}
+                           {minting ? 'Minting & Shipping...' : 'Ship It'}
+                      </button>
+                       {error && (
+                          <div className="mt-4 text-sm text-center bg-red-100 p-3 rounded-lg border border-red-300 text-red-700">
+                          {error}
+                          </div>
+                      )}
+                  </div>
+              </section>
 
-             <section id="page-shipping" className={cn('page-section p-8 flex flex-col items-center justify-center h-full min-h-[600px] bg-sky-100', { 'hidden': page !== 'page-shipping' })}>
-                <div className="w-full max-w-md bg-white border-4 border-black rounded-2xl p-8 hard-shadow-sm relative">
-                    <div className="absolute -top-6 -left-6 bg-red-500 text-white font-display font-semibold px-4 py-2 rotate-[-6deg] border-4 border-black rounded-lg shadow-md uppercase">Fragile!</div>
-                    <h2 className="font-display text-3xl font-semibold mb-6 border-b-4 border-stone-200 pb-2">Shipping Details</h2>
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="font-semibold uppercase text-sm tracking-wide">Full Name</label>
-                            <Input type="text" value={shippingName} onChange={(e) => setShippingName(e.target.value)} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="font-semibold uppercase text-sm tracking-wide">Contact Number</label>
-                            <Input type="text" value={shippingContact} onChange={(e) => setShippingContact(e.target.value)} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" placeholder="09123456789"/>
-                        </div>
-                         <div className="space-y-2">
-                            <label className="font-semibold uppercase text-sm tracking-wide">Province</label>
-                            <Select onValueChange={handleProvinceChange} value={selectedProvince?.code} disabled={provincesLoading}>
-                                <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto">
-                                    <SelectValue placeholder={provincesLoading ? "Loading provinces..." : "Select Province"} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {provinces.map(p => (
-                                    <SelectItem key={p.code} value={p.code}>{p.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                         <div className="space-y-2">
-                            <label className="font-semibold uppercase text-sm tracking-wide">City / Municipality</label>
-                            <Select onValueChange={handleCityChange} value={selectedCity?.code} disabled={!selectedProvince || citiesLoading}>
-                                <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" disabled={!selectedProvince || citiesLoading}>
-                                    <SelectValue placeholder={citiesLoading ? "Loading cities..." : "Select City/Municipality"} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {cities.map(c => (
-                                        <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="font-semibold uppercase text-sm tracking-wide">Barangay</label>
-                            <Select onValueChange={handleBarangayChange} value={selectedBarangay?.code} disabled={!selectedCity || barangaysLoading}>
-                                <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" disabled={!selectedCity || barangaysLoading}>
-                                    <SelectValue placeholder={barangaysLoading ? "Loading barangays..." : "Select Barangay"} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {barangays.map(b => (
-                                        <SelectItem key={b.code} value={b.code}>{b.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="font-semibold uppercase text-sm tracking-wide">Street Address, House/Bldg No.</label>
-                            <Input type="text" value={streetAddress} onChange={(e) => setStreetAddress(e.target.value)} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" />
-                        </div>
-                    </div>
+               <section id="page-receipt" className={cn('page-section p-8 flex flex-col items-center justify-center h-full min-h-[600px] bg-green-200', { 'hidden': page !== 'page-receipt' })}>
+                  <div className="w-full max-w-sm bg-white border-x-4 border-t-4 border-b-[12px] border-dotted border-black rounded-t-xl relative p-6 shadow-2xl">
+                      <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-green-200 rounded-full border-4 border-black"></div>
+                      <div className="text-center mb-6 border-b-2 border-dashed border-stone-300 pb-4">
+                          <h2 className="font-display text-3xl font-semibold uppercase tracking-tight">Order Receipt</h2>
+                          <p className="text-stone-500 font-medium text-sm mt-1">Order #{txHash.substring(0, 8)}</p>
+                      </div>
 
-                    <button onClick={handleMint} disabled={minting} className="mt-8 w-full bg-blue-500 text-white border-4 border-black rounded-xl py-3 text-xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hard-shadow-hover transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                         {minting ? <LoaderCircle className="w-6 h-6 animate-spin" /> : <Truck className="w-6 h-6" />}
-                         {minting ? 'Minting & Shipping...' : 'Ship It'}
-                    </button>
-                     {error && (
-                        <div className="mt-4 text-sm text-center bg-red-100 p-3 rounded-lg border border-red-300 text-red-700">
-                        {error}
-                        </div>
-                    )}
-                </div>
-            </section>
+                      <div className="flex gap-4 mb-6">
+                          <div className="w-20 h-20 bg-stone-100 border-2 border-black rounded-md shrink-0 overflow-hidden">
+                            {generatedImage && <Image src={generatedImage} alt="Kapogian Character" width={80} height={80} />}
+                          </div>
+                          <div className="flex flex-col justify-center">
+                              <span className="font-semibold text-lg">{generatedName}</span>
+                              <span className="text-sm text-stone-500">Includes Digital Asset</span>
+                          </div>
+                      </div>
 
-             <section id="page-receipt" className={cn('page-section p-8 flex flex-col items-center justify-center h-full min-h-[600px] bg-green-200', { 'hidden': page !== 'page-receipt' })}>
-                <div className="w-full max-w-sm bg-white border-x-4 border-t-4 border-b-[12px] border-dotted border-black rounded-t-xl relative p-6 shadow-2xl">
-                    <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-green-200 rounded-full border-4 border-black"></div>
-                    <div className="text-center mb-6 border-b-2 border-dashed border-stone-300 pb-4">
-                        <h2 className="font-display text-3xl font-semibold uppercase tracking-tight">Order Receipt</h2>
-                        <p className="text-stone-500 font-medium text-sm mt-1">Order #{txHash.substring(0, 8)}</p>
-                    </div>
+                      <div className="space-y-2 mb-6 text-base font-medium">
+                          <div className="flex justify-between">
+                              <span className="text-stone-600">Merch Bundle</span>
+                              <span>Included</span>
+                          </div>
+                          <div className="flex justify-between">
+                              <span className="text-stone-600">Shipping</span>
+                              <span>Free</span>
+                          </div>
+                          <div className="flex justify-between text-xl font-bold mt-2 pt-2 border-t-2 border-black">
+                              <span>Total</span>
+                              <span>10 SUI</span>
+                          </div>
+                      </div>
 
-                    <div className="flex gap-4 mb-6">
-                        <div className="w-20 h-20 bg-stone-100 border-2 border-black rounded-md shrink-0 overflow-hidden">
-                          {generatedImage && <Image src={generatedImage} alt="Kapogian Character" width={80} height={80} />}
-                        </div>
-                        <div className="flex flex-col justify-center">
-                            <span className="font-semibold text-lg">{generatedName}</span>
-                            <span className="text-sm text-stone-500">Includes Digital Asset</span>
-                        </div>
-                    </div>
+                      <div className="bg-stone-100 border-2 border-stone-300 p-2 text-center rounded mb-6">
+                          <span className="text-xs font-bold uppercase text-stone-500 tracking-widest">Status: Pending</span>
+                      </div>
 
-                    <div className="space-y-2 mb-6 text-base font-medium">
-                        <div className="flex justify-between">
-                            <span className="text-stone-600">Merch Bundle</span>
-                            <span>Included</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-stone-600">Shipping</span>
-                            <span>Free</span>
-                        </div>
-                        <div className="flex justify-between text-xl font-bold mt-2 pt-2 border-t-2 border-black">
-                            <span>Total</span>
-                            <span>10 SUI</span>
-                        </div>
-                    </div>
+                      <a href="/generate" className="block text-center w-full bg-white text-black border-4 border-black rounded-xl py-3 text-lg font-display font-semibold uppercase tracking-tight hover:bg-stone-100 transition-all">
+                          Make Another
+                      </a>
 
-                    <div className="bg-stone-100 border-2 border-stone-300 p-2 text-center rounded mb-6">
-                        <span className="text-xs font-bold uppercase text-stone-500 tracking-widest">Status: Pending</span>
-                    </div>
-
-                    <a href="/generate" className="block text-center w-full bg-white text-black border-4 border-black rounded-xl py-3 text-lg font-display font-semibold uppercase tracking-tight hover:bg-stone-100 transition-all">
-                        Make Another
-                    </a>
-
-                    <div className="absolute bottom-20 right-4 border-4 border-red-500 text-red-500 rounded-full w-24 h-24 flex items-center justify-center font-bold text-xl uppercase rotate-[-20deg] opacity-80 pointer-events-none" style={{mixBlendMode: 'multiply'}}>
-                        PAID
-                    </div>
-                </div>
-            </section>
-        </div>
-      </main>
-    </div>
+                      <div className="absolute bottom-20 right-4 border-4 border-red-500 text-red-500 rounded-full w-24 h-24 flex items-center justify-center font-bold text-xl uppercase rotate-[-20deg] opacity-80 pointer-events-none" style={{mixBlendMode: 'multiply'}}>
+                          PAID
+                      </div>
+                  </div>
+              </section>
+          </div>
+        </main>
+      </div>
+    </>
   );
 }
     

@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
-import { Home, LoaderCircle, Trophy, Crown, Medal, ShieldAlert } from 'lucide-react';
+import { LoaderCircle, Trophy, Crown, Medal, ShieldAlert } from 'lucide-react';
 import { suiClient } from '@/lib/sui';
 import { CONTRACT_ADDRESSES } from '@/lib/constants';
-import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
+import { PageHeader } from '@/components/kapogian/page-header';
 
 type LeaderboardEntry = {
   address: string;
@@ -76,91 +75,78 @@ export default function LeaderboardPage() {
   };
 
   return (
-    <div className="relative font-body min-h-screen p-4 md:p-8 antialiased selection:bg-black selection:text-white">
-      <Image
-        src="/images/herobg.png"
-        alt="Leaderboard background"
-        fill
-        className="object-cover -z-10"
-        priority
-      />
-      <div className="max-w-4xl mx-auto space-y-8 relative">
-        <header className="bg-white border-4 border-black rounded-full p-3 px-6 flex flex-col md:flex-row justify-between items-center shadow-hard gap-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-black text-white p-2 rounded-full flex items-center justify-center">
-              <Trophy size={24} />
-            </div>
-            <h1 className="font-headline text-3xl tracking-tight text-black uppercase">Leaderboards</h1>
-          </div>
-          <Link href="/" className="font-headline text-lg flex items-center gap-2 hover:underline text-black">
-            <Home className="w-6 h-6" /> Home
-          </Link>
-          <CustomConnectButton
-            className="!bg-[#60A5FA] !border-4 !border-black !text-white !font-black !px-6 !py-2 !rounded-full !shadow-hard-sm hover:!bg-[#3B82F6] !transition-brutal"
-            connectedClassName="!bg-[#60A5FA] !border-4 !border-black !text-white !font-black !px-6 !py-2 !rounded-full !shadow-hard-sm hover:!bg-[#3B82F6] !transition-brutal"
-          />
-        </header>
+    <>
+      <PageHeader />
+      <div className="relative font-body min-h-screen p-4 pt-28 md:p-8 md:pt-32 antialiased selection:bg-black selection:text-white">
+        <Image
+          src="/images/herobg.png"
+          alt="Leaderboard background"
+          fill
+          className="object-cover -z-10"
+          priority
+        />
+        <div className="max-w-4xl mx-auto space-y-8 relative">
+          {loading ? (
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl flex justify-center items-center p-20 text-lg gap-3 font-bold text-gray-800 shadow-hard">
+                  <LoaderCircle size={32} className="animate-spin" />
+                  <p>Loading Leaderboards...</p>
+              </div>
+          ) : error ? (
+              <div className="bg-red-100 border-4 border-dashed border-red-500 rounded-2xl p-8 text-center shadow-hard">
+                  <ShieldAlert size={48} className="mx-auto text-red-600 mb-4"/>
+                  <h3 className="font-headline text-2xl text-red-800">An Error Occurred</h3>
+                  <p className="text-red-700 font-bold">{error}</p>
+              </div>
+          ) : (
+            <>
+              <div className="bg-primary/80 backdrop-blur-sm text-white border-4 border-black rounded-3xl p-8 text-center shadow-hard transform -rotate-1 hover:rotate-0 transition-transform">
+                <h2 className="font-headline text-2xl opacity-80 uppercase">Total Kapogians Minted</h2>
+                <p className="font-headline text-7xl font-bold tracking-tighter" style={{textShadow: '4px 4px 0 #000'}}>
+                  {totalMinted !== null ? totalMinted.toLocaleString() : '...'}
+                </p>
+              </div>
 
-        {loading ? (
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl flex justify-center items-center p-20 text-lg gap-3 font-bold text-gray-800 shadow-hard">
-                <LoaderCircle size={32} className="animate-spin" />
-                <p>Loading Leaderboards...</p>
-            </div>
-        ) : error ? (
-            <div className="bg-red-100 border-4 border-dashed border-red-500 rounded-2xl p-8 text-center shadow-hard">
-                <ShieldAlert size={48} className="mx-auto text-red-600 mb-4"/>
-                <h3 className="font-headline text-2xl text-red-800">An Error Occurred</h3>
-                <p className="text-red-700 font-bold">{error}</p>
-            </div>
-        ) : (
-          <>
-            <div className="bg-primary/80 backdrop-blur-sm text-white border-4 border-black rounded-3xl p-8 text-center shadow-hard transform -rotate-1 hover:rotate-0 transition-transform">
-              <h2 className="font-headline text-2xl opacity-80 uppercase">Total Kapogians Minted</h2>
-              <p className="font-headline text-7xl font-bold tracking-tighter" style={{textShadow: '4px 4px 0 #000'}}>
-                {totalMinted !== null ? totalMinted.toLocaleString() : '...'}
-              </p>
-            </div>
-
-            <div className="bg-white border-4 border-black rounded-3xl shadow-hard overflow-hidden">
-                <div className="p-5 border-b-4 border-black">
-                    <h2 className="font-headline text-2xl tracking-tight text-black">Top Collectors</h2>
-                </div>
-                {leaderboard.length === 0 ? (
-                    <p className="p-10 text-center text-gray-500 font-bold">No collectors yet. Be the first!</p>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                            <tr className="bg-gray-50 text-gray-500 border-b-4 border-black text-sm uppercase font-black tracking-wider">
-                                <th className="p-4 px-6 text-center">Rank</th>
-                                <th className="p-4 px-6">Collector</th>
-                                <th className="p-4 px-6 text-right">NFTs Owned</th>
-                            </tr>
-                            </thead>
-                            <tbody className="text-base font-bold text-black">
-                            {leaderboard.map((entry, index) => (
-                                <tr key={entry.address} className="group border-b-2 border-gray-200 hover:bg-yellow-50 transition-colors last:border-b-0">
-                                    <td className="p-4 px-6 text-center">
-                                        <div className="flex items-center justify-center">
-                                            {getRankIcon(index)}
-                                        </div>
-                                    </td>
-                                    <td className="p-4 px-6 font-mono text-sm" title={entry.address}>
-                                        {entry.address.slice(0, 8)}...{entry.address.slice(-6)}
-                                    </td>
-                                    <td className="p-4 px-6 text-right font-headline text-2xl">
-                                        {entry.count}
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
-          </>
-        )}
+              <div className="bg-white border-4 border-black rounded-3xl shadow-hard overflow-hidden">
+                  <div className="p-5 border-b-4 border-black">
+                      <h2 className="font-headline text-2xl tracking-tight text-black">Top Collectors</h2>
+                  </div>
+                  {leaderboard.length === 0 ? (
+                      <p className="p-10 text-center text-gray-500 font-bold">No collectors yet. Be the first!</p>
+                  ) : (
+                      <div className="overflow-x-auto">
+                          <table className="w-full text-left border-collapse">
+                              <thead>
+                              <tr className="bg-gray-50 text-gray-500 border-b-4 border-black text-sm uppercase font-black tracking-wider">
+                                  <th className="p-4 px-6 text-center">Rank</th>
+                                  <th className="p-4 px-6">Collector</th>
+                                  <th className="p-4 px-6 text-right">NFTs Owned</th>
+                              </tr>
+                              </thead>
+                              <tbody className="text-base font-bold text-black">
+                              {leaderboard.map((entry, index) => (
+                                  <tr key={entry.address} className="group border-b-2 border-gray-200 hover:bg-yellow-50 transition-colors last:border-b-0">
+                                      <td className="p-4 px-6 text-center">
+                                          <div className="flex items-center justify-center">
+                                              {getRankIcon(index)}
+                                          </div>
+                                      </td>
+                                      <td className="p-4 px-6 font-mono text-sm" title={entry.address}>
+                                          {entry.address.slice(0, 8)}...{entry.address.slice(-6)}
+                                      </td>
+                                      <td className="p-4 px-6 text-right font-headline text-2xl">
+                                          {entry.count}
+                                      </td>
+                                  </tr>
+                              ))}
+                              </tbody>
+                          </table>
+                      </div>
+                  )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
