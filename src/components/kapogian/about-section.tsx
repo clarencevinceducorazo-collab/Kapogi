@@ -12,12 +12,12 @@ export const AboutSection = () => {
     );
 
     return (
-        <section className="relative w-full swirl-bg text-slate-300 flex items-center justify-center py-24 lg:py-32">
+        <section className="relative w-full swirl-bg text-slate-300 flex items-center justify-center pt-24 pb-56 lg:py-32 overflow-hidden">
             <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
                     
-                    {/* Left Column: Character Visual */}
-                    <div className="lg:col-span-5 relative group order-2 lg:order-1 flex justify-center">
+                    {/* Left Column: Character Visual (Desktop) */}
+                    <div className="lg:col-span-5 relative group order-2 lg:order-1 hidden lg:flex justify-center">
                         {/* Decorative back glow for character */}
                         <div className="absolute inset-0 bg-gradient-to-tr from-accent/20 to-primary/20 rounded-full blur-3xl transform scale-75 opacity-0 transition-opacity duration-700 group-hover:opacity-100"></div>
                         
@@ -88,6 +88,19 @@ export const AboutSection = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Mobile-only Character Image */}
+            {mainCharacter && (
+                <div className="lg:hidden absolute bottom-[-25vh] left-1/2 -translate-x-1/2 w-[120vw] h-[75vh] z-0">
+                     <Image 
+                        src="/images/pogimove.gif"
+                        alt={mainCharacter.description}
+                        fill
+                        className="object-contain object-top drop-shadow-2xl filter brightness-95"
+                        data-ai-hint={mainCharacter.imageHint}
+                    />
+                </div>
+            )}
         </section>
     );
 };
