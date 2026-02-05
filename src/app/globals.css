@@ -109,8 +109,8 @@
 
   .generate-page {
     font-family: 'Comic Neue', cursive;
-    background-color: #fcd34d;
-    background-image: radial-gradient(#f59e0b 20%, transparent 20%), radial-gradient(#f59e0b 20%, transparent 20%);
+    background-color: #3b82f6;
+    background-image: radial-gradient(#3b82f6 20%, transparent 20%), radial-gradient(#3b82f6 20%, transparent 20%);
     background-position: 0 0, 10px 10px;
     background-size: 20px 20px;
   }
@@ -335,6 +335,33 @@
     animation: shimmer 1.5s linear infinite;
   }
 
+  .swirl-bg {
+    @apply relative overflow-hidden;
+    background-color: #0b3c7a;
+  }
+
+  .swirl-bg::before {
+    content: "";
+    @apply absolute;
+    width: 160vmax;
+    height: 160vmax;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background:
+      repeating-conic-gradient(
+        from 0deg,
+        #0b3c7a 0deg 18deg,
+        #0e4fa3 18deg 36deg
+      ),
+      radial-gradient(
+        circle at center,
+        rgba(255,255,255,0.08),
+        transparent 60%
+      );
+    background-blend-mode: overlay;
+    animation: swirlRotate 80s linear infinite;
+  }
 }
 
 @keyframes fadeIn {
@@ -356,5 +383,14 @@
 
   to {
     background-position: 200% 0;
+  }
+}
+
+@keyframes swirlRotate {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
   }
 }

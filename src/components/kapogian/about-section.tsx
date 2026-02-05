@@ -12,17 +12,7 @@ export const AboutSection = () => {
     );
 
     return (
-        <section className="relative w-full bg-slate-500 text-slate-700 flex items-center justify-center overflow-hidden py-24 lg:py-32">
-        
-            {/* Ambient Background Effects */}
-            <div className="absolute inset-0 z-0 pointer-events-none">
-                {/* Central Blue Glow */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent/10 rounded-full blur-[120px] opacity-40"></div>
-                
-                {/* Grid Pattern Overlay */}
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20"></div>
-            </div>
-
+        <section className="relative w-full swirl-bg text-slate-300 flex items-center justify-center py-24 lg:py-32">
             <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
                     
@@ -35,7 +25,7 @@ export const AboutSection = () => {
                          {mainCharacter && (
                             <div className="relative w-full max-w-md aspect-[4/5] flex items-end justify-center">
                                 <Image 
-                                    src="/images/pogi.png"
+                                    src="/images/pogimove.gif"
                                     alt={mainCharacter.description}
                                     fill
                                     className="object-contain drop-shadow-2xl filter brightness-95 hover:brightness-100 transition-all duration-500 transform hover:scale-[1.02]"
@@ -52,7 +42,7 @@ export const AboutSection = () => {
                         
                         {/* Tagline */}
                         <div className="mb-6">
-                            <span className="inline-flex items-center rounded-full border border-accent/20 bg-accent/10 px-3 py-1 text-xs font-bold text-accent tracking-widest uppercase shadow-[0_0_15px_rgba(77,171,247,0.3)]">
+                            <span className="inline-flex items-center rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-400 tracking-widest uppercase shadow-[0_0_15px_rgba(59,130,246,0.3)]">
                                 About Kapogian
                             </span>
                         </div>
@@ -98,10 +88,6 @@ export const AboutSection = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Decorative Bottom Gradient */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-slate-900 to-transparent z-20 pointer-events-none"></div>
-
         </section>
     );
 };

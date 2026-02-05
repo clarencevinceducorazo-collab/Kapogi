@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 export const HeroSection = ({
@@ -9,7 +9,7 @@ export const HeroSection = ({
   onWhitepaperOpen: () => void;
 }) => {
   return (
-    <section className="relative w-full min-h-dvh flex items-center justify-center text-white overflow-hidden py-28 lg:py-20">
+    <section className="relative w-full min-h-dvh flex items-start lg:items-center justify-center text-white overflow-hidden py-28 lg:py-20">
       {/* Desktop Background */}
       <div className="hidden md:block absolute inset-0">
         <Image
@@ -38,7 +38,7 @@ export const HeroSection = ({
       <div className="absolute bottom-0 left-0 w-1/3 z-10"></div>
       <div className="absolute bottom-0 right-0 w-1/4 z-10 transform scale-x-[-1]"></div>
 
-      <div className="relative z-20 container mx-auto grid lg:grid-cols-2 gap-10 items-center">
+      <div className="relative z-20 container mx-auto grid lg:grid-cols-2 gap-10 items-start lg:items-center">
         <div className="text-center lg:text-left space-y-4">
           <div className="inline-flex items-center gap-2 bg-[#FFC83D] text-black px-4 py-1 rounded-full text-sm font-bold ml-0 lg:ml-2">
             <span className="relative flex h-3 w-3">
@@ -75,6 +75,7 @@ export const HeroSection = ({
               className="rounded-full bg-white/80 text-black hover:bg-white font-bold text-lg px-8 py-7"
               onClick={onWhitepaperOpen}
             >
+              <FileText className="mr-2 h-5 w-5" />
               Whitepaper
             </Button>
           </div>
