@@ -681,22 +681,32 @@ export default function GeneratorPage() {
 
   if (!account) {
     return (
-      <div className="generate-page min-h-screen p-4 md:p-8 flex items-center justify-center text-lg text-black antialiased">
-        <main className="relative w-full max-w-md bg-white border-4 border-black rounded-3xl hard-shadow overflow-hidden flex flex-col p-8 text-center">
-            <h2 className="font-display text-3xl font-semibold mb-4">Wallet Required</h2>
-            <p className="text-stone-600 mb-6">Please connect your SUI wallet to generate a Kapogian character.</p>
-            <div className="flex justify-center">
-              <CustomConnectButton className="!bg-accent !hover:bg-blue-500 !text-accent-foreground !comic-border !rounded-full !px-6 !py-2 !font-headline !text-lg !h-auto" />
-            </div>
-        </main>
-      </div>
+      <>
+        <PageHeader />
+        <div className="relative min-h-screen p-4 md:p-8 flex items-center justify-center text-lg text-black antialiased">
+          <Image
+            src="/images/herobg.png"
+            alt="Generate background"
+            fill
+            className="object-cover -z-10"
+            priority
+          />
+          <main className="relative w-full max-w-md bg-white border-4 border-black rounded-3xl hard-shadow overflow-hidden flex flex-col p-8 text-center">
+              <h2 className="font-display text-3xl font-semibold mb-4">Wallet Required</h2>
+              <p className="text-stone-600 mb-6">Please connect your SUI wallet to generate a Kapogian character.</p>
+              <div className="flex justify-center">
+                <CustomConnectButton className="!bg-accent !hover:bg-blue-500 !text-accent-foreground !comic-border !rounded-full !px-6 !py-2 !font-headline !text-lg !h-auto" />
+              </div>
+          </main>
+        </div>
+      </>
     );
   }
 
   return (
     <>
       <PageHeader />
-      <div className="generate-page relative min-h-screen p-4 md:p-8 flex items-center justify-center text-lg text-black antialiased pt-28 md:pt-32">
+      <div className="relative min-h-screen p-4 md:p-8 flex items-center justify-center text-lg text-black antialiased pt-28 md:pt-32">
         <Image
             src="/images/herobg.png"
             alt="Generate background"
@@ -1124,3 +1134,4 @@ export default function GeneratorPage() {
 
     
 
+    
