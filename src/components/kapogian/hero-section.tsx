@@ -9,7 +9,7 @@ export const HeroSection = ({
   onWhitepaperOpen: () => void;
 }) => {
   return (
-    <section className="relative w-full min-h-dvh flex items-center justify-center text-white overflow-hidden py-28 lg:py-20">
+    <section className="relative w-full min-h-dvh flex items-start lg:items-center justify-center text-white overflow-hidden py-28 lg:py-20">
       {/* Desktop Background */}
       <div className="hidden md:block absolute inset-0">
         <Image
@@ -80,7 +80,7 @@ export const HeroSection = ({
           </div>
         </div>
 
-        <div className="relative flex justify-center items-center mt-8 lg:mt-0 h-[50vh] sm:h-[60vh] lg:h-[650px] lg:items-end">
+        <div className="relative flex justify-center items-center mt-8 lg:mt-0">
           <Image
             src="/images/kpgs.png"
             alt="Kapogian Character"
@@ -88,9 +88,11 @@ export const HeroSection = ({
             height={800}
             className="
               object-contain
-              h-full
               w-auto
               max-w-full
+              h-[40vh]
+              sm:h-[50vh]
+              lg:h-[650px]
             "
           />
         </div>
