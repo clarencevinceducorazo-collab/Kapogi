@@ -696,7 +696,14 @@ export default function GeneratorPage() {
   return (
     <>
       <PageHeader />
-      <div className="generate-page min-h-screen p-4 md:p-8 flex items-center justify-center text-lg text-black antialiased pt-28 md:pt-32">
+      <div className="generate-page relative min-h-screen p-4 md:p-8 flex items-center justify-center text-lg text-black antialiased pt-28 md:pt-32">
+        <Image
+            src="/images/herobg.png"
+            alt="Generate background"
+            fill
+            className="object-cover -z-10"
+            priority
+        />
         <main className="relative w-full max-w-4xl bg-white border-4 border-black rounded-3xl hard-shadow overflow-hidden flex flex-col">
           <header className="bg-black text-white p-4 border-b-4 border-black flex justify-between items-center">
             <div className="w-1/3">
@@ -707,9 +714,9 @@ export default function GeneratorPage() {
               <span className="font-display font-semibold tracking-tight text-xl text-yellow-400">KAPOGIAN CUSTOMIZATION</span>
             </div>
             <div className="w-1/3 flex justify-end gap-2">
-              <div className="w-4 h-4 rounded-full bg-red-500 border-2 border-white animate-pulse"></div>
-              <div className="w-4 h-4 rounded-full bg-yellow-400 border-2 border-white animate-pulse" style={{ animationDelay: '200ms' }}></div>
-              <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-white animate-pulse" style={{ animationDelay: '400ms' }}></div>
+              <div className="w-4 h-4 rounded-full bg-red-500 border-2 border-white animate-pulse" style={{ boxShadow: '0 0 8px #ef4444' }}></div>
+              <div className="w-4 h-4 rounded-full bg-yellow-400 border-2 border-white animate-pulse" style={{ animationDelay: '200ms', boxShadow: '0 0 8px #f59e0b' }}></div>
+              <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-white animate-pulse" style={{ animationDelay: '400ms', boxShadow: '0 0 8px #22c55e' }}></div>
             </div>
           </header>
 
@@ -1116,3 +1123,4 @@ export default function GeneratorPage() {
     
 
     
+
