@@ -22,20 +22,23 @@ export const HowItWorksSection = () => {
   const splideOptions = {
     type: 'loop',
     drag: 'free',
-    perPage: 3,
+    perPage: 4,
     gap: '1.5rem',
     autoplay: true,
-    interval: 2000,
+    interval: 2500,
     speed: 1500,
-    pauseOnHover: false,
+    pauseOnHover: true,
     arrows: false,
     pagination: false,
     breakpoints: {
       1024: {
-        perPage: 2,
+        perPage: 3,
       },
       767: {
-        perPage: 1,
+        perPage: 2,
+      },
+      640: {
+        perPage: 1.5,
         gap: '1rem',
       },
     },
@@ -68,9 +71,9 @@ export const HowItWorksSection = () => {
               const characterImage = PlaceHolderImages.find((img) => img.id === step.id);
               return (
                 <SplideSlide key={index}>
-                  <div className="p-1 h-full">
+                  <div className="p-1">
                     <div
-                      className="bg-white rounded-3xl border-4 border-black p-4 flex flex-col items-center justify-between shadow-lg aspect-square md:aspect-[4/5] h-full"
+                      className="bg-white rounded-3xl border-4 border-black p-4 flex flex-col items-center justify-center aspect-[4/5] shadow-lg"
                       style={{boxShadow: '8px 8px 0px #000'}}
                     >
                       <div className="relative w-full flex-grow flex items-center justify-center">
@@ -86,8 +89,8 @@ export const HowItWorksSection = () => {
                           />
                         )}
                       </div>
-                      <p className="font-headline text-black text-lg md:text-xl font-bold flex items-center gap-2 mt-2">
-                        <span className="bg-accent text-black rounded-full h-8 w-8 flex items-center justify-center border-2 border-black font-sans text-sm">
+                      <p className="font-headline text-black text-lg md:text-xl font-bold flex items-center gap-2 mt-4 flex-shrink-0 text-center">
+                        <span className="bg-accent text-black rounded-full h-8 w-8 flex items-center justify-center border-2 border-black font-sans text-sm flex-shrink-0">
                           {index + 1}
                         </span>
                         {step.label}
