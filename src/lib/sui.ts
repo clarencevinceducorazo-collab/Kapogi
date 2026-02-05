@@ -9,6 +9,9 @@ import { CONTRACT_ADDRESSES, MODULES, PRICING, NETWORK_CONFIG } from './constant
 // Initialize SUI client
 export const suiClient = new SuiClient({ url: NETWORK_CONFIG.rpcUrl });
 
+console.log('🔍 SUI Client URL:', NETWORK_CONFIG.rpcUrl);
+console.log('🔍 Env variable:', process.env.NEXT_PUBLIC_SUI_RPC_URL);
+
 /**
  * Mint Character NFT with Order Receipt
  */

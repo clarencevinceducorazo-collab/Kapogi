@@ -52,7 +52,7 @@ export const ORDER_STATUS = {
 // Network Configuration
 export const NETWORK_CONFIG = {
   network: (process.env.NEXT_PUBLIC_SUI_NETWORK as 'testnet' | 'mainnet') ?? 'testnet',
-  rpcUrl: process.env.NEXT_PUBLIC_SUI_RPC_URL!,
+  rpcUrl: process.env.NEXT_PUBLIC_SUI_RPC_URL || 'https://fullnode.testnet.sui.io:443', // Added fallback
 };
 
 // IPFS Configuration
