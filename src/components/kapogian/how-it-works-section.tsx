@@ -35,10 +35,10 @@ export const HowItWorksSection = () => {
         perPage: 3,
       },
       767: {
-        perPage: 2,
+        perPage: 2.5,
       },
       640: {
-        perPage: 1.5,
+        perPage: 2,
         gap: '1rem',
       },
     },
@@ -73,7 +73,7 @@ export const HowItWorksSection = () => {
                 <SplideSlide key={index}>
                   <div className="p-1">
                     <div
-                      className="bg-white rounded-3xl border-4 border-black p-4 flex flex-col items-center justify-center aspect-[4/5] shadow-lg"
+                      className="bg-white rounded-3xl border-4 border-black p-2 md:p-4 flex flex-col items-center justify-center aspect-[4/5] shadow-lg"
                       style={{boxShadow: '8px 8px 0px #000'}}
                     >
                       <div className="relative w-full flex-grow flex items-center justify-center">
@@ -89,7 +89,7 @@ export const HowItWorksSection = () => {
                           />
                         )}
                       </div>
-                      <p className="font-headline text-black text-lg md:text-xl font-bold flex items-center gap-2 mt-4 flex-shrink-0 text-center">
+                      <p className="font-headline text-black text-base md:text-xl font-bold flex items-center gap-2 mt-2 md:mt-4 flex-shrink-0 text-center">
                         <span className="bg-accent text-black rounded-full h-8 w-8 flex items-center justify-center border-2 border-black font-sans text-sm flex-shrink-0">
                           {index + 1}
                         </span>
