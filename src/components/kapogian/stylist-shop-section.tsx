@@ -109,30 +109,28 @@ export const StylistShopSection = () => {
               })}
             </div>
 
-            <div className="mt-6 bg-[#FFC83D] rounded-full border-2 border-black flex flex-col md:flex-row items-center justify-between p-2 pl-4 md:pl-6 gap-4">
-  <div className="flex items-center gap-4">
-    <Checkbox
-      id="all-in-bundle"
-      className="w-6 h-6 border-2 border-black rounded-sm data-[state=checked]:bg-black"
-    />
-    <div className="text-left">
-      <label
-        htmlFor="all-in-bundle"
-        className="font-headline text-black text-lg font-bold"
-      >
-        THE "ALL-IN" BUNDLE
-      </label>
-      <p className="text-sm text-black/80 font-bold">
-        Save 20% when you grab the whole set.
-      </p>
-    </div>
-  </div>
-
-  <Button className="rounded-full bg-black text-white hover:bg-gray-800 font-bold text-base px-6 py-4 border-2 border-black w-full md:w-auto">
-    UPGRADE (+10 SUI)
-  </Button>
-</div>
-
+            <div className="mt-6 bg-[#FFC83D] rounded-2xl border-2 border-black flex flex-col md:flex-row items-center justify-between p-4 gap-4">
+              <div className="flex items-center gap-4">
+                <Checkbox
+                  id="all-in-bundle"
+                  className="w-6 h-6 border-2 border-black rounded-sm data-[state=checked]:bg-black"
+                />
+                <div className="text-center md:text-left">
+                  <label
+                    htmlFor="all-in-bundle"
+                    className="font-headline text-black text-lg font-bold"
+                  >
+                    THE "ALL-IN" BUNDLE
+                  </label>
+                  <p className="text-sm text-black/80 font-bold">
+                    Save 20% when you grab the whole set.
+                  </p>
+                </div>
+              </div>
+              <Button className="rounded-full bg-black text-white hover:bg-gray-800 font-bold text-base px-6 py-3 border-2 border-black w-full md:w-auto">
+                UPGRADE (+10 SUI)
+              </Button>
+            </div>
           </div>
 
           {charRight && (
