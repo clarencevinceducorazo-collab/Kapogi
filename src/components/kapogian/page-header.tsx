@@ -37,6 +37,14 @@ export const PageHeader = () => {
     { name: 'HOME', href: '/' },
     { name: 'GENERATE', href: '/generate' },
     {
+      name: 'PROFILE',
+      isDropdown: true,
+      items: [
+        { name: 'My Collection', href: '/collection' },
+        { name: 'My Orders', href: '/my-orders' },
+      ],
+    },
+    {
       name: 'ABOUT US',
       isDropdown: true,
       items: [
@@ -45,14 +53,6 @@ export const PageHeader = () => {
       ],
     },
     { name: 'LEADERBOARDS', href: '/leaderboard' },
-    {
-      name: 'PROFILE',
-      isDropdown: true,
-      items: [
-        { name: 'My Collection', href: '/collection' },
-        { name: 'My Orders', href: '/my-orders' },
-      ],
-    },
   ];
 
   const avatar = PlaceHolderImages.find((img) => img.id === 'header-avatar');

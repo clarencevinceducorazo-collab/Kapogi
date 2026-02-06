@@ -54,8 +54,9 @@ export const HeroSection = () => {
           >
             KAPOGIAN
           </h1>
-          <p className="text-xl md:text-2xl font-bold">
-            Collect Digital Magic, Get Real Rewards
+          <p className="text-xl md:text-2xl font-bold text-white [text-shadow:2px_2px_0_#000,-2px_2px_0_#000,2px_-2px_0_#000,-2px_-2px_0_#000]">
+            Be Pogi! Be Confident Everyday - Slogan  
+            Generate Kapogian - Acquire my Kapogian Spirit - Ito naman sa Generate
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
             <Link href="/generate">
