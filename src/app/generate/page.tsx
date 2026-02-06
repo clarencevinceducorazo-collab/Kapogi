@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -996,13 +997,13 @@ export default function GeneratorPage() {
                                                   key={color}
                                                   onClick={() => setHoodieColor(color)}
                                                   className={cn(
-                                                      "w-16 h-10 font-display font-semibold text-sm border-4 rounded-lg hard-shadow-sm hard-shadow-hover transition-all",
-                                                      hoodieColor === color && 'ring-4 ring-offset-2 ring-pink-500'
+                                                      "w-16 h-10 font-display font-semibold text-sm border-4 border-black rounded-lg hard-shadow-sm hard-shadow-hover transition-all",
+                                                      "active:translate-y-1 active:translate-x-1 active:shadow-[2px_2px_0px_#000]",
+                                                      hoodieColor !== color && "bg-gray-200 text-gray-500"
                                                   )}
-                                                  style={{ 
-                                                      backgroundColor: color.toLowerCase(), 
-                                                      color: color === 'Black' ? 'white' : 'black',
-                                                      borderColor: 'black'
+                                                  style={{
+                                                      backgroundColor: hoodieColor === color ? color.toLowerCase() : '',
+                                                      color: hoodieColor === color ? (color === 'Black' ? 'white' : 'black') : '',
                                                   }}
                                               >
                                                   {color}
@@ -1198,6 +1199,7 @@ export default function GeneratorPage() {
     
 
     
+
 
 
 
