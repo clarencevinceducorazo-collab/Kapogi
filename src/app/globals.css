@@ -273,7 +273,7 @@
   }
 
   .whitepaper-content h2 {
-    @apply font-headline text-2xl mt-6 mb-2 text-primary text-outline;
+    @apply font-headline text-2xl mt-6 mb-2 text-[hsl(var(--brand-yellow))] text-outline;
   }
 
   .whitepaper-content h3 {

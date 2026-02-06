@@ -5,6 +5,7 @@ import { PageFooter } from '@/components/kapogian/page-footer';
 import { Rocket, Gamepad2, Coins } from 'lucide-react';
 import { useInView } from '@/hooks/use-in-view';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 const roadmapPhases = [
   {
@@ -31,79 +32,112 @@ const roadmapPhases = [
 ];
 
 const RoadmapCard = ({ phase, index }: { phase: typeof roadmapPhases[0]; index: number }) => {
-  const [ref, inView] = useInView({ threshold: 0.5, triggerOnce: true });
-  const statusColors = {
-    completed: 'border-green-500 bg-green-500/10 text-green-300',
-    inprogress: 'border-yellow-400 bg-yellow-400/10 text-yellow-200',
-    upcoming: 'border-slate-600 bg-slate-500/10 text-slate-400',
+  const [ref, inView] = useInView({ threshold: 0.3, triggerOnce: true });
+
+  const statusStyles = {
+    completed: {
+      badge: 'bg-green-500 text-white',
+      iconBg: 'bg-green-100',
+      iconColor: 'text-green-600',
+      transform: 'transform -rotate-2 hover:rotate-0',
+    },
+    inprogress: {
+      badge: 'bg-yellow-400 text-black',
+      iconBg: 'bg-yellow-100',
+      iconColor: 'text-yellow-600',
+      transform: 'transform rotate-1 hover:rotate-0',
+    },
+    upcoming: {
+      badge: 'bg-gray-300 text-black',
+      iconBg: 'bg-gray-100',
+      iconColor: 'text-gray-500',
+      transform: 'transform -rotate-1 hover:rotate-0',
+    },
   };
-  const iconColors = {
-    completed: 'bg-green-500 text-white',
-    inprogress: 'bg-yellow-400 text-black',
-    upcoming: 'bg-slate-700 text-slate-300',
-  };
+
+  const styles = statusStyles[phase.status as keyof typeof statusStyles];
 
   return (
     <div
       ref={ref}
       className={cn(
-        'flex gap-6 relative transition-opacity duration-700 ease-out',
-        inView ? 'opacity-100' : 'opacity-0',
-        'flex-col md:flex-row',
-        index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
+        'bg-white border-4 border-black rounded-3xl p-6 md:p-8 shadow-hard transition-all duration-500 ease-out',
+        styles.transform,
+        inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
       )}
       style={{ transitionDelay: `${index * 150}ms` }}
     >
-      <div className={cn("flex items-center justify-center md:w-1/2", inView ? 'animate__animated animate__zoomIn' : 'opacity-0')}>
-        <div className="relative w-48 h-48 md:w-64 md:h-64">
-           <div className={cn("absolute inset-0 rounded-full blur-2xl", statusColors[phase.status as keyof typeof statusColors].replace('border-', 'bg-').replace('/10', '/20'))}></div>
-           <phase.icon className={cn("w-24 h-24 md:w-32 md:h-32 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2", statusColors[phase.status as keyof typeof statusColors].replace('bg-', 'text-'))} />
+      <div className="flex flex-col md:flex-row items-start gap-6">
+        <div
+          className={cn(
+            'w-24 h-24 rounded-2xl flex items-center justify-center flex-shrink-0 border-4 border-black shadow-hard-xs',
+            styles.iconBg
+          )}
+        >
+          <phase.icon
+            className={cn('w-12 h-12', styles.iconColor)}
+            strokeWidth={2.5}
+          />
         </div>
-      </div>
-      <div className={cn(
-          "md:w-1/2 p-8 rounded-2xl border-2 backdrop-blur-sm transition-all duration-500 ease-out",
-          statusColors[phase.status as keyof typeof statusColors],
-          inView ? 'transform-none opacity-100' : 'opacity-0',
-          index % 2 === 0 ? 'md:translate-x-10' : 'md:-translate-x-10'
-      )}>
-        <div className="flex items-center gap-4 mb-4">
-          <div className={cn("w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0", iconColors[phase.status as keyof typeof iconColors])}>
-            <phase.icon className="w-6 h-6" />
+        <div className="flex-grow">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-2">
+            <h3 className="font-headline text-3xl text-black">{phase.title}</h3>
+            <span
+              className={cn(
+                'text-xs font-black uppercase px-3 py-1 border-2 border-black rounded-full mt-2 sm:mt-0',
+                styles.badge
+              )}
+            >
+              {phase.status}
+            </span>
           </div>
-          <div>
-            <p className="text-sm font-bold uppercase tracking-widest">{phase.status}</p>
-            <p className="font-bold text-slate-400 text-sm">{phase.date}</p>
-          </div>
+          <p className="font-bold text-gray-500 mb-3">{phase.date}</p>
+          <p className="text-gray-700 leading-relaxed font-medium">
+            {phase.description}
+          </p>
         </div>
-        <h3 className="font-headline text-3xl text-white mb-3">{phase.title}</h3>
-        <p className="text-slate-400 leading-relaxed">{phase.description}</p>
       </div>
     </div>
   );
 };
 
+
 export default function RoadmapPage() {
   return (
-    <div className="bg-slate-900 text-white">
+    <>
       <PageHeader />
-      <main className="pt-32 pb-20 overflow-hidden">
-        <div className="text-center px-4">
-          <h1 className="font-headline text-6xl md:text-8xl tracking-tight text-white leading-[1.1] mb-4">
-            Our Roadmap
-          </h1>
-          <p className="text-lg lg:text-xl text-slate-400 max-w-2xl mx-auto">
-            The journey of Kapogian is a multi-year saga. Here's a look at what's to come.
-          </p>
-        </div>
+      <div className="relative font-body min-h-screen p-4 pt-28 md:p-8 md:pt-32 antialiased selection:bg-black selection:text-white">
+        <Image
+          src="/images/herobg.png"
+          alt="Roadmap background"
+          fill
+          className="object-cover -z-10"
+          priority
+        />
+        <div className="max-w-4xl mx-auto space-y-12 relative">
+            <div className="text-center px-4">
+                <h1 
+                    className="font-headline text-6xl sm:text-7xl md:text-8xl font-bold text-white"
+                    style={{
+                        textShadow:
+                        '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 5px 5px 0 #000',
+                    }}
+                >
+                    Our Roadmap
+                </h1>
+                <p className="text-xl md:text-2xl font-bold text-white max-w-2xl mx-auto mt-4" style={{ textShadow: '2px 2px 0px #000' }}>
+                    The journey of Kapogian is a multi-year saga. Here's a look at what's to come.
+                </p>
+            </div>
 
-        <div className="max-w-5xl mx-auto mt-20 px-4 relative space-y-16">
-          <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-slate-800 -translate-x-1/2 hidden md:block"></div>
-          {roadmapPhases.map((phase, index) => (
-            <RoadmapCard key={phase.title} phase={phase} index={index} />
-          ))}
+            <div className="space-y-8 md:space-y-12">
+            {roadmapPhases.map((phase, index) => (
+                <RoadmapCard key={phase.title} phase={phase} index={index} />
+            ))}
+            </div>
         </div>
-      </main>
+      </div>
       <PageFooter />
-    </div>
+    </>
   );
 }
