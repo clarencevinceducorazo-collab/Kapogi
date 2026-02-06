@@ -6,10 +6,27 @@ import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetClose,
+} from '@/components/ui/sheet';
+import { Menu, ChevronDown } from 'lucide-react';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { ADMIN_ADDRESS } from '@/lib/constants';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 export const PageHeader = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -19,6 +36,14 @@ export const PageHeader = () => {
   const navLinks = [
     { name: 'HOME', href: '/' },
     { name: 'GENERATE', href: '/generate' },
+    {
+      name: 'ABOUT US',
+      isDropdown: true,
+      items: [
+        { name: 'Whitepaper', href: '/whitepaper' },
+        { name: 'Roadmap', href: '/roadmap' },
+      ],
+    },
     { name: 'LEADERBOARDS', href: '/leaderboard' },
     { name: 'MY ORDERS', href: '/my-orders' },
   ];
@@ -45,15 +70,31 @@ export const PageHeader = () => {
               )}
             </div>
             <nav className="hidden md:flex items-center gap-6 lg:gap-10 text-lg font-bold text-primary-foreground">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className="transition-colors hover:text-accent/80"
-                >
-                  {link.name}
-                </Link>
-              ))}
+              {navLinks.map((link) =>
+                link.isDropdown ? (
+                  <DropdownMenu key={link.name}>
+                    <DropdownMenuTrigger className="flex items-center gap-1 transition-colors hover:text-accent/80 focus:outline-none">
+                      {link.name}
+                      <ChevronDown className="h-4 w-4" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="bg-primary/90 text-primary-foreground border-primary-foreground/20">
+                      {link.items?.map((item) => (
+                        <DropdownMenuItem key={item.name} asChild>
+                          <Link href={item.href}>{item.name}</Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Link
+                    key={link.name}
+                    href={link.href!}
+                    className="transition-colors hover:text-accent/80"
+                  >
+                    {link.name}
+                  </Link>
+                )
+              )}
               {isAdmin && (
                 <Link
                   href="/admin"
@@ -82,29 +123,56 @@ export const PageHeader = () => {
                     side="right"
                     className="bg-primary/95 text-primary-foreground border-l-primary-foreground/20 pt-20"
                   >
-                    <nav className="flex flex-col items-center gap-8">
-                      {navLinks.map((link) => (
-                        <Link
-                          key={link.name}
-                          href={link.href}
-                          onClick={() => setIsSheetOpen(false)}
-                          className="text-3xl font-bold transition-colors hover:text-accent"
-                        >
-                          {link.name}
-                        </Link>
-                      ))}
-                      {isAdmin && (
-                        <Link
-                          href="/admin"
-                          onClick={() => setIsSheetOpen(false)}
-                          className="text-3xl font-bold transition-colors hover:text-accent"
-                        >
-                          ADMIN
-                        </Link>
-                      )}
-                    </nav>
-                    <div className="mt-12 flex justify-center">
-                      <CustomConnectButton />
+                    <div className="flex flex-col h-full">
+                      <nav className="flex-grow">
+                        <Accordion type="single" collapsible className="w-full px-8">
+                          {navLinks.map((link) =>
+                            link.isDropdown ? (
+                              <AccordionItem value={link.name} key={link.name} className="border-b-primary-foreground/20">
+                                <AccordionTrigger className="text-3xl font-bold transition-colors hover:text-accent [&[data-state=open]>svg]:rotate-180 py-4 justify-center">
+                                  {link.name}
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                  <div className="flex flex-col items-center gap-4 mt-4">
+                                    {link.items?.map((item) => (
+                                      <SheetClose asChild key={item.name}>
+                                        <Link
+                                          href={item.href}
+                                          className="text-2xl font-semibold transition-colors hover:text-accent"
+                                        >
+                                          {item.name}
+                                        </Link>
+                                      </SheetClose>
+                                    ))}
+                                  </div>
+                                </AccordionContent>
+                              </AccordionItem>
+                            ) : (
+                              <SheetClose asChild key={link.name}>
+                                <Link
+                                  href={link.href!}
+                                  className="py-4 text-3xl font-bold transition-colors hover:text-accent flex justify-center w-full"
+                                >
+                                  {link.name}
+                                </Link>
+                              </SheetClose>
+                            )
+                          )}
+                          {isAdmin && (
+                            <SheetClose asChild>
+                              <Link
+                                href="/admin"
+                                className="py-4 text-3xl font-bold transition-colors hover:text-accent flex justify-center w-full"
+                              >
+                                ADMIN
+                              </Link>
+                            </SheetClose>
+                          )}
+                        </Accordion>
+                      </nav>
+                      <div className="mt-auto mb-8 flex justify-center">
+                        <CustomConnectButton />
+                      </div>
                     </div>
                   </SheetContent>
                 </Sheet>

@@ -5,11 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Sparkles, FileText } from 'lucide-react';
 import Link from 'next/link';
 
-export const HeroSection = ({
-  onWhitepaperOpen,
-}: {
-  onWhitepaperOpen: () => void;
-}) => {
+export const HeroSection = () => {
   return (
     <section className="relative w-full min-h-dvh flex items-start lg:items-center justify-center text-white overflow-hidden py-28 lg:py-20">
       {/* Desktop Background */}
@@ -71,15 +67,16 @@ export const HeroSection = ({
                 Generate Kapogian
               </Button>
             </Link>
-            <Button
-              size="lg"
-              variant="secondary"
-              className="rounded-full bg-white/80 text-black hover:bg-white font-bold text-lg px-8 py-7"
-              onClick={onWhitepaperOpen}
-            >
-              <FileText className="mr-2 h-5 w-5" />
-              Whitepaper
-            </Button>
+            <Link href="/whitepaper">
+              <Button
+                size="lg"
+                variant="secondary"
+                className="rounded-full bg-white/80 text-black hover:bg-white font-bold text-lg px-8 py-7"
+              >
+                <FileText className="mr-2 h-5 w-5" />
+                Whitepaper
+              </Button>
+            </Link>
           </div>
         </div>
 
