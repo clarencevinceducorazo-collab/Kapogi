@@ -9,24 +9,24 @@ import Image from 'next/image';
 
 const roadmapPhases = [
   {
-    status: 'completed',
+    status: 'inprogress',
     title: 'PHASE 1: GENESIS',
-    date: '2026 - 2027',
-    description: 'Launch the Kapogian NFT Collection and establish the "phygital" 1-to-1 experience, bridging digital ownership with high-end physical collectibles.',
+    date: '2026',
+    description: 'NFT Genesis & 1-to-1 Physical Merch Store Launch.',
     icon: Rocket,
   },
   {
-    status: 'inprogress',
+    status: 'upcoming',
     title: 'PHASE 2: THE KCG',
     date: '2027',
-    description: 'Develop and launch the Kapogian Card Game (KCG), a strategic digital game where your NFT acts as a deck commander with trait-based matchmaking.',
+    description: 'Kapogian Card Game (KCG) Launch; Integration of Trait-Based MMR.',
     icon: Gamepad2,
   },
   {
     status: 'upcoming',
     title: 'PHASE 3: TOKEN GENESIS',
     date: '2028',
-    description: 'Deploy the Kapogian Coin ($KPG) on the SUI network to power the entire ecosystem, from in-game purchases to governance.',
+    description: '$KPG Token Deployment; Full Ecosystem Integration; Global Pogi Nation Expansion.',
     icon: Coins,
   },
 ];
