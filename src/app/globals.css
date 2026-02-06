@@ -85,7 +85,7 @@
   }
 
   body {
-    @apply text-slate-900 antialiased selection:bg-black selection:text-[hsl(var(--brand-yellow))];
+    @apply text-slate-900 antialiased selection:bg-black selection:text-[hsl(var(--brand-yellow))] overflow-x-hidden;
     --mouse-x: 50%;
     --mouse-y: 50%;
     background-color: hsl(var(--primary));

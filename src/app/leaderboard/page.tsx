@@ -79,7 +79,7 @@ export default function LeaderboardPage() {
       <PageHeader />
       <div className="relative font-body min-h-screen p-4 pt-28 md:p-8 md:pt-32 antialiased selection:bg-black selection:text-white">
         <Image
-          src="/images/herobg.png"
+          src="/images/kapogian_background.png"
           alt="Leaderboard background"
           fill
           className="object-cover -z-10"

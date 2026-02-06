@@ -11,7 +11,7 @@ export const HeroSection = () => {
       {/* Desktop Background */}
       <div className="hidden md:block absolute inset-0">
         <Image
-          src="/images/herobg.png"
+          src="/images/kapogian_background.png"
           alt="Kapogian hero background"
           fill
           className="object-cover"

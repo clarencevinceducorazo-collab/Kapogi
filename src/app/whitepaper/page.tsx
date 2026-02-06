@@ -9,7 +9,7 @@ export default function WhitepaperPage() {
       <div className="relative font-body min-h-screen pt-32 px-4 pb-12 antialiased">
         <div className="hidden md:block absolute inset-0 -z-10">
           <Image
-            src="/images/herobg.png"
+            src="/images/kapogian_background.png"
             alt="Whitepaper background"
             fill
             className="object-cover"

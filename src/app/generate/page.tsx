@@ -708,7 +708,7 @@ export default function GeneratorPage() {
       <PageHeader />
       <div className="relative min-h-screen p-4 md:p-8 flex items-center justify-center text-lg text-black antialiased pt-28 md:pt-32">
         <Image
-            src="/images/herobg.png"
+            src="/images/kapogian_background.png"
             alt="Generate background"
             fill
             className="object-cover -z-10"
