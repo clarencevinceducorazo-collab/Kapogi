@@ -747,8 +747,8 @@ export default function GeneratorPage() {
           <div className="bg-stone-50 min-h-[600px] relative">
             <section id="page-generator" className={cn('page-section p-6 md:p-8 flex flex-col gap-8 h-full', { 'hidden': page !== 'generator' })}>
               <div className="text-center space-y-2">
-                  <h1 className="font-display text-4xl font-semibold tracking-tight uppercase">Kapogian Image Generator</h1>
-                  <p className="text-xl text-stone-600 font-medium max-w-lg mx-auto">Generate a unique character image and its corresponding lore for your collection.</p>
+                  <h1 className="font-display text-4xl font-semibold tracking-tight uppercase">Kapogian Spirit Summoner</h1>
+                  <p className="text-xl text-stone-600 font-medium max-w-lg mx-auto">Summon a unique character image and its corresponding lore for your collection.</p>
               </div>
 
               <div className="border-4 border-black rounded-2xl bg-white hard-shadow-sm p-6 grid grid-cols-1 md:grid-cols-2 gap-8 relative overflow-hidden">
@@ -865,7 +865,7 @@ export default function GeneratorPage() {
                               disabled={loading}
                               className="w-full bg-green-400 text-black border-4 border-black rounded-xl py-4 px-6 text-2xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hard-shadow-hover transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
                               {loading ? <LoaderCircle className="w-8 h-8 animate-spin" /> : <Sparkles className="w-8 h-8" />}
-                              {loading ? 'Generating...' : 'Generate'}
+                              {loading ? 'Generating...' : 'Summon'}
                           </button>
                       </div>
                        {error && (
@@ -896,7 +896,7 @@ export default function GeneratorPage() {
                         ) : (
                             <div className="flex flex-col items-center justify-center w-full h-full text-stone-500">
                                 <Ghost size={48} className="mb-2" />
-                                <p className="font-semibold">Generation failed or not started</p>
+                                <p className="font-semibold">Summon failed or not started</p>
                             </div>
                         )}
                     </div>
@@ -911,7 +911,7 @@ export default function GeneratorPage() {
                         <div className="flex-grow bg-stone-50 border-2 border-stone-200 rounded-lg p-4 font-medium text-stone-700 max-h-64 overflow-y-auto">
                           {(loading || !generatedLore) ? (
                               <div className="space-y-3">
-                                  <p className="mb-4 text-sm text-stone-500">Generating lore...</p>
+                                  <p className="mb-4 text-sm text-stone-500">Summoning lore...</p>
                                   <Skeleton className="h-4 w-[90%]" />
                                   <Skeleton className="h-4 w-full" />
                                   <Skeleton className="h-4 w-full" />

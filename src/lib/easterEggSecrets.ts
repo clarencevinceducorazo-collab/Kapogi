@@ -81,7 +81,7 @@ export interface EasterEggSliders {
       reveal: {
         name: 'Ang Hanon',
         lore: '**Ang Hanon** — *The Wind* — is a phantom wanderer from the deep forests of Visayas. No one has ever seen him stand still. He drifts between islands like a whisper, leaving behind only the faint scent of salt and old wood.\n\nThey say he was once a sailor who lost his ship to a storm and was reborn by the sea itself. Now he roams, chill and untouchable, a living legend wrapped in mist. Those who catch a glimpse of him in the dead of night know one thing: *the wind chose you.*',
-        imagePath: '/images/easter-eggs/secret_02.png',
+        imagePath: '/images/easter-eggs/vin.png',
       },
     },
     {

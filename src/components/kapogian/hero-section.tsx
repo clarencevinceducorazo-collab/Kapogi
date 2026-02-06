@@ -55,8 +55,7 @@ export const HeroSection = () => {
             KAPOGIAN
           </h1>
           <p className="text-xl md:text-2xl font-bold text-white [text-shadow:2px_2px_0_#000,-2px_2px_0_#000,2px_-2px_0_#000,-2px_-2px_0_#000]">
-            Be Pogi! Be Confident Everyday - Slogan  
-            Generate Kapogian - Acquire my Kapogian Spirit - Ito naman sa Generate
+            Be Pogi! Be Confident Everyday  
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
             <Link href="/generate">
@@ -65,17 +64,7 @@ export const HeroSection = () => {
                 className="rounded-full bg-[#FFC83D] text-black hover:bg-[#EAC35F] font-bold text-lg px-8 py-7"
               >
                 <Sparkles className="mr-2 h-5 w-5" />
-                Generate Kapogian
-              </Button>
-            </Link>
-            <Link href="/whitepaper">
-              <Button
-                size="lg"
-                variant="secondary"
-                className="rounded-full bg-white/80 text-black hover:bg-white font-bold text-lg px-8 py-7"
-              >
-                <FileText className="mr-2 h-5 w-5" />
-                Whitepaper
+                Summon my Kapogian Spirit
               </Button>
             </Link>
           </div>

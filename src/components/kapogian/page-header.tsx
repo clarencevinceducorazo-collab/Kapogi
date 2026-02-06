@@ -35,7 +35,7 @@ export const PageHeader = () => {
 
   const navLinks = [
     { name: 'HOME', href: '/' },
-    { name: 'GENERATE', href: '/generate' },
+    { name: 'SUMMON', href: '/generate' },
     {
       name: 'PROFILE',
       isDropdown: true,
