@@ -191,6 +191,7 @@ export default function CollectionPage() {
                             <CardTitle 
                                 className="font-headline text-2xl tracking-tight truncate text-black uppercase" 
                                 title={char.name}
+                                style={{ textShadow: '1px 1px 0 #FFF, -1px -1px 0 #FFF, 1px -1px 0 #FFF, -1px 1px 0 #FFF' }}
                             >
                                 {char.name}
                             </CardTitle>
