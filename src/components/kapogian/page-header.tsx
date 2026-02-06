@@ -36,7 +36,6 @@ export const PageHeader = () => {
   const navLinks = [
     { name: 'HOME', href: '/' },
     { name: 'GENERATE', href: '/generate' },
-    { name: 'COLLECTION', href: '/collection' },
     {
       name: 'ABOUT US',
       isDropdown: true,
@@ -46,7 +45,14 @@ export const PageHeader = () => {
       ],
     },
     { name: 'LEADERBOARDS', href: '/leaderboard' },
-    { name: 'MY ORDERS', href: '/my-orders' },
+    {
+      name: 'PROFILE',
+      isDropdown: true,
+      items: [
+        { name: 'My Collection', href: '/collection' },
+        { name: 'My Orders', href: '/my-orders' },
+      ],
+    },
   ];
 
   const avatar = PlaceHolderImages.find((img) => img.id === 'header-avatar');
