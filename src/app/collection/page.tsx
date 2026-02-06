@@ -138,15 +138,15 @@ export default function CollectionPage() {
         <div className="max-w-7xl mx-auto space-y-8 relative">
            <div className="text-center">
                 <h1 
-                    className="font-headline text-6xl sm:text-7xl md:text-8xl font-bold text-white"
+                    className="font-headline text-6xl sm:text-7xl md:text-8xl font-bold text-black"
                     style={{
                         textShadow:
-                        '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 5px 5px 0 #000',
+                        '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff, 5px 5px 0 #000',
                     }}
                 >
                     My Collection
                 </h1>
-                <p className="text-xl md:text-2xl font-bold text-white max-w-2xl mx-auto mt-4" style={{ textShadow: '2px 2px 0px #000' }}>
+                <p className="text-xl md:text-2xl font-bold text-black max-w-2xl mx-auto mt-4" style={{ textShadow: '1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 2px 2px 0px #000' }}>
                     Here are all the unique Kapogian characters you've minted.
                 </p>
             </div>
