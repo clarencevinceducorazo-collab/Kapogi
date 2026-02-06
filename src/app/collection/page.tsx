@@ -141,7 +141,7 @@ export default function CollectionPage() {
                     className="font-headline text-6xl sm:text-7xl md:text-8xl font-bold text-black"
                     style={{
                         textShadow:
-                        '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff, 5px 5px 0 #000',
+                        '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff, 5px 5px 0px #000',
                     }}
                 >
                     My Collection
@@ -188,7 +188,13 @@ export default function CollectionPage() {
                            </div>
                         </CardHeader>
                         <CardContent className="p-4 space-y-4">
-                            <CardTitle className="font-headline text-2xl tracking-tight truncate" title={char.name}>{char.name}</CardTitle>
+                            <CardTitle 
+                                className="font-headline text-2xl tracking-tight truncate text-black" 
+                                title={char.name}
+                                style={{ textShadow: '1.5px 1.5px 0 #fff, -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, -1.5px 1.5px 0 #fff' }}
+                            >
+                                {char.name}
+                            </CardTitle>
                             <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-3 space-y-3">
                                 <StatDisplay label="Cuteness" value={char.attributes.cuteness} icon={Star} color="text-yellow-500" />
                                 <StatDisplay label="Confidence" value={char.attributes.confidence} icon={Heart} color="text-pink-500"/>
