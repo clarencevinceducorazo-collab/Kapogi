@@ -85,10 +85,10 @@
   }
 
   body {
-    @apply text-slate-900 antialiased overflow-x-hidden pb-20 selection:bg-black selection:text-[hsl(var(--brand-yellow))];
+    @apply text-slate-900 antialiased selection:bg-black selection:text-[hsl(var(--brand-yellow))];
     --mouse-x: 50%;
     --mouse-y: 50%;
-    background-color: hsl(var(--brand-yellow));
+    background-color: hsl(var(--primary));
     background-image:
       /* This gradient will follow the mouse */
       radial-gradient(circle at var(--mouse-x) var(--mouse-y), hsla(var(--primary) / 0.2), transparent 30vw);

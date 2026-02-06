@@ -79,7 +79,7 @@ export const PageHeader = () => {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="bg-primary/90 text-primary-foreground border-primary-foreground/20">
                       {link.items?.map((item) => (
-                        <DropdownMenuItem key={item.name} asChild>
+                        <DropdownMenuItem key={item.name} asChild className="font-bold text-lg">
                           <Link href={item.href}>{item.name}</Link>
                         </DropdownMenuItem>
                       ))}
