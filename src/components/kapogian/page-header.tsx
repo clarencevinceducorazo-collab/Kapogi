@@ -69,7 +69,7 @@ export const PageHeader = () => {
                 </Link>
               )}
             </div>
-            <nav className="hidden md:flex items-center gap-6 lg:gap-10 text-lg font-bold text-primary-foreground">
+            <nav className="hidden lg:flex items-center gap-6 xl:gap-10 text-lg font-bold text-primary-foreground">
               {navLinks.map((link) =>
                 link.isDropdown ? (
                   <DropdownMenu key={link.name}>
@@ -105,10 +105,10 @@ export const PageHeader = () => {
               )}
             </nav>
             <div className="pr-2 flex items-center gap-2">
-              <div className="hidden md:block">
+              <div className="hidden lg:block">
                 <CustomConnectButton />
               </div>
-              <div className="md:hidden">
+              <div className="lg:hidden">
                 <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                   <SheetTrigger asChild>
                     <Button
