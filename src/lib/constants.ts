@@ -32,7 +32,7 @@ export const MERCH_OPTIONS = [
   { id: 'SHIRT', name: 'T-Shirt', icon: '👕' },
   { id: 'MUG', name: 'Mug', icon: '☕' },
   { id: 'MOUSEPAD', name: 'Mouse Pad', icon: '🖱️' },
-  { id: 'PLATE', name: 'Aluminum Plate', icon: '🍽️' },
+  { id: 'HOODIE', name: 'Hoodie', icon: '🧥' },
 ] as const;
 
 export const BUNDLE_OPTION = {

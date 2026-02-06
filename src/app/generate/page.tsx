@@ -114,7 +114,10 @@ export default function GeneratorPage() {
   // Merch selection state
   const [selection, setSelection] = useState<string | null>(null);
   const [shirtSize, setShirtSize] = useState<string>('');
+  const [hoodieSize, setHoodieSize] = useState<string>('');
+  const [hoodieColor, setHoodieColor] = useState<string>('');
   const SIZES = ['S', 'M', 'L', 'XL'];
+  const COLORS = ['Red', 'Blue', 'Black'];
 
   // Result State
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
@@ -571,11 +574,11 @@ export default function GeneratorPage() {
         case 'Pad':
           itemsSelected = 'MOUSEPAD';
           break;
-        case 'Plate':
-          itemsSelected = 'PLATE';
+        case 'Hoodie':
+          itemsSelected = `HOODIE-${hoodieColor.toUpperCase()}-${hoodieSize}`;
           break;
         case 'Bundle':
-          itemsSelected = `ALL_BUNDLE,SHIRT-${shirtSize}`;
+          itemsSelected = `ALL_BUNDLE,SHIRT-${shirtSize},HOODIE-${hoodieColor.toUpperCase()}-${hoodieSize}`;
           break;
         default:
           setError('Invalid merchandise selection.');
@@ -640,13 +643,17 @@ export default function GeneratorPage() {
   const handleSelection = (item: string) => {
     if (selection === item) {
       setSelection(null);
-      if (item === 'Tee' || item === 'Bundle') {
-        setShirtSize('');
-      }
+      setShirtSize('');
+      setHoodieColor('');
+      setHoodieSize('');
     } else {
       setSelection(item);
       if (item !== 'Tee' && item !== 'Bundle') {
         setShirtSize('');
+      }
+      if (item !== 'Hoodie' && item !== 'Bundle') {
+        setHoodieColor('');
+        setHoodieSize('');
       }
     }
   };
@@ -658,6 +665,10 @@ export default function GeneratorPage() {
     }
     if ((selection === 'Tee' || selection === 'Bundle') && !shirtSize) {
       setError("Please select a T-shirt size.");
+      return;
+    }
+    if ((selection === 'Hoodie' || selection === 'Bundle') && (!hoodieSize || !hoodieColor)) {
+      setError("Please select a hoodie color and size.");
       return;
     }
     setError('');
@@ -945,11 +956,11 @@ export default function GeneratorPage() {
                               </div>
                               <span className="font-display font-semibold uppercase">Pad</span>
                           </button>
-                          <button onClick={() => handleSelection('Plate')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Plate' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
+                          <button onClick={() => handleSelection('Hoodie')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Hoodie' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
                               <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
-                                  <Image src="/images/platerot.gif" alt="Aluminum Plate" width={128} height={128} className="object-contain" />
+                                  <Image src="/images/shirtrot.gif" alt="Hoodie" width={128} height={128} className="object-contain" />
                               </div>
-                              <span className="font-display font-semibold uppercase">Plate</span>
+                              <span className="font-display font-semibold uppercase">Hoodie</span>
                           </button>
                       </div>
 
@@ -969,6 +980,53 @@ export default function GeneratorPage() {
                                           {size}
                                       </button>
                                   ))}
+                              </div>
+                          </div>
+                      )}
+
+                       {(selection === 'Hoodie' || selection === 'Bundle') && (
+                          <div className="mb-6 bg-white border-4 border-black rounded-xl p-4 hard-shadow-sm relative z-10 animate__animated animate__fadeIn">
+                              <h3 className="font-display font-semibold text-xl mb-3 text-center">Select Hoodie Color & Size</h3>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                      <h4 className="font-display font-semibold text-lg text-center mb-2">Color</h4>
+                                      <div className="flex justify-center gap-2">
+                                          {COLORS.map(color => (
+                                              <button
+                                                  key={color}
+                                                  onClick={() => setHoodieColor(color)}
+                                                  className={cn(
+                                                      "w-16 h-10 font-display font-semibold text-sm border-4 rounded-lg hard-shadow-sm hard-shadow-hover transition-all",
+                                                      hoodieColor === color && 'ring-4 ring-offset-2 ring-pink-500'
+                                                  )}
+                                                  style={{ 
+                                                      backgroundColor: color.toLowerCase(), 
+                                                      color: color === 'Black' ? 'white' : 'black',
+                                                      borderColor: 'black'
+                                                  }}
+                                              >
+                                                  {color}
+                                              </button>
+                                          ))}
+                                      </div>
+                                  </div>
+                                  <div>
+                                      <h4 className="font-display font-semibold text-lg text-center mb-2">Size</h4>
+                                      <div className="flex justify-center gap-2">
+                                          {SIZES.map(size => (
+                                              <button
+                                                  key={size}
+                                                  onClick={() => setHoodieSize(size)}
+                                                  className={cn(
+                                                      "w-14 h-14 font-display font-semibold text-lg border-4 border-black rounded-lg hard-shadow-sm hard-shadow-hover transition-all",
+                                                      hoodieSize === size ? "bg-pink-500 text-white" : "bg-white text-black"
+                                                  )}
+                                              >
+                                                  {size}
+                                              </button>
+                                          ))}
+                                      </div>
+                                  </div>
                               </div>
                           </div>
                       )}
@@ -1140,6 +1198,7 @@ export default function GeneratorPage() {
     
 
     
+
 
 
 

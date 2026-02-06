@@ -8,14 +8,14 @@ export const StylistShopSection = () => {
     { id: 'stylist-shop-tee', name: 'TEE' },
     { id: 'stylist-shop-mug', name: 'MUG' },
     { id: 'stylist-shop-pad', name: 'PAD' },
-    { id: 'stylist-shop-hoodie', name: 'Aluminum Plate' },
+    { id: 'stylist-shop-hoodie', name: 'Hoodie' },
   ];
 
   const productImages = [
     "/images/shirtrot.gif",
     "/images/mugzrot.gif",
     "/images/padrot.gif",
-    "/images/platerot.gif"
+    "/images/shirtrot.gif"
   ];
 
   const avatar = PlaceHolderImages.find(
