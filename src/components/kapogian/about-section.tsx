@@ -12,7 +12,7 @@ export const AboutSection = () => {
     );
 
     return (
-        <section className="relative w-full swirl-bg text-slate-300 flex items-center justify-center pt-24 pb-56 lg:py-32 overflow-hidden">
+        <section className="relative w-full swirl-bg text-slate-300 flex items-center justify-center pt-24 pb-80 lg:py-32 overflow-hidden">
             <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
                     
