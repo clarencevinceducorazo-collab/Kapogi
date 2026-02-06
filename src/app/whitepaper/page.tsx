@@ -1,11 +1,30 @@
 import { PageHeader } from '@/components/kapogian/page-header';
 import { PageFooter } from '@/components/kapogian/page-footer';
+import Image from 'next/image';
 
 export default function WhitepaperPage() {
   return (
     <>
       <PageHeader />
-      <main className="bg-yellow-50 py-32 px-4">
+      <div className="relative font-body min-h-screen pt-32 px-4 pb-12 antialiased">
+        <div className="hidden md:block absolute inset-0 -z-10">
+          <Image
+            src="/images/herobg.png"
+            alt="Whitepaper background"
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
+        <div className="block md:hidden absolute inset-0 -z-10">
+          <Image
+            src="/images/mobilebg.png"
+            alt="Whitepaper background mobile"
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
         <div className="max-w-4xl mx-auto bg-white comic-border-thick rounded-3xl overflow-hidden toy-shadow-lg">
            <div className="p-8 border-b-4 border-black bg-yellow-300">
              <h1 className="font-headline text-4xl tracking-wide">The Pogi Protocol</h1>
@@ -112,7 +131,7 @@ export default function WhitepaperPage() {
             </p>
           </div>
         </div>
-      </main>
+      </div>
       <PageFooter />
     </>
   );

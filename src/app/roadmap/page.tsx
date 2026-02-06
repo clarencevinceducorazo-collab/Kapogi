@@ -107,13 +107,24 @@ export default function RoadmapPage() {
     <>
       <PageHeader />
       <div className="relative font-body min-h-screen p-4 pt-28 md:p-8 md:pt-32 antialiased selection:bg-black selection:text-white">
-        <Image
-          src="/images/herobg.png"
-          alt="Roadmap background"
-          fill
-          className="object-cover -z-10"
-          priority
-        />
+        <div className="hidden md:block absolute inset-0 -z-10">
+          <Image
+            src="/images/herobg.png"
+            alt="Roadmap background"
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
+        <div className="block md:hidden absolute inset-0 -z-10">
+          <Image
+            src="/images/mobilebg.png"
+            alt="Roadmap background mobile"
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
         <div className="max-w-4xl mx-auto space-y-12 relative">
             <div className="text-center px-4">
                 <h1 
