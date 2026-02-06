@@ -15,7 +15,7 @@ export const StylistShopSection = () => {
     "/images/shirtrot.gif",
     "/images/mugzrot.gif",
     "/images/padrot.gif",
-    "/images/shirtrot.gif"
+    "/images/hoodie_temp.png"
   ];
 
   const avatar = PlaceHolderImages.find(

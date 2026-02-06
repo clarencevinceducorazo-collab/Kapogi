@@ -959,7 +959,7 @@ export default function GeneratorPage() {
                           </button>
                           <button onClick={() => handleSelection('Hoodie')} className={cn("group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all", selection === 'Hoodie' && "bg-pink-100 ring-4 ring-offset-2 ring-pink-500")}>
                               <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
-                                  <Image src="/images/shirtrot.gif" alt="Hoodie" width={128} height={128} className="object-contain" />
+                                  <Image src="/images/hoodie_temp.png" alt="Hoodie" width={128} height={128} className="object-contain" />
                               </div>
                               <span className="font-display font-semibold uppercase">Hoodie</span>
                           </button>
