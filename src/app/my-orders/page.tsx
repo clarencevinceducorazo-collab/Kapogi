@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { suiClient, getOwnedReceipts } from '@/lib/sui';
+import { getIPFSGatewayUrl } from '@/lib/pinata';
 import { LoaderCircle, ShieldAlert, Package, Truck, CheckCircle, Wallet, ClipboardList } from 'lucide-react';
 import { ORDER_STATUS } from '@/lib/constants';
 import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
@@ -80,7 +81,7 @@ export default function MyOrdersPage() {
         nftObjects.map(obj => [
           obj.data?.objectId,
           {
-            imageUrl: (obj.data?.display?.data as any)?.image_url,
+            imageUrl: getIPFSGatewayUrl((obj.data?.display?.data as any)?.image_url),
             name: (obj.data?.display?.data as any)?.name,
           },
         ])
@@ -190,7 +191,7 @@ export default function MyOrdersPage() {
                   return (
                     <div key={order.objectId} onClick={() => setSelectedOrder(order)} className="flex flex-col md:flex-row items-center p-4 gap-4 hover:bg-yellow-50 transition-colors cursor-pointer">
                       <div className="w-20 h-20 bg-gray-100 rounded-lg border-2 border-black flex-shrink-0">
-                        {order.character?.imageUrl && <Image src={order.character.imageUrl} alt={order.character.name} width={80} height={80} className="rounded-md" />}
+                        {order.character?.imageUrl && <Image src={order.character.imageUrl} alt={order.character.name || 'Character'} width={80} height={80} className="rounded-md" />}
                       </div>
                       <div className="flex-grow text-center md:text-left">
                         <p className="font-headline text-xl">{order.character?.name || 'Loading...'}</p>
@@ -221,7 +222,7 @@ export default function MyOrdersPage() {
                 <div className="p-6 space-y-4">
                   <div className="flex gap-4 items-center">
                     <div className="w-24 h-24 bg-gray-100 rounded-lg border-2 border-black flex-shrink-0">
-                      {selectedOrder.character?.imageUrl && <Image src={selectedOrder.character.imageUrl} alt={selectedOrder.character.name} width={96} height={96} className="rounded-md" />}
+                      {selectedOrder.character?.imageUrl && <Image src={selectedOrder.character.imageUrl} alt={selectedOrder.character.name || 'Character'} width={96} height={96} className="rounded-md" />}
                     </div>
                     <div>
                       <p className="font-headline text-xl">{selectedOrder.character?.name}</p>

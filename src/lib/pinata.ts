@@ -7,7 +7,7 @@ import { IPFS_CONFIG } from './constants';
 /**
  * Upload image to IPFS via Pinata Direct API
  */
-export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Promise<{ gatewayUrl: string; ipfsHash: string }> {
+export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Promise<{ imageUrl: string; ipfsHash: string }> {
   try {
     console.log('📤 Uploading image to IPFS...');
     
@@ -50,11 +50,11 @@ export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Prom
       throw new Error('Invalid response from IPFS service');
     }
 
-    // Return gateway URL (not ipfs:// URI)
-    const gatewayUrl = `${IPFS_CONFIG.gateway}${ipfsHash}`;
+    // Return ipfs:// URI
+    const imageUrl = `ipfs://${ipfsHash}`;
     
-    console.log('✅ Image uploaded to IPFS:', gatewayUrl);
-    return { gatewayUrl, ipfsHash };
+    console.log('✅ Image uploaded to IPFS with URI:', imageUrl);
+    return { imageUrl, ipfsHash };
   } catch (error) {
     console.error('❌ Failed to upload image to IPFS:', error);
     throw new Error('Failed to upload image to IPFS');
@@ -150,7 +150,7 @@ export async function uploadCharacterToIPFS(
 ): Promise<{ imageUrl: string; metadataUrl: string; imageHash: string; metadataHash: string }> {
   try {
     // 1. Upload image first
-    const { gatewayUrl: imageUrl, ipfsHash: imageHash } = await uploadImageToIPFS(
+    const { imageUrl, ipfsHash: imageHash } = await uploadImageToIPFS(
       imageBlob,
       `${characterData.name.replace(/\s/g, '_')}.png`
     );
@@ -159,7 +159,7 @@ export async function uploadCharacterToIPFS(
     const metadata: CharacterMetadata = {
       name: characterData.name,
       description: characterData.description,
-      image: imageUrl, // This is now a proper gateway URL
+      image: imageUrl, // This is now an ipfs:// URI
       attributes: Object.entries(characterData.attributes).map(([key, value]) => ({
         trait_type: key,
         value: value,
@@ -180,15 +180,16 @@ export async function uploadCharacterToIPFS(
  * Get IPFS gateway URL for display (helper function)
  */
 export function getIPFSGatewayUrl(ipfsUrl: string): string {
+  if (!ipfsUrl) return '';
   if (ipfsUrl.startsWith('http')) {
     return ipfsUrl; // Already a gateway URL
   }
   if (ipfsUrl.startsWith('ipfs://')) {
     const hash = ipfsUrl.replace('ipfs://', '');
-    return `${IPFS_CONFIG.gateway}${hash}`;
+    return `https://crimson-near-lark-649.mypinata.cloud/ipfs/${hash}`;
   }
   // Assume it's just the hash
-  return `${IPFS_CONFIG.gateway}${ipfsUrl}`;
+  return `https://crimson-near-lark-649.mypinata.cloud/ipfs/${ipfsUrl}`;
 }
 
 /**
