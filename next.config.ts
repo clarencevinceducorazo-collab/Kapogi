@@ -53,6 +53,12 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'dweb.link',
+        port: '',
+        pathname: '/ipfs/**',
+      },
+      {
+        protocol: 'https',
         hostname: '*.mypinata.cloud', // Wildcard for all your Pinata gateways
         port: '',
         pathname: '/**',

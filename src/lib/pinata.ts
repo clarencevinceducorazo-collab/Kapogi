@@ -181,15 +181,14 @@ export async function uploadCharacterToIPFS(
  */
 export function getIPFSGatewayUrl(ipfsUrl: string): string {
   if (!ipfsUrl) return '';
-  if (ipfsUrl.startsWith('http')) {
-    return ipfsUrl; // Already a gateway URL
-  }
+  
   if (ipfsUrl.startsWith('ipfs://')) {
-    const hash = ipfsUrl.replace('ipfs://', '');
-    return `https://crimson-near-lark-649.mypinata.cloud/ipfs/${hash}`;
+    const cid = ipfsUrl.replace('ipfs://', '');
+    // Use IPFS.io - no Cloudflare verification, works everywhere
+    return `https://ipfs.io/ipfs/${cid}`;
   }
-  // Assume it's just the hash
-  return `https://crimson-near-lark-649.mypinata.cloud/ipfs/${ipfsUrl}`;
+  
+  return ipfsUrl;
 }
 
 /**
