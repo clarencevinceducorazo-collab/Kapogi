@@ -189,9 +189,8 @@ export default function CollectionPage() {
                         </CardHeader>
                         <CardContent className="p-4 space-y-4">
                             <CardTitle 
-                                className="font-headline text-2xl tracking-tight truncate text-black" 
+                                className="font-headline text-2xl tracking-tight truncate text-black uppercase" 
                                 title={char.name}
-                                style={{ textShadow: '1.5px 1.5px 0 #fff, -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, -1.5px 1.5px 0 #fff' }}
                             >
                                 {char.name}
                             </CardTitle>
