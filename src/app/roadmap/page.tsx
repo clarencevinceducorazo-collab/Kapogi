@@ -118,7 +118,7 @@ export default function RoadmapPage() {
         </div>
         <div className="block md:hidden absolute inset-0 -z-10">
           <Image
-            src="/images/mobilebg.png"
+            src="/images/kapogian_background.png"
             alt="Roadmap background mobile"
             fill
             className="object-cover"

@@ -32,6 +32,7 @@ import { useEasterEgg } from '@/hooks/useEasterEgg';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/kapogian/page-header';
+import { PageFooter } from '@/components/kapogian/page-footer';
 
 
 interface CharacterData {
@@ -699,6 +700,7 @@ export default function GeneratorPage() {
               </div>
           </main>
         </div>
+        <PageFooter />
       </>
     );
   }
@@ -1125,6 +1127,7 @@ export default function GeneratorPage() {
           </div>
         </main>
       </div>
+      <PageFooter />
     </>
   );
 }
@@ -1137,4 +1140,5 @@ export default function GeneratorPage() {
     
 
     
+
 

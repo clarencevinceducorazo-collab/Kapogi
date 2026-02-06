@@ -11,6 +11,7 @@ import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/kapogian/page-header';
+import { PageFooter } from '@/components/kapogian/page-footer';
 
 // Interface for combined Order data
 interface Order {
@@ -132,21 +133,24 @@ export default function MyOrdersPage() {
 
   if (!account) {
     return (
-      <div className="relative font-body text-gray-900 min-h-screen p-4 md:p-8 flex items-center justify-center antialiased selection:bg-black selection:text-white">
-        <Image
-            src="/images/herobg.png"
-            alt="My Orders background"
-            fill
-            className="object-cover -z-10"
-            priority
-        />
-        <div className="bg-white border-4 border-black rounded-3xl p-8 shadow-hard text-center max-w-md w-full relative">
-          <Wallet size={48} className="mx-auto mb-4" />
-          <h2 className="font-headline text-3xl mb-4">Connect Your Wallet</h2>
-          <p className="mb-6">Please connect your wallet to view your orders.</p>
-          <CustomConnectButton className="!bg-accent !border-4 !border-black !text-white !font-black !px-6 !py-2 !rounded-full !shadow-hard-sm hover:!bg-blue-600 !transition-brutal" />
+      <>
+        <div className="relative font-body text-gray-900 min-h-screen p-4 md:p-8 flex items-center justify-center antialiased selection:bg-black selection:text-white">
+          <Image
+              src="/images/herobg.png"
+              alt="My Orders background"
+              fill
+              className="object-cover -z-10"
+              priority
+          />
+          <div className="bg-white border-4 border-black rounded-3xl p-8 shadow-hard text-center max-w-md w-full relative">
+            <Wallet size={48} className="mx-auto mb-4" />
+            <h2 className="font-headline text-3xl mb-4">Connect Your Wallet</h2>
+            <p className="mb-6">Please connect your wallet to view your orders.</p>
+            <CustomConnectButton className="!bg-accent !border-4 !border-black !text-white !font-black !px-6 !py-2 !rounded-full !shadow-hard-sm hover:!bg-blue-600 !transition-brutal" />
+          </div>
         </div>
-      </div>
+        <PageFooter />
+      </>
     );
   }
 
@@ -262,6 +266,7 @@ export default function MyOrdersPage() {
           </DialogContent>
         </Dialog>
       </div>
+      <PageFooter />
     </>
   );
 }

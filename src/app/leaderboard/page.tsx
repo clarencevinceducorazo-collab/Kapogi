@@ -6,6 +6,7 @@ import { LoaderCircle, Trophy, Crown, Medal, ShieldAlert } from 'lucide-react';
 import { suiClient } from '@/lib/sui';
 import { CONTRACT_ADDRESSES } from '@/lib/constants';
 import { PageHeader } from '@/components/kapogian/page-header';
+import { PageFooter } from '@/components/kapogian/page-footer';
 
 type LeaderboardEntry = {
   address: string;
@@ -147,6 +148,7 @@ export default function LeaderboardPage() {
           )}
         </div>
       </div>
+      <PageFooter />
     </>
   );
 }
