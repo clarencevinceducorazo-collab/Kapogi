@@ -106,7 +106,7 @@ export default function RoadmapPage() {
   return (
     <>
       <PageHeader />
-      <div className="relative font-body min-h-screen p-4 pt-28 md:p-8 md:pt-32 antialiased selection:bg-black selection:text-white">
+      <div className="relative font-body min-h-screen p-4 pt-28 pb-16 md:p-8 md:pt-32 md:pb-24 antialiased selection:bg-black selection:text-white">
         <div className="hidden md:block absolute inset-0 -z-10">
           <Image
             src="/images/herobg.png"
