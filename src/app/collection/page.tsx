@@ -106,7 +106,7 @@ export default function CollectionPage() {
         <PageHeader />
         <div className="relative font-body text-gray-900 min-h-screen p-4 md:p-8 flex items-center justify-center antialiased selection:bg-black selection:text-white">
           <Image
-              src="/images/herobg.png"
+              src="/images/kapogian_background.png"
               alt="Collection background"
               fill
               className="object-cover -z-10"
