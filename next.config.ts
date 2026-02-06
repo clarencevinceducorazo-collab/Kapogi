@@ -8,7 +8,12 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  
+  // Output configuration for different hosts
+  output: 'standalone', // Good for Docker, self-hosting, and some platforms
+  
   images: {
+    unoptimized: true,  // Required for: Cloudflare, Netlify, static exports, and IPFS images
     remotePatterns: [
       {
         protocol: 'https',
@@ -34,7 +39,6 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/ipfs/**',
       },
-      // ADD THESE:
       {
         protocol: 'https',
         hostname: 'crimson-near-lark-649.mypinata.cloud',
@@ -55,6 +59,24 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  
+  // Webpack configuration for compatibility (especially for Web3/Sui SDK)
+  webpack: (config) => {
+    config.externals.push('pino-pretty', 'lokijs', 'encoding');
+    return config;
+  },
+  
+  // Disable x-powered-by header for security
+  poweredByHeader: false,
+  
+  // Compression for better performance
+  compress: true,
+  
+  // React strict mode for better development
+  reactStrictMode: true,
+  
+  // SWC minification (faster builds)
+  swcMinify: true,
 };
 
 export default nextConfig;
