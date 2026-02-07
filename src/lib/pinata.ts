@@ -184,8 +184,8 @@ export function getIPFSGatewayUrl(ipfsUrl: string): string {
   
   if (ipfsUrl.startsWith('ipfs://')) {
     const cid = ipfsUrl.replace('ipfs://', '');
-    // Use IPFS.io - no Cloudflare verification, works everywhere
-    return `https://ipfs.io/ipfs/${cid}`;
+    // Use Pinata gateway for fast and reliable image loading
+    return `https://gateway.pinata.cloud/ipfs/${cid}`;
   }
   
   return ipfsUrl;
