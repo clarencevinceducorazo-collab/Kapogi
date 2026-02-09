@@ -7,29 +7,23 @@ import { IPFS_CONFIG } from './constants';
 /**
  * Upload image to IPFS via Pinata Direct API
  */
-export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Promise<{ imageUrl: string; ipfsHash: string }> {
+export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Promise<{ ipfsHash: string }> {
   try {
     console.log('📤 Uploading image to IPFS...');
     
-    // Create FormData for Pinata API
     const formData = new FormData();
     const file = new File([imageBlob], filename, { type: imageBlob.type });
     formData.append('file', file);
 
-    // Add metadata
-    const metadata = JSON.stringify({
-      name: filename,
-    });
+    const metadata = JSON.stringify({ name: filename });
     formData.append('pinataMetadata', metadata);
 
-    // Add options
-    const options = JSON.stringify({
-      cidVersion: 1,
-    });
+    const options = JSON.stringify({ cidVersion: 1 });
     formData.append('pinataOptions', options);
 
-    // Upload to Pinata
-    const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+    const apiEndpoint = process.env.NEXT_PUBLIC_PINATA_API || 'https://api.pinata.cloud/pinning/pinFileToIPFS';
+
+    const response = await fetch(apiEndpoint, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${IPFS_CONFIG.jwt}`,
@@ -39,75 +33,28 @@ export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Prom
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ Pinata upload error:', errorText);
-      throw new Error('Failed to upload to IPFS');
+      console.error('❌ Pinata upload error:', `Status: ${response.status}`, errorText);
+      throw new Error(`Failed to upload to IPFS. Status: ${response.status}`);
     }
 
     const data = await response.json();
     const ipfsHash = data.IpfsHash;
 
     if (!ipfsHash) {
-      throw new Error('Invalid response from IPFS service');
+      throw new Error('Invalid response from IPFS service, hash not found.');
     }
-
-    // Return ipfs:// URI
-    const imageUrl = `ipfs://${ipfsHash}`;
     
-    console.log('✅ Image uploaded to IPFS with URI:', imageUrl);
-    return { imageUrl, ipfsHash };
+    console.log('✅ Image uploaded to IPFS with Hash:', ipfsHash);
+    return { ipfsHash };
   } catch (error) {
     console.error('❌ Failed to upload image to IPFS:', error);
-    throw new Error('Failed to upload image to IPFS');
+    if (error instanceof Error) {
+        throw error;
+    }
+    throw new Error('An unknown error occurred during IPFS upload.');
   }
 }
 
-/**
- * Upload JSON metadata to IPFS via Pinata Direct API
- */
-export async function uploadMetadataToIPFS(metadata: CharacterMetadata): Promise<{ gatewayUrl: string; ipfsHash: string }> {
-  try {
-    console.log('📤 Uploading metadata to IPFS...');
-    
-    const response = await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${IPFS_CONFIG.jwt}`,
-      },
-      body: JSON.stringify({
-        pinataContent: metadata,
-        pinataMetadata: {
-          name: `${metadata.name}_metadata.json`,
-        },
-        pinataOptions: {
-          cidVersion: 1,
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Pinata metadata upload error:', errorText);
-      throw new Error('Failed to upload metadata to IPFS');
-    }
-
-    const data = await response.json();
-    const ipfsHash = data.IpfsHash;
-
-    if (!ipfsHash) {
-      throw new Error('Invalid response from IPFS service');
-    }
-
-    // Return gateway URL (not ipfs:// URI)
-    const gatewayUrl = `${IPFS_CONFIG.gateway}${ipfsHash}`;
-    
-    console.log('✅ Metadata uploaded to IPFS:', gatewayUrl);
-    return { gatewayUrl, ipfsHash };
-  } catch (error) {
-    console.error('❌ Failed to upload metadata to IPFS:', error);
-    throw new Error('Failed to upload metadata to IPFS');
-  }
-}
 
 /**
  * Unpin (delete) a file from Pinata IPFS by its hash
@@ -116,7 +63,10 @@ export async function unpinFromIPFS(ipfsHash: string): Promise<void> {
   try {
     console.log(`🗑️ Unpinning ${ipfsHash} from IPFS...`);
 
-    const response = await fetch(`https://api.pinata.cloud/pinning/unpin/${ipfsHash}`, {
+    const apiBase = (process.env.NEXT_PUBLIC_PINATA_API || 'https://api.pinata.cloud/pinning/pinFileToIPFS').replace('/pinFileToIPFS', '');
+    const apiEndpoint = `${apiBase}/unpin/${ipfsHash}`;
+
+    const response = await fetch(apiEndpoint, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${IPFS_CONFIG.jwt}`,
@@ -124,7 +74,6 @@ export async function unpinFromIPFS(ipfsHash: string): Promise<void> {
     });
 
     if (!response.ok) {
-      // It's okay if it fails (e.g., already unpinned), just log it
       const errorText = await response.text();
       console.warn(`⚠️ Failed to unpin ${ipfsHash}:`, errorText);
     } else {
@@ -132,48 +81,28 @@ export async function unpinFromIPFS(ipfsHash: string): Promise<void> {
     }
   } catch (error) {
     console.error(`❌ Error unpinning ${ipfsHash}:`, error);
-    // Don't re-throw, as cleanup failure shouldn't block user flow
   }
 }
 
 
 /**
- * Complete upload flow: Image + Metadata
+ * Simplified upload flow: Just the Image
  */
 export async function uploadCharacterToIPFS(
   imageBlob: Blob,
   characterData: {
     name: string;
-    description: string;
-    attributes: Record<string, any>;
   }
-): Promise<{ imageUrl: string; metadataUrl: string; imageHash: string; metadataHash: string }> {
+): Promise<{ imageUrl: string; imageHash: string; }> {
   try {
-    // 1. Upload image and get the ipfs:// URI and hash
-    const { imageUrl: ipfsUri, ipfsHash: imageHash } = await uploadImageToIPFS(
+    const { ipfsHash } = await uploadImageToIPFS(
       imageBlob,
       `${characterData.name.replace(/\s/g, '_')}.png`
     );
-
-    // 2. Create metadata JSON with the ipfs:// URI for the image field (standard practice)
-    const metadata: CharacterMetadata = {
-      name: characterData.name,
-      description: characterData.description,
-      image: ipfsUri,
-      attributes: Object.entries(characterData.attributes).map(([key, value]) => ({
-        trait_type: key,
-        value: value,
-      })),
-    };
-
-    // 3. Upload metadata JSON to IPFS
-    const { gatewayUrl: metadataUrl, ipfsHash: metadataHash } = await uploadMetadataToIPFS(metadata);
     
-    // 4. Convert the image's ipfs:// URI to a public gateway URL for the NFT's direct image field
-    const gatewayImageUrl = getIPFSGatewayUrl(ipfsUri);
+    const gatewayImageUrl = getIPFSGatewayUrl(`ipfs://${ipfsHash}`);
 
-    // 5. Return the public gateway URL for the image, and the metadata URL
-    return { imageUrl: gatewayImageUrl, metadataUrl, imageHash, metadataHash };
+    return { imageUrl: gatewayImageUrl, imageHash: ipfsHash };
   } catch (error) {
     console.error('❌ Failed to upload character to IPFS:', error);
     throw error;
@@ -188,10 +117,23 @@ export function getIPFSGatewayUrl(ipfsUrl: string): string {
   
   if (ipfsUrl.startsWith('ipfs://')) {
     const cid = ipfsUrl.replace('ipfs://', '');
-    // Use Pinata gateway for fast and reliable image loading
-    return `https://gateway.pinata.cloud/ipfs/${cid}`;
+    return `${IPFS_CONFIG.gateway}${cid}`;
   }
   
+  // If it's already a gateway URL, try to convert it to the configured gateway for consistency
+  if (ipfsUrl.includes('/ipfs/')) {
+    try {
+        const url = new URL(ipfsUrl);
+        const parts = url.pathname.split('/ipfs/');
+        if (parts.length > 1 && parts[1]) {
+             return `${IPFS_CONFIG.gateway}${parts[1]}`;
+        }
+    } catch(e) {
+        // Not a valid URL, just return as is
+        return ipfsUrl;
+    }
+  }
+
   return ipfsUrl;
 }
 

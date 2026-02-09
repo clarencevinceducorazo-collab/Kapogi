@@ -58,7 +58,7 @@ export const NETWORK_CONFIG = {
 // IPFS Configuration
 export const IPFS_CONFIG = {
   jwt: process.env.NEXT_PUBLIC_PINATA_JWT || '',
-  gateway: 'https://gateway.pinata.cloud/ipfs/', // Must end with /ipfs/
+  gateway: process.env.NEXT_PUBLIC_PINATA_GATEWAY || 'https://gateway.pinata.cloud/ipfs/',
 };
 
 // Encryption
