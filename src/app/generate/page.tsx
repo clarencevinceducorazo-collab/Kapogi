@@ -127,6 +127,8 @@ export default function GeneratorPage() {
   const [generatedLore, setGeneratedLore] = useState<string | null>(null);
   const [originDescription, setOriginDescription] = useState('');
   const [txHash, setTxHash] = useState<string>('');
+  const [generatedMmr, setGeneratedMmr] = useState(0);
+
 
   const displayedLore = useTypewriter(generatedLore || '', 20);
   const isLoreTyping = generatedLore && displayedLore.length < generatedLore.length;
@@ -424,6 +426,7 @@ export default function GeneratorPage() {
     setSkinColor(Math.floor(Math.random() * 51));
     setBodyFat(Math.floor(Math.random() * 51));
     setPosture(Math.floor(Math.random() * 51));
+    setGeneratedMmr(Math.floor(Math.random() * 1000) + 1);
 
     const items = ['None', 'Cash', 'Random Food', 'Random Bouquet of Flowers', 'Random Home Utensils'];
     const randomItem = items[Math.floor(Math.random() * items.length)];
@@ -441,6 +444,7 @@ export default function GeneratorPage() {
     setOriginDescription('');
     setTxHash('');
     setLoadingStepIndex(0);
+    setGeneratedMmr(0);
 
     navigate('page-preview');
 
@@ -453,6 +457,7 @@ export default function GeneratorPage() {
             setGeneratedLore(activeEgg.lore);
             setGeneratedImage(activeEgg.imagePath);
             setGeneratedImageBlob(null);
+            setGeneratedMmr(Math.floor(Math.random() * 1000) + 1);
             setLoading(false);
             setShowExitLoader(false);
         }, 6500);
@@ -505,6 +510,7 @@ export default function GeneratorPage() {
         setGeneratedImageBlob(blob);
         setGeneratedImage(imageUrl);
         setGeneratedLore(loreResult);
+        setGeneratedMmr(Math.floor(Math.random() * 1000) + 1);
         setLoading(false);
         setShowExitLoader(false);
       }, 6500); // Duration for exit GIF
@@ -533,36 +539,10 @@ export default function GeneratorPage() {
     let imageHash: string | null = null;
   
     try {
-      // 1. Validate Shipping Info
-      const validation = validateShippingInfo(
-        {
-          full_name: shippingName,
-          contact_number: shippingContact,
-        },
-        {
-          province: selectedProvince,
-          city: selectedCity,
-          barangay: selectedBarangay,
-          street_address: streetAddress,
-        }
-      );
+      // NOTE: Shipping validation and encryption is removed as per the new Move contract
+      // which expects this data to be handled off-chain.
   
-      if (!validation.valid) {
-        setError(validation.errors.join(', '));
-        setMinting(false);
-        return;
-      }
-  
-      // 2. Encrypt Shipping Info
-      console.log('🔐 Encrypting shipping information...');
-      const encryptedShippingInfo = await encryptShippingInfo({
-        full_name: shippingName,
-        contact_number: shippingContact,
-        address: validation.fullAddress,
-      });
-      console.log('✅ Shipping info encrypted successfully');
-  
-      // 3. Map selection to contract-expected value
+      // 1. Map selection to contract-expected value
       let itemsSelected = '';
       switch (selection) {
         case 'Tee':
@@ -586,7 +566,7 @@ export default function GeneratorPage() {
           return;
       }
   
-      // 4. Upload to IPFS (only if it was an AI generated image)
+      // 2. Upload to IPFS (only if it was an AI generated image)
       let finalImageUrl = generatedImage;
       if (generatedImageBlob) {
         console.log('📤 Uploading to IPFS...');
@@ -599,21 +579,15 @@ export default function GeneratorPage() {
         console.log('✅ IPFS upload complete:', finalImageUrl);
       }
   
-      // 5. Generate MMR (between 100-500)
-      const mmr = Math.floor(Math.random() * 401) + 100; // Random number between 100-500
-      console.log('🎲 Generated MMR:', mmr);
-  
-      // 6. Mint on SUI blockchain
+      // 3. Mint on SUI blockchain
       console.log('⛓️ Minting on SUI blockchain...');
       const result = await mintCharacterNFT({
         name: generatedName,
         description: `A Kapogian character from ${originDescription}`,
         imageUrl: finalImageUrl!, // Use the direct image URL from IPFS or the local one for easter eggs
         attributes: JSON.stringify({ cuteness, confidence, tiliFactor, luzon, visayas, mindanao, hairAmount, facialHair, clothingStyle, hairColor, eyewear, skinColor, bodyFat, posture, holdingItem }),
-        mmr: mmr, // NEW: MMR parameter
+        mmr: generatedMmr,
         itemsSelected: itemsSelected,
-        encryptedShippingInfo: encryptedShippingInfo,
-        encryptionPubkey: ENCRYPTION_CONFIG.adminPublicKey,
         signAndExecute,
       });
       console.log('✅ Mint successful!', result);
@@ -1196,6 +1170,7 @@ export default function GeneratorPage() {
     
 
     
+
 
 
 

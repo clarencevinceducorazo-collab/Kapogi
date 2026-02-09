@@ -17,13 +17,11 @@ console.log('🔍 Env variable:', process.env.NEXT_PUBLIC_SUI_RPC_URL);
  */
 export async function mintCharacterNFT(params: {
   name: string;
-  description: string; // NOTE: This is "lore" in the contract now, but keeping param name for backward compatibility
+  description: string; // NOTE: This is "lore" in the contract
   imageUrl: string;
   attributes: string; // JSON string
-  mmr: number; // NEW: MMR parameter
+  mmr: number;
   itemsSelected: string;
-  encryptedShippingInfo: string;
-  encryptionPubkey: string;
   signAndExecute: any; // From wallet hook
 }) {
   try {
@@ -50,10 +48,8 @@ export async function mintCharacterNFT(params: {
         tx.pure.string(params.description), // This maps to "lore" in contract
         tx.pure.string(params.imageUrl),
         tx.pure.string(params.attributes),
-        tx.pure.u64(params.mmr), // NEW: MMR argument
+        tx.pure.u64(params.mmr),
         tx.pure.string(params.itemsSelected),
-        tx.pure.string(params.encryptedShippingInfo),
-        tx.pure.string(params.encryptionPubkey),
         clock,
       ],
     });
@@ -85,7 +81,6 @@ export async function mintCharacterNFT(params: {
  */
 export async function upgradeToBundleNFT(params: {
   receiptId: string;
-  newEncryptedShippingInfo: string;
   signAndExecute: any;
 }) {
   try {
@@ -102,7 +97,6 @@ export async function upgradeToBundleNFT(params: {
       arguments: [
         tx.object(params.receiptId),
         coin,
-        tx.pure.string(params.newEncryptedShippingInfo),
       ],
     });
 
