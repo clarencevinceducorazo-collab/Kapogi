@@ -5,7 +5,7 @@
 // Smart Contract Addresses
 export const CONTRACT_ADDRESSES = {
   PACKAGE_ID: process.env.NEXT_PUBLIC_PACKAGE_ID!,
-  MINT_COUNTER_ID: process.env.NEXT_PUBLIC_MINT_COUNTER_ID!, // Changed
+  MINT_COUNTER_ID: process.env.NEXT_PUBLIC_MINT_COUNTER_ID!,
   RECEIPT_REGISTRY_ID: process.env.NEXT_PUBLIC_RECEIPT_REGISTRY_ID!,
   ADMIN_CAP_ID: process.env.NEXT_PUBLIC_ADMIN_CAP_ID!,
   TREASURY_WALLET: process.env.NEXT_PUBLIC_TREASURY_WALLET!,
@@ -52,13 +52,23 @@ export const ORDER_STATUS = {
 // Network Configuration
 export const NETWORK_CONFIG = {
   network: (process.env.NEXT_PUBLIC_SUI_NETWORK as 'testnet' | 'mainnet') ?? 'testnet',
-  rpcUrl: process.env.NEXT_PUBLIC_SUI_RPC_URL || 'https://fullnode.testnet.sui.io:443', // Added fallback
+  rpcUrl: process.env.NEXT_PUBLIC_SUI_RPC_URL || 'https://fullnode.testnet.sui.io:443',
 };
 
-// IPFS Configuration
+// IPFS Configuration - UPDATED to use all Pinata environment variables
 export const IPFS_CONFIG = {
+  // API credentials (for uploading)
+  apiKey: process.env.NEXT_PUBLIC_PINATA_API_KEY || '',
+  apiSecret: process.env.NEXT_PUBLIC_PINATA_API_SECRET || '',
   jwt: process.env.NEXT_PUBLIC_PINATA_JWT || '',
-  gateway: process.env.NEXT_PUBLIC_PINATA_GATEWAY || 'https://gateway.pinata.cloud/ipfs/',
+  
+  // Gateway configuration (for accessing files)
+  gateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY || 'https://nft.kapogian.xyz/ipfs/',
+  gatewayUrl: process.env.NEXT_PUBLIC_PINATA_GATEWAY_URL || 'https://nft.kapogian.xyz',
+  gatewayKey: process.env.NEXT_PUBLIC_PINATA_GATEWAY_KEY || '',
+  
+  // Group/folder organization
+  groupId: process.env.PINATA_GROUP_KAPOGIAN || '',
 };
 
 // Encryption

@@ -529,7 +529,7 @@ export default function GeneratorPage() {
   
     setMinting(true);
     setError('');
-
+  
     let imageHash: string | null = null;
   
     try {
@@ -546,7 +546,7 @@ export default function GeneratorPage() {
           street_address: streetAddress,
         }
       );
-
+  
       if (!validation.valid) {
         setError(validation.errors.join(', '));
         setMinting(false);
@@ -599,13 +599,18 @@ export default function GeneratorPage() {
         console.log('✅ IPFS upload complete:', finalImageUrl);
       }
   
-      // 5. Mint on SUI blockchain
+      // 5. Generate MMR (between 100-500)
+      const mmr = Math.floor(Math.random() * 401) + 100; // Random number between 100-500
+      console.log('🎲 Generated MMR:', mmr);
+  
+      // 6. Mint on SUI blockchain
       console.log('⛓️ Minting on SUI blockchain...');
       const result = await mintCharacterNFT({
         name: generatedName,
         description: `A Kapogian character from ${originDescription}`,
         imageUrl: finalImageUrl!, // Use the direct image URL from IPFS or the local one for easter eggs
         attributes: JSON.stringify({ cuteness, confidence, tiliFactor, luzon, visayas, mindanao, hairAmount, facialHair, clothingStyle, hairColor, eyewear, skinColor, bodyFat, posture, holdingItem }),
+        mmr: mmr, // NEW: MMR parameter
         itemsSelected: itemsSelected,
         encryptedShippingInfo: encryptedShippingInfo,
         encryptionPubkey: ENCRYPTION_CONFIG.adminPublicKey,
@@ -623,7 +628,7 @@ export default function GeneratorPage() {
     } catch (err: any) {
       console.error('❌ Mint failed:', err);
       setError(err.message || 'Failed to mint NFT. Please try again.');
-
+  
       // Cleanup IPFS file if it was uploaded
       if (imageHash) {
         await unpinFromIPFS(imageHash);

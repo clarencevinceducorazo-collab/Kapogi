@@ -175,7 +175,7 @@ export default function RoadmapV2Page() {
                 <div className="sticky top-0 h-screen w-full overflow-hidden">
                     <div className="absolute top-1/2 left-0 w-full h-8 bg-sky-100/50 border-y-2 border-white -translate-y-1/2 z-0 backdrop-blur-sm"></div>
                     <div id="main-character" ref={mainCharRef} className="absolute left-6 md:left-20 top-1/2 -translate-y-1/2 z-50 group cursor-pointer transition-transform duration-100 ease-linear will-change-transform">
-                    <Image src="/images/balloony.gif" width={100} height={100} className="w-full h-full object-cover opacity-100 scale-x-[-1] w-full" alt="User Avatar" />                            </div>
+                    <Image src="/images/skydiving.gif" width={100} height={100} className="w-full h-full object-cover opacity-100 w-full" alt="User Avatar" />                            </div>
 
                     <div id="roadmap-track" ref={trackRef} className="absolute top-0 left-0 h-full flex items-center pl-[60vw] pr-[50vw] gap-[20vw] md:gap-[25vw] will-change-transform">
                        
@@ -332,7 +332,7 @@ export default function RoadmapV2Page() {
                                   <iconify-icon icon="solar:arrow-right-bold"></iconify-icon>
                                 </button>
                                 <div className="absolute -bottom-4 -right-4 w-60 h-60 z-20 pointer-events-none">
-                                  <Image src="images/day2.gif" width={250} height={250} className="w-full h-full object-contain drop-shadow-xl" alt="Day 5 Character" />
+                                  <Image src="images/day5.gif" width={250} height={250} className="w-full h-full object-contain drop-shadow-xl" alt="Day 5 Character" />
                                 </div>
                               </div>
                             </div>
@@ -357,10 +357,7 @@ export default function RoadmapV2Page() {
                     </h2>
                     <div className="mx-auto w-48 h-48 md:w-64 md:h-64 char-container rounded-full border-8 border-yellow-200 shadow-2xl mb-10 flex items-center justify-center placeholder-dashed relative overflow-hidden group">
                         <div className="absolute inset-0 bg-yellow-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <div className="relative flex flex-col items-center">
-                            <iconify-icon icon="solar:crown-star-bold" className="text-yellow-500 mb-2" width="64"></iconify-icon>
-                            <span className="text-sm font-bold text-slate-500">Chibi_Celebration.png</span>
-                        </div>
+                        <Image src="images/celebrate.gif" width={200} height={200} className="w-full h-full object-contain drop-shadow-xl" alt="day 1 Character" />
                     </div>
                     <Link href="/generate" passHref>
                         <button className="bg-slate-800 hover:bg-slate-700 text-white text-xl font-bold py-5 px-12 rounded-[2rem] shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 border-4 border-slate-600">

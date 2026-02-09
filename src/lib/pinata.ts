@@ -15,13 +15,24 @@ export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Prom
     const file = new File([imageBlob], filename, { type: imageBlob.type });
     formData.append('file', file);
 
-    const metadata = JSON.stringify({ name: filename });
-    formData.append('pinataMetadata', metadata);
+    // Pinata Metadata - includes group if available
+    const metadata: any = { 
+      name: filename,
+    };
+    
+    // Add to group/folder if configured
+    if (IPFS_CONFIG.groupId) {
+      metadata.keyvalues = {
+        group: IPFS_CONFIG.groupId,
+      };
+    }
+    
+    formData.append('pinataMetadata', JSON.stringify(metadata));
 
     const options = JSON.stringify({ cidVersion: 1 });
     formData.append('pinataOptions', options);
 
-    const apiEndpoint = process.env.NEXT_PUBLIC_PINATA_API || 'https://api.pinata.cloud/pinning/pinFileToIPFS';
+    const apiEndpoint = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
 
     const response = await fetch(apiEndpoint, {
       method: 'POST',
@@ -63,8 +74,7 @@ export async function unpinFromIPFS(ipfsHash: string): Promise<void> {
   try {
     console.log(`🗑️ Unpinning ${ipfsHash} from IPFS...`);
 
-    const apiBase = (process.env.NEXT_PUBLIC_PINATA_API || 'https://api.pinata.cloud/pinning/pinFileToIPFS').replace('/pinFileToIPFS', '');
-    const apiEndpoint = `${apiBase}/unpin/${ipfsHash}`;
+    const apiEndpoint = `https://api.pinata.cloud/pinning/unpin/${ipfsHash}`;
 
     const response = await fetch(apiEndpoint, {
       method: 'DELETE',
@@ -110,13 +120,14 @@ export async function uploadCharacterToIPFS(
 }
 
 /**
- * Get IPFS gateway URL for display (helper function)
+ * Get IPFS gateway URL for display - UPDATED to use custom gateway
  */
 export function getIPFSGatewayUrl(ipfsUrl: string): string {
   if (!ipfsUrl) return '';
   
   if (ipfsUrl.startsWith('ipfs://')) {
     const cid = ipfsUrl.replace('ipfs://', '');
+    // Use the custom gateway from config
     return `${IPFS_CONFIG.gateway}${cid}`;
   }
   
@@ -126,6 +137,7 @@ export function getIPFSGatewayUrl(ipfsUrl: string): string {
         const url = new URL(ipfsUrl);
         const parts = url.pathname.split('/ipfs/');
         if (parts.length > 1 && parts[1]) {
+             // Use the custom gateway from config
              return `${IPFS_CONFIG.gateway}${parts[1]}`;
         }
     } catch(e) {

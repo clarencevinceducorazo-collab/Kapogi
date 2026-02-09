@@ -17,9 +17,10 @@ console.log('🔍 Env variable:', process.env.NEXT_PUBLIC_SUI_RPC_URL);
  */
 export async function mintCharacterNFT(params: {
   name: string;
-  description: string;
+  description: string; // NOTE: This is "lore" in the contract now, but keeping param name for backward compatibility
   imageUrl: string;
   attributes: string; // JSON string
+  mmr: number; // NEW: MMR parameter
   itemsSelected: string;
   encryptedShippingInfo: string;
   encryptionPubkey: string;
@@ -46,9 +47,10 @@ export async function mintCharacterNFT(params: {
         mintCounter, // Shared object
         coin,
         tx.pure.string(params.name),
-        tx.pure.string(params.description),
+        tx.pure.string(params.description), // This maps to "lore" in contract
         tx.pure.string(params.imageUrl),
         tx.pure.string(params.attributes),
+        tx.pure.u64(params.mmr), // NEW: MMR argument
         tx.pure.string(params.itemsSelected),
         tx.pure.string(params.encryptedShippingInfo),
         tx.pure.string(params.encryptionPubkey),
