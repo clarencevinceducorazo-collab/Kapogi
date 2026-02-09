@@ -69,6 +69,10 @@ export const AboutSection = () => {
                                 Explore Collection
                                 <ArrowRight className="h-4 w-4 stroke-[2] transition-transform group-hover:translate-x-1" />
                             </Link>
+                            <Link href="/roadmapv2" className="group inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-6 py-3.5 text-sm font-medium text-accent-foreground transition-all hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-900">
+                                View Roadmap v2
+                                <ArrowRight className="h-4 w-4 stroke-[2] transition-transform group-hover:translate-x-1" />
+                            </Link>
 
                         </div>
 

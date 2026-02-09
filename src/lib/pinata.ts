@@ -1,130 +1,114 @@
 /**
  * Pinata IPFS Utilities - Direct API Implementation
+ * FIXED: Now properly uses all environment variables and gateway authentication
  */
 
 import { IPFS_CONFIG } from './constants';
 
 /**
  * Upload image to IPFS via Pinata Direct API
+ * Uses JWT for authentication (preferred method)
  */
-export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Promise<{ imageUrl: string; ipfsHash: string }> {
+export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Promise<{ ipfsHash: string }> {
   try {
     console.log('📤 Uploading image to IPFS...');
     
-    // Create FormData for Pinata API
     const formData = new FormData();
     const file = new File([imageBlob], filename, { type: imageBlob.type });
     formData.append('file', file);
 
-    // Add metadata
-    const metadata = JSON.stringify({
+    // Pinata Metadata - includes group if available
+    const metadata: any = { 
       name: filename,
-    });
-    formData.append('pinataMetadata', metadata);
+    };
+    
+    // Add to group/folder if configured (NOW PROPERLY READS FROM ENV)
+    if (IPFS_CONFIG.groupId) {
+      metadata.keyvalues = {
+        group: IPFS_CONFIG.groupId,
+      };
+      console.log(`📁 Adding to group: ${IPFS_CONFIG.groupId}`);
+    }
+    
+    formData.append('pinataMetadata', JSON.stringify(metadata));
 
-    // Add options
-    const options = JSON.stringify({
-      cidVersion: 1,
-    });
+    const options = JSON.stringify({ cidVersion: 1 });
     formData.append('pinataOptions', options);
 
-    // Upload to Pinata
-    const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+    const apiEndpoint = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
+
+    // Primary authentication method: JWT
+    const headers: Record<string, string> = {};
+    
+    if (IPFS_CONFIG.jwt) {
+      headers.Authorization = `Bearer ${IPFS_CONFIG.jwt}`;
+      console.log('🔑 Using JWT authentication');
+    } else if (IPFS_CONFIG.apiKey && IPFS_CONFIG.apiSecret) {
+      // Fallback: API Key + Secret (legacy method)
+      headers.pinata_api_key = IPFS_CONFIG.apiKey;
+      headers.pinata_secret_api_key = IPFS_CONFIG.apiSecret;
+      console.log('🔑 Using API Key authentication (fallback)');
+    } else {
+      throw new Error('No Pinata authentication credentials found. Please set NEXT_PUBLIC_PINATA_JWT or API keys.');
+    }
+
+    const response = await fetch(apiEndpoint, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${IPFS_CONFIG.jwt}`,
-      },
+      headers,
       body: formData,
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ Pinata upload error:', errorText);
-      throw new Error('Failed to upload to IPFS');
+      console.error('❌ Pinata upload error:', `Status: ${response.status}`, errorText);
+      throw new Error(`Failed to upload to IPFS. Status: ${response.status}`);
     }
 
     const data = await response.json();
     const ipfsHash = data.IpfsHash;
 
     if (!ipfsHash) {
-      throw new Error('Invalid response from IPFS service');
+      throw new Error('Invalid response from IPFS service, hash not found.');
     }
-
-    // Return ipfs:// URI
-    const imageUrl = `ipfs://${ipfsHash}`;
     
-    console.log('✅ Image uploaded to IPFS with URI:', imageUrl);
-    return { imageUrl, ipfsHash };
+    console.log('✅ Image uploaded to IPFS with Hash:', ipfsHash);
+    return { ipfsHash };
   } catch (error) {
     console.error('❌ Failed to upload image to IPFS:', error);
-    throw new Error('Failed to upload image to IPFS');
+    if (error instanceof Error) {
+        throw error;
+    }
+    throw new Error('An unknown error occurred during IPFS upload.');
   }
 }
 
-/**
- * Upload JSON metadata to IPFS via Pinata Direct API
- */
-export async function uploadMetadataToIPFS(metadata: CharacterMetadata): Promise<{ gatewayUrl: string; ipfsHash: string }> {
-  try {
-    console.log('📤 Uploading metadata to IPFS...');
-    
-    const response = await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${IPFS_CONFIG.jwt}`,
-      },
-      body: JSON.stringify({
-        pinataContent: metadata,
-        pinataMetadata: {
-          name: `${metadata.name}_metadata.json`,
-        },
-        pinataOptions: {
-          cidVersion: 1,
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Pinata metadata upload error:', errorText);
-      throw new Error('Failed to upload metadata to IPFS');
-    }
-
-    const data = await response.json();
-    const ipfsHash = data.IpfsHash;
-
-    if (!ipfsHash) {
-      throw new Error('Invalid response from IPFS service');
-    }
-
-    // Return gateway URL (not ipfs:// URI)
-    const gatewayUrl = `${IPFS_CONFIG.gateway}${ipfsHash}`;
-    
-    console.log('✅ Metadata uploaded to IPFS:', gatewayUrl);
-    return { gatewayUrl, ipfsHash };
-  } catch (error) {
-    console.error('❌ Failed to upload metadata to IPFS:', error);
-    throw new Error('Failed to upload metadata to IPFS');
-  }
-}
 
 /**
  * Unpin (delete) a file from Pinata IPFS by its hash
+ * Uses same authentication as upload
  */
 export async function unpinFromIPFS(ipfsHash: string): Promise<void> {
   try {
     console.log(`🗑️ Unpinning ${ipfsHash} from IPFS...`);
 
-    const response = await fetch(`https://api.pinata.cloud/pinning/unpin/${ipfsHash}`, {
+    const apiEndpoint = `https://api.pinata.cloud/pinning/unpin/${ipfsHash}`;
+
+    // Use JWT if available, otherwise use API keys
+    const headers: Record<string, string> = {};
+    
+    if (IPFS_CONFIG.jwt) {
+      headers.Authorization = `Bearer ${IPFS_CONFIG.jwt}`;
+    } else if (IPFS_CONFIG.apiKey && IPFS_CONFIG.apiSecret) {
+      headers.pinata_api_key = IPFS_CONFIG.apiKey;
+      headers.pinata_secret_api_key = IPFS_CONFIG.apiSecret;
+    }
+
+    const response = await fetch(apiEndpoint, {
       method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${IPFS_CONFIG.jwt}`,
-      },
+      headers,
     });
 
     if (!response.ok) {
-      // It's okay if it fails (e.g., already unpinned), just log it
       const errorText = await response.text();
       console.warn(`⚠️ Failed to unpin ${ipfsHash}:`, errorText);
     } else {
@@ -132,44 +116,28 @@ export async function unpinFromIPFS(ipfsHash: string): Promise<void> {
     }
   } catch (error) {
     console.error(`❌ Error unpinning ${ipfsHash}:`, error);
-    // Don't re-throw, as cleanup failure shouldn't block user flow
   }
 }
 
 
 /**
- * Complete upload flow: Image + Metadata
+ * Simplified upload flow: Just the Image
  */
 export async function uploadCharacterToIPFS(
   imageBlob: Blob,
   characterData: {
     name: string;
-    description: string;
-    attributes: Record<string, any>;
   }
-): Promise<{ imageUrl: string; metadataUrl: string; imageHash: string; metadataHash: string }> {
+): Promise<{ imageUrl: string; imageHash: string; }> {
   try {
-    // 1. Upload image first
-    const { imageUrl, ipfsHash: imageHash } = await uploadImageToIPFS(
+    const { ipfsHash } = await uploadImageToIPFS(
       imageBlob,
       `${characterData.name.replace(/\s/g, '_')}.png`
     );
+    
+    const gatewayImageUrl = getIPFSGatewayUrl(`ipfs://${ipfsHash}`);
 
-    // 2. Create metadata JSON with gateway URL
-    const metadata: CharacterMetadata = {
-      name: characterData.name,
-      description: characterData.description,
-      image: imageUrl, // This is now an ipfs:// URI
-      attributes: Object.entries(characterData.attributes).map(([key, value]) => ({
-        trait_type: key,
-        value: value,
-      })),
-    };
-
-    // 3. Upload metadata
-    const { gatewayUrl: metadataUrl, ipfsHash: metadataHash } = await uploadMetadataToIPFS(metadata);
-
-    return { imageUrl, metadataUrl, imageHash, metadataHash };
+    return { imageUrl: gatewayImageUrl, imageHash: ipfsHash };
   } catch (error) {
     console.error('❌ Failed to upload character to IPFS:', error);
     throw error;
@@ -177,18 +145,98 @@ export async function uploadCharacterToIPFS(
 }
 
 /**
- * Get IPFS gateway URL for display (helper function)
+ * Get IPFS gateway URL for display with proper authentication
+ * FIXED: Now properly applies gateway key to authenticate requests
  */
 export function getIPFSGatewayUrl(ipfsUrl: string): string {
   if (!ipfsUrl) return '';
   
+  let cid = '';
+  
+  // Extract CID from ipfs:// protocol
   if (ipfsUrl.startsWith('ipfs://')) {
-    const cid = ipfsUrl.replace('ipfs://', '');
-    // Use IPFS.io - no Cloudflare verification, works everywhere
-    return `https://ipfs.io/ipfs/${cid}`;
+    cid = ipfsUrl.replace('ipfs://', '');
+  } 
+  // Extract CID from gateway URLs
+  else if (ipfsUrl.includes('/ipfs/')) {
+    try {
+      const url = new URL(ipfsUrl);
+      const parts = url.pathname.split('/ipfs/');
+      if (parts.length > 1 && parts[1]) {
+        cid = parts[1];
+      }
+    } catch(e) {
+      // Not a valid URL, return as is
+      return ipfsUrl;
+    }
+  } 
+  // Already a full URL without /ipfs/ path
+  else {
+    return ipfsUrl;
+  }
+
+  if (!cid) return ipfsUrl;
+
+  // Remove any trailing slashes or query params from CID
+  cid = cid.split('?')[0].split('#')[0];
+
+  // Build the authenticated gateway URL
+  const baseUrl = IPFS_CONFIG.gatewayUrl || 'https://nft.kapogian.xyz';
+  
+  // Apply gateway authentication token if available
+  if (IPFS_CONFIG.gatewayKey) {
+    console.log('🔐 Using authenticated gateway access');
+    return `${baseUrl}/ipfs/${cid}?pinataGatewayToken=${IPFS_CONFIG.gatewayKey}`;
   }
   
-  return ipfsUrl;
+  // Fallback: Use gateway without authentication (may fail for restricted gateways)
+  console.warn('⚠️ No gateway key found - using unauthenticated access (may fail)');
+  return `${IPFS_CONFIG.gateway}${cid}`;
+}
+
+/**
+ * Verify IPFS configuration is complete
+ * Useful for debugging
+ */
+export function verifyIPFSConfig(): {
+  hasAuth: boolean;
+  hasGateway: boolean;
+  hasGatewayKey: boolean;
+  hasGroup: boolean;
+  warnings: string[];
+} {
+  const warnings: string[] = [];
+  
+  const hasJWT = !!IPFS_CONFIG.jwt;
+  const hasAPIKeys = !!(IPFS_CONFIG.apiKey && IPFS_CONFIG.apiSecret);
+  const hasAuth = hasJWT || hasAPIKeys;
+  
+  if (!hasAuth) {
+    warnings.push('No authentication credentials found (JWT or API keys)');
+  }
+  
+  const hasGateway = !!IPFS_CONFIG.gatewayUrl;
+  if (!hasGateway) {
+    warnings.push('No gateway URL configured');
+  }
+  
+  const hasGatewayKey = !!IPFS_CONFIG.gatewayKey;
+  if (!hasGatewayKey) {
+    warnings.push('No gateway key found - authenticated gateway access will not work');
+  }
+  
+  const hasGroup = !!IPFS_CONFIG.groupId;
+  if (!hasGroup) {
+    warnings.push('No group ID configured - files will not be organized in folders');
+  }
+
+  return {
+    hasAuth,
+    hasGateway,
+    hasGatewayKey,
+    hasGroup,
+    warnings,
+  };
 }
 
 /**
