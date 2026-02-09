@@ -1,11 +1,13 @@
 /**
  * Pinata IPFS Utilities - Direct API Implementation
+ * FIXED: Now properly uses all environment variables and gateway authentication
  */
 
 import { IPFS_CONFIG } from './constants';
 
 /**
  * Upload image to IPFS via Pinata Direct API
+ * Uses JWT for authentication (preferred method)
  */
 export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Promise<{ ipfsHash: string }> {
   try {
@@ -20,11 +22,12 @@ export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Prom
       name: filename,
     };
     
-    // Add to group/folder if configured
+    // Add to group/folder if configured (NOW PROPERLY READS FROM ENV)
     if (IPFS_CONFIG.groupId) {
       metadata.keyvalues = {
         group: IPFS_CONFIG.groupId,
       };
+      console.log(`📁 Adding to group: ${IPFS_CONFIG.groupId}`);
     }
     
     formData.append('pinataMetadata', JSON.stringify(metadata));
@@ -34,11 +37,24 @@ export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Prom
 
     const apiEndpoint = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
 
+    // Primary authentication method: JWT
+    const headers: Record<string, string> = {};
+    
+    if (IPFS_CONFIG.jwt) {
+      headers.Authorization = `Bearer ${IPFS_CONFIG.jwt}`;
+      console.log('🔑 Using JWT authentication');
+    } else if (IPFS_CONFIG.apiKey && IPFS_CONFIG.apiSecret) {
+      // Fallback: API Key + Secret (legacy method)
+      headers.pinata_api_key = IPFS_CONFIG.apiKey;
+      headers.pinata_secret_api_key = IPFS_CONFIG.apiSecret;
+      console.log('🔑 Using API Key authentication (fallback)');
+    } else {
+      throw new Error('No Pinata authentication credentials found. Please set NEXT_PUBLIC_PINATA_JWT or API keys.');
+    }
+
     const response = await fetch(apiEndpoint, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${IPFS_CONFIG.jwt}`,
-      },
+      headers,
       body: formData,
     });
 
@@ -69,6 +85,7 @@ export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Prom
 
 /**
  * Unpin (delete) a file from Pinata IPFS by its hash
+ * Uses same authentication as upload
  */
 export async function unpinFromIPFS(ipfsHash: string): Promise<void> {
   try {
@@ -76,11 +93,19 @@ export async function unpinFromIPFS(ipfsHash: string): Promise<void> {
 
     const apiEndpoint = `https://api.pinata.cloud/pinning/unpin/${ipfsHash}`;
 
+    // Use JWT if available, otherwise use API keys
+    const headers: Record<string, string> = {};
+    
+    if (IPFS_CONFIG.jwt) {
+      headers.Authorization = `Bearer ${IPFS_CONFIG.jwt}`;
+    } else if (IPFS_CONFIG.apiKey && IPFS_CONFIG.apiSecret) {
+      headers.pinata_api_key = IPFS_CONFIG.apiKey;
+      headers.pinata_secret_api_key = IPFS_CONFIG.apiSecret;
+    }
+
     const response = await fetch(apiEndpoint, {
       method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${IPFS_CONFIG.jwt}`,
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -120,33 +145,98 @@ export async function uploadCharacterToIPFS(
 }
 
 /**
- * Get IPFS gateway URL for display - UPDATED to use custom gateway
+ * Get IPFS gateway URL for display with proper authentication
+ * FIXED: Now properly applies gateway key to authenticate requests
  */
 export function getIPFSGatewayUrl(ipfsUrl: string): string {
   if (!ipfsUrl) return '';
   
-  if (ipfsUrl.startsWith('ipfs://')) {
-    const cid = ipfsUrl.replace('ipfs://', '');
-    // Use the custom gateway from config
-    return `${IPFS_CONFIG.gateway}${cid}`;
-  }
+  let cid = '';
   
-  // If it's already a gateway URL, try to convert it to the configured gateway for consistency
-  if (ipfsUrl.includes('/ipfs/')) {
+  // Extract CID from ipfs:// protocol
+  if (ipfsUrl.startsWith('ipfs://')) {
+    cid = ipfsUrl.replace('ipfs://', '');
+  } 
+  // Extract CID from gateway URLs
+  else if (ipfsUrl.includes('/ipfs/')) {
     try {
-        const url = new URL(ipfsUrl);
-        const parts = url.pathname.split('/ipfs/');
-        if (parts.length > 1 && parts[1]) {
-             // Use the custom gateway from config
-             return `${IPFS_CONFIG.gateway}${parts[1]}`;
-        }
+      const url = new URL(ipfsUrl);
+      const parts = url.pathname.split('/ipfs/');
+      if (parts.length > 1 && parts[1]) {
+        cid = parts[1];
+      }
     } catch(e) {
-        // Not a valid URL, just return as is
-        return ipfsUrl;
+      // Not a valid URL, return as is
+      return ipfsUrl;
     }
+  } 
+  // Already a full URL without /ipfs/ path
+  else {
+    return ipfsUrl;
   }
 
-  return ipfsUrl;
+  if (!cid) return ipfsUrl;
+
+  // Remove any trailing slashes or query params from CID
+  cid = cid.split('?')[0].split('#')[0];
+
+  // Build the authenticated gateway URL
+  const baseUrl = IPFS_CONFIG.gatewayUrl || 'https://nft.kapogian.xyz';
+  
+  // Apply gateway authentication token if available
+  if (IPFS_CONFIG.gatewayKey) {
+    console.log('🔐 Using authenticated gateway access');
+    return `${baseUrl}/ipfs/${cid}?pinataGatewayToken=${IPFS_CONFIG.gatewayKey}`;
+  }
+  
+  // Fallback: Use gateway without authentication (may fail for restricted gateways)
+  console.warn('⚠️ No gateway key found - using unauthenticated access (may fail)');
+  return `${IPFS_CONFIG.gateway}${cid}`;
+}
+
+/**
+ * Verify IPFS configuration is complete
+ * Useful for debugging
+ */
+export function verifyIPFSConfig(): {
+  hasAuth: boolean;
+  hasGateway: boolean;
+  hasGatewayKey: boolean;
+  hasGroup: boolean;
+  warnings: string[];
+} {
+  const warnings: string[] = [];
+  
+  const hasJWT = !!IPFS_CONFIG.jwt;
+  const hasAPIKeys = !!(IPFS_CONFIG.apiKey && IPFS_CONFIG.apiSecret);
+  const hasAuth = hasJWT || hasAPIKeys;
+  
+  if (!hasAuth) {
+    warnings.push('No authentication credentials found (JWT or API keys)');
+  }
+  
+  const hasGateway = !!IPFS_CONFIG.gatewayUrl;
+  if (!hasGateway) {
+    warnings.push('No gateway URL configured');
+  }
+  
+  const hasGatewayKey = !!IPFS_CONFIG.gatewayKey;
+  if (!hasGatewayKey) {
+    warnings.push('No gateway key found - authenticated gateway access will not work');
+  }
+  
+  const hasGroup = !!IPFS_CONFIG.groupId;
+  if (!hasGroup) {
+    warnings.push('No group ID configured - files will not be organized in folders');
+  }
+
+  return {
+    hasAuth,
+    hasGateway,
+    hasGatewayKey,
+    hasGroup,
+    warnings,
+  };
 }
 
 /**

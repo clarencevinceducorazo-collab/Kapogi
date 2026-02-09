@@ -55,7 +55,7 @@ export const NETWORK_CONFIG = {
   rpcUrl: process.env.NEXT_PUBLIC_SUI_RPC_URL || 'https://fullnode.testnet.sui.io:443',
 };
 
-// IPFS Configuration - UPDATED to use all Pinata environment variables
+// IPFS Configuration - FIXED to use all Pinata environment variables properly
 export const IPFS_CONFIG = {
   // API credentials (for uploading)
   apiKey: process.env.NEXT_PUBLIC_PINATA_API_KEY || '',
@@ -67,8 +67,8 @@ export const IPFS_CONFIG = {
   gatewayUrl: process.env.NEXT_PUBLIC_PINATA_GATEWAY_URL || 'https://nft.kapogian.xyz',
   gatewayKey: process.env.NEXT_PUBLIC_PINATA_GATEWAY_KEY || '',
   
-  // Group/folder organization
-  groupId: process.env.PINATA_GROUP_KAPOGIAN || '',
+  // Group/folder organization (FIXED: added NEXT_PUBLIC prefix)
+  groupId: process.env.NEXT_PUBLIC_PINATA_GROUP_KAPOGIAN || '',
 };
 
 // Encryption
