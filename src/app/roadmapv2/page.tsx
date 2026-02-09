@@ -175,15 +175,8 @@ export default function RoadmapV2Page() {
                 <div className="sticky top-0 h-screen w-full overflow-hidden">
                     <div className="absolute top-1/2 left-0 w-full h-8 bg-sky-100/50 border-y-2 border-white -translate-y-1/2 z-0 backdrop-blur-sm"></div>
                     <div id="main-character" ref={mainCharRef} className="absolute left-6 md:left-20 top-1/2 -translate-y-1/2 z-50 group cursor-pointer transition-transform duration-100 ease-linear will-change-transform">
-                        <div className="relative w-32 h-32 md:w-48 md:h-48 bg-white rounded-full border-8 border-white shadow-2xl animate-float-slow flex flex-col items-center justify-center text-center overflow-hidden ring-4 ring-sky-200">
-                            <div className="absolute inset-0 bg-sky-50 flex items-center justify-center">
-                                <Image src="/images/KapogianLogo.webp" width={200} height={200} className="w-full h-full object-cover opacity-80" alt="User Avatar" />
-                            </div>
-                            <div className="relative z-10 bg-white/80 backdrop-blur-sm p-3 rounded-full shadow-sm">
-                                <iconify-icon icon="solar:user-bold" className="text-sky-500 text-3xl"></iconify-icon>
-                            </div>
-                        </div>
-                    </div>
+                    <Image src="/images/balloony.gif" width={100} height={100} className="w-full h-full object-cover opacity-100 scale-x-[-1] w-full" alt="User Avatar" />                            </div>
+
                     <div id="roadmap-track" ref={trackRef} className="absolute top-0 left-0 h-full flex items-center pl-[60vw] pr-[50vw] gap-[20vw] md:gap-[25vw] will-change-transform">
                        
                         {/* STEP 1 */}
@@ -210,7 +203,7 @@ export default function RoadmapV2Page() {
                                     <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:10px_10px]"></div>
                                 </div>
                                 <div className="absolute -bottom-2 -right-2 w-48 h-48 z-20 pointer-events-none">
-                                    <Image src="https://placehold.co/200x200/png?text=Vince+pogi" width={200} height={200} className="w-full h-full object-contain drop-shadow-xl" alt="day 1 Character" />
+                                    <Image src="images/day1.gif" width={200} height={200} className="w-full h-full object-contain drop-shadow-xl" alt="day 1 Character" />
                                 </div>
                             </div>
                         </div>
@@ -245,7 +238,7 @@ export default function RoadmapV2Page() {
                                 </div>
                               </div>
                               <div className="absolute -bottom-2 -right-4 w-56 h-56 z-20 pointer-events-none">
-                                <Image src="https://placehold.co/220x220/png?text=Builder+Kapogi" width={220} height={220} className="w-full h-full object-contain drop-shadow-xl" alt="Day 2 Character" />
+                                <Image src="images/day2.gif" width={220} height={220} className="w-full h-full object-contain drop-shadow-xl" alt="Day 2 Character" />
                               </div>
                             </div>
                         </div>
@@ -272,7 +265,7 @@ export default function RoadmapV2Page() {
                                 <div className="w-8 h-8 rounded-full bg-amber-400 border-2 border-white shadow-md"></div>
                               </div>
                               <div className="absolute -bottom-4 -right-4 w-52 h-52 z-20 pointer-events-none">
-                                <Image src="https://placehold.co/220x220/png?text=Artist+kapogi" width={220} height={220} className="w-full h-full object-contain drop-shadow-xl" alt="day 3 Character" />
+                                <Image src="images/day3.gif" width={220} height={220} className="w-full h-full object-contain drop-shadow-xl" alt="day 3 Character" />
                               </div>
                             </div>
                         </div>
@@ -311,7 +304,7 @@ export default function RoadmapV2Page() {
                                 </div>
                               </div>
                               <div className="absolute -bottom-2 -right-2 w-56 h-56 z-20 pointer-events-none">
-                                <Image src="https://placehold.co/240x240/png?text=Guard+kapogian" width={240} height={240} className="w-full h-full object-contain drop-shadow-xl" alt="Day 4 Character" />
+                                <Image src="images/day4.gif" width={240} height={240} className="w-full h-full object-contain drop-shadow-xl" alt="Day 4 Character" />
                               </div>
                             </div>
                         </div>
@@ -339,7 +332,7 @@ export default function RoadmapV2Page() {
                                   <iconify-icon icon="solar:arrow-right-bold"></iconify-icon>
                                 </button>
                                 <div className="absolute -bottom-4 -right-4 w-60 h-60 z-20 pointer-events-none">
-                                  <Image src="https://placehold.co/250x250/png?text=King+kapogian" width={250} height={250} className="w-full h-full object-contain drop-shadow-xl" alt="Day 5 Character" />
+                                  <Image src="images/day2.gif" width={250} height={250} className="w-full h-full object-contain drop-shadow-xl" alt="Day 5 Character" />
                                 </div>
                               </div>
                             </div>
@@ -371,7 +364,7 @@ export default function RoadmapV2Page() {
                     </div>
                     <Link href="/generate" passHref>
                         <button className="bg-slate-800 hover:bg-slate-700 text-white text-xl font-bold py-5 px-12 rounded-[2rem] shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 border-4 border-slate-600">
-                            Launch Kapogian
+                          Summon Kapogian Spirit
                         </button>
                     </Link>
                     <p className="mt-6 text-slate-400 font-semibold text-sm">

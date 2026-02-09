@@ -149,27 +149,31 @@ export async function uploadCharacterToIPFS(
   }
 ): Promise<{ imageUrl: string; metadataUrl: string; imageHash: string; metadataHash: string }> {
   try {
-    // 1. Upload image first
-    const { imageUrl, ipfsHash: imageHash } = await uploadImageToIPFS(
+    // 1. Upload image and get the ipfs:// URI and hash
+    const { imageUrl: ipfsUri, ipfsHash: imageHash } = await uploadImageToIPFS(
       imageBlob,
       `${characterData.name.replace(/\s/g, '_')}.png`
     );
 
-    // 2. Create metadata JSON with gateway URL
+    // 2. Create metadata JSON with the ipfs:// URI for the image field (standard practice)
     const metadata: CharacterMetadata = {
       name: characterData.name,
       description: characterData.description,
-      image: imageUrl, // This is now an ipfs:// URI
+      image: ipfsUri,
       attributes: Object.entries(characterData.attributes).map(([key, value]) => ({
         trait_type: key,
         value: value,
       })),
     };
 
-    // 3. Upload metadata
+    // 3. Upload metadata JSON to IPFS
     const { gatewayUrl: metadataUrl, ipfsHash: metadataHash } = await uploadMetadataToIPFS(metadata);
+    
+    // 4. Convert the image's ipfs:// URI to a public gateway URL for the NFT's direct image field
+    const gatewayImageUrl = getIPFSGatewayUrl(ipfsUri);
 
-    return { imageUrl, metadataUrl, imageHash, metadataHash };
+    // 5. Return the public gateway URL for the image, and the metadata URL
+    return { imageUrl: gatewayImageUrl, metadataUrl, imageHash, metadataHash };
   } catch (error) {
     console.error('❌ Failed to upload character to IPFS:', error);
     throw error;
