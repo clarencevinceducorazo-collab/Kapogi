@@ -1282,7 +1282,10 @@ export default function GeneratorPage() {
                       >
                         Battle MMR
                       </p>
-                      <p className="text-6xl font-display font-black tracking-tighter leading-none text-slate-900 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)">
+                      <p
+                        style={{ fontSize: "24px" }}
+                        className="font-display font-bold uppercase leading-none text-black drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]"
+                      >
                         {generatedMmr}
                       </p>
                     </div>
