@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -444,7 +442,7 @@ export default function GeneratorPage() {
     setOriginDescription('');
     setTxHash('');
     setLoadingStepIndex(0);
-    setGeneratedMmr(0);
+    setGeneratedMmr(Math.floor(Math.random() * 1000) + 1);
 
     navigate('page-preview');
 
@@ -524,7 +522,7 @@ export default function GeneratorPage() {
   };
 
   const handleMint = async () => {
-    if (!generatedImageBlob && !activeEgg) { // activeEgg won't have a blob
+    if (!generatedImageBlob && !activeEgg) {
       setError("Character data is missing.");
       return;
     }
@@ -539,8 +537,28 @@ export default function GeneratorPage() {
     let imageHash: string | null = null;
   
     try {
-      // NOTE: Shipping validation and encryption is removed as per the new Move contract
-      // which expects this data to be handled off-chain.
+      // Validate and encrypt shipping information
+      const { valid, errors, fullAddress } = validateShippingInfo(
+        { full_name: shippingName, contact_number: shippingContact },
+        {
+          province: selectedProvince,
+          city: selectedCity,
+          barangay: selectedBarangay,
+          street_address: streetAddress,
+        }
+      );
+
+      if (!valid) {
+        setError(errors.join(' '));
+        setMinting(false);
+        return;
+      }
+      
+      const encryptedString = await encryptShippingInfo({
+        full_name: shippingName,
+        contact_number: shippingContact,
+        address: fullAddress,
+      });
   
       // 1. Map selection to contract-expected value
       let itemsSelected = '';
@@ -584,10 +602,12 @@ export default function GeneratorPage() {
       const result = await mintCharacterNFT({
         name: generatedName,
         description: `A Kapogian character from ${originDescription}`,
-        imageUrl: finalImageUrl!, // Use the direct image URL from IPFS or the local one for easter eggs
+        imageUrl: finalImageUrl!,
         attributes: JSON.stringify({ cuteness, confidence, tiliFactor, luzon, visayas, mindanao, hairAmount, facialHair, clothingStyle, hairColor, eyewear, skinColor, bodyFat, posture, holdingItem }),
         mmr: generatedMmr,
         itemsSelected: itemsSelected,
+        encryptedShippingInfo: encryptedString,
+        encryptionPubkey: ENCRYPTION_CONFIG.adminPublicKey,
         signAndExecute,
       });
       console.log('✅ Mint successful!', result);
@@ -1161,19 +1181,3 @@ export default function GeneratorPage() {
     </>
   );
 }
-    
-
-    
-
-    
-
-    
-
-    
-
-
-
-
-
-
-

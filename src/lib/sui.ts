@@ -17,12 +17,14 @@ console.log('🔍 Env variable:', process.env.NEXT_PUBLIC_SUI_RPC_URL);
  */
 export async function mintCharacterNFT(params: {
   name: string;
-  description: string; // NOTE: This is "lore" in the contract
+  description: string;
   imageUrl: string;
-  attributes: string; // JSON string
+  attributes: string;
   mmr: number;
   itemsSelected: string;
-  signAndExecute: any; // From wallet hook
+  encryptedShippingInfo: string;
+  encryptionPubkey: string;
+  signAndExecute: any;
 }) {
   try {
     console.log('🎨 Creating mint transaction...');
@@ -42,14 +44,16 @@ export async function mintCharacterNFT(params: {
     tx.moveCall({
       target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.CHARACTER_NFT}::mint_character`,
       arguments: [
-        mintCounter, // Shared object
+        mintCounter,
         coin,
         tx.pure.string(params.name),
-        tx.pure.string(params.description), // This maps to "lore" in contract
+        tx.pure.string(params.description),
         tx.pure.string(params.imageUrl),
         tx.pure.string(params.attributes),
         tx.pure.u64(params.mmr),
         tx.pure.string(params.itemsSelected),
+        tx.pure.string(params.encryptedShippingInfo),
+        tx.pure.string(params.encryptionPubkey),
         clock,
       ],
     });
@@ -81,6 +85,7 @@ export async function mintCharacterNFT(params: {
  */
 export async function upgradeToBundleNFT(params: {
   receiptId: string;
+  newEncryptedShippingInfo: string;
   signAndExecute: any;
 }) {
   try {
@@ -90,13 +95,17 @@ export async function upgradeToBundleNFT(params: {
 
     // Split 10 SUI for upgrade payment
     const [coin] = tx.splitCoins(tx.gas, [tx.pure.u64(PRICING.BUNDLE_UPGRADE)]);
+    const clock = tx.object('0x6');
+    const receipt = tx.object(params.receiptId);
 
     // Call upgrade_to_bundle function
     tx.moveCall({
       target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.CHARACTER_NFT}::upgrade_to_bundle`,
       arguments: [
-        tx.object(params.receiptId),
+        receipt,
         coin,
+        tx.pure.string(params.newEncryptedShippingInfo),
+        clock,
       ],
     });
 
@@ -119,6 +128,7 @@ export async function upgradeToBundleNFT(params: {
     throw error;
   }
 }
+
 
 /**
  * Get owned Character NFTs for a wallet
