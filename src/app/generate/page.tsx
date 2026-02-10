@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -76,6 +77,7 @@ export default function GeneratorPage() {
   
   // Form State
   const [characterName, setCharacterName] = useState('');
+  const [gender, setGender] = useState('Malakas'); // Malakas, Maganda, Mahawari, Maharaba
   const [cuteness, setCuteness] = useState(50);
   const [confidence, setConfidence] = useState(50);
   const [tiliFactor, setTiliFactor] = useState(50);
@@ -149,6 +151,19 @@ export default function GeneratorPage() {
     'Balancing body proportions',
     'Finalizing character pose',
   ];
+
+  // MMR Calculation
+  const calculateMMR = () => {
+    const base = (cuteness * 1.5) + (confidence * 2.5) + (tiliFactor * 2.0);
+    const originBonus = (luzon + visayas + mindanao) / 2;
+    const styleBonus = clothingStyle * 1.2;
+    return Math.floor(base + originBonus + styleBonus);
+  };
+
+  useEffect(() => {
+    setGeneratedMmr(calculateMMR());
+  }, [cuteness, confidence, tiliFactor, luzon, visayas, mindanao, clothingStyle]);
+
 
   useEffect(() => {
     let interval: NodeJS.Timeout | undefined;
@@ -254,10 +269,21 @@ export default function GeneratorPage() {
     return <div dangerouslySetInnerHTML={{ __html: html }} />;
   };
 
+  const getIdentityContext = (id: string) => {
+    switch(id) {
+      case 'Malakas': return 'Male';
+      case 'Maganda': return 'Female';
+      case 'Mahawari': return 'Gay';
+      case 'Maharaba': return 'Lesbian';
+      default: return 'Male';
+    }
+  };
+
   const generateName = async (): Promise<string> => {
     try {
+      const context = getIdentityContext(gender);
       const result = await generateText({ 
-          prompt: 'Generate a single unique and creative name for a Filipino male character. The name should be a traditional or modern Filipino name. Do not include any other text, just the name.'
+          prompt: `Generate a single unique Filipino name for a character who belongs to the ${gender} lineage (Context: ${context}). Traditional or modern. Only return the name, no extra text.`
       });
       return result.text?.replace(/["']+/g, '') || "Pogi";
     } catch (e) {
@@ -280,11 +306,13 @@ export default function GeneratorPage() {
 
   const generateLore = async (name: string, originDesc: string): Promise<string> => {
     try {
+      const identityContext = getIdentityContext(gender);
       const promptText = `
         You are a lore generator for a fictional universe called "Kapogian Chibis".
-        A Kapogian Chibi is a confident, good-looking Filipino male.
+        A Kapogian Chibi is a confident, good-looking Filipino character.
         Their stats are: Cuteness is ${cuteness} out of 100, Confidence is ${confidence} out of 100, and Tili Factor is ${tiliFactor} out of 100.
-        Create a detailed lore for a Kapogian Chibi named **${name}**, a ${originDesc}.
+        Create a detailed lore for a Kapogian Chibi named **${name}**, a ${originDesc} of the ${gender} lineage.
+        (Note to AI: ${gender} maps to ${identityContext} identity, but NEVER use the word "${identityContext.toLowerCase()}" in your response. Only use the term "${gender}").
         The lore should be about 150 words and include a backstory, personality description influenced by their stats, a heroic anecdote, and a concluding sentence.
         Do not mention the exact stat numbers in the narrative. Focus on the creative description.
         Use markdown formatting like bolding and italics to make the text stylish.`;
@@ -300,49 +328,53 @@ export default function GeneratorPage() {
   };
 
   const buildCharacterPrompt = (name: string, originDesc: string): string => {
-    let statDescriptors = "";
-    // Cuteness
-    if (cuteness > 75) {
-      statDescriptors += ", large innocent eyes, soft round face";
-    } else if (cuteness < 25) {
-      statDescriptors += ", mischievous smile, slightly narrowed eyes";
-    }
+    const identityContext = getIdentityContext(gender);
 
-    // Confidence
-    if (confidence > 75) {
-      statDescriptors += ", a bold and smirking pose, puffed-out chest";
-    } else if (confidence < 25) {
-      statDescriptors += ", a shy and uncertain smile, hands in pockets";
+    let pose = "standing confidently";
+    if (cuteness > 30 && confidence > 30) {
+      if (posture === 50) {
+        pose = (gender === 'Maganda' || gender === 'Mahawari') 
+          ? "striking a charming finger heart pose with a playful wink and high-fashion poise" 
+          : "striking a cool finger heart pose with a bold smirk";
+      } else if (posture >= 20) {
+        pose = (gender === 'Maganda' || gender === 'Mahawari') 
+          ? "posing with high energy and sassy confidence, hand on hip" 
+          : "flexing heroically in a bodybuilder-inspired stance";
+      } else {
+        pose = "with a casual, charismatic pose, slightly flexing";
+      }
+    } else {
+      if (posture === 50) {
+        pose = "standing very well-postured and proud";
+      } else if (posture > 20) {
+        pose = "with an upright, well-postured stance";
+      } else {
+        pose = "with a very casual, relaxed posture";
+      }
     }
-
-    // Tili Factor
-    if (tiliFactor > 75) {
-      statDescriptors += ", a heart-throb hairstyle, dazzling infectious smile";
-    } else if (tiliFactor < 25) {
-      statDescriptors += ", a subtle, cool expression, reserved vibe";
-    }
-
-    // NEW LOGIC: Based on new slider values
+    
     // Hair Amount
     let hairDescriptor = "medium length hair";
-    if (hairAmount <= 5) hairDescriptor = "bald";
+    if (hairAmount <= 5) hairDescriptor = (identityContext === 'Female' || identityContext === 'Lesbian') ? 'stylish pixie cut' : 'bald';
     else if (hairAmount <= 15) hairDescriptor = "short spiky hair";
     else if (hairAmount <= 35) hairDescriptor = "medium length hair";
     else hairDescriptor = "long, flowing hair";
 
     // Facial Hair
     let facialHairDescriptor = "clean shaven";
-    if (facialHair > 5) facialHairDescriptor = "light stubble";
-    if (facialHair > 20) facialHairDescriptor = "short, neat beard";
-    if (facialHair > 40) facialHairDescriptor = "long, full beard and a stylish mustache";
+    if (identityContext === 'Male' || identityContext === 'Gay') {
+        if (facialHair > 5) facialHairDescriptor = "light stubble";
+        if (facialHair > 20) facialHairDescriptor = "short, neat beard";
+        if (facialHair > 40) facialHairDescriptor = "long, full beard and a stylish mustache";
+    }
 
     // Clothing
     let clothingDescriptor = "casual streetwear";
     if (clothingStyle <= 5) clothingDescriptor = "only a Sleeveless colored SHirt and shorts";
     else if (clothingStyle <= 15) clothingDescriptor = "simple t-shirt and shorts";
     else if (clothingStyle <= 30) clothingDescriptor = "stylish streetwear with a hoodie";
-    else if (clothingStyle <= 45) clothingDescriptor = "formal attire with a crisp polo";
-    else clothingDescriptor = "elegant filipino formal attire, like a barong tagalog";
+    else if (clothingStyle <= 45) clothingDescriptor = (identityContext === 'Female' || identityContext === 'Gay') ? 'fashionable modern attire' : "formal attire with a crisp polo";
+    else clothingDescriptor = (identityContext === 'Female' || identityContext === 'Gay') ? 'elegant colorful Filipiniana attire' : "elegant filipino formal attire, like a barong tagalog";
     
     // Hair Color
     let hairColorDescriptor = "black hair";
@@ -367,29 +399,7 @@ export default function GeneratorPage() {
     else if (bodyFat <= 35) bodyFatDescriptor = "average body type";
     else bodyFatDescriptor = "chubby and plump body";
     
-    // Posture
-    let postureDescriptor = "";
-    // New logic for flexing cute looks and confidence
-    if (cuteness > 30 && confidence > 30) {
-      if (posture === 50) {
-        postureDescriptor = "striking a finger heart pose with a proud smile";
-      } else if (posture >= 20) {
-        postureDescriptor = "flexing his muscles and striking a charismatic pose";
-      } else {
-        postureDescriptor = "with a casual, charming pose, slightly flexing";
-      }
-    } else {
-      // Standard poses if the "pogi flex" conditions are not met.
-      if (posture === 50) {
-        postureDescriptor = "standing very well-postured and proud";
-      } else if (posture > 20) {
-        postureDescriptor = "with an upright, well-postured stance";
-      } else {
-        postureDescriptor = "with a very casual, relaxed posture";
-      }
-    }
-    
-    // Holding Item - New
+    // Holding Item
     let holdingItemDescriptor = "not holding anything";
     switch (holdingItem) {
       case 'Cash':
@@ -406,7 +416,7 @@ export default function GeneratorPage() {
         break;
     }
 
-    return `full body shot of a cute chubby chibi pinoy boy named ${name}, ${originDesc}, with ${skinColorDescriptor}, with ${hairColorDescriptor} and ${hairDescriptor}, ${facialHairDescriptor}, wearing ${clothingDescriptor}, with ${eyewearDescriptor}, ${bodyFatDescriptor}, ${postureDescriptor}, ${holdingItemDescriptor}, showing confident pose, smiling. Chibi character art, clean vector line art, cel-shaded, sticker style, simple white background.`;
+    return `full body shot of a cute chubby chibi pinoy character of the ${gender} lineage (${identityContext}), named ${name}, ${originDesc}, with ${skinColorDescriptor}, with ${hairColorDescriptor} and ${hairDescriptor}, ${facialHairDescriptor}, wearing ${clothingDescriptor}, with ${eyewearDescriptor}, ${bodyFatDescriptor}, ${pose}, ${holdingItemDescriptor}, showing confident pose, smiling. Chibi character art, clean vector line art, cel-shaded, sticker style, simple white background.`;
   };
 
   const handleShuffle = () => {
@@ -424,7 +434,6 @@ export default function GeneratorPage() {
     setSkinColor(Math.floor(Math.random() * 51));
     setBodyFat(Math.floor(Math.random() * 51));
     setPosture(Math.floor(Math.random() * 51));
-    setGeneratedMmr(Math.floor(Math.random() * 1000) + 1);
 
     const items = ['None', 'Cash', 'Random Food', 'Random Bouquet of Flowers', 'Random Home Utensils'];
     const randomItem = items[Math.floor(Math.random() * items.length)];
@@ -442,7 +451,6 @@ export default function GeneratorPage() {
     setOriginDescription('');
     setTxHash('');
     setLoadingStepIndex(0);
-    setGeneratedMmr(Math.floor(Math.random() * 1000) + 1);
 
     navigate('page-preview');
 
@@ -455,7 +463,6 @@ export default function GeneratorPage() {
             setGeneratedLore(activeEgg.lore);
             setGeneratedImage(activeEgg.imagePath);
             setGeneratedImageBlob(null);
-            setGeneratedMmr(Math.floor(Math.random() * 1000) + 1);
             setLoading(false);
             setShowExitLoader(false);
         }, 6500);
@@ -508,7 +515,6 @@ export default function GeneratorPage() {
         setGeneratedImageBlob(blob);
         setGeneratedImage(imageUrl);
         setGeneratedLore(loreResult);
-        setGeneratedMmr(Math.floor(Math.random() * 1000) + 1);
         setLoading(false);
         setShowExitLoader(false);
       }, 6500); // Duration for exit GIF
@@ -746,6 +752,21 @@ export default function GeneratorPage() {
                   <div className="absolute top-2 right-2 rotate-12 bg-yellow-400 text-black text-xs font-bold px-2 py-1 border-2 border-black rounded shadow-[2px_2px_0px_#000]">NEW!</div>
 
                   <div className="space-y-6">
+                      <div className="p-4 border-4 border-stone-200 border-dashed rounded-xl bg-stone-50">
+                        <h3 className="font-display font-semibold text-lg text-stone-500 uppercase mb-4">Character Lineage</h3>
+                        <div className="grid grid-cols-2 gap-2 p-1 bg-stone-200 rounded-lg">
+                          {['Malakas', 'Maganda', 'Mahawari', 'Maharaba'].map((g) => (
+                            <button
+                              key={g}
+                              onClick={() => setGender(g)}
+                              className={`py-3 text-xs font-display font-bold rounded-md transition-all ${gender === g ? 'bg-pink-400 text-white border-2 border-black shadow-inner' : 'bg-white text-black hover:bg-stone-100'}`}
+                            >
+                              {g.toUpperCase()}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       <div className="space-y-2">
                           <label className="font-display font-semibold text-xl uppercase">Character Name</label>
                           <input 
@@ -891,7 +912,9 @@ export default function GeneratorPage() {
                             </div>
                         )}
                     </div>
-                    <div className="w-full md:w-1/2 p-8 bg-white flex flex-col">
+                    <div className="w-full md:w-1/2 p-6 bg-white flex flex-col gap-4">
+                      {/* LORE SECTION */}
+                      <div>
                         <div className="mb-4">
                           {loading ? <Skeleton className="h-8 w-48" /> :
                             <h2 className="font-display text-2xl font-semibold tracking-tight uppercase border-b-4 border-yellow-300 inline-block">
@@ -899,7 +922,7 @@ export default function GeneratorPage() {
                             </h2>
                           }
                         </div>
-                        <div className="flex-grow bg-stone-50 border-2 border-stone-200 rounded-lg p-4 font-medium text-stone-700 max-h-64 overflow-y-auto">
+                        <div className="flex-grow bg-stone-50 border-2 border-stone-200 rounded-lg p-4 font-medium text-stone-700 min-h-48 max-h-64 overflow-y-auto">
                           {(loading || !generatedLore) ? (
                               <div className="space-y-3">
                                   <p className="mb-4 text-sm text-stone-500">Summoning lore...</p>
@@ -917,6 +940,31 @@ export default function GeneratorPage() {
                               renderMarkdown(generatedLore)
                           )}
                         </div>
+                      </div>
+
+                      {/* MMR/STATS SECTION */}
+                       <div className="bg-white rounded-[2rem] flex flex-col justify-between">
+                        <div>
+                            <h3 className="font-display font-semibold text-lg uppercase mb-3">Game Intelligence Stats</h3>
+                            <div className="p-4 bg-slate-900 rounded-[1.5rem] text-white text-center shadow-lg relative overflow-hidden">
+                                <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">Battle MMR</p>
+                                <p className="text-6xl font-display font-bold tracking-tighter leading-none">{generatedMmr}</p>
+                                <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden mt-3">
+                                    <div className="h-full bg-gradient-to-r from-blue-400 to-indigo-400" style={{ width: `${Math.min(100, generatedMmr / 10)}%` }}></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mt-4 grid grid-cols-2 gap-4 text-center">
+                            <div className="p-3 bg-stone-50 rounded-2xl border-2 border-stone-200">
+                                <span className="block text-[10px] font-bold text-stone-500 uppercase tracking-wide mb-1">Lineage</span>
+                                <span className="text-sm font-display font-semibold text-slate-800 uppercase">{gender}</span>
+                            </div>
+                            <div className="p-3 bg-stone-50 rounded-2xl border-2 border-stone-200">
+                                <span className="block text-[10px] font-bold text-stone-500 uppercase tracking-wide mb-1">Rank</span>
+                                <span className="text-sm font-display font-semibold text-blue-600 uppercase">{generatedMmr > 800 ? 'Mythic' : (generatedMmr > 500 ? 'Elite' : 'Adept')}</span>
+                            </div>
+                        </div>
+                      </div>
                     </div>
                 </div>
 
@@ -1181,3 +1229,5 @@ export default function GeneratorPage() {
     </>
   );
 }
+
+    
