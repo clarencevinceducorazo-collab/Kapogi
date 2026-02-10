@@ -43,6 +43,8 @@ export const PageHeader = () => {
       items: [
         { name: "Whitepaper", href: "/whitepaper" },
         { name: "Roadmap", href: "/roadmap" },
+        { name: "Roadmap v2", href: "/roadmapv2" },
+        { name: "Roadmap v3", href: "/roadmapv3" },
       ],
     },
     { name: "PODIUM", href: "/podium" },
