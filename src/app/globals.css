@@ -96,6 +96,8 @@
     background-size: cover;
     background-position: 0 0;
     padding-bottom: 0rem;
+    font-family: "Nunito", sans-serif;
+    -webkit-tap-highlight-color: transparent;
   }
 
   h1,
@@ -423,6 +425,42 @@
     -webkit-text-fill-color: transparent;
   }
 
+  /* Podium / Leaderboard V2 styles */
+    .btn-toy {
+        transition: all 0.1s;
+        border-bottom-width: 4px;
+      }
+      .btn-toy:active {
+        transform: translateY(2px);
+        border-bottom-width: 2px;
+        margin-top: 2px;
+      }
+      .podium-gold {
+        background: #fde047;
+        border: 3px solid #eab308;
+        box-shadow: 0 4px 0 #ca8a04;
+      }
+      .podium-silver {
+        background: #f1f5f9;
+        border: 3px solid #cbd5e1;
+        box-shadow: 0 4px 0 #94a3b8;
+      }
+      .podium-bronze {
+        background: #fdba74;
+        border: 3px solid #f97316;
+        box-shadow: 0 4px 0 #c2410c;
+      }
+      .card-toy {
+        background: white;
+        border: 2px solid #e2e8f0;
+        box-shadow: 0 4px 0 #e2e8f0;
+      }
+      .card-toy:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 0 #cbd5e1;
+        border-color: #cbd5e1;
+      }
+
 }
 
 @keyframes fadeIn {
@@ -507,3 +545,37 @@
     transform: translateX(-5%);
   }
 }
+
+/* Podium Page Keyframes */
+@keyframes float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+@keyframes popIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.9) translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+.animate-float-1 {
+    animation: float 3s ease-in-out infinite;
+}
+.animate-float-2 {
+    animation: float 3.5s ease-in-out infinite 0.5s;
+}
+.animate-float-3 {
+    animation: float 4s ease-in-out infinite 1s;
+}
+.animate-pop-in {
+    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+

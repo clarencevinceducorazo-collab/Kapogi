@@ -45,6 +45,7 @@ export const PageHeader = () => {
         { name: "Roadmap", href: "/roadmap" },
       ],
     },
+    { name: "PODIUM", href: "/podium" },
     { name: "LEADERBOARDS", href: "/leaderboard" },
   ];
 
