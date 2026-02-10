@@ -696,30 +696,32 @@ export default function GeneratorPage() {
       }
 
       // 3. Mint on SUI blockchain
-      console.log('⛓️ Minting on SUI blockchain...');
-      const plainTextLore = (generatedLore || `A Kapogian character from ${originDescription}`).replace(/\*/g, '');
+      console.log("⛓️ Minting on SUI blockchain...");
+      const plainTextLore = (
+        generatedLore || `A Kapogian character from ${originDescription}`
+      ).replace(/\*/g, "");
 
       const result = await mintCharacterNFT({
         name: generatedName,
         description: plainTextLore,
         imageUrl: finalImageUrl!,
         attributes: JSON.stringify({
-            gender,
-            cuteness,
-            confidence,
-            tiliFactor,
-            luzon,
-            visayas,
-            mindanao,
-            hairAmount,
-            facialHair,
-            clothingStyle,
-            hairColor,
-            eyewear,
-            skinColor,
-            bodyFat,
-            posture,
-            holdingItem,
+          gender,
+          cuteness,
+          confidence,
+          tiliFactor,
+          luzon,
+          visayas,
+          mindanao,
+          hairAmount,
+          facialHair,
+          clothingStyle,
+          hairColor,
+          eyewear,
+          skinColor,
+          bodyFat,
+          posture,
+          holdingItem,
         }),
         mmr: generatedMmr,
         itemsSelected: itemsSelected,
@@ -802,12 +804,11 @@ export default function GeneratorPage() {
   };
 
   const lineageColors: { [key: string]: string } = {
-    Malakas: 'bg-blue-500',
-    Maganda: 'bg-pink-500',
-    Mahawari: 'bg-violet-500',
-    Maharaba: 'bg-rose-700',
+    Malakas: "bg-blue-500",
+    Maganda: "bg-pink-500",
+    Mahawari: "bg-violet-500",
+    Maharaba: "bg-rose-700",
   };
-
 
   if (!account) {
     return (
@@ -905,26 +906,30 @@ export default function GeneratorPage() {
                   NEW!
                 </div>
 
-                  <div className="space-y-6">
-                    <div className="p-4 border-4 border-stone-200 border-dashed rounded-xl bg-stone-50">
-                        <h3 className="font-display font-semibold text-lg text-stone-500 uppercase mb-4">Character Lineage</h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          {['Malakas', 'Maganda', 'Mahawari', 'Maharaba'].map((g) => (
-                            <button
-                              key={g}
-                              onClick={() => setGender(g)}
-                              className={cn(
-                                'py-3 text-xs font-display font-bold rounded-lg transition-all border-2 border-black hard-shadow-sm active:translate-y-1 active:shadow-none',
-                                gender === g
-                                  ? `${lineageColors[g]} text-white`
-                                  : 'bg-white text-black hover:bg-stone-100'
-                              )}
-                            >
-                              {g.toUpperCase()}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                <div className="space-y-6">
+                  <div className="p-4 border-4 border-stone-200 border-dashed rounded-xl bg-stone-50">
+                    <h3 className="font-display font-semibold text-lg text-stone-500 uppercase mb-4">
+                      Character Lineage
+                    </h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {["Malakas", "Maganda", "Mahawari", "Maharaba"].map(
+                        (g) => (
+                          <button
+                            key={g}
+                            onClick={() => setGender(g)}
+                            className={cn(
+                              "py-3 text-xs font-display font-bold rounded-lg transition-all border-2 border-black hard-shadow-sm active:translate-y-1 active:shadow-none",
+                              gender === g
+                                ? `${lineageColors[g]} text-white`
+                                : "bg-white text-black hover:bg-stone-100",
+                            )}
+                          >
+                            {g.toUpperCase()}
+                          </button>
+                        ),
+                      )}
+                    </div>
+                  </div>
 
                   <div className="space-y-2">
                     <label className="font-display font-semibold text-xl uppercase">
@@ -1222,22 +1227,59 @@ export default function GeneratorPage() {
                   {/* TOP SECTION: Split Image & Lore */}
                   <div className="flex flex-col md:flex-row border-b-4 border-black">
                     {/* LEFT COLUMN: Image/Loader Area */}
-                    <div className="w-full md:w-1/2 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px]">
+                    <div className="relative w-full md:w-1/2 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px]">
                       {loading ? (
-                        /* ... your existing loader logic ... */
-                        <div className="animate-pulse">Summoning...</div>
+                        showExitLoader ? (
+                          /* STAGE 2: Final Exit Loader */
+                          <div className="relative w-full h-full flex items-center justify-center">
+                            <Image
+                              src="/images/finalexit.gif"
+                              alt="Finishing up..."
+                              width={400}
+                              height={400}
+                              className="object-contain"
+                              unoptimized
+                            />
+                          </div>
+                        ) : (
+                          /* STAGE 1: Primary Generation Loader */
+                          <div className="relative w-full h-full flex flex-col items-center justify-center">
+                            <Image
+                              src="/images/loadscreens.gif"
+                              alt="Generating..."
+                              width={400}
+                              height={400}
+                              className="object-contain"
+                              unoptimized
+                            />
+                            <p
+                              key={loadingStepIndex}
+                              style={{ fontSize: "16px" }}
+                              className="font-semibold h-6 animate__animated animate__fadeIn mt-2 text-stone-600"
+                            >
+                              {loadingSteps[loadingStepIndex]}...
+                            </p>
+                          </div>
+                        )
                       ) : generatedImage ? (
+                        /* FINAL STATE: Character Revealed */
                         <Image
                           src={generatedImage}
-                          alt="Character"
+                          alt="Kapogian Character"
                           width={512}
                           height={512}
-                          className="animate__animated animate__zoomIn"
+                          className=" animate__animated animate__zoomIn"
                         />
                       ) : (
-                        <div className="flex flex-col items-center justify-center text-stone-500">
+                        /* ERROR STATE: Failed Summon */
+                        <div className="flex flex-col items-center justify-center w-full h-full text-stone-500">
                           <Ghost size={48} className="mb-2" />
-                          <p className="font-semibold">Summon failed</p>
+                          <p
+                            style={{ fontSize: "16px" }}
+                            className="font-semibold"
+                          >
+                            Summon failed or not started
+                          </p>
                         </div>
                       )}
                     </div>
@@ -1285,7 +1327,6 @@ export default function GeneratorPage() {
                       </h3>
                     </div>
 
-                    {/* 2. Battle MMR (Focal Point) */}
                     {/* 2. Battle MMR (The focal point) */}
                     <div className="flex-1 p-6 bg-white flex flex-col items-center justify-center border-black">
                       <p
