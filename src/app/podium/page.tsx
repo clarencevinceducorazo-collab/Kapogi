@@ -250,7 +250,7 @@ export default function PodiumPage() {
         </div>
         <div className="text-right px-2">
             <div className="text-sm md:text-lg font-extrabold text-slate-800">
-              {mode === 'mmr' ? (user as MmrEntry).mmrScore.toLocaleString() : (user as SummonEntry).totalNftSummon}
+              {mode === 'mmr' ? (user as MmrEntry)?.mmrScore?.toLocaleString() : (user as SummonEntry)?.totalNftSummon?.toLocaleString()}
             </div>
             <div className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wide bg-slate-100 px-2 py-0.5 rounded-full inline-block group-hover:bg-sky-100 group-hover:text-sky-500 transition-colors">
               {mode === 'mmr' ? 'MMR' : 'NFTs'}
