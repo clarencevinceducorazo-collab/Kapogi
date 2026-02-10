@@ -1273,24 +1273,28 @@ export default function GeneratorPage() {
                       </h3>
                     </div>
 
+                    {/* 2. Battle MMR (Focal Point) */}
                     {/* 2. Battle MMR (The focal point) */}
-                    <div className="flex-1 p-6 bg-slate-900 text-white flex flex-col items-center justify-center shadow-inner">
-                      <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">
+                    <div className="flex-1 p-6 bg-white flex flex-col items-center justify-center border-black">
+                      <p
+                        style={{ fontSize: "14px" }}
+                        className="font-bold text-stone-500 uppercase tracking-widest mb-1"
+                      >
                         Battle MMR
                       </p>
-                      <p className="text-5xl font-display font-bold tracking-tighter leading-none">
+                      <p className="text-6xl font-display font-black tracking-tighter leading-none text-slate-900 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)">
                         {generatedMmr}
                       </p>
                     </div>
 
-                    {/* 3. Rank Display */}
-                    <div className="flex-1 p-6 flex flex-col items-center justify-center">
-                      <p className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-1">
+                    {/* 3. Rank Display (Updated to White Bg & White Text) */}
+                    <div className="flex-1 p-6 flex flex-col items-center justify-center bg-white">
+                      <p className="text-[14px] font-bold text-stone-500 uppercase tracking-widest mb-1">
                         Rank
                       </p>
                       <h3
                         style={{ fontSize: "24px" }}
-                        className="font-bold uppercase text-blue-600"
+                        className="font-display font-bold uppercase leading-none text-black drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]"
                       >
                         {generatedMmr > 800
                           ? "Mythic"
@@ -1300,14 +1304,14 @@ export default function GeneratorPage() {
                       </h3>
                     </div>
 
-                    {/* 4. Lineage/Stats */}
-                    <div className="flex-1 p-6 flex flex-col items-center justify-center">
-                      <p className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-1">
+                    {/* 4. Lineage/Stats (Updated to White Bg & White Text) */}
+                    <div className="flex-1 p-6 flex flex-col items-center justify-center bg-white">
+                      <p className="text-[14px] font-bold text-stone-500 uppercase tracking-widest mb-1">
                         Lineage
                       </p>
                       <p
-                        style={{ fontSize: "16px" }}
-                        className="font-bold uppercase text-slate-800"
+                        style={{ fontSize: "24px" }}
+                        className="font-display font-bold uppercase leading-none text-black drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]"
                       >
                         {gender || "Ancient"}
                       </p>
