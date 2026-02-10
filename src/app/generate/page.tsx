@@ -434,6 +434,7 @@ export default function GeneratorPage() {
     setSkinColor(Math.floor(Math.random() * 51));
     setBodyFat(Math.floor(Math.random() * 51));
     setPosture(Math.floor(Math.random() * 51));
+    setGeneratedMmr(Math.floor(Math.random() * 1001));
 
     const items = ['None', 'Cash', 'Random Food', 'Random Bouquet of Flowers', 'Random Home Utensils'];
     const randomItem = items[Math.floor(Math.random() * items.length)];
@@ -451,6 +452,7 @@ export default function GeneratorPage() {
     setOriginDescription('');
     setTxHash('');
     setLoadingStepIndex(0);
+    setGeneratedMmr(calculateMMR());
 
     navigate('page-preview');
 
@@ -609,23 +611,23 @@ export default function GeneratorPage() {
         name: generatedName,
         description: generatedLore || `A Kapogian character from ${originDescription}`,
         imageUrl: finalImageUrl!,
-        attributes: JSON.stringify({ 
-          gender, 
-          cuteness, 
-          confidence, 
-          tiliFactor, 
-          luzon, 
-          visayas, 
-          mindanao, 
-          hairAmount, 
-          facialHair, 
-          clothingStyle, 
-          hairColor, 
-          eyewear, 
-          skinColor, 
-          bodyFat, 
-          posture, 
-          holdingItem 
+        attributes: JSON.stringify({
+            gender,
+            cuteness,
+            confidence,
+            tiliFactor,
+            luzon,
+            visayas,
+            mindanao,
+            hairAmount,
+            facialHair,
+            clothingStyle,
+            hairColor,
+            eyewear,
+            skinColor,
+            bodyFat,
+            posture,
+            holdingItem,
         }),
         mmr: generatedMmr,
         itemsSelected: itemsSelected,
@@ -705,6 +707,13 @@ export default function GeneratorPage() {
     setSelectedBarangay(barangay);
   };
 
+  const lineageColors: { [key: string]: string } = {
+    Malakas: 'bg-blue-500',
+    Maganda: 'bg-pink-500',
+    Mahawari: 'bg-violet-500',
+    Maharaba: 'bg-rose-700',
+  };
+
 
   if (!account) {
     return (
@@ -769,14 +778,19 @@ export default function GeneratorPage() {
                   <div className="absolute top-2 right-2 rotate-12 bg-yellow-400 text-black text-xs font-bold px-2 py-1 border-2 border-black rounded shadow-[2px_2px_0px_#000]">NEW!</div>
 
                   <div className="space-y-6">
-                      <div className="p-4 border-4 border-stone-200 border-dashed rounded-xl bg-stone-50">
+                    <div className="p-4 border-4 border-stone-200 border-dashed rounded-xl bg-stone-50">
                         <h3 className="font-display font-semibold text-lg text-stone-500 uppercase mb-4">Character Lineage</h3>
-                        <div className="grid grid-cols-2 gap-2 p-1 bg-stone-200 rounded-lg">
+                        <div className="grid grid-cols-2 gap-2">
                           {['Malakas', 'Maganda', 'Mahawari', 'Maharaba'].map((g) => (
                             <button
                               key={g}
                               onClick={() => setGender(g)}
-                              className={`py-3 text-xs font-display font-bold rounded-md transition-all ${gender === g ? 'bg-pink-400 text-white border-2 border-black shadow-inner' : 'bg-white text-black hover:bg-stone-100'}`}
+                              className={cn(
+                                'py-3 text-xs font-display font-bold rounded-lg transition-all border-2 border-black hard-shadow-sm active:translate-y-1 active:shadow-none',
+                                gender === g
+                                  ? `${lineageColors[g]} text-white`
+                                  : 'bg-white text-black hover:bg-stone-100'
+                              )}
                             >
                               {g.toUpperCase()}
                             </button>
@@ -960,27 +974,22 @@ export default function GeneratorPage() {
                       </div>
 
                       {/* MMR/STATS SECTION */}
-                       <div className="bg-white rounded-[2rem] flex flex-col justify-between">
-                        <div>
-                            <h3 className="font-display font-semibold text-lg uppercase mb-3">Game Intelligence Stats</h3>
-                            <div className="p-4 bg-slate-900 rounded-[1.5rem] text-white text-center shadow-lg relative overflow-hidden">
-                                <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">Battle MMR</p>
-                                <p className="text-6xl font-display font-bold tracking-tighter leading-none">{generatedMmr}</p>
-                                <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden mt-3">
-                                    <div className="h-full bg-gradient-to-r from-blue-400 to-indigo-400" style={{ width: `${Math.min(100, generatedMmr / 10)}%` }}></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="mt-4 grid grid-cols-2 gap-4 text-center">
-                            <div className="p-3 bg-stone-50 rounded-2xl border-2 border-stone-200">
-                                <span className="block text-[10px] font-bold text-stone-500 uppercase tracking-wide mb-1">Lineage</span>
-                                <span className="text-sm font-display font-semibold text-slate-800 uppercase">{gender}</span>
-                            </div>
-                            <div className="p-3 bg-stone-50 rounded-2xl border-2 border-stone-200">
-                                <span className="block text-[10px] font-bold text-stone-500 uppercase tracking-wide mb-1">Rank</span>
-                                <span className="text-sm font-display font-semibold text-blue-600 uppercase">{generatedMmr > 800 ? 'Mythic' : (generatedMmr > 500 ? 'Elite' : 'Adept')}</span>
-                            </div>
-                        </div>
+                       <div className="bg-white border-4 border-black rounded-2xl p-6 hard-shadow-sm space-y-4">
+                          <h3 className="font-display font-semibold text-xl uppercase text-center border-b-4 border-dashed border-stone-200 pb-2">Game Intelligence Stats</h3>
+                          <div className="text-center">
+                              <p className="font-display text-sm font-semibold text-stone-500 uppercase">Battle MMR</p>
+                              <p className="font-display text-7xl font-bold tracking-tighter text-black">{generatedMmr}</p>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4 text-center pt-2">
+                              <div className="p-3 bg-stone-50 rounded-xl border-2 border-stone-200">
+                                  <span className="block text-xs font-bold text-stone-500 uppercase tracking-wide">Lineage</span>
+                                  <span className="text-sm font-display font-semibold text-slate-800 uppercase">{gender}</span>
+                              </div>
+                              <div className="p-3 bg-stone-50 rounded-xl border-2 border-stone-200">
+                                  <span className="block text-xs font-bold text-stone-500 uppercase tracking-wide">Rank</span>
+                                  <span className="text-sm font-display font-semibold text-blue-600 uppercase">{generatedMmr > 800 ? 'Mythic' : (generatedMmr > 500 ? 'Elite' : 'Adept')}</span>
+                              </div>
+                          </div>
                       </div>
                     </div>
                 </div>
@@ -1054,12 +1063,12 @@ export default function GeneratorPage() {
                                                   onClick={() => setHoodieColor(color)}
                                                   className={cn(
                                                       "w-16 h-10 font-display font-semibold text-sm border-4 border-black rounded-lg hard-shadow-sm hard-shadow-hover transition-all",
-                                                      "active:translate-y-1 active:translate-x-1 active:shadow-[2px_2px_0px_#000]",
-                                                      hoodieColor !== color && "bg-gray-200 text-gray-500"
+                                                      "active:translate-y-1 active:translate-x-1 active:shadow-none",
+                                                       hoodieColor === color ? '' : 'bg-gray-200 text-gray-500'
                                                   )}
-                                                  style={{
-                                                      backgroundColor: hoodieColor === color ? color.toLowerCase() : '',
-                                                      color: hoodieColor === color ? (color === 'Black' ? 'white' : 'black') : '',
+                                                   style={{
+                                                      backgroundColor: hoodieColor === color ? color.toLowerCase() : undefined,
+                                                      color: hoodieColor === color ? (color === 'Black' ? 'white' : 'black') : undefined
                                                   }}
                                               >
                                                   {color}
@@ -1246,5 +1255,7 @@ export default function GeneratorPage() {
     </>
   );
 }
+
+    
 
     
