@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { Sparkles, FileText } from 'lucide-react';
-import Link from 'next/link';
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Sparkles, FileText } from "lucide-react";
+import Link from "next/link";
 
 export const HeroSection = () => {
   return (
@@ -49,13 +49,13 @@ export const HeroSection = () => {
             className="font-headline text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold text-white"
             style={{
               textShadow:
-                '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 5px 5px 0 #000',
+                "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 5px 5px 0 #000",
             }}
           >
             KAPOGIAN
           </h1>
           <p className="text-xl md:text-2xl font-bold text-white [text-shadow:2px_2px_0_#000,-2px_2px_0_#000,2px_-2px_0_#000,-2px_-2px_0_#000]">
-            Be Pogi! Be Confident Everyday  
+            Be Pogi! Be Confident Everyday
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
             <Link href="/generate">
@@ -86,7 +86,7 @@ export const HeroSection = () => {
           />
         </div>
       </div>
-      
+
       {/* MOBILE Image: Positioned absolutely at the bottom, only visible on mobile */}
       <div className="lg:hidden absolute bottom-[-30vh] left-1/2 -translate-x-1/2 w-full max-w-xl h-[75vh] z-10">
         <Image
