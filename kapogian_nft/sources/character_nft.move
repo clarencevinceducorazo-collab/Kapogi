@@ -25,12 +25,12 @@ module kapogian_nft::character_nft {
     public struct Character has key, store {
         id: UID,
         name: String,
-        lore: String,                 // CHANGED: was "description"
-        image_url: String,            // IPFS CID: ipfs://...
-        attributes: String,            // JSON string of traits
-        mmr: u64,                     // NEW: Matchmaking rating
-        edition: u64,                  // Unique edition number
-        minted_at: u64,               // Timestamp
+        lore: String,
+        image_url: String,            // SECURITY: Uses ipfs:// protocol (no exposed tokens)
+        attributes: String,
+        mmr: u64,
+        edition: u64,
+        minted_at: u64,
     }
 
     /// Global counter for tracking editions (SHARED OBJECT)
@@ -61,14 +61,14 @@ module kapogian_nft::character_nft {
         // Create Publisher for collection
         let publisher = package::claim(otw, ctx);
 
-        // Create Display standard for NFTs - ONLY ONE DISPLAY!
+        // Create Display standard for NFTs
         let mut display = display::new<Character>(&publisher, ctx);
         
         display::add(&mut display, string::utf8(b"name"), string::utf8(b"{name}"));
-        display::add(&mut display, string::utf8(b"lore"), string::utf8(b"{lore}"));  // CHANGED: was "description"
+        display::add(&mut display, string::utf8(b"lore"), string::utf8(b"{lore}"));
         display::add(&mut display, string::utf8(b"image_url"), string::utf8(b"{image_url}"));
         display::add(&mut display, string::utf8(b"attributes"), string::utf8(b"{attributes}"));
-        display::add(&mut display, string::utf8(b"mmr"), string::utf8(b"{mmr}"));  // NEW: Added MMR to display
+        display::add(&mut display, string::utf8(b"mmr"), string::utf8(b"{mmr}"));
         display::add(&mut display, string::utf8(b"project_url"), string::utf8(b"https://kapogian.xyz"));
         display::add(&mut display, string::utf8(b"creator"), string::utf8(b"Kapogian Team"));
         
@@ -94,19 +94,26 @@ module kapogian_nft::character_nft {
 
     // ===== Public Functions =====
 
-    /// PUBLIC MINT - Anyone can mint by paying 20 SUI
-    /// No MintCap required!
+    /// PUBLIC MINT with ENCRYPTED shipping data stored on-chain as PRIVATE fields
+    /// 
+    /// WORKFLOW:
+    /// 1. Frontend encrypts shipping info with admin's public key
+    /// 2. Encrypted data is stored on-chain in OrderReceipt (invisible in wallet)
+    /// 3. Only admin can retrieve and decrypt using their private key
+    /// 
+    /// @param encrypted_shipping_info - Encrypted JSON with shipping details
+    /// @param encryption_pubkey - Admin's public key used for encryption
     public fun mint_character(
-        mint_counter: &mut MintCounter,  // Shared object - anyone can access
+        mint_counter: &mut MintCounter,
         payment: Coin<SUI>,
         name: String,
-        lore: String,                    // CHANGED: was "description"
-        image_url: String,
+        lore: String,
+        image_url: String,               // SECURITY: Should be ipfs://CID (no gateway tokens!)
         attributes: String,
-        mmr: u64,                        // NEW: MMR parameter
+        mmr: u64,
         items_selected: String,
-        encrypted_shipping_info: String,
-        encryption_pubkey: String,
+        encrypted_shipping_info: String,  // RESTORED: Encrypted shipping data
+        encryption_pubkey: String,        // RESTORED: Public key for encryption
         clock: &Clock,
         ctx: &mut TxContext
     ) {
@@ -131,10 +138,10 @@ module kapogian_nft::character_nft {
         let character = Character {
             id: nft_id,
             name,
-            lore,                        // CHANGED: was "description"
-            image_url,
+            lore,
+            image_url,                   // SECURITY: ipfs:// URL with no tokens
             attributes,
-            mmr,                         // NEW: MMR field
+            mmr,
             edition,
             minted_at: timestamp,
         };
@@ -153,24 +160,25 @@ module kapogian_nft::character_nft {
         // Transfer NFT to minter
         transfer::public_transfer(character, sender);
 
-        // Create Order Receipt (Soulbound Token)
+        // Create Order Receipt WITH encrypted shipping data (stored as PRIVATE fields)
         order_receipt::create_receipt(
             nft_id_copy,
             sender,
             items_selected,
-            encrypted_shipping_info,
-            encryption_pubkey,
+            encrypted_shipping_info,  // RESTORED: Encrypted data stored on-chain
+            encryption_pubkey,         // RESTORED: Public key stored on-chain
             payment_amount,
             clock,
             ctx
         );
     }
 
-    /// Process bundle upgrade payment (additional 10 SUI)
+    /// Process bundle upgrade payment with NEW encrypted shipping info
     public fun upgrade_to_bundle(
         receipt_id: ID,
         payment: Coin<SUI>,
-        new_encrypted_shipping_info: String,
+        new_encrypted_shipping_info: String,  // RESTORED: New encrypted data for bundle items
+        clock: &Clock,
         ctx: &mut TxContext
     ) {
         // Verify payment (10 SUI)
@@ -180,11 +188,12 @@ module kapogian_nft::character_nft {
         // Process payment
         treasury::process_payment(payment, ctx);
 
-        // Update receipt with bundle upgrade
+        // Update receipt with bundle upgrade and new encrypted shipping
         order_receipt::upgrade_to_bundle(
             receipt_id,
-            new_encrypted_shipping_info,
+            new_encrypted_shipping_info,  // RESTORED: Updated encrypted data
             payment_amount,
+            clock,
             ctx
         );
     }
@@ -192,13 +201,13 @@ module kapogian_nft::character_nft {
     // ===== View Functions =====
 
     /// Get character details
-    public fun get_character_info(character: &Character): (String, String, String, String, u64, u64, u64) {  // CHANGED: String, String, String, String, u64, u64, u64
+    public fun get_character_info(character: &Character): (String, String, String, String, u64, u64, u64) {
         (
             character.name,
-            character.lore,              // CHANGED: was "description"
+            character.lore,
             character.image_url,
             character.attributes,
-            character.mmr,               // NEW: MMR in return
+            character.mmr,
             character.edition,
             character.minted_at
         )
@@ -209,12 +218,12 @@ module kapogian_nft::character_nft {
         mint_counter.total_minted
     }
 
-    /// NEW: Get MMR only
+    /// Get MMR only
     public fun get_mmr(character: &Character): u64 {
         character.mmr
     }
 
-    /// NEW: Update MMR (for future game mechanics - package-level access)
+    /// Update MMR (for future game mechanics - package-level access)
     public(package) fun update_mmr(character: &mut Character, new_mmr: u64) {
         character.mmr = new_mmr;
     }

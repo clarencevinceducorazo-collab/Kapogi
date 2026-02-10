@@ -49,7 +49,7 @@ module kapogian_nft::admin {
         order_receipt::update_status(receipt, 2, clock, ctx);
     }
 
-    /// NEW: Add tracking information to order (admin only)
+    /// Add tracking information to order (admin only)
     public fun add_tracking_information(
         _admin_cap: &AdminCap,
         receipt: &mut OrderReceipt,
@@ -69,25 +69,60 @@ module kapogian_nft::admin {
         );
     }
 
-    /// Get receipt information (admin only)
+    /// ADMIN ONLY: Get full receipt details including ALL PRIVATE fields + ENCRYPTED DATA
+    /// This function can access ALL fields because it requires AdminCap
+    /// 
+    /// IMPORTANT: The encrypted_shipping_info needs to be DECRYPTED using your admin private key
+    /// Use the encryption_pubkey to verify it was encrypted with the correct key
     public fun get_receipt_details(
         _admin_cap: &AdminCap,
         receipt: &OrderReceipt
     ): (
+        ID,           // receipt_id
         ID,           // nft_id
         address,      // buyer
-        String,       // items_selected
-        String,       // encrypted_shipping_info
-        String,       // encryption_pubkey
+        String,       // items_selected (PRIVATE)
         u64,          // payment_amount
-        u8,           // status
+        u8,           // status (PRIVATE)
         u64,          // created_at
         u64,          // updated_at
-        String,       // tracking_number (NEW)
-        String,       // carrier (NEW)
-        u64           // estimated_delivery (NEW)
+        String,       // tracking_number (PRIVATE)
+        String,       // carrier (PRIVATE)
+        u64,          // estimated_delivery (PRIVATE)
+        String,       // encrypted_shipping_info (PRIVATE - NEEDS DECRYPTION!)
+        String        // encryption_pubkey (PRIVATE)
     ) {
-        order_receipt::get_receipt_info(receipt)
+        let receipt_id = order_receipt::get_receipt_id(receipt);
+        let (
+            nft_id,
+            buyer,
+            items_selected,
+            payment_amount,
+            status,
+            created_at,
+            updated_at,
+            tracking_number,
+            carrier,
+            estimated_delivery,
+            encrypted_shipping_info,  // RESTORED: This is the encrypted data
+            encryption_pubkey          // RESTORED: This is the public key used
+        ) = order_receipt::get_receipt_info_admin(receipt);
+        
+        (
+            receipt_id,
+            nft_id,
+            buyer,
+            items_selected,
+            payment_amount,
+            status,
+            created_at,
+            updated_at,
+            tracking_number,
+            carrier,
+            estimated_delivery,
+            encrypted_shipping_info,  // Admin must decrypt this
+            encryption_pubkey
+        )
     }
 
     // ===== View Functions =====
