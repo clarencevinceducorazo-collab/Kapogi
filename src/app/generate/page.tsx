@@ -607,9 +607,11 @@ export default function GeneratorPage() {
   
       // 3. Mint on SUI blockchain
       console.log('⛓️ Minting on SUI blockchain...');
+      const plainTextLore = (generatedLore || `A Kapogian character from ${originDescription}`).replace(/\*/g, '');
+
       const result = await mintCharacterNFT({
         name: generatedName,
-        description: generatedLore || `A Kapogian character from ${originDescription}`,
+        description: plainTextLore,
         imageUrl: finalImageUrl!,
         attributes: JSON.stringify({
             gender,
@@ -1255,7 +1257,3 @@ export default function GeneratorPage() {
     </>
   );
 }
-
-    
-
-    
