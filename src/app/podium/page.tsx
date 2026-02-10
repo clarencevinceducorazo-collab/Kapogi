@@ -53,87 +53,87 @@ export default function PodiumPage() {
   const fetchData = async () => {
     setLoading(true);
     setError('');
-    setCurrentPage(1); // Reset page on mode switch
+    setCurrentPage(1);
     try {
-      if (mode === 'summon') {
-        const allEvents = await suiClient.queryEvents({
-          query: { MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::CharacterMinted` },
-          order: 'ascending',
-        });
-        
-        const ownerCounts: { [key: string]: number } = {};
-        allEvents.data.forEach(event => {
-          const owner = (event.parsedJson as any)?.owner;
-          if (owner) {
-            ownerCounts[owner] = (ownerCounts[owner] || 0) + 1;
-          }
-        });
+      const allMintEvents = await suiClient.queryEvents({
+        query: { MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::CharacterMinted` },
+      });
+      const nftIds = allMintEvents.data.map(event => (event.parsedJson as any)?.nft_id).filter(Boolean);
 
-        const sortedData: SummonEntry[] = Object.entries(ownerCounts)
-          .map(([address, count]) => ({
-            walletAddress: address,
-            totalNftSummon: count,
-            avatarImage: `https://api.dicebear.com/7.x/avataaars/svg?seed=${address}&backgroundColor=b6e3f4`,
-            rank: 0,
-          }))
-          .sort((a, b) => b.totalNftSummon - a.totalNftSummon)
-          .map((user, index) => ({ ...user, rank: index + 1 }));
+      if (nftIds.length === 0) {
+        setData([]);
+        setLoading(false);
+        return;
+      }
+
+      const characterObjects = [];
+      const chunkSize = 50;
+      for (let i = 0; i < nftIds.length; i += chunkSize) {
+        const chunk = nftIds.slice(i, i + chunkSize);
+        const chunkObjects = await suiClient.multiGetObjects({
+          ids: chunk,
+          options: { showContent: true, showOwner: true, showDisplay: true }
+        });
+        characterObjects.push(...chunkObjects);
+      }
+
+      const validObjects = characterObjects.filter(obj => obj.data?.content?.dataType === 'moveObject' && obj.data.owner);
+
+      // Process all objects into a comprehensive map
+      const ownerStats: Map<string, {
+        walletAddress: string;
+        totalNftSummon: number;
+        mmrScore: number;
+        avatarImage: string;
+        nftName: string;
+      }> = new Map();
+
+      validObjects.forEach((obj: any) => {
+        const ownerAddress = obj.data.owner.AddressOwner;
+        const currentMmr = Number(obj.data.content.fields.mmr);
         
+        if (!ownerStats.has(ownerAddress)) {
+          ownerStats.set(ownerAddress, {
+            walletAddress: ownerAddress,
+            totalNftSummon: 0,
+            mmrScore: -1,
+            avatarImage: '',
+            nftName: '',
+          });
+        }
+
+        const stats = ownerStats.get(ownerAddress)!;
+        stats.totalNftSummon += 1;
+
+        if (currentMmr > stats.mmrScore) {
+          stats.mmrScore = currentMmr;
+          stats.avatarImage = getIPFSGatewayUrl((obj.data.display.data as any).image_url);
+          stats.nftName = obj.data.content.fields.name;
+        }
+      });
+      
+      const processedData = Array.from(ownerStats.values());
+
+      if (mode === 'summon') {
+        const sortedData: SummonEntry[] = processedData
+          .sort((a, b) => b.totalNftSummon - a.totalNftSummon)
+          .map((user, index) => ({
+            rank: index + 1,
+            walletAddress: user.walletAddress,
+            avatarImage: user.avatarImage, // Use the avatar from the highest MMR NFT
+            totalNftSummon: user.totalNftSummon,
+          }));
         setData(sortedData);
       } else { // MMR mode
-        const allMintEvents = await suiClient.queryEvents({
-          query: { MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::CharacterMinted` },
-        });
-
-        const nftIds = allMintEvents.data.map(event => (event.parsedJson as any)?.nft_id).filter(Boolean);
-
-        if (nftIds.length === 0) {
-            setData([]);
-            setLoading(false);
-            return;
-        }
-        
-        // Fetch objects in chunks
-        const characterObjects = [];
-        const chunkSize = 50; 
-        for (let i = 0; i < nftIds.length; i += chunkSize) {
-            const chunk = nftIds.slice(i, i + chunkSize);
-            const chunkObjects = await suiClient.multiGetObjects({
-                ids: chunk,
-                options: { showContent: true, showOwner: true, showDisplay: true }
-            });
-            characterObjects.push(...chunkObjects);
-        }
-
-        const highestMmrByOwner: Map<string, MmrEntry> = new Map();
-
-        characterObjects
-          .filter(obj => obj.data?.content?.dataType === 'moveObject' && obj.data.owner)
-          .forEach((obj: any) => {
-            const fields = obj.data.content.fields;
-            const ownerAddress = obj.data.owner.AddressOwner;
-            const currentMmr = Number(fields.mmr);
-
-            // If we haven't seen this owner, or if their new NFT has a higher MMR
-            if (!highestMmrByOwner.has(ownerAddress) || currentMmr > highestMmrByOwner.get(ownerAddress)!.mmrScore) {
-              highestMmrByOwner.set(ownerAddress, {
-                walletAddress: ownerAddress,
-                avatarImage: getIPFSGatewayUrl((obj.data.display.data as any).image_url),
-                mmrScore: currentMmr,
-                nftName: fields.name, // The name of the highest MMR NFT
-                rank: 0, // will be set after sorting
-              });
-            }
-          });
-        
-        // Convert the map back to an array
-        const uniqueEntries = Array.from(highestMmrByOwner.values());
-
-        // Sort the unique entries by MMR score
-        const sortedData: MmrEntry[] = uniqueEntries
+        const sortedData: MmrEntry[] = processedData
           .sort((a, b) => b.mmrScore - a.mmrScore)
-          .map((user, index) => ({ ...user, rank: index + 1 }));
-        
+          .map((user, index) => ({
+            rank: index + 1,
+            walletAddress: user.walletAddress,
+            avatarImage: user.avatarImage,
+            mmrScore: user.mmrScore,
+            nftName: user.nftName,
+          }));
         setData(sortedData);
       }
     } catch (err) {
@@ -185,8 +185,7 @@ export default function PodiumPage() {
                 <div className="absolute top-0 left-0 w-full h-2 bg-white/30"></div>
                 <span className="text-xs md:text-sm text-slate-500 font-bold mb-1 truncate w-full px-2">{(users[0] as any).walletAddress.slice(0,6)}...{(users[0] as any).walletAddress.slice(-4)}</span>
                 <span className="text-sm md:text-lg font-extrabold text-slate-700">
-                  {mode === 'mmr' && (users[0] as MmrEntry)?.mmrScore?.toLocaleString()}
-                  {mode === 'summon' && (users[0] as SummonEntry)?.totalNftSummon?.toLocaleString()}
+                  {mode === 'mmr' ? (users[0] as MmrEntry)?.mmrScore?.toLocaleString() : (users[0] as SummonEntry)?.totalNftSummon?.toLocaleString()}
                 </span>
             </div>
           </>
@@ -205,8 +204,7 @@ export default function PodiumPage() {
                 <div className="absolute top-0 left-0 w-full h-3 bg-white/30"></div>
                 <span className="text-xs md:text-sm text-yellow-800/70 font-bold mb-1 truncate w-full px-2">{(users[1] as any).walletAddress.slice(0,6)}...{(users[1] as any).walletAddress.slice(-4)}</span>
                 <span className="text-lg md:text-2xl font-extrabold text-yellow-900">
-                  {mode === 'mmr' && (users[1] as MmrEntry)?.mmrScore?.toLocaleString()}
-                  {mode === 'summon' && (users[1] as SummonEntry)?.totalNftSummon?.toLocaleString()}
+                  {mode === 'mmr' ? (users[1] as MmrEntry)?.mmrScore?.toLocaleString() : (users[1] as SummonEntry)?.totalNftSummon?.toLocaleString()}
                 </span>
             </div>
           </>
@@ -224,8 +222,7 @@ export default function PodiumPage() {
                 <div className="absolute top-0 left-0 w-full h-2 bg-white/30"></div>
                 <span className="text-xs md:text-sm text-orange-800/60 font-bold mb-1 truncate w-full px-2">{(users[2] as any).walletAddress.slice(0,6)}...{(users[2] as any).walletAddress.slice(-4)}</span>
                 <span className="text-sm md:text-lg font-extrabold text-orange-900">
-                  {mode === 'mmr' && (users[2] as MmrEntry)?.mmrScore?.toLocaleString()}
-                  {mode === 'summon' && (users[2] as SummonEntry)?.totalNftSummon?.toLocaleString()}
+                  {mode === 'mmr' ? (users[2] as MmrEntry)?.mmrScore?.toLocaleString() : (users[2] as SummonEntry)?.totalNftSummon?.toLocaleString()}
                 </span>
             </div>
           </>
