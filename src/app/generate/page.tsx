@@ -607,9 +607,26 @@ export default function GeneratorPage() {
       console.log('⛓️ Minting on SUI blockchain...');
       const result = await mintCharacterNFT({
         name: generatedName,
-        description: `A Kapogian character from ${originDescription}`,
+        description: generatedLore || `A Kapogian character from ${originDescription}`,
         imageUrl: finalImageUrl!,
-        attributes: JSON.stringify({ cuteness, confidence, tiliFactor, luzon, visayas, mindanao, hairAmount, facialHair, clothingStyle, hairColor, eyewear, skinColor, bodyFat, posture, holdingItem }),
+        attributes: JSON.stringify({ 
+          gender, 
+          cuteness, 
+          confidence, 
+          tiliFactor, 
+          luzon, 
+          visayas, 
+          mindanao, 
+          hairAmount, 
+          facialHair, 
+          clothingStyle, 
+          hairColor, 
+          eyewear, 
+          skinColor, 
+          bodyFat, 
+          posture, 
+          holdingItem 
+        }),
         mmr: generatedMmr,
         itemsSelected: itemsSelected,
         encryptedShippingInfo: encryptedString,
