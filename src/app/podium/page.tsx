@@ -177,7 +177,7 @@ export default function PodiumPage() {
         {users[1] && (
           <>
             <div className="relative mb-4 transition-transform group-hover:scale-110 duration-300">
-                <iconify-icon icon="solar:crown-bold" className="absolute -top-8 left-1/2 -translate-x-1/2 text-yellow-400 drop-shadow-sm text-3xl md:text-4xl animate-bounce"></iconify-icon>
+                <iconify-icon icon="solar:crown-bold" class="absolute -top-8 left-1/2 -translate-x-1/2 text-yellow-400 drop-shadow-sm text-3xl md:text-4xl animate-bounce"></iconify-icon>
                 <Image src={(users[1] as any).avatarImage} width={112} height={112} alt="Rank 1" className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-white bg-yellow-100 object-cover shadow-lg ring-4 ring-yellow-200/50" />
                 <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-yellow-400 border-2 border-white text-white text-sm font-bold px-3 py-0.5 rounded-full shadow-sm">#1</div>
             </div>
@@ -234,36 +234,38 @@ export default function PodiumPage() {
   return (
     <>
       <PageHeader/>
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 pb-24 pt-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
-          <div className="text-center md:text-left">
-            <h1 className="text-3xl md:text-4xl font-extrabold text-slate-800 tracking-tight mb-2">Leaderboard</h1>
-            <p className="text-slate-500 font-medium">Climb the ranks and earn rewards!</p>
+      <div className="bg-[#f0f9ff] text-slate-600 antialiased min-h-screen">
+        <main className="flex-1 max-w-5xl mx-auto w-full px-4 pb-24 pt-32">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
+            <div className="text-center md:text-left">
+              <h1 className="text-3xl md:text-4xl font-extrabold text-slate-800 tracking-tight mb-2">Leaderboard</h1>
+              <p className="text-slate-500 font-medium">Climb the ranks and earn rewards!</p>
+            </div>
+            <div className="bg-white p-1.5 rounded-2xl shadow-sm border-2 border-slate-100 inline-flex relative">
+              <div id="tab-bg" className="absolute top-1.5 bottom-1.5 left-1.5 w-[calc(50%-6px)] bg-sky-400 rounded-xl shadow-md transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]" style={{ transform: mode === 'mmr' ? 'translateX(0)' : 'translateX(100%)' }}></div>
+              <button onClick={() => switchMode('mmr')} className={`relative z-10 px-6 py-2.5 rounded-xl text-sm font-bold transition-colors duration-200 flex items-center gap-2 ${mode === 'mmr' ? 'text-white' : 'text-slate-500 hover:text-sky-500'}`}>
+                  <iconify-icon icon="solar:cup-star-linear" width="18" class=""></iconify-icon> MMR Rank
+              </button>
+              <button onClick={() => switchMode('summon')} className={`relative z-10 px-6 py-2.5 rounded-xl text-sm font-bold transition-colors duration-200 flex items-center gap-2 ${mode === 'summon' ? 'text-white' : 'text-slate-500 hover:text-sky-500'}`}>
+                  <iconify-icon icon="solar:box-linear" width="18" class=""></iconify-icon> Summons
+              </button>
+            </div>
           </div>
-          <div className="bg-white p-1.5 rounded-2xl shadow-sm border-2 border-slate-100 inline-flex relative">
-            <div id="tab-bg" className="absolute top-1.5 bottom-1.5 left-1.5 w-[calc(50%-6px)] bg-sky-400 rounded-xl shadow-md transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]" style={{ transform: mode === 'mmr' ? 'translateX(0)' : 'translateX(100%)' }}></div>
-            <button onClick={() => switchMode('mmr')} className={`relative z-10 px-6 py-2.5 rounded-xl text-sm font-bold transition-colors duration-200 flex items-center gap-2 ${mode === 'mmr' ? 'text-white' : 'text-slate-500 hover:text-sky-500'}`}>
-                <iconify-icon icon="solar:cup-star-linear" width="18" class=""></iconify-icon> MMR Rank
-            </button>
-            <button onClick={() => switchMode('summon')} className={`relative z-10 px-6 py-2.5 rounded-xl text-sm font-bold transition-colors duration-200 flex items-center gap-2 ${mode === 'summon' ? 'text-white' : 'text-slate-500 hover:text-sky-500'}`}>
-                <iconify-icon icon="solar:box-linear" width="18" class=""></iconify-icon> Summons
-            </button>
-          </div>
-        </div>
 
-        {loading ? (
-            <div className="flex justify-center items-center p-20"><iconify-icon icon="solar:spinner-gap-linear" class="text-4xl animate-spin text-sky-500"></iconify-icon></div>
-        ) : error ? (
-            <div className="bg-red-50 text-red-700 p-6 rounded-2xl border-2 border-red-200 text-center font-bold">{error}</div>
-        ) : (
-          <div id="content-area" className="w-full">
-            {currentPage === 1 && data.length >= 3 && <Podium users={podiumData} />}
-            {listData.map((user, index) => (
-              <ListItem key={(user as any).walletAddress + index} user={user} delayIndex={index} />
-            ))}
-          </div>
-        )}
-      </main>
+          {loading ? (
+              <div className="flex justify-center items-center p-20"><iconify-icon icon="solar:spinner-gap-linear" class="text-4xl animate-spin text-sky-500"></iconify-icon></div>
+          ) : error ? (
+              <div className="bg-red-50 text-red-700 p-6 rounded-2xl border-2 border-red-200 text-center font-bold">{error}</div>
+          ) : (
+            <div id="content-area" className="w-full">
+              {currentPage === 1 && data.length >= 3 && <Podium users={podiumData} />}
+              {listData.map((user, index) => (
+                <ListItem key={(user as any).walletAddress + index} user={user} delayIndex={index} />
+              ))}
+            </div>
+          )}
+        </main>
+      </div>
 
       <div className="fixed bottom-6 left-0 right-0 z-20 flex justify-center pointer-events-none">
         <div className="bg-white/90 backdrop-blur-xl border-2 border-white shadow-xl shadow-sky-900/10 rounded-full p-2 flex items-center gap-4 pointer-events-auto btn-toy">
