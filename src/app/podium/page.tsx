@@ -1,11 +1,14 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { suiClient } from '@/lib/sui';
-import { CONTRACT_ADDRESSES } from '@/lib/constants';
+import Script from 'next/script';
+import Link from 'next/link';
 import { PageHeader } from '@/components/kapogian/page-header';
 import { PageFooter } from '@/components/kapogian/page-footer';
+import { suiClient } from '@/lib/sui';
+import { CONTRACT_ADDRESSES } from '@/lib/constants';
 import { getIPFSGatewayUrl } from '@/lib/pinata';
 
 // I have to define IconifyIcon for typescript since it's not a standard element
@@ -102,21 +105,35 @@ export default function PodiumPage() {
             characterObjects.push(...chunkObjects);
         }
 
-        const sortedData: MmrEntry[] = characterObjects
-          .filter(obj => obj.data?.content?.dataType === 'moveObject')
-          .map((obj: any) => {
+        const highestMmrByOwner: Map<string, MmrEntry> = new Map();
+
+        characterObjects
+          .filter(obj => obj.data?.content?.dataType === 'moveObject' && obj.data.owner)
+          .forEach((obj: any) => {
             const fields = obj.data.content.fields;
-            return {
-              walletAddress: obj.data.owner.AddressOwner,
-              avatarImage: getIPFSGatewayUrl(obj.data.display.data.image_url),
-              mmrScore: Number(fields.mmr),
-              nftName: fields.name,
-              rank: 0,
-            };
-          })
+            const ownerAddress = obj.data.owner.AddressOwner;
+            const currentMmr = Number(fields.mmr);
+
+            // If we haven't seen this owner, or if their new NFT has a higher MMR
+            if (!highestMmrByOwner.has(ownerAddress) || currentMmr > highestMmrByOwner.get(ownerAddress)!.mmrScore) {
+              highestMmrByOwner.set(ownerAddress, {
+                walletAddress: ownerAddress,
+                avatarImage: getIPFSGatewayUrl((obj.data.display.data as any).image_url),
+                mmrScore: currentMmr,
+                nftName: fields.name, // The name of the highest MMR NFT
+                rank: 0, // will be set after sorting
+              });
+            }
+          });
+        
+        // Convert the map back to an array
+        const uniqueEntries = Array.from(highestMmrByOwner.values());
+
+        // Sort the unique entries by MMR score
+        const sortedData: MmrEntry[] = uniqueEntries
           .sort((a, b) => b.mmrScore - a.mmrScore)
           .map((user, index) => ({ ...user, rank: index + 1 }));
-
+        
         setData(sortedData);
       }
     } catch (err) {
@@ -167,7 +184,10 @@ export default function PodiumPage() {
             <div className="w-full h-32 md:h-40 rounded-t-2xl md:rounded-t-3xl podium-silver flex flex-col justify-end items-center p-3 text-center relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-2 bg-white/30"></div>
                 <span className="text-xs md:text-sm text-slate-500 font-bold mb-1 truncate w-full px-2">{(users[0] as any).walletAddress.slice(0,6)}...{(users[0] as any).walletAddress.slice(-4)}</span>
-                <span className="text-sm md:text-lg font-extrabold text-slate-700">{mode === 'mmr' ? (users[0] as MmrEntry).mmrScore.toLocaleString() : (users[0] as SummonEntry).totalNftSummon}</span>
+                <span className="text-sm md:text-lg font-extrabold text-slate-700">
+                  {mode === 'mmr' && (users[0] as MmrEntry)?.mmrScore?.toLocaleString()}
+                  {mode === 'summon' && (users[0] as SummonEntry)?.totalNftSummon?.toLocaleString()}
+                </span>
             </div>
           </>
         )}
@@ -184,7 +204,10 @@ export default function PodiumPage() {
             <div className="w-full h-44 md:h-52 rounded-t-2xl md:rounded-t-3xl podium-gold flex flex-col justify-end items-center p-3 text-center relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-3 bg-white/30"></div>
                 <span className="text-xs md:text-sm text-yellow-800/70 font-bold mb-1 truncate w-full px-2">{(users[1] as any).walletAddress.slice(0,6)}...{(users[1] as any).walletAddress.slice(-4)}</span>
-                <span className="text-lg md:text-2xl font-extrabold text-yellow-900">{mode === 'mmr' ? (users[1] as MmrEntry).mmrScore.toLocaleString() : (users[1] as SummonEntry).totalNftSummon}</span>
+                <span className="text-lg md:text-2xl font-extrabold text-yellow-900">
+                  {mode === 'mmr' && (users[1] as MmrEntry)?.mmrScore?.toLocaleString()}
+                  {mode === 'summon' && (users[1] as SummonEntry)?.totalNftSummon?.toLocaleString()}
+                </span>
             </div>
           </>
         )}
@@ -200,7 +223,10 @@ export default function PodiumPage() {
             <div className="w-full h-24 md:h-32 rounded-t-2xl md:rounded-t-3xl podium-bronze flex flex-col justify-end items-center p-3 text-center relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-2 bg-white/30"></div>
                 <span className="text-xs md:text-sm text-orange-800/60 font-bold mb-1 truncate w-full px-2">{(users[2] as any).walletAddress.slice(0,6)}...{(users[2] as any).walletAddress.slice(-4)}</span>
-                <span className="text-sm md:text-lg font-extrabold text-orange-900">{mode === 'mmr' ? (users[2] as MmrEntry).mmrScore.toLocaleString() : (users[2] as SummonEntry).totalNftSummon}</span>
+                <span className="text-sm md:text-lg font-extrabold text-orange-900">
+                  {mode === 'mmr' && (users[2] as MmrEntry)?.mmrScore?.toLocaleString()}
+                  {mode === 'summon' && (users[2] as SummonEntry)?.totalNftSummon?.toLocaleString()}
+                </span>
             </div>
           </>
         )}
@@ -223,7 +249,9 @@ export default function PodiumPage() {
             </div>
         </div>
         <div className="text-right px-2">
-            <div className="text-sm md:text-lg font-extrabold text-slate-800">{mode === 'mmr' ? (user as MmrEntry).mmrScore.toLocaleString() : (user as SummonEntry).totalNftSummon}</div>
+            <div className="text-sm md:text-lg font-extrabold text-slate-800">
+              {mode === 'mmr' ? (user as MmrEntry).mmrScore.toLocaleString() : (user as SummonEntry).totalNftSummon}
+            </div>
             <div className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wide bg-slate-100 px-2 py-0.5 rounded-full inline-block group-hover:bg-sky-100 group-hover:text-sky-500 transition-colors">
               {mode === 'mmr' ? 'MMR' : 'NFTs'}
             </div>
