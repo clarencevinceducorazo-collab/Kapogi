@@ -133,14 +133,24 @@ export const HowItWorksSection = () => {
       </div>
       <div className="absolute bottom-0 left-0 right-0 w-full z-10">
         <svg
-          viewBox="0 0 1440 60"
+          viewBox="0 0 1440 120"
           xmlns="http://www.w3.org/2000/svg"
           preserveAspectRatio="none"
-          className="w-full h-auto -translate-y-[30px]"
+          className="w-full h-auto -translate-y-[20px]"
         >
           <path
-            d="M0 45 C 480 55, 960 35, 1440 45 V 60 H 0 Z"
-            fill="rgba(145, 145, 145, 0.72)"
+            d="M0 90 C 480 100, 960 80, 1440 90 V 120 H 0 Z"
+            fill="#2D2D2D"
+          />
+
+          <path
+            d="M0 90 C 480 100, 960 80, 1440 90"
+            fill="none"
+            stroke="#FFC107"
+            stroke-width="3"
+            stroke-dasharray="15, 12"
+            stroke-linecap="round"
+            transform="translate(0, 15)"
           />
         </svg>
 
@@ -181,7 +191,7 @@ export const HowItWorksSection = () => {
         </div>
 
         <div
-          className="absolute bottom-0 right-full w-32 md:w-48 z-20 animate-drive-reverse"
+          className="absolute bottom-0  right-full w-32 md:w-48 z-20 animate-drive-reverse"
           style={{ animationDelay: "5s" }}
         >
           {scooter && (
