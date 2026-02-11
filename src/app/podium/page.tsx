@@ -389,7 +389,7 @@ export default function PodiumPage() {
           ) : (
             <div id="content-area" className="w-full">
               {currentPage === 1 && data.length >= 3 && <Podium users={podiumData} />}
-              {listData.map((user, index) => (
+              {pagedData.map((user, index) => (
                 <ListItem key={(user as any).walletAddress + index} user={user} delayIndex={index} />
               ))}
             </div>
