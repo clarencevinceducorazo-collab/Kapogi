@@ -1,10 +1,19 @@
 'use client';
 
 import { useEffect } from 'react';
-import Script from 'next/script';
+import { useRouter } from 'next/navigation';
 
-export default function Loading() {
+export default function SummoningPage() {
+  const router = useRouter();
+
   useEffect(() => {
+    // --- REDIRECT ---
+    const redirectTimeout = setTimeout(() => {
+        router.push('/generate');
+    }, 7500); // 7.5 seconds, allows full animation to play
+
+
+    // --- ANIMATION LOGIC ---
     // Elements
     const el = {
       text: document.getElementById('story-text'),
@@ -25,6 +34,8 @@ export default function Loading() {
     // Check if all elements are found before proceeding
     if (Object.values(el).some(element => !element)) {
       console.error("One or more elements for loading animation not found.");
+      // If elements are missing, just redirect immediately to not get stuck.
+      router.push('/generate');
       return;
     }
 
@@ -145,14 +156,15 @@ export default function Loading() {
 
     }, 6800));
 
+    // Cleanup function
     return () => {
+        clearTimeout(redirectTimeout);
         timeouts.forEach(clearTimeout);
     }
-  }, []);
+  }, [router]);
 
   return (
     <>
-      <Script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js" strategy="lazyOnload"></Script>
       <style jsx global>{`
         body {
             font-family: 'Inter', sans-serif;

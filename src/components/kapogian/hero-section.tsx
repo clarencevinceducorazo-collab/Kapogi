@@ -58,7 +58,7 @@ export const HeroSection = () => {
             Be Pogi! Be Confident Everyday
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
-            <Link href="/generate">
+            <Link href="/summoning">
               <Button
                 size="lg"
                 className="rounded-full bg-[#FFC83D] text-black hover:bg-[#EAC35F] font-bold text-lg px-8 py-7"

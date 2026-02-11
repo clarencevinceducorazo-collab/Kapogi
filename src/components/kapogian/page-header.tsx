@@ -36,7 +36,7 @@ export const PageHeader = () => {
   // PROFILE removed from here to prevent duplication
   const navLinks = [
     { name: "HOME", href: "/" },
-    { name: "SUMMON", href: "/generate" },
+    { name: "SUMMON", href: "/summoning" },
     {
       name: "ABOUT US",
       isDropdown: true,

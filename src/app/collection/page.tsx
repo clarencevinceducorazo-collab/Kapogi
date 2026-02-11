@@ -167,7 +167,7 @@ export default function CollectionPage() {
                 <Ghost size={48} className="mx-auto mb-4 text-gray-400"/>
               <h3 className="font-headline text-3xl">Your Collection is Empty</h3>
               <p className="text-gray-600 mb-6 mt-2">You haven't minted any Kapogian characters yet.</p>
-              <a href="/generate">
+              <a href="/summoning">
                   <Button className="bg-primary hover:bg-primary/90 text-white border-2 border-black shadow-hard-sm rounded-lg font-bold px-6 py-3 text-base">
                       Mint Your First Character
                   </Button>
