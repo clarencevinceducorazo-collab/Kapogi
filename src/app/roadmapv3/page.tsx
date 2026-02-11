@@ -5,7 +5,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Script from 'next/script';
 import { PageHeader } from '@/components/kapogian/page-header';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 // I have to define IconifyIcon for typescript since it's not a standard element
 declare global {
@@ -29,27 +28,13 @@ export default function RoadmapV3Page() {
     const progressBarRef = useRef<HTMLDivElement>(null);
     const [activeBg, setActiveBg] = useState<string | null>(null);
 
-    // Get image data from placeholders
-    const phase1Bg = PlaceHolderImages.find(p => p.id === 'roadmap-phase1-bg');
-    const phase2Bg = PlaceHolderImages.find(p => p.id === 'roadmap-phase2-bg');
-    const phase3Bg = PlaceHolderImages.find(p => p.id === 'roadmap-phase3-bg');
-    const phase4Bg = PlaceHolderImages.find(p => p.id === 'roadmap-phase4-bg');
-    const phase5Bg = PlaceHolderImages.find(p => p.id === 'roadmap-phase5-bg');
-
-    const chibi1 = PlaceHolderImages.find(p => p.id === 'roadmap-chibi1');
-    const chibi2 = PlaceHolderImages.find(p => p.id === 'roadmap-chibi2');
-    const chibi3 = PlaceHolderImages.find(p => p.id === 'roadmap-chibi3');
-    const chibi4 = PlaceHolderImages.find(p => p.id === 'roadmap-chibi4');
-    const chibi5 = PlaceHolderImages.find(p => p.id === 'roadmap-chibi5');
-    const chibi6 = PlaceHolderImages.find(p => p.id === 'roadmap-chibi6');
-
     const backgroundImages = [
-        phase1Bg?.imageUrl,
-        phase2Bg?.imageUrl,
-        phase3Bg?.imageUrl,
-        phase4Bg?.imageUrl,
-        phase5Bg?.imageUrl
-    ].filter(Boolean) as string[];
+        '/images/Roadmaps/static/phase1.png',
+        '/images/Roadmaps/static/phase2.png',
+        '/images/Roadmaps/static/phase3.png',
+        '/images/Roadmaps/static/phase4.png',
+        '/images/Roadmaps/static/phase5.webp'
+    ];
 
     useEffect(() => {
         const container = scrollContainerRef.current;
@@ -352,7 +337,7 @@ export default function RoadmapV3Page() {
                   </section>
         
                   {/* 1. GENESIS (Q1 2026) */}
-                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#ECFDF5" data-phase="PHASE 1" data-bg-image={phase1Bg?.imageUrl}>
+                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#ECFDF5" data-phase="PHASE 1" data-bg-image="/images/Roadmaps/static/phase1.png">
                       <div className="slide-content w-full h-full max-h-[640px]">
                           <div className="pogi-card p-8 md:p-10 h-full flex flex-col relative group">
                               <iconify-icon icon="solar:structure-linear" class="absolute -right-8 -top-8 text-emerald-100 opacity-50 group-hover:rotate-12 transition-transform duration-700" width="200"></iconify-icon>
@@ -397,14 +382,14 @@ export default function RoadmapV3Page() {
                               </div>
                               
                               <div className="absolute -bottom-5 -right-5 w-48 h-48 z-20 pointer-events-none select-none">
-                                  {chibi1 && <Image src={chibi1.imageUrl} alt={chibi1.description} data-ai-hint={chibi1.imageHint} width={192} height={192} className="w-full h-full object-contain chibi-character" />}
+                                  <Image src="/images/day1.gif" alt="Genesis phase character" width={192} height={192} className="w-full h-full object-contain chibi-character" unoptimized />
                               </div>
                           </div>
                       </div>
                   </section>
         
                   {/* 2. IDENTITY (Q1-Q2 2026) */}
-                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#ECFEFF" data-phase="PHASE 2" data-bg-image={phase2Bg?.imageUrl}>
+                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#ECFEFF" data-phase="PHASE 2" data-bg-image="/images/Roadmaps/static/phase2.png">
                       <div className="slide-content w-full h-full max-h-[640px]">
                           <div className="pogi-card p-8 md:p-10 h-full flex flex-col relative group">
                               <iconify-icon icon="solar:user-id-linear" class="absolute -left-8 -top-8 text-cyan-100 opacity-50" width="200"></iconify-icon>
@@ -449,14 +434,14 @@ export default function RoadmapV3Page() {
                               </div>
         
                               <div className="absolute -bottom-4 -right-2 w-48 h-48 z-20 pointer-events-none select-none">
-                                {chibi2 && <Image src={chibi2.imageUrl} alt={chibi2.description} data-ai-hint={chibi2.imageHint} width={192} height={192} className="w-full h-full object-contain chibi-character" style={{animationDelay: '0.5s'}} />}
+                                <Image src="/images/day2.gif" alt="Identity phase character" width={192} height={192} className="w-full h-full object-contain chibi-character" style={{animationDelay: '0.5s'}} unoptimized />
                               </div>
                           </div>
                       </div>
                   </section>
         
                   {/* 3. BIRINGAN (Q2-Q3 2026) */}
-                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#FAF5FF" data-phase="PHASE 3" data-bg-image={phase3Bg?.imageUrl}>
+                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#FAF5FF" data-phase="PHASE 3" data-bg-image="/images/Roadmaps/static/phase3.png">
                       <div className="slide-content w-full h-full max-h-[640px]">
                           <div className="pogi-card p-8 md:p-10 h-full flex flex-col relative group">
                               <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-purple-50 opacity-50"></div>
@@ -502,14 +487,14 @@ export default function RoadmapV3Page() {
                               </div>
         
                               <div className="absolute -bottom-2 -right-2 w-44 h-44 z-20 pointer-events-none select-none">
-                                  {chibi3 && <Image src={chibi3.imageUrl} alt={chibi3.description} data-ai-hint={chibi3.imageHint} width={176} height={176} className="w-full h-full object-contain chibi-character" style={{animationDelay: '1s'}} />}
+                                <Image src="/images/day3.gif" alt="Conquest phase character" width={176} height={176} className="w-full h-full object-contain chibi-character" style={{animationDelay: '1s'}} unoptimized />
                               </div>
                           </div>
                       </div>
                   </section>
         
                   {/* 4. FARM RWA (Q3-Q4 2026) */}
-                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#FFF7ED" data-phase="PHASE 4" data-bg-image={phase4Bg?.imageUrl}>
+                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#FFF7ED" data-phase="PHASE 4" data-bg-image="/images/Roadmaps/static/phase4.png">
                       <div className="slide-content w-full h-full max-h-[640px]">
                           <div className="pogi-card p-8 md:p-10 h-full flex flex-col relative group">
                               <iconify-icon icon="solar:sun-2-linear" class="absolute -top-8 -left-8 text-orange-100 opacity-60" width="200"></iconify-icon>
@@ -554,14 +539,14 @@ export default function RoadmapV3Page() {
                               </div>
         
                               <div className="absolute -bottom-4 -right-4 w-52 h-52 z-20 pointer-events-none select-none">
-                                  {chibi4 && <Image src={chibi4.imageUrl} alt={chibi4.description} data-ai-hint={chibi4.imageHint} width={208} height={208} className="w-full h-full object-contain chibi-character" style={{animationDelay: '0.2s'}} />}
+                                <Image src="/images/day4.gif" alt="The Farm phase character" width={208} height={208} className="w-full h-full object-contain chibi-character" style={{animationDelay: '0.2s'}} unoptimized />
                               </div>
                           </div>
                       </div>
                   </section>
         
                   {/* 5. EXPANSION (Q3 2027) */}
-                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#FEFCE8" data-phase="PHASE 5" data-bg-image={phase5Bg?.imageUrl}>
+                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#FEFCE8" data-phase="PHASE 5" data-bg-image="/images/Roadmaps/static/phase5.webp">
                       <div className="slide-content w-full h-full max-h-[640px]">
                           <div className="pogi-card p-8 md:p-10 h-full flex flex-col relative group">
                               <iconify-icon icon="solar:bolt-linear" class="absolute -top-8 -right-8 text-yellow-100 opacity-80" width="200"></iconify-icon>
@@ -606,14 +591,14 @@ export default function RoadmapV3Page() {
                               </div>
         
                               <div className="absolute -bottom-5 -right-5 w-48 h-48 z-20 pointer-events-none select-none">
-                                  {chibi5 && <Image src={chibi5.imageUrl} alt={chibi5.description} data-ai-hint={chibi5.imageHint} width={192} height={192} className="w-full h-full object-contain chibi-character" style={{animationDelay: '1.5s'}} />}
+                                <Image src="/images/day5.gif" alt="Expansion phase character" width={192} height={192} className="w-full h-full object-contain chibi-character" style={{animationDelay: '1.5s'}} unoptimized />
                               </div>
                           </div>
                       </div>
                   </section>
         
                   {/* 6. FINALE (End 2027) */}
-                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#FDF2F8" data-phase="PHASE 6" data-bg-image={phase1Bg?.imageUrl}>
+                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#FDF2F8" data-phase="PHASE 6" data-bg-image="/images/Roadmaps/static/phase1.png">
                       <div className="slide-content w-full h-full max-h-[640px]">
                           <div className="pogi-card p-8 md:p-10 h-full flex flex-col relative border-pink-200 bg-gradient-to-b from-white to-pink-50">
                               <div className="absolute inset-0 flex items-center justify-center opacity-5">
@@ -648,7 +633,7 @@ export default function RoadmapV3Page() {
                               </div>
         
                               <div className="absolute -bottom-2 -right-4 w-48 h-48 z-20 pointer-events-none select-none">
-                                  {chibi6 && <Image src={chibi6.imageUrl} alt={chibi6.description} data-ai-hint={chibi6.imageHint} width={192} height={192} className="w-full h-full object-contain chibi-character" style={{animationDelay: '0.8s'}} />}
+                                <Image src="/images/celebrate.gif" alt="Finale phase character" width={192} height={192} className="w-full h-full object-contain chibi-character" style={{animationDelay: '0.8s'}} unoptimized />
                               </div>
                           </div>
                       </div>
