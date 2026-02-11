@@ -4,7 +4,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Script from 'next/script';
-import { PageHeader } from '@/components/kapogian/page-header';
+
 
 // I have to define IconifyIcon for typescript since it's not a standard element
 declare global {
@@ -189,7 +189,7 @@ export default function RoadmapV3Page() {
 
     return (
         <>
-            <PageHeader />
+            
             <style>{`
             body {
                 font-family: 'Outfit', sans-serif;
