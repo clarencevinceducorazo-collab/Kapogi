@@ -267,7 +267,6 @@ export default function RoadmapV3Page() {
       
       <div id="nav-ui" ref={navUiRef} className="fixed top-0 left-0 w-full z-50 px-8 py-6 flex justify-between items-start transition-all duration-500 opacity-0 -translate-y-4">
         <div className="flex items-center gap-3">
-            <div id="logo-k" className="bg-black text-white w-10 h-10 flex items-center justify-center rounded-lg font-bold text-lg tracking-tighter-custom">K</div>
             <div className="hidden md:flex flex-col">
                 <span className="font-semibold tracking-tight text-sm uppercase leading-none mb-1">Kapogian Roadmap</span>
                 <span className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">Exec Ver 1.2</span>
@@ -603,8 +602,8 @@ export default function RoadmapV3Page() {
                 <iconify-icon icon="solar:emoji-funny-circle-linear" width="80" class="text-yellow-400 mb-6 animate-bounce"></iconify-icon>
                 <h2 className="text-6xl md:text-8xl font-semibold tracking-tighter-custom mb-6">Stay Pogi.</h2>
                 <p className="text-slate-400 text-lg md:text-2xl mb-12 font-light">The Journey is Just Beginning.</p>
-                <a href="#" className="inline-flex items-center gap-3 px-8 py-4 bg-white text-black rounded-full text-lg font-semibold hover:scale-105 transition-transform">
-                    Join the Community <iconify-icon icon="solar:arrow-right-up-linear"></iconify-icon>
+                <a href="/generate" className="inline-flex items-center gap-3 px-8 py-4 bg-white text-black rounded-full text-lg font-semibold hover:scale-105 transition-transform">
+                    Summon Spirit Kapogian <iconify-icon icon="solar:arrow-right-up-linear"></iconify-icon>
                 </a>
                 <div className="absolute bottom-[-30vh] left-1/2 -translate-x-1/2 text-slate-600 text-xs">
                     ← Scroll back to start
