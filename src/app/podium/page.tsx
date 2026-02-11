@@ -31,7 +31,12 @@ const ITEMS_PER_PAGE = 10;
 const IDLE_TIMEOUT = 3 * 60 * 1000; // 3 minutes
 
 // Type definitions for our data
-interface MmrEntry {
+interface UserStatus {
+  status: 'online' | 'away' | 'offline';
+  last_seen: string;
+}
+
+interface MmrEntry extends UserStatus {
   rank: number;
   walletAddress: string;
   avatarImage: string;
@@ -39,7 +44,7 @@ interface MmrEntry {
   nftName: string;
 }
 
-interface SummonEntry {
+interface SummonEntry extends UserStatus {
   rank: number;
   walletAddress: string;
   avatarImage: string;
@@ -69,9 +74,21 @@ export default function PodiumPage() {
     setError('');
     setCurrentPage(1);
     try {
-      const allMintEvents = await suiClient.queryEvents({
-        query: { MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::CharacterMinted` },
+      // Fetch both SUI data and Supabase statuses in parallel
+      const [allMintEvents, { data: statusesData, error: dbError }] = await Promise.all([
+        suiClient.queryEvents({
+          query: { MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::CharacterMinted` },
+        }),
+        supabase.from('user_status').select('wallet_address, status, last_seen')
+      ]);
+      
+      if (dbError) throw dbError;
+
+      const statusMap = new Map<string, UserStatus>();
+      statusesData.forEach(s => {
+        statusMap.set(s.wallet_address, { status: s.status as UserStatus['status'], last_seen: s.last_seen });
       });
+
       const nftIds = allMintEvents.data.map(event => (event.parsedJson as any)?.nft_id).filter(Boolean);
 
       if (nftIds.length === 0) {
@@ -93,7 +110,6 @@ export default function PodiumPage() {
 
       const validObjects = characterObjects.filter(obj => obj.data?.content?.dataType === 'moveObject' && obj.data.owner);
 
-      // Process all objects into a comprehensive map
       const ownerStats: Map<string, {
         walletAddress: string;
         totalNftSummon: number;
@@ -126,27 +142,25 @@ export default function PodiumPage() {
         }
       });
       
-      const processedData = Array.from(ownerStats.values());
+      const processedData = Array.from(ownerStats.values()).map(user => {
+        const dbStatus = statusMap.get(user.walletAddress) || { status: 'offline' as const, last_seen: new Date(0).toISOString() };
+        return { ...user, ...dbStatus };
+      });
 
       if (mode === 'summon') {
         const sortedData: SummonEntry[] = processedData
           .sort((a, b) => b.totalNftSummon - a.totalNftSummon)
           .map((user, index) => ({
+            ...user,
             rank: index + 1,
-            walletAddress: user.walletAddress,
-            avatarImage: user.avatarImage, // Use the avatar from the highest MMR NFT
-            totalNftSummon: user.totalNftSummon,
           }));
         setData(sortedData);
       } else { // MMR mode
         const sortedData: MmrEntry[] = processedData
           .sort((a, b) => b.mmrScore - a.mmrScore)
           .map((user, index) => ({
+            ...user,
             rank: index + 1,
-            walletAddress: user.walletAddress,
-            avatarImage: user.avatarImage,
-            mmrScore: user.mmrScore,
-            nftName: user.nftName,
           }));
         setData(sortedData);
       }
@@ -162,47 +176,49 @@ export default function PodiumPage() {
     fetchData();
   }, [mode]);
   
-  // Supabase Presence Logic
   useEffect(() => {
-    if (!account?.address) {
+    const walletAddress = account?.address;
+    if (!walletAddress) {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
+        setOnlineUsers({});
+        joinedRef.current = false;
+        userStatusRef.current = 'online';
       }
-      setOnlineUsers({});
-      joinedRef.current = false;
-      userStatusRef.current = 'online';
       return;
     }
 
-    const walletAddress = account.address;
     const presenceKey = `${walletAddress}-${crypto.randomUUID()}`;
-
-    const channel = supabase.channel('online-users', {
+    channelRef.current = supabase.channel('online-users', {
       config: {
         presence: {
           key: presenceKey,
         },
       },
     });
-    channelRef.current = channel;
-
+    
     let activityThrottle = false;
     const updateActivity = () => {
-        lastActiveRef.current = Date.now();
-        if (!joinedRef.current) return;
-        if (activityThrottle) return;
+      lastActiveRef.current = Date.now();
+      if (!joinedRef.current || activityThrottle) return;
 
-        if (userStatusRef.current === 'away') {
-            userStatusRef.current = 'online';
-            activityThrottle = true;
-            setTimeout(() => (activityThrottle = false), 10_000); // 10s throttle
-            channelRef.current?.track({ 
-              wallet: walletAddress,
-              status: 'online', 
-              last_active: lastActiveRef.current 
-            });
-        }
+      if (userStatusRef.current === 'away') {
+        userStatusRef.current = 'online';
+        activityThrottle = true;
+        setTimeout(() => (activityThrottle = false), 10_000);
+
+        channelRef.current?.track({
+          wallet: walletAddress,
+          status: 'online',
+          last_active: lastActiveRef.current,
+        });
+        supabase.from('user_status').upsert({
+          wallet_address: walletAddress,
+          status: 'online',
+          last_seen: new Date().toISOString(),
+        });
+      }
     };
     
     window.addEventListener('mousemove', updateActivity);
@@ -210,36 +226,53 @@ export default function PodiumPage() {
     window.addEventListener('scroll', updateActivity);
 
     idleCheckIntervalRef.current = setInterval(() => {
-        if (Date.now() - lastActiveRef.current > IDLE_TIMEOUT) {
-            if (joinedRef.current && userStatusRef.current === 'online') {
-                userStatusRef.current = 'away';
-                channelRef.current?.track({
-                    wallet: walletAddress,
-                    status: 'away', 
-                    last_active: lastActiveRef.current 
-                });
-            }
+      if (Date.now() - lastActiveRef.current > IDLE_TIMEOUT) {
+        if (joinedRef.current && userStatusRef.current === 'online') {
+          userStatusRef.current = 'away';
+          channelRef.current?.track({
+            wallet: walletAddress,
+            status: 'away',
+            last_active: lastActiveRef.current,
+          });
+          supabase.from('user_status').upsert({
+            wallet_address: walletAddress,
+            status: 'away',
+            last_seen: new Date().toISOString(),
+          });
         }
-    }, 30_000); // Check every 30 seconds
+      }
+    }, 30_000);
 
-    channel
+    channelRef.current
       .on('presence', { event: 'sync' }, () => {
-        const newState = channel.presenceState();
-        setOnlineUsers(newState);
+        setOnlineUsers(channelRef.current!.presenceState());
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           joinedRef.current = true;
           lastActiveRef.current = Date.now();
-          await channel.track({ 
+          await channelRef.current!.track({
             wallet: walletAddress,
-            status: 'online', 
-            last_active: Date.now() 
+            status: 'online',
+            last_active: lastActiveRef.current,
+          });
+          await supabase.from('user_status').upsert({
+            wallet_address: walletAddress,
+            status: 'online',
+            last_seen: new Date().toISOString(),
           });
         }
       });
 
     return () => {
+      if (walletAddress) {
+        // This fires on unmount (tab close, disconnect, etc.)
+        supabase.from('user_status').upsert({
+          wallet_address: walletAddress,
+          status: 'offline',
+          last_seen: new Date().toISOString(),
+        });
+      }
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
@@ -340,23 +373,24 @@ export default function PodiumPage() {
   );
 
   const ListItem = ({ user, delayIndex, presenceState }: { user: MmrEntry | SummonEntry; delayIndex: number; presenceState: PresenceState }) => {
-    const presence = Object.values(presenceState)
+    const livePresence = Object.values(presenceState)
       .flat()
       .find((p: any) => p.wallet === user.walletAddress);
+
+    let finalStatus: 'online' | 'away' | 'offline' = user.status;
+    if (livePresence) {
+      finalStatus = (livePresence as any).status;
+    }
       
-    let status: 'online' | 'away' | 'offline' = 'offline';
     let statusText = 'Offline';
     let statusColorClass = 'bg-slate-400';
 
-    if (presence) {
-        status = (presence as any).status;
-        if (status === 'away') {
-            statusText = 'Away';
-            statusColorClass = 'bg-yellow-400';
-        } else {
-            statusText = 'Online';
-            statusColorClass = 'bg-green-400';
-        }
+    if (finalStatus === 'online') {
+        statusText = 'Online';
+        statusColorClass = 'bg-green-400';
+    } else if (finalStatus === 'away') {
+        statusText = 'Away';
+        statusColorClass = 'bg-yellow-400';
     }
       
     return (
