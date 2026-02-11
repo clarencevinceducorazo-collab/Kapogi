@@ -1,9 +1,7 @@
-
 'use client';
 
 import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { PageFooter } from '@/components/kapogian/page-footer';
 
 // I have to define IconifyIcon for typescript since it's not a standard element
 declare global {
@@ -634,10 +632,7 @@ export default function RoadmapV3Page() {
                   </section>
         
               </div>
-        
-              
-            <PageFooter />
-        </>
-      );
+          </main>
+       </>
+    );
 }
-```
