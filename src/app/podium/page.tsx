@@ -10,9 +10,6 @@ import { PageFooter } from '@/components/kapogian/page-footer';
 import { suiClient } from '@/lib/sui';
 import { CONTRACT_ADDRESSES } from '@/lib/constants';
 import { getIPFSGatewayUrl } from '@/lib/pinata';
-import { useCurrentAccount } from '@mysten/dapp-kit';
-import { supabase } from '@/lib/supabase';
-import type { RealtimeChannel, PresenceState } from '@supabase/supabase-js';
 
 // I have to define IconifyIcon for typescript since it's not a standard element
 declare global {
@@ -54,16 +51,6 @@ export default function PodiumPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-
-  // Presence State
-  const account = useCurrentAccount();
-  const [onlineUsers, setOnlineUsers] = useState<PresenceState>({});
-  const channelRef = useRef<RealtimeChannel | null>(null);
-  const lastActiveRef = useRef(Date.now());
-  const idleCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const userStatusRef = useRef<'online' | 'away'>('online');
-  const joinedRef = useRef(false);
-
 
   const fetchData = async () => {
     setLoading(true);
@@ -547,7 +534,7 @@ export default function PodiumPage() {
             <div id="content-area" className="w-full">
               {currentPage === 1 && data.length >= 3 && <Podium users={podiumData} />}
               {pagedData.map((user, index) => (
-                <ListItem key={(user as any).walletAddress + index} user={user} delayIndex={index} presenceState={onlineUsers} />
+                <ListItem key={(user as any).walletAddress + index} user={user} delayIndex={index} />
               ))}
             </div>
           )}
