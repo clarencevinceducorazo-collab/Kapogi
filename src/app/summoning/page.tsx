@@ -291,20 +291,20 @@ export default function SummoningPage() {
           </div>
 
           {/* Main Stage (Z-20) */}
-          <main className="relative z-20 flex h-full w-full flex-col items-center justify-center p-6">
+          <main className="relative z-20 h-full w-full p-6">
 
               {/* Central Glow Source */}
               <div id="center-glow" className="pointer-events-none absolute top-1/2 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/0 blur-[100px] transition-all duration-[2000ms]"></div>
 
               {/* Text Container (Overlay) */}
-              <div className="absolute top-[20%] z-30 flex w-full max-w-2xl flex-col items-center justify-center text-center">
+              <div className="absolute top-[20%] z-30 flex w-full max-w-2xl flex-col items-center justify-center text-center left-1/2 -translate-x-1/2">
                   <h1 id="story-text" className="font-fantasy text-3xl font-semibold tracking-wide text-transparent md:text-5xl">
                       {/* Text injected by JS */}
                   </h1>
               </div>
 
               {/* The Summoning Container */}
-              <div className="relative flex flex-col items-center justify-center">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center">
                   
                   {/* Ritual Rings */}
                   <div id="ritual-rings" className="relative flex h-72 w-72 items-center justify-center transition-all duration-[1000ms] opacity-20 scale-95 md:h-96 md:w-96">
@@ -331,7 +331,7 @@ export default function SummoningPage() {
                   </div>
 
                   {/* Post-Reveal UI (Hidden Initially) */}
-                  <div id="final-ui" className="absolute -bottom-24 flex flex-col items-center gap-3 opacity-0 transition-all duration-1000 translate-y-4">
+                  <div id="final-ui" className="absolute top-full mt-8 flex flex-col items-center gap-3 opacity-0 transition-all duration-1000 translate-y-4">
                        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/50 px-4 py-1.5 shadow-sm backdrop-blur-sm">
                           <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
                           <span className="text-[10px] font-semibold tracking-widest text-slate-500 uppercase font-sans">Summoning Complete</span>
