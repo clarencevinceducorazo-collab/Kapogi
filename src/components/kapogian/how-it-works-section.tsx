@@ -147,9 +147,9 @@ export const HowItWorksSection = () => {
             d="M0 90 C 480 100, 960 80, 1440 90"
             fill="none"
             stroke="#FFC107"
-            stroke-width="3"
-            stroke-dasharray="15, 12"
-            stroke-linecap="round"
+            strokeWidth="3"
+            strokeDasharray="15, 12"
+            strokeLinecap="round"
             transform="translate(0, 15)"
           />
         </svg>
