@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function SummoningPage() {
   const router = useRouter();
@@ -19,20 +20,18 @@ export default function SummoningPage() {
       text: document.getElementById('story-text'),
       darkLayer: document.getElementById('dark-layer'),
       flash: document.getElementById('flash-overlay'),
-      box: document.getElementById('summoning-box'),
+      aura: document.getElementById('summoning-aura'),
       rings: document.getElementById('ritual-rings'),
       ringOuter: document.getElementById('ring-outer'),
       ringInner: document.getElementById('ring-inner'),
-      icon: document.getElementById('center-icon'),
       glow: document.getElementById('center-glow'),
       emeraldBg: document.getElementById('emerald-bg'),
       particleAnchor: document.getElementById('particle-anchor'),
       finalUi: document.getElementById('final-ui'),
-      scanLine: document.getElementById('scan-line'),
     };
 
     // Check if all elements are found before proceeding
-    if (Object.values(el).some(element => !element)) {
+    if (!el.text || !el.darkLayer || !el.flash || !el.aura || !el.rings || !el.ringOuter || !el.ringInner || !el.glow || !el.emeraldBg || !el.particleAnchor || !el.finalUi) {
       console.error("One or more elements for loading animation not found.");
       // If elements are missing, just redirect immediately to not get stuck.
       router.push('/generate');
@@ -102,10 +101,10 @@ export default function SummoningPage() {
 
     // 2. First Light Pop - Welcome (1.5s)
     timeouts.push(setTimeout(() => {
-        if(!el.rings || !el.box || !el.glow) return;
+        if(!el.rings || !el.aura || !el.glow) return;
         el.rings.classList.remove('opacity-20', 'scale-95');
         el.rings.classList.add('opacity-100', 'scale-100');
-        el.box.classList.replace('border-white/5', 'border-amber-500/30');
+        el.aura.classList.remove('opacity-0');
         el.glow.classList.replace('bg-emerald-500/0', 'bg-amber-500/10');
         spawnParticles('burst');
         playText(`Welcome, Kapogi, to the<br/><span class="text-amber-300 text-glow-gold">Kapogian Summoning!</span>`, 1500);
@@ -121,38 +120,31 @@ export default function SummoningPage() {
 
     // 4. Final Text Pop - Start (5s)
     timeouts.push(setTimeout(() => {
-        if(!el.emeraldBg || !el.box || !el.icon) return;
+        if(!el.emeraldBg || !el.aura) return;
         el.emeraldBg.classList.remove('opacity-0');
         el.emeraldBg.classList.add('opacity-60');
-        el.box.classList.add('animate-pulse');
-        el.icon.classList.add('text-white', 'drop-shadow-lg');
-        el.icon.classList.remove('opacity-50', 'text-slate-600');
+        el.aura.classList.add('animate-pulse');
         playText(`<span class="uppercase tracking-widest text-4xl md:text-6xl text-white text-magical">It starts now!</span>`, 1200);
     }, 5500));
 
     // 5. Ultimate White Reveal (6.5s)
     timeouts.push(setTimeout(() => {
-        if(!el.flash || !el.darkLayer || !el.box || !el.ringOuter || !el.ringInner || !el.icon || !el.finalUi || !el.scanLine) return;
+        if(!el.flash || !el.darkLayer || !el.aura || !el.ringOuter || !el.ringInner || !el.finalUi) return;
         el.flash.classList.add('white-flash');
         
         setTimeout(() => {
             if (!el.darkLayer) return;
             el.darkLayer.style.opacity = '0';
         }, 300);
-
-        el.box.classList.remove('bg-slate-900/80', 'border-amber-500/30', 'animate-pulse');
-        el.box.classList.add('bg-white/80', 'border-slate-200', 'shadow-emerald-500/20', 'ritual-active');
         
+        el.aura.classList.remove('animate-pulse');
+        el.aura.classList.add('ritual-active-aura');
+
         el.ringOuter.classList.replace('border-slate-600/30', 'border-slate-200');
         el.ringInner.classList.replace('border-slate-700/40', 'border-slate-300');
         
-        el.icon.setAttribute('icon', 'solar:ghost-smile-bold-duotone');
-        el.icon.classList.replace('text-white', 'text-emerald-600');
-        
         el.finalUi.classList.remove('opacity-0', 'translate-y-4');
         el.finalUi.classList.add('opacity-100', 'translate-y-0');
-
-        el.scanLine.classList.add('animate-[ping_3s_infinite]');
 
     }, 6800));
 
@@ -224,11 +216,11 @@ export default function SummoningPage() {
             100% { opacity: 0; }
         }
 
-        /* Container Final Pulse */
-        @keyframes container-active-pulse {
-            0% { border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.2); }
-            50% { border-color: rgba(16, 185, 129, 0.8); box-shadow: 0 0 30px 10px rgba(16, 185, 129, 0.1); }
-            100% { border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        /* Aura Final Pulse */
+        @keyframes aura-active-pulse {
+            0% { filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.2)); }
+            50% { filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.5)); }
+            100% { filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.2)); }
         }
 
         .animate-drift { animation: drift-shadow 12s infinite ease-out; }
@@ -239,7 +231,7 @@ export default function SummoningPage() {
         .text-enter { animation: text-pop-enter 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .text-exit { animation: text-flash-exit 0.8s ease-in forwards; }
         .white-flash { animation: flash-white-screen 1s ease-out forwards; }
-        .ritual-active { animation: container-active-pulse 2s infinite; }
+        .ritual-active-aura { animation: aura-active-pulse 2s infinite; }
         
         .particle {
             position: absolute;
@@ -291,53 +283,48 @@ export default function SummoningPage() {
           </div>
 
           {/* Main Stage (Z-20) */}
-          <main className="relative z-20 h-full w-full p-6">
+          <main className="relative z-20 h-full w-full p-6 grid place-items-center">
 
               {/* Central Glow Source */}
-              <div id="center-glow" className="pointer-events-none absolute top-1/2 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/0 blur-[100px] transition-all duration-[2000ms]"></div>
+              <div id="center-glow" className="pointer-events-none absolute h-[600px] w-[600px] rounded-full bg-emerald-500/0 blur-[100px] transition-all duration-[2000ms]"></div>
 
               {/* Text Container (Overlay) */}
-              <div className="absolute top-[20%] z-30 flex w-full max-w-2xl flex-col items-center justify-center text-center left-1/2 -translate-x-1/2">
+              <div className="absolute top-[20%] z-30 flex w-full max-w-2xl flex-col items-center justify-center text-center">
                   <h1 id="story-text" className="font-fantasy text-3xl font-semibold tracking-wide text-transparent md:text-5xl">
                       {/* Text injected by JS */}
                   </h1>
               </div>
 
               {/* The Summoning Container */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center">
+              
+              {/* Ritual Rings */}
+              <div id="ritual-rings" className="relative flex h-72 w-72 items-center justify-center transition-all duration-[1000ms] opacity-20 scale-95 md:h-96 md:w-96">
+                  {/* Outer Ring */}
+                  <div id="ring-outer" className="absolute inset-0 animate-rotate rounded-full border border-dashed border-slate-600/30 transition-colors duration-1000"></div>
+                  {/* Inner Ring */}
+                  <div id="ring-inner" className="absolute inset-8 animate-rotate-reverse rounded-full border border-dotted border-slate-700/40 transition-colors duration-1000" ></div>
                   
-                  {/* Ritual Rings */}
-                  <div id="ritual-rings" className="relative flex h-72 w-72 items-center justify-center transition-all duration-[1000ms] opacity-20 scale-95 md:h-96 md:w-96">
-                      {/* Outer Ring */}
-                      <div id="ring-outer" className="absolute inset-0 animate-rotate rounded-full border border-dashed border-slate-600/30 transition-colors duration-1000"></div>
-                      {/* Inner Ring */}
-                      <div id="ring-inner" className="absolute inset-8 animate-rotate-reverse rounded-full border border-dotted border-slate-700/40 transition-colors duration-1000" ></div>
-                      
-                      {/* Particle Anchor */}
-                      <div id="particle-anchor" className="absolute inset-0 pointer-events-none overflow-visible"></div>
-                  </div>
+                  {/* Particle Anchor */}
+                  <div id="particle-anchor" className="absolute inset-0 pointer-events-none overflow-visible"></div>
+              </div>
 
-                  {/* The Box (Chibi Container) */}
-                  <div id="summoning-box" className="absolute top-1/2 left-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-white/5 bg-slate-900/80 backdrop-blur-xl shadow-2xl transition-all duration-[1200ms] md:h-40 md:w-40 flex items-center justify-center overflow-hidden">
-                      
-                      {/* Inner Highlight */}
-                      <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent opacity-50"></div>
-                      
-                      {/* Icon / Content */}
-                      <iconify-icon icon="solar:ghost-smile-linear" className="text-4xl text-slate-600 transition-all duration-700 opacity-50" id="center-icon"></iconify-icon>
-                      
-                      {/* Scanning/Loading Effect (Initially Hidden) */}
-                      <div id="scan-line" className="absolute top-0 h-full w-full bg-gradient-to-b from-transparent via-emerald-500/20 to-transparent -translate-y-full transition-transform duration-1000"></div>
-                  </div>
+              {/* The Aura GIF */}
+              <Image
+                  id="summoning-aura"
+                  src="/images/effects/aura.gif"
+                  alt="Summoning Aura"
+                  width={256}
+                  height={256}
+                  unoptimized
+                  className="absolute w-40 h-40 md:w-56 md:h-56 opacity-0 transition-opacity duration-[1200ms]"
+              />
 
-                  {/* Post-Reveal UI (Hidden Initially) */}
-                  <div id="final-ui" className="absolute top-full mt-8 flex flex-col items-center gap-3 opacity-0 transition-all duration-1000 translate-y-4">
-                       <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/50 px-4 py-1.5 shadow-sm backdrop-blur-sm">
-                          <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                          <span className="text-[10px] font-semibold tracking-widest text-slate-500 uppercase font-sans">Summoning Complete</span>
-                      </div>
+              {/* Post-Reveal UI (Hidden Initially) */}
+              <div id="final-ui" className="absolute top-1/2 mt-40 flex flex-col items-center gap-3 opacity-0 transition-all duration-1000 translate-y-4">
+                    <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/50 px-4 py-1.5 shadow-sm backdrop-blur-sm">
+                      <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                      <span className="text-[10px] font-semibold tracking-widest text-slate-500 uppercase font-sans">Summoning Complete</span>
                   </div>
-
               </div>
 
           </main>
