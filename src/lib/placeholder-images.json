@@ -107,6 +107,72 @@
       "description": "Logo avatar for footer",
       "imageUrl": "https://images.unsplash.com/photo-1615915468538-0fbd857888ca?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bG9nb3xlbnwwfHx8fDE3NzAwNDExNDd8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "logo"
+    },
+    {
+      "id": "roadmap-phase1-bg",
+      "description": "Background for roadmap phase 1",
+      "imageUrl": "https://images.unsplash.com/photo-1578059456805-cd4809a05d70?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxhYnN0cmFjdCUyMGdyZWVufGVufDB8fHx8MTc3MDY5NzQ4M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract green"
+    },
+    {
+      "id": "roadmap-phase2-bg",
+      "description": "Background for roadmap phase 2",
+      "imageUrl": "https://images.unsplash.com/photo-1702133504884-cf0057f66aee?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YWJzdHJhY3QlMjBjeWFufGVufDB8fHx8MTc3MDc4MzA3MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract cyan"
+    },
+    {
+      "id": "roadmap-phase3-bg",
+      "description": "Background for roadmap phase 3",
+      "imageUrl": "https://images.unsplash.com/photo-1637825891028-564f672aa42c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMHB1cnBsZXxlbnwwfHx8fDE3NzA3Mzk5Nzh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract purple"
+    },
+    {
+      "id": "roadmap-phase4-bg",
+      "description": "Background for roadmap phase 4",
+      "imageUrl": "https://images.unsplash.com/photo-1633596683562-4a47eb4983c5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMG9yYW5nZXxlbnwwfHx8fDE3NzA3ODMwNzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract orange"
+    },
+    {
+      "id": "roadmap-phase5-bg",
+      "description": "Background for roadmap phase 5",
+      "imageUrl": "https://images.unsplash.com/photo-1739204334686-277b2df097ee?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxhYnN0cmFjdCUyMHllbGxvd3xlbnwwfHx8fDE3NzA3ODMwNzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract yellow"
+    },
+    {
+      "id": "roadmap-chibi1",
+      "description": "Chibi character for roadmap phase 1",
+      "imageUrl": "https://images.unsplash.com/photo-1769431948806-3563f40011dc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjdXRlJTIwbW9uc3RlcnxlbnwwfHx8fDE3NzA2OTI4Njl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cute monster"
+    },
+    {
+      "id": "roadmap-chibi2",
+      "description": "Chibi character for roadmap phase 2",
+      "imageUrl": "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxjdXRlJTIwcm9ib3R8ZW58MHx8fHwxNzcwNzgzMDcxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cute robot"
+    },
+    {
+      "id": "roadmap-chibi3",
+      "description": "Chibi character for roadmap phase 3",
+      "imageUrl": "https://images.unsplash.com/photo-1652489997226-7b81358ea57a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjdXRlJTIwbW9uc3RlciUyMGhlYWRwaG9uZXxlbnwwfHx8fDE3NzA3ODMwNzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cute monster headphone"
+    },
+    {
+      "id": "roadmap-chibi4",
+      "description": "Chibi character for roadmap phase 4",
+      "imageUrl": "https://images.unsplash.com/photo-1643646621386-c59aa6b9fed6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjdXRlJTIwY2hpY2tlbnxlbnwwfHx8fDE3NzA3ODMwNzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cute chicken"
+    },
+    {
+      "id": "roadmap-chibi5",
+      "description": "Chibi character for roadmap phase 5",
+      "imageUrl": "https://images.unsplash.com/photo-1589254065909-b7086229d08c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjdXRlJTIwcm9ib3QlMjBoZWxsb3xlbnwwfHx8fDE3NzA3ODMwNzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cute robot hello"
+    },
+    {
+      "id": "roadmap-chibi6",
+      "description": "Chibi character for roadmap phase 6",
+      "imageUrl": "https://images.unsplash.com/photo-1704657198203-1d5c247dcc6b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxraW5nJTIwYmlyZHxlbnwwfHx8fDE3NzA3ODMwNzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "king bird"
     }
   ]
 }
