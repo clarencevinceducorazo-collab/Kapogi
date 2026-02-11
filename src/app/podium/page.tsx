@@ -257,7 +257,6 @@ export default function PodiumPage() {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const pagedData = data.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   const podiumData = currentPage === 1 ? [data[1], data[0], data[2]] : [];
-  const listData = currentPage === 1 ? pagedData.slice(3) : pagedData;
 
   const Podium = ({ users }: { users: (MmrEntry | SummonEntry | undefined)[] }) => (
     <div className="flex flex-row justify-center items-end gap-2 md:gap-6 mb-12 w-full max-w-2xl mx-auto pt-4">
