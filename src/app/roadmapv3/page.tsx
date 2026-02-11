@@ -1,7 +1,10 @@
+
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import Script from 'next/script';
+import { PageHeader } from '@/components/kapogian/page-header';
 
 // I have to define IconifyIcon for typescript since it's not a standard element
 declare global {
@@ -23,6 +26,15 @@ export default function RoadmapV3Page() {
     const navUiRef = useRef<HTMLDivElement>(null);
     const phaseTextRef = useRef<HTMLSpanElement>(null);
     const progressBarRef = useRef<HTMLDivElement>(null);
+    const [activeBg, setActiveBg] = useState<string | null>(null);
+
+    const backgroundImages = [
+        '/images/static/phase1.png',
+        '/images/static/phase2.png',
+        '/images/static/phase3.png',
+        '/images/static/phase4.png',
+        '/images/static/phase5.webp'
+    ];
 
     useEffect(() => {
         const container = scrollContainerRef.current;
@@ -130,8 +142,11 @@ export default function RoadmapV3Page() {
         function updateTheme(slide: HTMLElement) {
             if (!slide) return;
             const color = slide.getAttribute('data-theme');
+            const newBgImage = slide.getAttribute('data-bg-image');
             const phase = slide.getAttribute('data-phase');
             
+            setActiveBg(newBgImage);
+
             if (bgLayer && color) {
               bgLayer.style.backgroundColor = color;
             }
@@ -174,6 +189,7 @@ export default function RoadmapV3Page() {
 
     return (
         <>
+            <PageHeader />
             <style>{`
             body {
                 font-family: 'Outfit', sans-serif;
@@ -219,10 +235,6 @@ export default function RoadmapV3Page() {
             @keyframes breathe {
                 0%, 100% { transform: translateY(0) scale(1); }
                 50% { transform: translateY(-3px) scale(1.02); }
-            }
-    
-            #dynamic-bg {
-                transition: background 1.2s cubic-bezier(0.4, 0, 0.2, 1);
             }
     
             /* Animations */
@@ -276,6 +288,18 @@ export default function RoadmapV3Page() {
           <main>
               {/* DYNAMIC BACKGROUND */}
               <div id="dynamic-bg" ref={bgLayerRef} className="fixed inset-0 z-0 bg-[#FFFDF5]">
+                  <div className="absolute inset-0">
+                      {backgroundImages.map(src => (
+                          <Image
+                              key={src}
+                              src={src}
+                              alt="Roadmap background"
+                              fill
+                              className={`object-cover transition-opacity duration-1000 ${activeBg === src ? 'opacity-100' : 'opacity-0'}`}
+                              priority={activeBg === src}
+                          />
+                      ))}
+                  </div>
                   <div id="ambient-orb" ref={ambientOrbRef} className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-white opacity-20 blur-[100px] transition-all duration-1000 transform translate-x-0"></div>
                   <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-white/40 to-transparent pointer-events-none"></div>
                   <div className="absolute inset-0 opacity-[0.03]" style={{backgroundImage: "radial-gradient(#000 1px, transparent 1px)", backgroundSize: "32px 32px"}}></div>
@@ -313,7 +337,7 @@ export default function RoadmapV3Page() {
                   </section>
         
                   {/* 1. GENESIS (Q1 2026) */}
-                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#ECFDF5" data-phase="PHASE 1">
+                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#ECFDF5" data-phase="PHASE 1" data-bg-image="/images/static/phase1.png">
                       <div className="slide-content w-full h-full max-h-[640px]">
                           <div className="pogi-card p-8 md:p-10 h-full flex flex-col relative group">
                               <iconify-icon icon="solar:structure-linear" class="absolute -right-8 -top-8 text-emerald-100 opacity-50 group-hover:rotate-12 transition-transform duration-700" width="200"></iconify-icon>
@@ -365,7 +389,7 @@ export default function RoadmapV3Page() {
                   </section>
         
                   {/* 2. IDENTITY (Q1-Q2 2026) */}
-                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#ECFEFF" data-phase="PHASE 2">
+                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#ECFEFF" data-phase="PHASE 2" data-bg-image="/images/static/phase2.png">
                       <div className="slide-content w-full h-full max-h-[640px]">
                           <div className="pogi-card p-8 md:p-10 h-full flex flex-col relative group">
                               <iconify-icon icon="solar:user-id-linear" class="absolute -left-8 -top-8 text-cyan-100 opacity-50" width="200"></iconify-icon>
@@ -417,7 +441,7 @@ export default function RoadmapV3Page() {
                   </section>
         
                   {/* 3. BIRINGAN (Q2-Q3 2026) */}
-                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#FAF5FF" data-phase="PHASE 3">
+                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#FAF5FF" data-phase="PHASE 3" data-bg-image="/images/static/phase3.png">
                       <div className="slide-content w-full h-full max-h-[640px]">
                           <div className="pogi-card p-8 md:p-10 h-full flex flex-col relative group">
                               <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-purple-50 opacity-50"></div>
@@ -470,7 +494,7 @@ export default function RoadmapV3Page() {
                   </section>
         
                   {/* 4. FARM RWA (Q3-Q4 2026) */}
-                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#FFF7ED" data-phase="PHASE 4">
+                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#FFF7ED" data-phase="PHASE 4" data-bg-image="/images/static/phase4.png">
                       <div className="slide-content w-full h-full max-h-[640px]">
                           <div className="pogi-card p-8 md:p-10 h-full flex flex-col relative group">
                               <iconify-icon icon="solar:sun-2-linear" class="absolute -top-8 -left-8 text-orange-100 opacity-60" width="200"></iconify-icon>
@@ -522,7 +546,7 @@ export default function RoadmapV3Page() {
                   </section>
         
                   {/* 5. EXPANSION (Q3 2027) */}
-                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#FEFCE8" data-phase="PHASE 5">
+                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#FEFCE8" data-phase="PHASE 5" data-bg-image="/images/static/phase5.webp">
                       <div className="slide-content w-full h-full max-h-[640px]">
                           <div className="pogi-card p-8 md:p-10 h-full flex flex-col relative group">
                               <iconify-icon icon="solar:bolt-linear" class="absolute -top-8 -right-8 text-yellow-100 opacity-80" width="200"></iconify-icon>
@@ -574,7 +598,7 @@ export default function RoadmapV3Page() {
                   </section>
         
                   {/* 6. FINALE (End 2027) */}
-                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#FDF2F8" data-phase="PHASE 6">
+                  <section className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12" data-theme="#FDF2F8" data-phase="PHASE 6" data-bg-image="/images/static/phase1.png">
                       <div className="slide-content w-full h-full max-h-[640px]">
                           <div className="pogi-card p-8 md:p-10 h-full flex flex-col relative border-pink-200 bg-gradient-to-b from-white to-pink-50">
                               <div className="absolute inset-0 flex items-center justify-center opacity-5">
