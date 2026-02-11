@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Use EXACT endpoint from your working code
-    const imageApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+    const imageApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
     
     const payload = {
       instances: [{ prompt }],  // Array format

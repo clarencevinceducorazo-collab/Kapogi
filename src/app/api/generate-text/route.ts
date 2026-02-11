@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     if (!apiKey) {
       throw new Error("Missing GEMINI_API_KEY environment variable");
     }
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
     
     const payload = {
       contents: [{
