@@ -136,14 +136,32 @@ export const HowItWorksSection = () => {
           viewBox="0 0 1440 120"
           xmlns="http://www.w3.org/2000/svg"
           preserveAspectRatio="none"
-          className="w-full h-auto -translate-y-[20px]"
+          /* Mobile: Reduced from 40px to 32px for a subtler move | Desktop: Unchanged */
+          className="w-full h-auto -translate-y-[32px] md:-translate-y-[20px]"
         >
           <path
+            className="block md:hidden"
+            d="M0 80 C 480 90, 960 70, 1440 80 V 120 H 0 Z"
+            fill="#2D2D2D"
+          />
+          <path
+            className="hidden md:block"
             d="M0 90 C 480 100, 960 80, 1440 90 V 120 H 0 Z"
             fill="#2D2D2D"
           />
 
           <path
+            className="block md:hidden"
+            d="M0 80 C 480 90, 960 70, 1440 80"
+            fill="none"
+            stroke="#FFC107"
+            strokeWidth="3"
+            strokeDasharray="15, 12"
+            strokeLinecap="round"
+            transform="translate(0, 10)"
+          />
+          <path
+            className="hidden md:block"
             d="M0 90 C 480 100, 960 80, 1440 90"
             fill="none"
             stroke="#FFC107"
