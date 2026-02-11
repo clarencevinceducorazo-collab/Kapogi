@@ -10,6 +10,9 @@ import { PageFooter } from '@/components/kapogian/page-footer';
 import { suiClient } from '@/lib/sui';
 import { CONTRACT_ADDRESSES } from '@/lib/constants';
 import { getIPFSGatewayUrl } from '@/lib/pinata';
+import { useCurrentAccount } from '@mysten/dapp-kit';
+import { supabase } from '@/lib/supabase';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 // I have to define IconifyIcon for typescript since it's not a standard element
 declare global {
@@ -49,6 +52,13 @@ export default function PodiumPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Presence State
+  const account = useCurrentAccount();
+  const [onlineUsers, setOnlineUsers] = useState<any>({});
+  const [isIdle, setIsIdle] = useState(false);
+  const idleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -147,6 +157,84 @@ export default function PodiumPage() {
   useEffect(() => {
     fetchData();
   }, [mode]);
+  
+  // Supabase Presence Logic
+  useEffect(() => {
+    if (!account?.address) {
+      if (channelRef.current) {
+        channelRef.current.untrack();
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+      return;
+    }
+
+    const walletAddress = account.address;
+    const channel = supabase.channel('online-users', {
+      config: {
+        presence: {
+          key: walletAddress,
+        },
+      },
+    });
+    channelRef.current = channel;
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const newState = channel.presenceState();
+        setOnlineUsers(newState);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({
+            is_idle: false, // Start as not idle
+          });
+        }
+      });
+
+    return () => {
+      if (channelRef.current) {
+        channelRef.current.untrack();
+        supabase.removeChannel(channelRef.current);
+      }
+    };
+  }, [account?.address]);
+  
+  // Idle detection logic
+  useEffect(() => {
+    const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+
+    const handleActivity = () => {
+      if (isIdle) setIsIdle(false); // Only update if state changes
+      if (idleTimeoutRef.current) {
+        clearTimeout(idleTimeoutRef.current);
+      }
+      idleTimeoutRef.current = setTimeout(() => {
+        setIsIdle(true);
+      }, IDLE_TIMEOUT);
+    };
+
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+    window.addEventListener('scroll', handleActivity);
+    handleActivity(); // Initial call
+
+    return () => {
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('scroll', handleActivity);
+      if (idleTimeoutRef.current) {
+        clearTimeout(idleTimeoutRef.current);
+      }
+    };
+  }, [isIdle]);
+  
+  // Update presence on idle state change
+  useEffect(() => {
+    if (account?.address && channelRef.current && channelRef.current.state === 'joined') {
+      channelRef.current.track({ is_idle: isIdle });
+    }
+  }, [isIdle, account?.address]);
 
   const switchMode = (newMode: 'mmr' | 'summon') => {
     if (mode === newMode) return;
@@ -231,7 +319,25 @@ export default function PodiumPage() {
     </div>
   );
 
-  const ListItem = ({ user, delayIndex }: { user: MmrEntry | SummonEntry; delayIndex: number }) => (
+  const ListItem = ({ user, delayIndex }: { user: MmrEntry | SummonEntry; delayIndex: number }) => {
+    const presence = onlineUsers[(user as any).walletAddress]?.[0];
+    let status: 'online' | 'away' | 'offline' = 'offline';
+    let statusText = 'Offline';
+    let statusColorClass = 'bg-slate-400';
+
+    if (presence) {
+        if (presence.is_idle) {
+            status = 'away';
+            statusText = 'Away';
+            statusColorClass = 'bg-yellow-400';
+        } else {
+            status = 'online';
+            statusText = 'Online';
+            statusColorClass = 'bg-green-400';
+        }
+    }
+      
+    return (
     <div className="card-toy rounded-2xl md:rounded-3xl p-3 md:p-4 mb-3 flex items-center gap-3 md:gap-5 animate-pop-in cursor-default group transition-all" style={{ animationDelay: `${delayIndex * 50}ms`}}>
         <div className="w-10 md:w-12 flex-shrink-0 flex justify-center">
             <span className="text-sm md:text-base font-bold text-slate-400 bg-slate-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center rank-text group-hover:bg-sky-100 group-hover:text-sky-500 transition-colors">#{user.rank}</span>
@@ -241,8 +347,8 @@ export default function PodiumPage() {
         </div>
         <div className="flex-1 min-w-0">
             <div className="text-sm md:text-base font-bold text-slate-700 truncate">{user.walletAddress}</div>
-            <div className="text-xs font-semibold text-slate-400 flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-green-400"></span> Online
+            <div className="text-xs font-semibold text-slate-400 flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${statusColorClass}`}></span> {statusText}
             </div>
         </div>
         <div className="text-right px-2">
@@ -254,7 +360,7 @@ export default function PodiumPage() {
             </div>
         </div>
     </div>
-  );
+  )};
   
   return (
     <>
@@ -292,17 +398,19 @@ export default function PodiumPage() {
         </main>
       </div>
 
-      <div className="fixed bottom-6 left-0 right-0 z-20 flex justify-center pointer-events-none">
-        <div className="bg-white/90 backdrop-blur-xl border-2 border-white shadow-xl shadow-sky-900/10 rounded-full p-2 flex items-center gap-4 pointer-events-auto btn-toy">
-            <button onClick={() => changePage(-1)} disabled={currentPage === 1} className="w-10 h-10 rounded-full bg-slate-50 border-2 border-slate-200 text-slate-400 hover:bg-white hover:text-sky-500 hover:border-sky-200 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                <iconify-icon icon="solar:arrow-left-linear" width="20" class=""></iconify-icon>
-            </button>
-            <span className="text-sm font-bold text-slate-600 font-mono w-20 text-center">Page {currentPage}</span>
-            <button onClick={() => changePage(1)} disabled={currentPage === totalPages || totalPages === 0} className="w-10 h-10 rounded-full bg-slate-50 border-2 border-slate-200 text-slate-400 hover:bg-white hover:text-sky-500 hover:border-sky-200 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                <iconify-icon icon="solar:arrow-right-linear" width="20" class=""></iconify-icon>
-            </button>
+      {totalPages > 1 && (
+        <div className="fixed bottom-6 left-0 right-0 z-20 flex justify-center pointer-events-none">
+          <div className="bg-white/90 backdrop-blur-xl border-2 border-white shadow-xl shadow-sky-900/10 rounded-full p-2 flex items-center gap-4 pointer-events-auto btn-toy">
+              <button onClick={() => changePage(-1)} disabled={currentPage === 1} className="w-10 h-10 rounded-full bg-slate-50 border-2 border-slate-200 text-slate-400 hover:bg-white hover:text-sky-500 hover:border-sky-200 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                  <iconify-icon icon="solar:arrow-left-linear" width="20" class=""></iconify-icon>
+              </button>
+              <span className="text-sm font-bold text-slate-600 font-mono w-20 text-center">Page {currentPage}</span>
+              <button onClick={() => changePage(1)} disabled={currentPage === totalPages || totalPages === 0} className="w-10 h-10 rounded-full bg-slate-50 border-2 border-slate-200 text-slate-400 hover:bg-white hover:text-sky-500 hover:border-sky-200 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                  <iconify-icon icon="solar:arrow-right-linear" width="20" class=""></iconify-icon>
+              </button>
+          </div>
         </div>
-      </div>
+      )}
       <PageFooter />
     </>
   );
