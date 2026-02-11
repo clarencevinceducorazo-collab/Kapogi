@@ -3,8 +3,6 @@
 
 import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
-import { PageHeader } from '@/components/kapogian/page-header';
 import { PageFooter } from '@/components/kapogian/page-footer';
 
 // I have to define IconifyIcon for typescript since it's not a standard element
@@ -155,19 +153,10 @@ export default function RoadmapV3Page() {
             slide.classList.add('active-slide');
             
             if (navUi) {
-                const logo = navUi.querySelector('#logo-k') as HTMLElement;
                 if (phase === 'END') {
                     navUi.classList.add('text-white-custom');
-                    if (logo) {
-                        logo.classList.remove('bg-black', 'text-white');
-                        logo.classList.add('bg-white', 'text-black');
-                    }
                 } else {
                     navUi.classList.remove('text-white-custom');
-                    if (logo) {
-                       logo.classList.remove('bg-white', 'text-black');
-                       logo.classList.add('bg-black', 'text-white');
-                    }
                 }
             }
         }
@@ -187,7 +176,6 @@ export default function RoadmapV3Page() {
 
     return (
         <>
-            <PageHeader/>
             <style>{`
             body {
                 font-family: 'Outfit', sans-serif;
@@ -296,16 +284,7 @@ export default function RoadmapV3Page() {
               </div>
               
               {/* UI HEADS-UP DISPLAY */}
-              <div id="nav-ui" ref={navUiRef} className="fixed top-0 left-0 w-full z-50 px-8 py-6 flex justify-between items-start transition-all duration-500 opacity-0 -translate-y-4">
-                  <div className="flex items-center gap-3">
-                      <div id="logo-k" className="w-10 h-10 flex items-center justify-center rounded-lg font-bold text-lg tracking-tighter-custom">
-                         <Image src="/images/kapogianlogo.webp" alt="Kapogian Logo" width={40} height={40} />
-                      </div>
-                      <div className="hidden md:flex flex-col">
-                          <span className="font-semibold tracking-tight text-sm uppercase leading-none mb-1">Kapogian Roadmap</span>
-                          <span className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">Exec Ver 1.2</span>
-                      </div>
-                  </div>
+              <div id="nav-ui" ref={navUiRef} className="fixed top-0 left-0 w-full z-50 px-8 py-6 flex justify-end items-start transition-all duration-500 opacity-0 -translate-y-4">
                   <div className="flex items-center gap-4 bg-white/80 backdrop-blur-md border border-black/5 px-4 py-2 rounded-full shadow-sm">
                       <span id="phase-indicator" ref={phaseTextRef} className="text-xs font-semibold uppercase tracking-wider text-slate-500 w-24 text-right">Intro</span>
                       <div className="w-24 h-1 bg-slate-200 rounded-full overflow-hidden">
@@ -645,9 +624,9 @@ export default function RoadmapV3Page() {
                           <iconify-icon icon="solar:emoji-funny-circle-linear" width="80" class="text-yellow-400 mb-6 animate-bounce"></iconify-icon>
                           <h2 className="text-6xl md:text-8xl font-semibold tracking-tighter-custom mb-6">Stay Pogi.</h2>
                           <p className="text-slate-400 text-lg md:text-2xl mb-12 font-light">The Journey is Just Beginning.</p>
-                          <Link href="/generate" className="inline-flex items-center gap-3 px-8 py-4 bg-white text-black rounded-full text-lg font-semibold hover:scale-105 transition-transform">
-                              Summon Spirit Kapogian <iconify-icon icon="solar:arrow-right-up-linear"></iconify-icon>
-                          </Link>
+                          <a href="#" className="inline-flex items-center gap-3 px-8 py-4 bg-white text-black rounded-full text-lg font-semibold hover:scale-105 transition-transform">
+                              Join the Community <iconify-icon icon="solar:arrow-right-up-linear"></iconify-icon>
+                          </a>
                           <div className="absolute bottom-[-30vh] left-1/2 -translate-x-1/2 text-slate-600 text-xs">
                               ← Scroll back to start
                           </div>
@@ -655,8 +634,10 @@ export default function RoadmapV3Page() {
                   </section>
         
               </div>
-          </main>
-          <PageFooter />
+        
+              
+            <PageFooter />
         </>
       );
 }
+```
