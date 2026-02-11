@@ -6,5 +6,5 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Supabase URL and/or Anon Key are not defined in environment variables.');
 }
-
+Q
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);

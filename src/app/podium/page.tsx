@@ -61,6 +61,7 @@ export default function PodiumPage() {
   const lastActiveRef = useRef(Date.now());
   const idleCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const userStatusRef = useRef<'online' | 'away'>('online');
+  const joinedRef = useRef(false);
 
 
   const fetchData = async () => {
@@ -168,24 +169,39 @@ export default function PodiumPage() {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
+      setOnlineUsers({});
+      joinedRef.current = false;
+      userStatusRef.current = 'online';
       return;
     }
 
     const walletAddress = account.address;
+    const presenceKey = `${walletAddress}-${crypto.randomUUID()}`;
+
     const channel = supabase.channel('online-users', {
       config: {
         presence: {
-          key: walletAddress,
+          key: presenceKey,
         },
       },
     });
     channelRef.current = channel;
 
+    let activityThrottle = false;
     const updateActivity = () => {
         lastActiveRef.current = Date.now();
-        if (userStatusRef.current === 'away' && channelRef.current?.state === 'joined') {
+        if (!joinedRef.current) return;
+        if (activityThrottle) return;
+
+        if (userStatusRef.current === 'away') {
             userStatusRef.current = 'online';
-            channelRef.current.track({ status: 'online', last_active: Date.now() });
+            activityThrottle = true;
+            setTimeout(() => (activityThrottle = false), 10_000); // 10s throttle
+            channelRef.current?.track({ 
+              wallet: walletAddress,
+              status: 'online', 
+              last_active: lastActiveRef.current 
+            });
         }
     };
     
@@ -195,9 +211,13 @@ export default function PodiumPage() {
 
     idleCheckIntervalRef.current = setInterval(() => {
         if (Date.now() - lastActiveRef.current > IDLE_TIMEOUT) {
-            if (userStatusRef.current === 'online' && channelRef.current?.state === 'joined') {
+            if (joinedRef.current && userStatusRef.current === 'online') {
                 userStatusRef.current = 'away';
-                channelRef.current.track({ status: 'away', last_active: lastActiveRef.current });
+                channelRef.current?.track({
+                    wallet: walletAddress,
+                    status: 'away', 
+                    last_active: lastActiveRef.current 
+                });
             }
         }
     }, 30_000); // Check every 30 seconds
@@ -209,14 +229,20 @@ export default function PodiumPage() {
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          updateActivity();
-          await channel.track({ status: 'online', last_active: Date.now() });
+          joinedRef.current = true;
+          lastActiveRef.current = Date.now();
+          await channel.track({ 
+            wallet: walletAddress,
+            status: 'online', 
+            last_active: Date.now() 
+          });
         }
       });
 
     return () => {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
       }
       if (idleCheckIntervalRef.current) {
         clearInterval(idleCheckIntervalRef.current);
@@ -224,6 +250,9 @@ export default function PodiumPage() {
       window.removeEventListener('mousemove', updateActivity);
       window.removeEventListener('keydown', updateActivity);
       window.removeEventListener('scroll', updateActivity);
+      setOnlineUsers({});
+      joinedRef.current = false;
+      userStatusRef.current = 'online';
     };
   }, [account?.address]);
   
@@ -311,13 +340,16 @@ export default function PodiumPage() {
   );
 
   const ListItem = ({ user, delayIndex, presenceState }: { user: MmrEntry | SummonEntry; delayIndex: number; presenceState: PresenceState }) => {
-    const presence = presenceState[(user as any).walletAddress]?.[0];
+    const presence = Object.values(presenceState)
+      .flat()
+      .find((p: any) => p.wallet === user.walletAddress);
+      
     let status: 'online' | 'away' | 'offline' = 'offline';
     let statusText = 'Offline';
     let statusColorClass = 'bg-slate-400';
 
     if (presence) {
-        status = presence.status;
+        status = (presence as any).status;
         if (status === 'away') {
             statusText = 'Away';
             statusColorClass = 'bg-yellow-400';
