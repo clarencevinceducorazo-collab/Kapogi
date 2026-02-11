@@ -1,8 +1,11 @@
+
 'use client';
 
 import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { PageHeader } from '@/components/kapogian/page-header';
+import { PageFooter } from '@/components/kapogian/page-footer';
 
 // I have to define IconifyIcon for typescript since it's not a standard element
 declare global {
@@ -184,6 +187,7 @@ export default function RoadmapV3Page() {
 
   return (
     <>
+      <PageHeader/>
       <style>{`
         body {
             font-family: 'Outfit', sans-serif;
@@ -604,12 +608,8 @@ export default function RoadmapV3Page() {
           </section>
 
       </div>
-      </main>
     </>
   );
 }
 
-the page should include this in the header
-<PageHeader/>
-and footer
- <PageFooter />
+```
