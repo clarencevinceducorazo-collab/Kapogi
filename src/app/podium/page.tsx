@@ -12,7 +12,7 @@ import { CONTRACT_ADDRESSES } from '@/lib/constants';
 import { getIPFSGatewayUrl } from '@/lib/pinata';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { supabase } from '@/lib/supabase';
-import type { RealtimeChannel } from '@supabase/supabase-js';
+import type { RealtimeChannel, PresenceState } from '@supabase/supabase-js';
 
 // I have to define IconifyIcon for typescript since it's not a standard element
 declare global {
@@ -28,6 +28,7 @@ declare global {
 }
 
 const ITEMS_PER_PAGE = 10;
+const IDLE_TIMEOUT = 3 * 60 * 1000; // 3 minutes
 
 // Type definitions for our data
 interface MmrEntry {
@@ -55,10 +56,12 @@ export default function PodiumPage() {
 
   // Presence State
   const account = useCurrentAccount();
-  const [onlineUsers, setOnlineUsers] = useState<any>({});
-  const [isIdle, setIsIdle] = useState(false);
-  const idleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [onlineUsers, setOnlineUsers] = useState<PresenceState>({});
   const channelRef = useRef<RealtimeChannel | null>(null);
+  const lastActiveRef = useRef(Date.now());
+  const idleCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const userStatusRef = useRef<'online' | 'away'>('online');
+
 
   const fetchData = async () => {
     setLoading(true);
@@ -162,7 +165,6 @@ export default function PodiumPage() {
   useEffect(() => {
     if (!account?.address) {
       if (channelRef.current) {
-        channelRef.current.untrack();
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
@@ -179,6 +181,27 @@ export default function PodiumPage() {
     });
     channelRef.current = channel;
 
+    const updateActivity = () => {
+        lastActiveRef.current = Date.now();
+        if (userStatusRef.current === 'away' && channelRef.current?.state === 'joined') {
+            userStatusRef.current = 'online';
+            channelRef.current.track({ status: 'online', last_active: Date.now() });
+        }
+    };
+    
+    window.addEventListener('mousemove', updateActivity);
+    window.addEventListener('keydown', updateActivity);
+    window.addEventListener('scroll', updateActivity);
+
+    idleCheckIntervalRef.current = setInterval(() => {
+        if (Date.now() - lastActiveRef.current > IDLE_TIMEOUT) {
+            if (userStatusRef.current === 'online' && channelRef.current?.state === 'joined') {
+                userStatusRef.current = 'away';
+                channelRef.current.track({ status: 'away', last_active: lastActiveRef.current });
+            }
+        }
+    }, 30_000); // Check every 30 seconds
+
     channel
       .on('presence', { event: 'sync' }, () => {
         const newState = channel.presenceState();
@@ -186,55 +209,24 @@ export default function PodiumPage() {
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          await channel.track({
-            is_idle: false, // Start as not idle
-          });
+          updateActivity();
+          await channel.track({ status: 'online', last_active: Date.now() });
         }
       });
 
     return () => {
       if (channelRef.current) {
-        channelRef.current.untrack();
         supabase.removeChannel(channelRef.current);
       }
+      if (idleCheckIntervalRef.current) {
+        clearInterval(idleCheckIntervalRef.current);
+      }
+      window.removeEventListener('mousemove', updateActivity);
+      window.removeEventListener('keydown', updateActivity);
+      window.removeEventListener('scroll', updateActivity);
     };
   }, [account?.address]);
   
-  // Idle detection logic
-  useEffect(() => {
-    const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
-
-    const handleActivity = () => {
-      if (isIdle) setIsIdle(false); // Only update if state changes
-      if (idleTimeoutRef.current) {
-        clearTimeout(idleTimeoutRef.current);
-      }
-      idleTimeoutRef.current = setTimeout(() => {
-        setIsIdle(true);
-      }, IDLE_TIMEOUT);
-    };
-
-    window.addEventListener('mousemove', handleActivity);
-    window.addEventListener('keydown', handleActivity);
-    window.addEventListener('scroll', handleActivity);
-    handleActivity(); // Initial call
-
-    return () => {
-      window.removeEventListener('mousemove', handleActivity);
-      window.removeEventListener('keydown', handleActivity);
-      window.removeEventListener('scroll', handleActivity);
-      if (idleTimeoutRef.current) {
-        clearTimeout(idleTimeoutRef.current);
-      }
-    };
-  }, [isIdle]);
-  
-  // Update presence on idle state change
-  useEffect(() => {
-    if (account?.address && channelRef.current && channelRef.current.state === 'joined') {
-      channelRef.current.track({ is_idle: isIdle });
-    }
-  }, [isIdle, account?.address]);
 
   const switchMode = (newMode: 'mmr' | 'summon') => {
     if (mode === newMode) return;
@@ -318,19 +310,18 @@ export default function PodiumPage() {
     </div>
   );
 
-  const ListItem = ({ user, delayIndex }: { user: MmrEntry | SummonEntry; delayIndex: number }) => {
-    const presence = onlineUsers[(user as any).walletAddress]?.[0];
+  const ListItem = ({ user, delayIndex, presenceState }: { user: MmrEntry | SummonEntry; delayIndex: number; presenceState: PresenceState }) => {
+    const presence = presenceState[(user as any).walletAddress]?.[0];
     let status: 'online' | 'away' | 'offline' = 'offline';
     let statusText = 'Offline';
     let statusColorClass = 'bg-slate-400';
 
     if (presence) {
-        if (presence.is_idle) {
-            status = 'away';
+        status = presence.status;
+        if (status === 'away') {
             statusText = 'Away';
             statusColorClass = 'bg-yellow-400';
         } else {
-            status = 'online';
             statusText = 'Online';
             statusColorClass = 'bg-green-400';
         }
@@ -390,7 +381,7 @@ export default function PodiumPage() {
             <div id="content-area" className="w-full">
               {currentPage === 1 && data.length >= 3 && <Podium users={podiumData} />}
               {pagedData.map((user, index) => (
-                <ListItem key={(user as any).walletAddress + index} user={user} delayIndex={index} />
+                <ListItem key={(user as any).walletAddress + index} user={user} delayIndex={index} presenceState={onlineUsers} />
               ))}
             </div>
           )}
