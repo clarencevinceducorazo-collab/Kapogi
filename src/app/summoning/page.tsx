@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -20,7 +21,7 @@ export default function SummoningPage() {
       text: document.getElementById('story-text'),
       darkLayer: document.getElementById('dark-layer'),
       flash: document.getElementById('flash-overlay'),
-      aura: document.getElementById('summoning-aura'),
+      wizard: document.getElementById('summoning-wizard'),
       rings: document.getElementById('ritual-rings'),
       ringOuter: document.getElementById('ring-outer'),
       ringInner: document.getElementById('ring-inner'),
@@ -31,7 +32,7 @@ export default function SummoningPage() {
     };
 
     // Check if all elements are found before proceeding
-    if (!el.text || !el.darkLayer || !el.flash || !el.aura || !el.rings || !el.ringOuter || !el.ringInner || !el.glow || !el.emeraldBg || !el.particleAnchor || !el.finalUi) {
+    if (!el.text || !el.darkLayer || !el.flash || !el.wizard || !el.rings || !el.ringOuter || !el.ringInner || !el.glow || !el.emeraldBg || !el.particleAnchor || !el.finalUi) {
       console.error("One or more elements for loading animation not found.");
       // If elements are missing, just redirect immediately to not get stuck.
       router.push('/generate');
@@ -101,10 +102,10 @@ export default function SummoningPage() {
 
     // 2. First Light Pop - Welcome (1.5s)
     timeouts.push(setTimeout(() => {
-        if(!el.rings || !el.aura || !el.glow) return;
+        if(!el.rings || !el.wizard || !el.glow) return;
         el.rings.classList.remove('opacity-20', 'scale-95');
         el.rings.classList.add('opacity-100', 'scale-100');
-        el.aura.classList.remove('opacity-0');
+        el.wizard.classList.remove('opacity-0');
         el.glow.classList.replace('bg-emerald-500/0', 'bg-amber-500/10');
         spawnParticles('burst');
         playText(`Welcome, Kapogi, to the<br/><span class="text-amber-300 text-glow-gold">Kapogian Summoning!</span>`, 1500);
@@ -120,16 +121,16 @@ export default function SummoningPage() {
 
     // 4. Final Text Pop - Start (5s)
     timeouts.push(setTimeout(() => {
-        if(!el.emeraldBg || !el.aura) return;
+        if(!el.emeraldBg || !el.wizard) return;
         el.emeraldBg.classList.remove('opacity-0');
         el.emeraldBg.classList.add('opacity-60');
-        el.aura.classList.add('animate-pulse');
+        el.wizard.classList.add('animate-pulse');
         playText(`<span class="uppercase tracking-widest text-4xl md:text-6xl text-white text-magical">It starts now!</span>`, 1200);
     }, 5500));
 
     // 5. Ultimate White Reveal (6.5s)
     timeouts.push(setTimeout(() => {
-        if(!el.flash || !el.darkLayer || !el.aura || !el.ringOuter || !el.ringInner || !el.finalUi) return;
+        if(!el.flash || !el.darkLayer || !el.wizard || !el.ringOuter || !el.ringInner || !el.finalUi) return;
         el.flash.classList.add('white-flash');
         
         setTimeout(() => {
@@ -137,8 +138,8 @@ export default function SummoningPage() {
             el.darkLayer.style.opacity = '0';
         }, 300);
         
-        el.aura.classList.remove('animate-pulse');
-        el.aura.classList.add('ritual-active-aura');
+        el.wizard.classList.remove('animate-pulse');
+        el.wizard.classList.add('ritual-active-wizard');
 
         el.ringOuter.classList.replace('border-slate-600/30', 'border-slate-200');
         el.ringInner.classList.replace('border-slate-700/40', 'border-slate-300');
@@ -216,8 +217,8 @@ export default function SummoningPage() {
             100% { opacity: 0; }
         }
 
-        /* Aura Final Pulse */
-        @keyframes aura-active-pulse {
+        /* Wizard Final Pulse */
+        @keyframes wizard-active-pulse {
             0% { filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.2)); }
             50% { filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.5)); }
             100% { filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.2)); }
@@ -231,7 +232,7 @@ export default function SummoningPage() {
         .text-enter { animation: text-pop-enter 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .text-exit { animation: text-flash-exit 0.8s ease-in forwards; }
         .white-flash { animation: flash-white-screen 1s ease-out forwards; }
-        .ritual-active-aura { animation: aura-active-pulse 2s infinite; }
+        .ritual-active-wizard { animation: wizard-active-pulse 2s infinite; }
         
         .particle {
             position: absolute;
@@ -308,11 +309,11 @@ export default function SummoningPage() {
                   <div id="particle-anchor" className="absolute inset-0 pointer-events-none overflow-visible"></div>
               </div>
 
-              {/* The Aura GIF */}
+              {/* The Wizard GIF */}
               <Image
-                  id="summoning-aura"
-                  src="/images/effects/aura.gif"
-                  alt="Summoning Aura"
+                  id="summoning-wizard"
+                  src="/images/effects/wizard.gif"
+                  alt="Summoning Wizard"
                   width={256}
                   height={256}
                   unoptimized
@@ -332,3 +333,5 @@ export default function SummoningPage() {
     </>
   );
 }
+
+    
