@@ -192,6 +192,8 @@ export default function GeneratorPage() {
   const [generatedMmr, setGeneratedMmr] = useState(0);
   const [shufflingMmr, setShufflingMmr] = useState(0);
 
+  const [generatedNamesHistory, setGeneratedNamesHistory] = useState<string[]>([]);
+
   const displayedLore = useTypewriter(generatedLore || "", 20);
   const isLoreTyping =
     generatedLore && displayedLore.length < generatedLore.length;
@@ -373,10 +375,17 @@ export default function GeneratorPage() {
   const generateName = async (): Promise<string> => {
     try {
       const context = getIdentityContext(gender);
+      const excludeList = generatedNamesHistory.length > 0
+        ? `Do not use any of these names: ${generatedNamesHistory.join(', ')}.`
+        : "";
+
       const result = await generateText({
-        prompt: `Generate a single unique Filipino name for a character who belongs to the ${gender} lineage (Context: ${context}). Traditional or modern. Only return the name, no extra text.`,
+        prompt: `Generate a single unique name for a character who belongs to the ${gender} lineage (Identity Context: ${context}). The name can be from ANY country or culture in the world (Filipino, Spanish, Japanese, American, European, etc.). ${excludeList} Make it unique, catchy, and fitting for a heroic Chibi. Only return the name, no extra text.`,
       });
-      return result.text?.replace(/["']+/g, "") || "Pogi";
+
+      const newName = result.text?.replace(/["']+/g, "") || "Pogi";
+      setGeneratedNamesHistory(prev => [...prev, newName]);
+      return newName;
     } catch (e) {
       console.error("Name generation failed:", e);
       return "Pogi";
