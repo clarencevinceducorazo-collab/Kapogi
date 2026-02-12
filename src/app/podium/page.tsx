@@ -166,8 +166,10 @@ export default function PodiumPage() {
   };
 
   const podiumData = data.length >= 3 ? [data[1], data[0], data[2]] : [];
-  const listData = data.length > 3 ? data.slice(3) : [];
+  const listData = data.slice(3);
   const totalPages = Math.ceil(listData.length / ITEMS_PER_PAGE) || 1;
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const pagedData = listData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const changePage = (direction: number) => {
     setCurrentPage((prev) => {
@@ -179,9 +181,6 @@ export default function PodiumPage() {
       return prev;
     });
   };
-
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const pagedData = listData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const Podium = ({
     users,
@@ -317,7 +316,9 @@ export default function PodiumPage() {
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-sm md:text-base font-bold text-slate-700 truncate">
-            {user.walletAddress}
+            {mode === 'mmr' 
+              ? (user as MmrEntry).nftName 
+              : `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}`}
           </div>
           <div className="text-xs font-semibold text-slate-400 flex items-center gap-2"></div>
         </div>
@@ -397,19 +398,26 @@ export default function PodiumPage() {
           ) : (
             <div id="content-area" className="w-full">
               {data.length >= 3 && <Podium users={podiumData} />}
-              {pagedData.length > 0 ? (
-                pagedData.map((user, index) => (
-                  <ListItem
-                    key={(user as any).walletAddress + index}
-                    user={user}
-                    delayIndex={index}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-10 text-slate-500 font-semibold">
-                  No data to display.
-                </div>
-              )}
+              
+              <div className="mt-8">
+                {pagedData.length > 0 ? (
+                  pagedData.map((user, index) => (
+                    <ListItem
+                      key={(user as any).walletAddress + index}
+                      user={user}
+                      delayIndex={index}
+                    />
+                  ))
+                ) : data.length > 0 ? (
+                   <div className="text-center py-10 text-slate-500 font-semibold">
+                     No more users to display.
+                   </div>
+                ) : (
+                  <div className="text-center py-10 text-slate-500 font-semibold">
+                    No data to display.
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </main>
