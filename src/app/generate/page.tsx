@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -78,27 +79,43 @@ interface Barangay {
 const merchProducts = {
     tee: {
         name: 'Tee',
-        colors: ['#3b82f6', '#ef4444', '#22c55e', '#171717', '#f3f4f6'],
+        icon: Shirt,
         sizes: ['S', 'M', 'L', 'XL'],
-        icon: Shirt
+        colors: [
+            { name: 'Blue', value: '#3b82f6', image: '/images/merch-selection/shirts/blueshirt.gif' },
+            { name: 'Red', value: '#ef4444', image: '/images/merch-selection/shirts/redshirt.gif' },
+            { name: 'Black', value: '#171717', image: '/images/merch-selection/shirts/blackshirt.gif' },
+        ]
     },
     mug: {
         name: 'Mug',
-        colors: ['#f3f4f6', '#ef4444', '#3b82f6', '#171717'],
+        icon: Coffee,
         sizes: [],
-        icon: Coffee
+        colors: [
+            { name: 'White', value: '#f3f4f6', image: '/images/merch-selection/mug/gifWhiteMug.gif' },
+            { name: 'Red', value: '#ef4444', image: '/images/merch-selection/mug/gifRedMug.gif' },
+            { name: 'Blue', value: '#3b82f6', image: '/images/merch-selection/mug/gifBlueMug.gif' },
+            { name: 'Black', value: '#171717', image: '/images/merch-selection/mug/gifBlackMug.gif' },
+        ]
     },
     pad: {
         name: 'Pad',
-        colors: [],
+        icon: Mouse,
         sizes: [],
-        icon: Mouse
+        colors: []
     },
     hoodie: {
         name: 'Hoodie',
-        colors: ['#171717', '#ef4444', '#3b82f6', '#d6d3d1'],
-        sizes: ['S', 'M', 'L', 'XL'],
         icon: User,
+        sizes: ['S', 'M', 'L', 'XL'],
+        colors: [
+            { name: 'Black', value: '#171717', image: '/images/merch-selection/hoodies/blackhoodie.gif' },
+            { name: 'Red', value: '#ef4444', image: '/images/merch-selection/hoodies/redhoodie.gif' },
+            { name: 'Blue', value: '#3b82f6', image: '/images/merch-selection/hoodies/bluehoodie.gif' },
+            { name: 'Grey', value: '#d6d3d1', image: '/images/merch-selection/hoodies/greyhoodie.gif' },
+            { name: 'Beige', value: '#f5f5dc', image: '/images/merch-selection/hoodies/biegehoodie.gif' },
+            { name: 'Cyan', value: '#22d3ee', image: '/images/merch-selection/hoodies/cyanhoodie.gif' },
+        ]
     }
 };
 
@@ -160,7 +177,7 @@ export default function GeneratorPage() {
   const [teeColor, setTeeColor] = useState<string>('#3b82f6');
   const [mugColor, setMugColor] = useState<string>('#f3f4f6');
   const [hoodieSize, setHoodieSize] = useState<string>("L");
-  const [hoodieColor, setHoodieColor] = useState<string>("Black");
+  const [hoodieColor, setHoodieColor] = useState<string>('#171717');
 
 
   // Result State
@@ -687,6 +704,9 @@ export default function GeneratorPage() {
       });
 
       // 1. Map selection to contract-expected value
+      const hoodieColorObject = merchProducts.hoodie.colors.find(c => c.value === hoodieColor);
+      const hoodieColorName = hoodieColorObject ? hoodieColorObject.name : 'Black';
+
       let itemsSelected = "";
       switch (selection) {
         case "Tee":
@@ -699,10 +719,10 @@ export default function GeneratorPage() {
           itemsSelected = "MOUSEPAD";
           break;
         case "Hoodie":
-          itemsSelected = `HOODIE-${hoodieColor.toUpperCase()}-${hoodieSize}`;
+          itemsSelected = `HOODIE-${hoodieColorName.toUpperCase()}-${hoodieSize}`;
           break;
         case "Bundle":
-          itemsSelected = `ALL_BUNDLE,SHIRT-${shirtSize},HOODIE-${hoodieColor.toUpperCase()}-${hoodieSize}`;
+          itemsSelected = `ALL_BUNDLE,SHIRT-${shirtSize},HOODIE-${hoodieColorName.toUpperCase()}-${hoodieSize}`;
           break;
         default:
           setError("Invalid merchandise selection.");
@@ -854,12 +874,18 @@ export default function GeneratorPage() {
   }
 
   const SIZES = ["S", "M", "L", "XL"];
-  const HOODIE_COLORS = ["Black", "Red", "Blue", "Gray"];
-
+  
   const renderMerchControls = () => {
     const activeProductKey = selection?.toLowerCase() as keyof typeof merchProducts | null;
     
     if (selection === 'Bundle') {
+        const teeColorObject = merchProducts.tee.colors.find(c => c.value === teeColor);
+        const teeImage = teeColorObject ? teeColorObject.image : merchProducts.tee.colors[0]!.image;
+        const mugColorObject = merchProducts.mug.colors.find(c => c.value === mugColor);
+        const mugImage = mugColorObject ? mugColorObject.image : merchProducts.mug.colors[0]!.image;
+        const hoodieColorObject = merchProducts.hoodie.colors.find(c => c.value === hoodieColor);
+        const hoodieImage = hoodieColorObject ? hoodieColorObject.image : merchProducts.hoodie.colors[0]!.image;
+
         return (
             <div id="bundle-view" className="transition-opacity duration-300 mb-8">
                 <div className="bg-white border-4 border-black rounded-2xl hard-shadow p-6 space-y-6">
@@ -870,12 +896,14 @@ export default function GeneratorPage() {
 
                     {/* Bundle Item: Tee */}
                     <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-gray-50 p-4 rounded-xl border-2 border-black/10">
-                        <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0"><Shirt className="text-3xl"/></div>
+                        <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0">
+                           <Image src={teeImage} alt="Tee" width={64} height={64} className="object-contain p-1" unoptimized/>
+                        </div>
                         <div className="flex-grow w-full">
                             <div className="flex justify-between mb-2"><span className="font-bold uppercase text-sm">Tee Configuration</span></div>
                             <div className="flex flex-wrap gap-4 items-center">
                                 <div className="flex gap-2">
-                                  {merchProducts.tee.colors.map(c => <button key={c} onClick={() => setTeeColor(c)} className={cn("w-6 h-6 rounded-full border border-black", teeColor === c && 'ring-1 ring-offset-1 ring-black scale-110')} style={{backgroundColor: c}}></button>)}
+                                  {merchProducts.tee.colors.map(c => <button key={c.value} onClick={() => setTeeColor(c.value)} className={cn("w-6 h-6 rounded-full border border-black", teeColor === c.value && 'ring-1 ring-offset-1 ring-black scale-110')} style={{backgroundColor: c.value}}></button>)}
                                 </div>
                                 <div className="h-6 w-0.5 bg-gray-300 hidden md:block"></div>
                                 <div className="flex gap-1">
@@ -886,26 +914,30 @@ export default function GeneratorPage() {
                     </div>
                     {/* Bundle Item: Mug */}
                      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-gray-50 p-4 rounded-xl border-2 border-black/10">
-                        <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0"><Coffee className="text-3xl"/></div>
+                        <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0">
+                           <Image src={mugImage} alt="Mug" width={64} height={64} className="object-contain p-1" unoptimized/>
+                        </div>
                         <div className="flex-grow w-full">
                             <div className="flex justify-between mb-2"><span className="font-bold uppercase text-sm">Mug Configuration</span></div>
                              <div className="flex gap-2">
-                               {merchProducts.mug.colors.map(c => <button key={c} onClick={() => setMugColor(c)} className={cn("w-6 h-6 rounded-full border border-black", mugColor === c && 'ring-1 ring-offset-1 ring-black scale-110')} style={{backgroundColor: c}}></button>)}
+                               {merchProducts.mug.colors.map(c => <button key={c.value} onClick={() => setMugColor(c.value)} className={cn("w-6 h-6 rounded-full border border-black", mugColor === c.value && 'ring-1 ring-offset-1 ring-black scale-110')} style={{backgroundColor: c.value}}></button>)}
                             </div>
                         </div>
                     </div>
                     {/* Bundle Item: Hoodie */}
                     <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-gray-50 p-4 rounded-xl border-2 border-black/10">
-                        <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0"><User className="text-3xl"/></div>
+                        <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0">
+                           <Image src={hoodieImage} alt="Hoodie" width={64} height={64} className="object-contain p-1" unoptimized/>
+                        </div>
                         <div className="flex-grow w-full">
                             <div className="flex justify-between mb-2"><span className="font-bold uppercase text-sm">Hoodie Configuration</span></div>
                             <div className="flex flex-wrap gap-4 items-center">
                                 <div className="flex gap-2">
-                                    {HOODIE_COLORS.map(c => <button key={c} onClick={() => setHoodieColor(c)} className={cn("w-6 h-6 rounded-full border border-black", hoodieColor === c && 'ring-1 ring-offset-1 ring-black scale-110')} style={{backgroundColor: c.toLowerCase()}}></button>)}
+                                    {merchProducts.hoodie.colors.map(c => <button key={c.value} onClick={() => setHoodieColor(c.value)} className={cn("w-6 h-6 rounded-full border border-black", hoodieColor === c.value && 'ring-1 ring-offset-1 ring-black scale-110')} style={{backgroundColor: c.value}}></button>)}
                                 </div>
                                 <div className="h-6 w-0.5 bg-gray-300 hidden md:block"></div>
                                 <div className="flex gap-1">
-                                    {SIZES.map(s => <button key={s} onClick={() => setHoodieSize(s)} className={cn("w-8 h-8 rounded border border-black text-xs font-bold", hoodieSize === s ? 'bg-black text-white' : 'bg-white text-black')}>{s}</button>)}
+                                    {merchProducts.hoodie.sizes.map(s => <button key={s} onClick={() => setHoodieSize(s)} className={cn("w-8 h-8 rounded border border-black text-xs font-bold", hoodieSize === s ? 'bg-black text-white' : 'bg-white text-black')}>{s}</button>)}
                                 </div>
                             </div>
                         </div>
@@ -916,14 +948,33 @@ export default function GeneratorPage() {
     }
 
     if (!activeProductKey || !merchProducts[activeProductKey]) return null;
-    const product = merchProducts[activeProductKey];
+    const product = merchProducts[activeProductKey as keyof typeof merchProducts];
     const Icon = product.icon;
+
+    let currentImageUrl = '';
+    let selectedColorValue: string | undefined = undefined;
+
+    if ('image' in product && typeof product.image === 'string') {
+        currentImageUrl = product.image;
+    } else if (product.colors.length > 0) {
+        if (activeProductKey === 'tee') selectedColorValue = teeColor;
+        else if (activeProductKey === 'mug') selectedColorValue = mugColor;
+        else if (activeProductKey === 'hoodie') selectedColorValue = hoodieColor;
+
+        const selectedColorObject = product.colors.find(c => c.value === selectedColorValue);
+        currentImageUrl = selectedColorObject ? selectedColorObject.image : product.colors[0]!.image;
+    }
+
 
     return (
         <div id="single-view" className="transition-opacity duration-300">
             <div className="bg-white border-4 border-black rounded-2xl hard-shadow mb-8 p-6 md:p-8 flex flex-col items-center justify-center relative min-h-[320px]">
                 <div className="w-48 h-48 md:w-56 md:h-56 flex items-center justify-center transition-all duration-300 mb-6">
-                    <Icon className="text-[10rem] drop-shadow-xl" style={{color: (activeProductKey === 'tee' ? teeColor : (activeProductKey === 'mug' ? mugColor : (activeProductKey === 'hoodie' ? hoodieColor.toLowerCase() : '#4b5563')))}} />
+                    {currentImageUrl ? (
+                        <Image src={currentImageUrl} alt={product.name} width={224} height={224} className="object-contain" unoptimized/>
+                    ) : (
+                        <Icon className="text-[10rem] drop-shadow-xl" />
+                    )}
                 </div>
                 <div className="w-full max-w-md mx-auto space-y-5">
                     <div className="flex justify-between items-end border-b-2 border-black pb-2">
@@ -934,12 +985,12 @@ export default function GeneratorPage() {
                         {product.colors.length > 0 && (
                             <div className="flex flex-wrap gap-3 justify-center">
                                 {product.colors.map(c => {
-                                    const isActive = (activeProductKey === 'tee' && teeColor === c) || (activeProductKey === 'mug' && mugColor === c) || (activeProductKey === 'hoodie' && hoodieColor.toLowerCase() === c.toLowerCase());
-                                    return <button key={c} onClick={() => {
-                                        if (activeProductKey === 'tee') setTeeColor(c);
-                                        if (activeProductKey === 'mug') setMugColor(c);
-                                        if (activeProductKey === 'hoodie') setHoodieColor(c.charAt(0).toUpperCase() + c.slice(1));
-                                    }} className={cn("w-8 h-8 rounded-full border-2 border-black transition-transform hover:scale-110", isActive && 'ring-2 ring-offset-2 ring-black')} style={{backgroundColor: c}}></button>
+                                    const isActive = selectedColorValue === c.value;
+                                    return <button key={c.value} onClick={() => {
+                                        if (activeProductKey === 'tee') setTeeColor(c.value);
+                                        if (activeProductKey === 'mug') setMugColor(c.value);
+                                        if (activeProductKey === 'hoodie') setHoodieColor(c.value);
+                                    }} className={cn("w-8 h-8 rounded-full border-2 border-black transition-transform hover:scale-110", isActive && 'ring-2 ring-offset-2 ring-black')} style={{backgroundColor: c.value}}></button>
                                 })}
                             </div>
                         )}
@@ -1550,7 +1601,7 @@ export default function GeneratorPage() {
                   
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                       {(Object.keys(merchProducts) as Array<keyof typeof merchProducts>).map(key => {
-                          const product = merchProducts[key];
+                          const product = merchProducts[key as keyof typeof merchProducts];
                           const Icon = product.icon;
                           return (
                               <button key={key} onClick={() => setSelection(product.name)} className={cn("group bg-white rounded-xl border-4 border-black p-4 flex flex-col items-center hard-shadow hover:-translate-y-1 transition-all", selection === product.name && "translate-y-1 shadow-none bg-yellow-300")}>
@@ -1828,3 +1879,6 @@ export default function GeneratorPage() {
     </>
   );
 }
+
+
+    
