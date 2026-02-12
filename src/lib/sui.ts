@@ -151,10 +151,12 @@ export async function getOwnedCharacters(walletAddress: string): Promise<SuiObje
     }
     console.log(`Found ${kioskOwnerCaps.length} kiosks.`);
 
-    const kiosks = await kioskClient.getKiosks({
-        ids: kioskOwnerCaps.map(c => c.kioskId),
+    const kioskPromises = kioskOwnerCaps.map(cap => kioskClient.getKiosk({
+        id: cap.kioskId,
         options: { withObjects: true, objectOptions: { showDisplay: true, showContent: true, showType: true } }
-    });
+    }));
+
+    const kiosks = await Promise.all(kioskPromises);
     
     let allItems: SuiObjectResponse[] = [];
     kiosks.forEach(kiosk => {
