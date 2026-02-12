@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   useCurrentAccount,
   useSignAndExecuteTransaction,
@@ -190,6 +190,7 @@ export default function GeneratorPage() {
   const [originDescription, setOriginDescription] = useState("");
   const [txHash, setTxHash] = useState<string>("");
   const [generatedMmr, setGeneratedMmr] = useState(0);
+  const [shufflingMmr, setShufflingMmr] = useState(0);
 
   const displayedLore = useTypewriter(generatedLore || "", 20);
   const isLoreTyping =
@@ -564,36 +565,42 @@ export default function GeneratorPage() {
   };
 
   const handleGenerate = async () => {
-    setLoading(true);
-    setShowExitLoader(false);
-    setError("");
-    setGeneratedImage(null);
-    setGeneratedLore(null);
-    setGeneratedImageBlob(null);
-    setGeneratedName("");
-    setOriginDescription("");
-    setTxHash("");
-    setLoadingStepIndex(0);
-    setGeneratedMmr(calculateMMR());
-
-    navigate("page-preview");
-
-    // ── Easter Egg Short-Circuit ──
-    if (activeEgg) {
-      setShowExitLoader(true);
-      setTimeout(() => {
-        setGeneratedName(activeEgg.name);
-        setOriginDescription("a legend of the Kapogian realm");
-        setGeneratedLore(activeEgg.lore);
-        setGeneratedImage(activeEgg.imagePath);
-        setGeneratedImageBlob(null);
-        setLoading(false);
-        setShowExitLoader(false);
-      }, 6500);
-      return;
-    }
-
+    let shuffleInterval: NodeJS.Timeout | undefined;
     try {
+        setLoading(true);
+        setShowExitLoader(false);
+        setError("");
+        setGeneratedImage(null);
+        setGeneratedLore(null);
+        setGeneratedImageBlob(null);
+        setGeneratedName("");
+        setOriginDescription("");
+        setTxHash("");
+        setLoadingStepIndex(0);
+        setGeneratedMmr(calculateMMR());
+        
+        shuffleInterval = setInterval(() => {
+          setShufflingMmr(Math.floor(Math.random() * 999));
+        }, 75);
+
+        navigate("page-preview");
+
+        // ── Easter Egg Short-Circuit ──
+        if (activeEgg) {
+          if (shuffleInterval) clearInterval(shuffleInterval);
+          setShowExitLoader(true);
+          setTimeout(() => {
+            setGeneratedName(activeEgg.name);
+            setOriginDescription("a legend of the Kapogian realm");
+            setGeneratedLore(activeEgg.lore);
+            setGeneratedImage(activeEgg.imagePath);
+            setGeneratedImageBlob(null);
+            setLoading(false);
+            setShowExitLoader(false);
+          }, 6500);
+          return;
+        }
+
       // Step 1: Generate name and origin description
       const namePromise = characterName
         ? Promise.resolve(characterName)
@@ -646,6 +653,7 @@ export default function GeneratorPage() {
       // Step 4: Trigger the exit animation then update state
       setShowExitLoader(true);
       setTimeout(() => {
+        if (shuffleInterval) clearInterval(shuffleInterval);
         setGeneratedName(nameToUse);
         setOriginDescription(originDesc);
         setGeneratedImageBlob(blob);
@@ -655,6 +663,7 @@ export default function GeneratorPage() {
         setShowExitLoader(false);
       }, 6500); // Duration for exit GIF
     } catch (err: any) {
+      if (shuffleInterval) clearInterval(shuffleInterval);
       console.error("Generation failed:", err);
       setError(
         err.message || "Failed to generate character. Please try again.",
@@ -1465,7 +1474,7 @@ export default function GeneratorPage() {
                         ) : (
                           <h1
                             style={{ fontSize: "42px" }}
-                            className="font-display font-bold uppercase tracking-tight leading-none border-b-8 border-yellow-300 inline-block"
+                            className="font-display font-bold uppercase tracking-tight leading-none border-b-8 border-yellow-300 inline-block animate__animated animate__fadeInUp"
                           >
                             {generatedName || "..."}
                           </h1>
@@ -1474,12 +1483,14 @@ export default function GeneratorPage() {
 
                       <div
                         style={{ fontSize: "16px" }}
-                        className="font-medium text-stone-700 leading-relaxed max-h-64 overflow-y-auto pr-2 custom-scrollbar"
+                        className="font-medium text-stone-700 leading-relaxed max-h-64 overflow-y-auto pr-2 custom-scrollbar animate__animated animate__fadeInUp"
                       >
                         {loading || !generatedLore ? (
                           <div className="space-y-3">
                             <Skeleton className="h-4 w-full" />
                             <Skeleton className="h-4 w-[90%]" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-[85%]" />
                           </div>
                         ) : (
                           renderMarkdown(generatedLore)
@@ -1500,7 +1511,7 @@ export default function GeneratorPage() {
                       </h3>
                     </div>
 
-                    {/* 2. Battle MMR (The focal point) */}
+                    {/* 2. Battle MMR */}
                     <div className="flex-1 p-6 bg-white flex flex-col items-center justify-center border-black">
                       <p
                         style={{ fontSize: "14px" }}
@@ -1508,42 +1519,43 @@ export default function GeneratorPage() {
                       >
                         Battle MMR
                       </p>
-                      <p
-                        style={{ fontSize: "24px" }}
-                        className="font-display font-bold uppercase leading-none text-black drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]"
-                      >
-                        {generatedMmr}
-                      </p>
+                        {loading ? (
+                            <p style={{ fontSize: "24px" }} className="font-display font-bold uppercase leading-none text-black/50 w-24 text-center">
+                                {shufflingMmr.toString().padStart(3, '0')}
+                            </p>
+                        ) : (
+                            <p style={{ fontSize: "24px" }} className="font-display font-bold uppercase leading-none text-black drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp">
+                                {generatedMmr}
+                            </p>
+                        )}
                     </div>
 
-                    {/* 3. Rank Display (Updated to White Bg & White Text) */}
+                    {/* 3. Rank Display */}
                     <div className="flex-1 p-6 flex flex-col items-center justify-center bg-white">
                       <p className="text-[14px] font-bold text-stone-500 uppercase tracking-widest mb-1">
                         Rank
                       </p>
-                      <h3
-                        style={{ fontSize: "24px" }}
-                        className="font-display font-bold uppercase leading-none text-black drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]"
-                      >
-                        {generatedMmr > 800
-                          ? "Mythic"
-                          : generatedMmr > 500
-                            ? "Elite"
-                            : "Adept"}
-                      </h3>
+                        {loading ? (
+                            <Skeleton className="h-6 w-24 mt-1" />
+                        ) : (
+                            <h3 style={{ fontSize: "24px" }} className="font-display font-bold uppercase leading-none text-black drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp">
+                                {generatedMmr > 800 ? "Mythic" : generatedMmr > 500 ? "Elite" : "Adept"}
+                            </h3>
+                        )}
                     </div>
 
-                    {/* 4. Lineage/Stats (Updated to White Bg & White Text) */}
+                    {/* 4. Lineage/Stats */}
                     <div className="flex-1 p-6 flex flex-col items-center justify-center bg-white">
                       <p className="text-[14px] font-bold text-stone-500 uppercase tracking-widest mb-1">
                         Lineage
                       </p>
-                      <p
-                        style={{ fontSize: "24px" }}
-                        className="font-display font-bold uppercase leading-none text-black drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]"
-                      >
-                        {gender || "Ancient"}
-                      </p>
+                        {loading ? (
+                            <Skeleton className="h-6 w-32 mt-1" />
+                        ) : (
+                            <p style={{ fontSize: "24px" }} className="font-display font-bold uppercase leading-none text-black drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp">
+                                {gender || "Ancient"}
+                            </p>
+                        )}
                     </div>
                   </div>
                 </div>
@@ -1551,17 +1563,28 @@ export default function GeneratorPage() {
               <div className="p-6 md:p-8 flex justify-between items-center border-t-4 border-black bg-stone-100">
                   <button
                       onClick={() => navigate("generator")}
-                      className="bg-white text-black border-4 border-black rounded-full w-16 h-16 md:w-20 md:h-20 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all"
+                      disabled={loading}
+                      className="bg-white text-black border-4 border-black rounded-full w-16 h-16 md:w-20 md:h-20 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                       <ArrowLeft className="w-8 h-8 md:w-10 md:h-10 stroke-[2.5]" />
                   </button>
                   <div className="text-center">
-                    <p className="font-display font-semibold text-lg uppercase">Character Confirmed!</p>
-                    <p className="text-sm text-stone-500">Next, select your merch.</p>
+                    {loading ? (
+                        <>
+                            <p className="font-display font-semibold text-lg uppercase">Summoning in Progress...</p>
+                            <p className="text-sm text-stone-500">Please wait, this can take a moment.</p>
+                        </>
+                    ) : (
+                        <>
+                            <p className="font-display font-semibold text-lg uppercase">Character Confirmed!</p>
+                            <p className="text-sm text-stone-500">Next, select your merch.</p>
+                        </>
+                    )}
                   </div>
                   <button
                       onClick={() => navigate("page-merch")}
-                      className="bg-pink-500 text-white border-4 border-black rounded-full w-16 h-16 md:w-20 md:h-20 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all"
+                      disabled={loading}
+                      className="bg-pink-500 text-white border-4 border-black rounded-full w-16 h-16 md:w-20 md:h-20 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-pink-300"
                   >
                       <ArrowRight className="w-8 h-8 md:w-10 md:h-10 stroke-[2.5]" />
                   </button>
@@ -1880,5 +1903,7 @@ export default function GeneratorPage() {
   );
 }
 
+
+    
 
     
