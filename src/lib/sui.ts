@@ -3,7 +3,8 @@
  */
 
 import { Transaction } from '@mysten/sui/transactions';
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient, SuiObjectResponse } from '@mysten/sui/client';
+import { KioskClient, Network } from '@mysten/kiosk';
 import { CONTRACT_ADDRESSES, MODULES, PRICING, NETWORK_CONFIG } from './constants';
 
 // Initialize SUI client
@@ -132,24 +133,44 @@ export async function upgradeToBundleNFT(params: {
 
 
 /**
- * Get owned Character NFTs for a wallet
+ * Get owned Character NFTs for a wallet (using Kiosk)
  */
-export async function getOwnedCharacters(walletAddress: string) {
+export async function getOwnedCharacters(walletAddress: string): Promise<SuiObjectResponse[]> {
   try {
-    const objects = await suiClient.getOwnedObjects({
-      owner: walletAddress,
-      filter: {
-        StructType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.CHARACTER_NFT}::Character`,
-      },
-      options: {
-        showContent: true,
-        showDisplay: true,
-      },
+    console.log("Fetching owned characters via Kiosk for address:", walletAddress);
+    const kioskClient = new KioskClient({
+      client: suiClient,
+      network: NETWORK_CONFIG.network === 'mainnet' ? Network.MAINNET : Network.TESTNET,
     });
 
-    return objects.data;
+    const { kioskOwnerCaps } = await kioskClient.getOwnedKiosks({ address: walletAddress });
+    
+    if (!kioskOwnerCaps || kioskOwnerCaps.length === 0) {
+      console.log("No kiosks found for address.");
+      return [];
+    }
+    console.log(`Found ${kioskOwnerCaps.length} kiosks.`);
+
+    const kiosks = await kioskClient.getKiosks({
+        ids: kioskOwnerCaps.map(c => c.kioskId),
+        options: { withObjects: true, objectOptions: { showDisplay: true, showContent: true, showType: true } }
+    });
+    
+    let allItems: SuiObjectResponse[] = [];
+    kiosks.forEach(kiosk => {
+        if (kiosk && kiosk.items) {
+            const characterItems = kiosk.items.filter(
+                (item: any) => item.data?.type === `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::Character`
+            );
+            const responses = characterItems.map(item => item.data).filter(Boolean) as SuiObjectResponse[];
+            allItems.push(...responses);
+        }
+    });
+
+    console.log(`Found ${allItems.length} character NFTs in kiosks.`);
+    return allItems;
   } catch (error) {
-    console.error('Failed to fetch owned characters:', error);
+    console.error('Failed to fetch owned characters from kiosks:', error);
     return [];
   }
 }

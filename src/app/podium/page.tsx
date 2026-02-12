@@ -66,9 +66,17 @@ export default function PodiumPage() {
         },
       });
 
-      const nftIds = allMintEvents.data
-        .map((event) => (event.parsedJson as any)?.nft_id)
-        .filter(Boolean);
+      // Step 1: Create a map of nft_id -> owner_address
+      const nftOwnerMap = new Map<string, string>();
+      allMintEvents.data.forEach(event => {
+          const nftId = (event.parsedJson as any)?.nft_id;
+          const owner = (event.parsedJson as any)?.owner;
+          if (nftId && owner) {
+              nftOwnerMap.set(nftId, owner);
+          }
+      });
+
+      const nftIds = Array.from(nftOwnerMap.keys());
 
       if (nftIds.length === 0) {
         setData([]);
@@ -88,7 +96,7 @@ export default function PodiumPage() {
       }
 
       const validObjects = characterObjects.filter(
-        (obj) => obj.data?.content?.dataType === "moveObject" && obj.data.owner,
+        (obj) => obj.data?.content?.dataType === "moveObject",
       );
 
       const ownerStats: Map<
@@ -103,7 +111,9 @@ export default function PodiumPage() {
       > = new Map();
 
       validObjects.forEach((obj: any) => {
-        const ownerAddress = obj.data.owner.AddressOwner;
+        const ownerAddress = nftOwnerMap.get(obj.data.objectId);
+        if (!ownerAddress) return;
+
         const currentMmr = Number(obj.data.content.fields.mmr);
 
         if (!ownerStats.has(ownerAddress)) {
@@ -187,8 +197,13 @@ export default function PodiumPage() {
   }: {
     users: (MmrEntry | SummonEntry | undefined)[];
   }) => {
-    const podiumOrder = users.length >= 3 ? [users[1], users[0], users[2]] : [];
-    
+    const podiumOrder = users.length >= 3 ? [users[1], users[0], users[2]] : users;
+    if (users.length === 2) {
+      podiumOrder.splice(2, 0, undefined);
+    } else if (users.length === 1) {
+      podiumOrder.splice(1, 0, undefined, undefined);
+    }
+
     return (
     <div className="flex flex-row justify-center items-end gap-2 md:gap-6 mb-12 w-full max-w-2xl mx-auto pt-4">
       {/* Rank 2 */}
@@ -197,7 +212,7 @@ export default function PodiumPage() {
           <>
             <div className="relative mb-3 transition-transform group-hover:scale-110 duration-300">
               <Image
-                src={(podiumOrder[0] as any).avatarImage}
+                src={(podiumOrder[0] as any).avatarImage || ''}
                 width={80}
                 height={80}
                 alt="Rank 2"
@@ -233,7 +248,7 @@ export default function PodiumPage() {
                 class="absolute -top-8 left-1/2 -translate-x-1/2 text-yellow-400 drop-shadow-sm text-3xl md:text-4xl animate-bounce"
               ></iconify-icon>
               <Image
-                src={(podiumOrder[1] as any).avatarImage}
+                src={(podiumOrder[1] as any).avatarImage || ''}
                 width={112}
                 height={112}
                 alt="Rank 1"
@@ -265,7 +280,7 @@ export default function PodiumPage() {
           <>
             <div className="relative mb-3 transition-transform group-hover:scale-110 duration-300">
               <Image
-                src={(podiumOrder[2] as any).avatarImage}
+                src={(podiumOrder[2] as any).avatarImage || ''}
                 width={80}
                 height={80}
                 alt="Rank 3"
@@ -301,6 +316,7 @@ export default function PodiumPage() {
     user: MmrEntry | SummonEntry;
     delayIndex: number;
   }) => {
+    const rank = user.rank;
     return (
       <div
         className="card-toy rounded-2xl md:rounded-3xl p-3 md:p-4 mb-3 flex items-center gap-3 md:gap-5 animate-pop-in cursor-default group transition-all"
@@ -308,12 +324,12 @@ export default function PodiumPage() {
       >
         <div className="w-10 md:w-12 flex-shrink-0 flex justify-center">
           <span className="text-sm md:text-base font-bold text-slate-400 bg-slate-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center rank-text group-hover:bg-sky-100 group-hover:text-sky-500 transition-colors">
-            #{user.rank}
+            #{rank}
           </span>
         </div>
         <div className="relative">
           <Image
-            src={user.avatarImage}
+            src={user.avatarImage || ''}
             width={48}
             height={48}
             alt="Avatar"
