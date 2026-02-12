@@ -193,11 +193,11 @@ export default function PodiumPage() {
     <div className="flex flex-row justify-center items-end gap-2 md:gap-6 mb-12 w-full max-w-2xl mx-auto pt-4">
       {/* Rank 2 */}
       <div className="w-1/3 flex flex-col items-center animate-float-2 group cursor-pointer">
-        {podiumOrder[1] && (
+        {podiumOrder[0] && (
           <>
             <div className="relative mb-3 transition-transform group-hover:scale-110 duration-300">
               <Image
-                src={(podiumOrder[1] as any).avatarImage}
+                src={(podiumOrder[0] as any).avatarImage}
                 width={80}
                 height={80}
                 alt="Rank 2"
@@ -211,13 +211,13 @@ export default function PodiumPage() {
               <div className="absolute top-0 left-0 w-full h-2 bg-white/30"></div>
               <span className="text-xs md:text-sm text-slate-500 font-bold mb-1 truncate w-full px-2">
                 {mode === 'mmr' 
-                  ? (podiumOrder[1] as MmrEntry).nftName 
-                  : `${(podiumOrder[1] as any).walletAddress.slice(0, 6)}...${(podiumOrder[1] as any).walletAddress.slice(-4)}`}
+                  ? (podiumOrder[0] as MmrEntry).nftName 
+                  : `${(podiumOrder[0] as any).walletAddress.slice(0, 6)}...${(podiumOrder[0] as any).walletAddress.slice(-4)}`}
               </span>
               <span className="text-sm md:text-lg font-extrabold text-slate-700">
                 {mode === "mmr"
-                  ? (podiumOrder[1] as MmrEntry)?.mmrScore?.toLocaleString()
-                  : (podiumOrder[1] as SummonEntry)?.totalNftSummon?.toLocaleString()}
+                  ? (podiumOrder[0] as MmrEntry)?.mmrScore?.toLocaleString()
+                  : (podiumOrder[0] as SummonEntry)?.totalNftSummon?.toLocaleString()}
               </span>
             </div>
           </>
@@ -225,7 +225,7 @@ export default function PodiumPage() {
       </div>
       {/* Rank 1 */}
       <div className="w-1/3 flex flex-col items-center z-10 animate-float-1 group cursor-pointer -mx-1">
-        {podiumOrder[0] && (
+        {podiumOrder[1] && (
           <>
             <div className="relative mb-4 transition-transform group-hover:scale-110 duration-300">
               <iconify-icon
@@ -233,7 +233,7 @@ export default function PodiumPage() {
                 class="absolute -top-8 left-1/2 -translate-x-1/2 text-yellow-400 drop-shadow-sm text-3xl md:text-4xl animate-bounce"
               ></iconify-icon>
               <Image
-                src={(podiumOrder[0] as any).avatarImage}
+                src={(podiumOrder[1] as any).avatarImage}
                 width={112}
                 height={112}
                 alt="Rank 1"
@@ -247,13 +247,13 @@ export default function PodiumPage() {
               <div className="absolute top-0 left-0 w-full h-3 bg-white/30"></div>
               <span className="text-xs md:text-sm text-yellow-800/70 font-bold mb-1 truncate w-full px-2">
                  {mode === 'mmr' 
-                  ? (podiumOrder[0] as MmrEntry).nftName 
-                  : `${(podiumOrder[0] as any).walletAddress.slice(0, 6)}...${(podiumOrder[0] as any).walletAddress.slice(-4)}`}
+                  ? (podiumOrder[1] as MmrEntry).nftName 
+                  : `${(podiumOrder[1] as any).walletAddress.slice(0, 6)}...${(podiumOrder[1] as any).walletAddress.slice(-4)}`}
               </span>
               <span className="text-lg md:text-2xl font-extrabold text-yellow-900">
                 {mode === "mmr"
-                  ? (podiumOrder[0] as MmrEntry)?.mmrScore?.toLocaleString()
-                  : (podiumOrder[0] as SummonEntry)?.totalNftSummon?.toLocaleString()}
+                  ? (podiumOrder[1] as MmrEntry)?.mmrScore?.toLocaleString()
+                  : (podiumOrder[1] as SummonEntry)?.totalNftSummon?.toLocaleString()}
               </span>
             </div>
           </>
@@ -324,7 +324,7 @@ export default function PodiumPage() {
           <div className="text-sm md:text-base font-bold text-slate-700 truncate">
             {mode === 'mmr' 
               ? (user as MmrEntry).nftName 
-              : `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}`}
+              : `${(user as SummonEntry).walletAddress.slice(0, 6)}...${(user as SummonEntry).walletAddress.slice(-4)}`}
           </div>
           <div className="text-xs font-semibold text-slate-400 flex items-center gap-2"></div>
         </div>
