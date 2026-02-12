@@ -161,9 +161,9 @@ export async function getOwnedCharacters(walletAddress: string): Promise<SuiObje
     let allItems: SuiObjectResponse[] = [];
     kiosks.forEach(kiosk => {
         if (kiosk && kiosk.items) {
-            // CORRECTED: Filter by the `type` property directly on the KioskItem
+            // Filter by checking for a unique field in the display data (more reliable)
             const characterItems = kiosk.items.filter(
-                (item: any) => item.type === `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::Character`
+                (item: any) => item.data?.display?.data?.image_url
             );
             const responses = characterItems.map(item => item.data).filter(Boolean) as SuiObjectResponse[];
             allItems.push(...responses);
