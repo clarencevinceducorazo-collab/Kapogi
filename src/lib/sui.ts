@@ -157,63 +157,58 @@ export async function upgradeToBundleNFT(params: {
 
 
 /**
- * Get owned Character NFTs for a wallet (using Kiosk)
+ * Get owned Character NFTs for a wallet (event-based)
  */
 export async function getOwnedCharacters(walletAddress: string): Promise<SuiObjectResponse[]> {
   try {
-    console.log("Fetching owned characters via Kiosk for address:", walletAddress);
-    const kioskClient = new KioskClient({
-      client: suiClient,
-      network: NETWORK_CONFIG.network === 'mainnet' ? Network.MAINNET : Network.TESTNET,
+    console.log("Fetching owned characters for address:", walletAddress);
+
+    // Step 1: Query all mint events and filter for the current user.
+    const allMintEvents = await suiClient.queryEvents({
+      query: {
+        MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::CharacterMinted`,
+      },
+      order: 'descending',
     });
 
-    const { kioskOwnerCaps } = await kioskClient.getOwnedKiosks({ address: walletAddress });
-    
-    if (!kioskOwnerCaps || kioskOwnerCaps.length === 0) {
-      console.log("No kiosks found for address.");
-      return [];
+    const userMintEvents = allMintEvents.data.filter(
+        event => (event.parsedJson as any)?.owner === walletAddress
+    );
+
+    const nftIds = userMintEvents.map(event => (event.parsedJson as any)?.nft_id).filter(Boolean);
+
+    if (nftIds.length === 0) {
+        console.log("No characters minted by this user found.");
+        return [];
     }
-    console.log(`Found ${kioskOwnerCaps.length} kiosk(s).`);
 
-    const kioskPromises = kioskOwnerCaps.map(cap => kioskClient.getKiosk({
-        id: cap.kioskId,
-        options: { withObjects: true, objectOptions: { showDisplay: true, showContent: true, showType: true } }
-    }));
-
-    const kiosks = await Promise.all(kioskPromises);
+    // Step 2: Fetch the full object data for these NFTs.
+    // This is more reliable than kiosk filtering. Note: this shows all minted, not just currently owned.
+    // For a marketplace app, you would need to cross-reference with kiosk contents.
+    console.log(`Found ${nftIds.length} NFTs minted by user. Fetching details...`);
     
-    const characterNftType = `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::Character`;
-    console.log(`Filtering for NFT type: ${characterNftType}`);
-
-    const allCharacterObjects: SuiObjectResponse[] = [];
-
-    kiosks.forEach((kiosk, kioskIndex) => {
-      if (kiosk && kiosk.items) {
-        console.log(`Processing Kiosk #${kioskIndex + 1} (ID: ${kiosk.kioskId}), which contains ${kiosk.items.length} items.`);
-        
-        // Detailed logging for debugging
-        kiosk.items.forEach((item: any, itemIndex: number) => {
-            console.log(`  - Item ${itemIndex} type: ${item.data?.type}`);
+    const characterObjects: SuiObjectResponse[] = [];
+    const chunkSize = 50;
+    for (let i = 0; i < nftIds.length; i += chunkSize) {
+        const chunk = nftIds.slice(i, i + chunkSize);
+        const chunkObjects = await suiClient.multiGetObjects({
+            ids: chunk,
+            options: { showContent: true, showOwner: true, showDisplay: true },
         });
+        characterObjects.push(...chunkObjects);
+    }
+    
+    const validObjects = characterObjects.filter(obj => obj.data);
 
-        const characterItems = kiosk.items.filter(
-          (item: any) => item.data?.type === characterNftType
-        );
-        
-        console.log(`Found ${characterItems.length} matching character NFTs in this kiosk.`);
-        
-        const responses = characterItems.map((item: any) => item.data).filter(Boolean) as SuiObjectResponse[];
-        allCharacterObjects.push(...responses);
-      }
-    });
-
-    console.log(`Found a total of ${allCharacterObjects.length} character NFTs across all kiosks.`);
-    return allCharacterObjects;
+    console.log(`✅ Successfully fetched ${validObjects.length} character objects.`);
+    return validObjects;
+    
   } catch (error) {
-    console.error('Failed to fetch owned characters from kiosks:', error);
+    console.error('Failed to fetch owned characters:', error);
     return [];
   }
 }
+
 
 /**
  * Get owned Order Receipts for a wallet
