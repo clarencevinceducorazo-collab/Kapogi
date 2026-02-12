@@ -1,15 +1,14 @@
+"use client";
 
-'use client';
-
-import React, { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
-import Script from 'next/script';
-import Link from 'next/link';
-import { PageHeader } from '@/components/kapogian/page-header';
-import { PageFooter } from '@/components/kapogian/page-footer';
-import { suiClient } from '@/lib/sui';
-import { CONTRACT_ADDRESSES } from '@/lib/constants';
-import { getIPFSGatewayUrl } from '@/lib/pinata';
+import React, { useEffect, useState } from "react";
+import Image from "next/image";
+import Script from "next/script";
+import { PageHeader } from "@/components/kapogian/page-header";
+import { PageFooter } from "@/components/kapogian/page-footer";
+import { suiClient } from "@/lib/sui";
+import { CONTRACT_ADDRESSES } from "@/lib/constants";
+import { getIPFSGatewayUrl } from "@/lib/pinata";
+import { useCurrentAccount } from "@mysten/dapp-kit";
 
 // I have to define IconifyIcon for typescript since it's not a standard element
 declare global {
@@ -51,25 +50,17 @@ export default function PodiumPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const account = useCurrentAccount();
 
   const fetchData = async () => {
     setLoading(true);
     setError("");
     setCurrentPage(1);
     try {
-      // Fetch both SUI data and Supabase statuses in parallel
-      const [allMintEvents, { data: statusesData, error: dbError }] = await Promise.all([
-        suiClient.queryEvents({
-          query: { MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::CharacterMinted` },
-        }),
-        supabase.from('user_status').select('wallet_address, status, last_seen')
-      ]);
-      
-      if (dbError) throw dbError;
-
-      const statusMap = new Map<string, UserStatus>();
-      statusesData.forEach(s => {
-        statusMap.set(s.wallet_address, { status: s.status as UserStatus['status'], last_seen: s.last_seen });
+      const allMintEvents = await suiClient.queryEvents({
+        query: {
+          MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::CharacterMinted`,
+        },
       });
 
       const nftIds = allMintEvents.data
@@ -133,11 +124,8 @@ export default function PodiumPage() {
           stats.nftName = obj.data.content.fields.name;
         }
       });
-      
-      const processedData = Array.from(ownerStats.values()).map(user => {
-        const dbStatus = statusMap.get(user.walletAddress) || { status: 'offline' as const, last_seen: new Date(0).toISOString() };
-        return { ...user, ...dbStatus };
-      });
+
+      const processedData = Array.from(ownerStats.values());
 
       if (mode === "summon") {
         const sortedData: SummonEntry[] = processedData
@@ -168,127 +156,15 @@ export default function PodiumPage() {
   useEffect(() => {
     fetchData();
   }, [mode]);
-  
-  useEffect(() => {
-    const walletAddress = account?.address;
-    if (!walletAddress) {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-        setOnlineUsers({});
-        joinedRef.current = false;
-        userStatusRef.current = 'online';
-      }
-      return;
-    }
 
-    const presenceKey = `${walletAddress}-${crypto.randomUUID()}`;
-    channelRef.current = supabase.channel('online-users', {
-      config: {
-        presence: {
-          key: presenceKey,
-        },
-      },
-    });
-    
-    let activityThrottle = false;
-    const updateActivity = () => {
-      lastActiveRef.current = Date.now();
-      if (!joinedRef.current || activityThrottle) return;
-
-      if (userStatusRef.current === 'away') {
-        userStatusRef.current = 'online';
-        activityThrottle = true;
-        setTimeout(() => (activityThrottle = false), 10_000);
-
-        channelRef.current?.track({
-          wallet: walletAddress,
-          status: 'online',
-          last_active: lastActiveRef.current,
-        });
-        supabase.from('user_status').upsert({
-          wallet_address: walletAddress,
-          status: 'online',
-          last_seen: new Date().toISOString(),
-        });
-      }
-    };
-    
-    window.addEventListener('mousemove', updateActivity);
-    window.addEventListener('keydown', updateActivity);
-    window.addEventListener('scroll', updateActivity);
-
-    idleCheckIntervalRef.current = setInterval(() => {
-      if (Date.now() - lastActiveRef.current > IDLE_TIMEOUT) {
-        if (joinedRef.current && userStatusRef.current === 'online') {
-          userStatusRef.current = 'away';
-          channelRef.current?.track({
-            wallet: walletAddress,
-            status: 'away',
-            last_active: lastActiveRef.current,
-          });
-          supabase.from('user_status').upsert({
-            wallet_address: walletAddress,
-            status: 'away',
-            last_seen: new Date().toISOString(),
-          });
-        }
-      }
-    }, 30_000);
-
-    channelRef.current
-      .on('presence', { event: 'sync' }, () => {
-        setOnlineUsers(channelRef.current!.presenceState());
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          joinedRef.current = true;
-          lastActiveRef.current = Date.now();
-          await channelRef.current!.track({
-            wallet: walletAddress,
-            status: 'online',
-            last_active: lastActiveRef.current,
-          });
-          await supabase.from('user_status').upsert({
-            wallet_address: walletAddress,
-            status: 'online',
-            last_seen: new Date().toISOString(),
-          });
-        }
-      });
-
-    return () => {
-      if (walletAddress) {
-        // This fires on unmount (tab close, disconnect, etc.)
-        supabase.from('user_status').upsert({
-          wallet_address: walletAddress,
-          status: 'offline',
-          last_seen: new Date().toISOString(),
-        });
-      }
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-      if (idleCheckIntervalRef.current) {
-        clearInterval(idleCheckIntervalRef.current);
-      }
-      window.removeEventListener('mousemove', updateActivity);
-      window.removeEventListener('keydown', updateActivity);
-      window.removeEventListener('scroll', updateActivity);
-      setOnlineUsers({});
-      joinedRef.current = false;
-      userStatusRef.current = 'online';
-    };
-  }, [account?.address]);
-  
-
-  const switchMode = (newMode: 'mmr' | 'summon') => {
+  const switchMode = (newMode: "mmr" | "summon") => {
     if (mode === newMode) return;
     setMode(newMode);
   };
 
-  const totalPages = Math.ceil(data.length / ITEMS_PER_PAGE);
+  const podiumData = data.length >= 3 ? [data[1], data[0], data[2]] : [];
+  const listData = data.length > 3 ? data.slice(3) : [];
+  const totalPages = Math.ceil(listData.length / ITEMS_PER_PAGE) || 1;
 
   const changePage = (direction: number) => {
     setCurrentPage((prev) => {
@@ -302,8 +178,7 @@ export default function PodiumPage() {
   };
 
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const pagedData = data.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  const podiumData = currentPage === 1 ? [data[1], data[0], data[2]] : [];
+  const pagedData = listData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const Podium = ({
     users,
@@ -411,27 +286,13 @@ export default function PodiumPage() {
     </div>
   );
 
-  const ListItem = ({ user, delayIndex, presenceState }: { user: MmrEntry | SummonEntry; delayIndex: number; presenceState: PresenceState }) => {
-    const livePresence = Object.values(presenceState)
-      .flat()
-      .find((p: any) => p.wallet === user.walletAddress);
-
-    let finalStatus: 'online' | 'away' | 'offline' = user.status;
-    if (livePresence) {
-      finalStatus = (livePresence as any).status;
-    }
-      
-    let statusText = 'Offline';
-    let statusColorClass = 'bg-slate-400';
-
-    if (finalStatus === 'online') {
-        statusText = 'Online';
-        statusColorClass = 'bg-green-400';
-    } else if (finalStatus === 'away') {
-        statusText = 'Away';
-        statusColorClass = 'bg-yellow-400';
-    }
-      
+  const ListItem = ({
+    user,
+    delayIndex,
+  }: {
+    user: MmrEntry | SummonEntry;
+    delayIndex: number;
+  }) => {
     return (
       <div
         className="card-toy rounded-2xl md:rounded-3xl p-3 md:p-4 mb-3 flex items-center gap-3 md:gap-5 animate-pop-in cursor-default group transition-all"
@@ -452,10 +313,10 @@ export default function PodiumPage() {
           />
         </div>
         <div className="flex-1 min-w-0">
-            <div className="text-sm md:text-base font-bold text-slate-700 truncate">{user.walletAddress}</div>
-            <div className="text-xs font-semibold text-slate-400 flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${statusColorClass}`}></span> {statusText}
-            </div>
+          <div className="text-sm md:text-base font-bold text-slate-700 truncate">
+            {user.walletAddress}
+          </div>
+          <div className="text-xs font-semibold text-slate-400 flex items-center gap-2"></div>
         </div>
         <div className="text-right px-2">
           <div className="text-sm md:text-lg font-extrabold text-slate-800">
@@ -532,10 +393,20 @@ export default function PodiumPage() {
             </div>
           ) : (
             <div id="content-area" className="w-full">
-              {currentPage === 1 && data.length >= 3 && <Podium users={podiumData} />}
-              {pagedData.map((user, index) => (
-                <ListItem key={(user as any).walletAddress + index} user={user} delayIndex={index} />
-              ))}
+              {data.length >= 3 && <Podium users={podiumData} />}
+              {pagedData.length > 0 ? (
+                pagedData.map((user, index) => (
+                  <ListItem
+                    key={(user as any).walletAddress + index}
+                    user={user}
+                    delayIndex={index}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-10 text-slate-500 font-semibold">
+                  No data to display.
+                </div>
+              )}
             </div>
           )}
         </main>
@@ -556,7 +427,7 @@ export default function PodiumPage() {
               ></iconify-icon>
             </button>
             <span className="text-sm font-bold text-slate-600 font-mono w-20 text-center">
-              Page {currentPage}
+              Page {currentPage} of {totalPages}
             </span>
             <button
               onClick={() => changePage(1)}
