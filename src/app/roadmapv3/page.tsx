@@ -487,7 +487,7 @@ export default function RoadmapV3Page() {
 
                 <div className="absolute -bottom-5 -right-5 w-48 h-48 z-20 pointer-events-none select-none">
                   <Image
-                    src="/images/day1.gif"
+                    src="/images/Roadmaps/chibi-character/phase1.gif"
                     alt="Genesis phase character"
                     width={192}
                     height={192}
@@ -590,7 +590,7 @@ export default function RoadmapV3Page() {
 
                 <div className="absolute -bottom-4 -right-2 w-48 h-48 z-20 pointer-events-none select-none">
                   <Image
-                    src="/images/day2.gif"
+                    src="/images/Roadmaps/chibi-character/phase2.gif"
                     alt="Identity phase character"
                     width={192}
                     height={192}
@@ -689,17 +689,17 @@ export default function RoadmapV3Page() {
                   </div>
                 </div>
 
-                <div className="absolute -bottom-2 -right-2 w-44 h-44 z-20 pointer-events-none select-none">
-                  <Image
-                    src="/images/day3.gif"
-                    alt="Conquest phase character"
-                    width={176}
-                    height={176}
-                    className="w-full h-full object-contain chibi-character"
-                    style={{ animationDelay: "1s" }}
-                    unoptimized
-                  />
-                </div>
+                <div className="absolute -bottom-28 -right-40 w-[28rem] h-[28rem] z-20 pointer-events-none select-none">
+  <Image
+    src="/images/Roadmaps/chibi-character/phase3.gif"
+    alt="Conquest phase character"
+    width={796}
+    height={796}
+    className="w-full h-full object-contain chibi-character"
+    style={{ animationDelay: '1s' }}
+    unoptimized
+  />
+</div>
               </div>
             </div>
           </section>
@@ -791,7 +791,7 @@ export default function RoadmapV3Page() {
 
                 <div className="absolute -bottom-4 -right-4 w-52 h-52 z-20 pointer-events-none select-none">
                   <Image
-                    src="/images/day4.gif"
+                    src="/images/Roadmaps/chibi-character/phase4.gif"
                     alt="The Farm phase character"
                     width={208}
                     height={208}
@@ -897,7 +897,7 @@ export default function RoadmapV3Page() {
 
                 <div className="absolute -bottom-5 -right-5 w-48 h-48 z-20 pointer-events-none select-none">
                   <Image
-                    src="/images/day5.gif"
+                    src="/images/Roadmaps/chibi-character/phase5.gif"
                     alt="Expansion phase character"
                     width={192}
                     height={192}
@@ -976,7 +976,7 @@ export default function RoadmapV3Page() {
 
                 <div className="absolute -bottom-2 -right-4 w-48 h-48 z-20 pointer-events-none select-none">
                   <Image
-                    src="/images/celebrate.gif"
+                    src="/images/Roadmaps/chibi-character/pogi.gif"
                     alt="Finale phase character"
                     width={192}
                     height={192}
