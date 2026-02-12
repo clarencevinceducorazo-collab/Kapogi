@@ -23,12 +23,17 @@ export async function encryptShippingInfo(shippingInfo: ShippingInfo): Promise<s
   try {
     console.log('🔐 Encrypting shipping information...');
     
+    const adminPublicKey = ENCRYPTION_CONFIG.adminPublicKey;
+    if (!adminPublicKey || adminPublicKey.includes('YOUR_ADMIN_PUBLIC_KEY')) {
+      throw new Error('Admin public key is not configured. Please set NEXT_PUBLIC_ADMIN_PUBLIC_KEY in your .env file.');
+    }
+
     // Convert to JSON string
     const dataString = JSON.stringify(shippingInfo);
     
     // Encrypt using admin's public key
     const encrypted = await EthCrypto.encryptWithPublicKey(
-      ENCRYPTION_CONFIG.adminPublicKey,
+      adminPublicKey,
       dataString
     );
     
@@ -39,6 +44,9 @@ export async function encryptShippingInfo(shippingInfo: ShippingInfo): Promise<s
     return encryptedString;
   } catch (error) {
     console.error('❌ Encryption failed:', error);
+    if (error instanceof Error) {
+        throw error;
+    }
     throw new Error('Failed to encrypt shipping information');
   }
 }
