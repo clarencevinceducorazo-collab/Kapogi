@@ -15,6 +15,7 @@ console.log('🔍 Env variable:', process.env.NEXT_PUBLIC_SUI_RPC_URL);
 
 /**
  * Mint Character NFT with Order Receipt
+ * Checks for an existing kiosk and uses the appropriate minting function.
  */
 export async function mintCharacterNFT(params: {
   name: string;
@@ -25,44 +26,67 @@ export async function mintCharacterNFT(params: {
   itemsSelected: string;
   encryptedShippingInfo: string;
   encryptionPubkey: string;
+  walletAddress: string; // The address of the current user
   signAndExecute: any;
 }) {
   try {
-    console.log('🎨 Creating mint transaction...');
-
-    const tx = new Transaction();
-
-    // Split 20 SUI for payment (in MIST)
-    const [coin] = tx.splitCoins(tx.gas, [tx.pure.u64(PRICING.BASE_MINT)]);
-
-    // Get Clock object (0x6)
-    const clock = tx.object('0x6');
-
-    // Get shared MintCounter object
-    const mintCounter = tx.object(CONTRACT_ADDRESSES.MINT_COUNTER_ID);
-
-    // Call mint_character function
-    tx.moveCall({
-      target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.CHARACTER_NFT}::mint_character`,
-      arguments: [
-        mintCounter,
-        coin,
-        tx.pure.string(params.name),
-        tx.pure.string(params.description),
-        tx.pure.string(params.imageUrl),
-        tx.pure.string(params.attributes),
-        tx.pure.u64(params.mmr),
-        tx.pure.string(params.itemsSelected),
-        tx.pure.string(params.encryptedShippingInfo),
-        tx.pure.string(params.encryptionPubkey),
-        tx.object(CONTRACT_ADDRESSES.TRANSFER_POLICY_ID),
-        clock,
-      ],
+    console.log('🎨 Preparing mint transaction for address:', params.walletAddress);
+    const kioskClient = new KioskClient({
+      client: suiClient,
+      network: NETWORK_CONFIG.network === 'mainnet' ? Network.MAINNET : Network.TESTNET,
     });
 
-    console.log('📝 Executing transaction...');
+    // Check if the user has an existing kiosk
+    const { kioskOwnerCaps } = await kioskClient.getOwnedKiosks({ address: params.walletAddress });
 
-    // Sign and execute with correct format
+    const tx = new Transaction();
+    const [coin] = tx.splitCoins(tx.gas, [tx.pure.u64(PRICING.BASE_MINT)]);
+    const clock = tx.object('0x6');
+    const mintCounter = tx.object(CONTRACT_ADDRESSES.MINT_COUNTER_ID);
+    const transferPolicy = tx.object(CONTRACT_ADDRESSES.TRANSFER_POLICY_ID);
+
+    const commonArgs = [
+      tx.pure.string(params.name),
+      tx.pure.string(params.description),
+      tx.pure.string(params.imageUrl),
+      tx.pure.string(params.attributes),
+      tx.pure.u64(params.mmr),
+      tx.pure.string(params.itemsSelected),
+      tx.pure.string(params.encryptedShippingInfo),
+      tx.pure.string(params.encryptionPubkey),
+    ];
+
+    if (kioskOwnerCaps.length > 0) {
+      console.log('✅ Existing kiosk found. Using mint_to_existing_kiosk.');
+      const firstKioskCap = kioskOwnerCaps[0];
+      
+      tx.moveCall({
+        target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.CHARACTER_NFT}::mint_to_existing_kiosk`,
+        arguments: [
+          mintCounter,
+          coin,
+          ...commonArgs,
+          tx.object(firstKioskCap.kioskId),
+          tx.object(firstKioskCap.objectId),
+          transferPolicy,
+          clock,
+        ],
+      });
+    } else {
+      console.log('ℹ️ No kiosk found. Using mint_character to create a new one.');
+      tx.moveCall({
+        target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.CHARACTER_NFT}::mint_character`,
+        arguments: [
+          mintCounter,
+          coin,
+          ...commonArgs,
+          transferPolicy,
+          clock,
+        ],
+      });
+    }
+
+    console.log('📝 Executing transaction...');
     const result = await params.signAndExecute(
       {
         transaction: tx,
@@ -149,7 +173,7 @@ export async function getOwnedCharacters(walletAddress: string): Promise<SuiObje
       console.log("No kiosks found for address.");
       return [];
     }
-    console.log(`Found ${kioskOwnerCaps.length} kiosks.`);
+    console.log(`Found ${kioskOwnerCaps.length} kiosk(s).`);
 
     const kioskPromises = kioskOwnerCaps.map(cap => kioskClient.getKiosk({
         id: cap.kioskId,
@@ -158,20 +182,27 @@ export async function getOwnedCharacters(walletAddress: string): Promise<SuiObje
 
     const kiosks = await Promise.all(kioskPromises);
     
-    let allItems: SuiObjectResponse[] = [];
+    const characterNftType = `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::Character`;
+    console.log(`Filtering for NFT type: ${characterNftType}`);
+
+    const allCharacterObjects: SuiObjectResponse[] = [];
+
     kiosks.forEach(kiosk => {
-        if (kiosk && kiosk.items) {
-            // Filter by checking for a unique field in the display data (more reliable)
-            const characterItems = kiosk.items.filter(
-                (item: any) => item.data?.display?.data?.image_url
-            );
-            const responses = characterItems.map(item => item.data).filter(Boolean) as SuiObjectResponse[];
-            allItems.push(...responses);
-        }
+      if (kiosk && kiosk.items) {
+        console.log(`Kiosk ${kiosk.kioskId} contains ${kiosk.items.length} items.`);
+        const characterItems = kiosk.items.filter(
+          (item: any) => item.data?.data?.type === characterNftType
+        );
+        
+        console.log(`Found ${characterItems.length} matching character NFTs in this kiosk.`);
+        
+        const responses = characterItems.map((item: any) => item.data).filter(Boolean) as SuiObjectResponse[];
+        allCharacterObjects.push(...responses);
+      }
     });
 
-    console.log(`Found ${allItems.length} character NFTs in kiosks.`);
-    return allItems;
+    console.log(`Found a total of ${allCharacterObjects.length} character NFTs across all kiosks.`);
+    return allCharacterObjects;
   } catch (error) {
     console.error('Failed to fetch owned characters from kiosks:', error);
     return [];

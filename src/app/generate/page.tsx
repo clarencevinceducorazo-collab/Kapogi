@@ -787,9 +787,10 @@ export default function GeneratorPage() {
         itemsSelected: itemsSelected,
         encryptedShippingInfo: encryptedString,
         encryptionPubkey: ENCRYPTION_CONFIG.adminPublicKey,
+        walletAddress: account.address,
         signAndExecute,
       });
-      console.log("✅ Mint successful!", result);
+      console.log('✅ Mint successful!', result);
 
       if ("digest" in result) {
         setTxHash(result.digest);
