@@ -187,11 +187,17 @@ export async function getOwnedCharacters(walletAddress: string): Promise<SuiObje
 
     const allCharacterObjects: SuiObjectResponse[] = [];
 
-    kiosks.forEach(kiosk => {
+    kiosks.forEach((kiosk, kioskIndex) => {
       if (kiosk && kiosk.items) {
-        console.log(`Kiosk ${kiosk.kioskId} contains ${kiosk.items.length} items.`);
+        console.log(`Processing Kiosk #${kioskIndex + 1} (ID: ${kiosk.kioskId}), which contains ${kiosk.items.length} items.`);
+        
+        // Detailed logging for debugging
+        kiosk.items.forEach((item: any, itemIndex: number) => {
+            console.log(`  - Item ${itemIndex} type: ${item.data?.type}`);
+        });
+
         const characterItems = kiosk.items.filter(
-          (item: any) => item.data?.data?.type === characterNftType
+          (item: any) => item.data?.type === characterNftType
         );
         
         console.log(`Found ${characterItems.length} matching character NFTs in this kiosk.`);
