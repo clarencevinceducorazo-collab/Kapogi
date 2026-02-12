@@ -4,13 +4,13 @@ export async function POST(request: NextRequest) {
   try {
     const { prompt } = await request.json();
     
-    const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       throw new Error("Missing GEMINI_API_KEY environment variable");
     }
     
     // Use EXACT endpoint from your working code
-    const imageApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+    const imageApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${apiKey}`;
     
     const payload = {
       instances: [{ prompt }],  // Array format
