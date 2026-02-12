@@ -54,6 +54,7 @@ export async function mintCharacterNFT(params: {
         tx.pure.string(params.itemsSelected),
         tx.pure.string(params.encryptedShippingInfo),
         tx.pure.string(params.encryptionPubkey),
+        tx.object(CONTRACT_ADDRESSES.TRANSFER_POLICY_ID),
         clock,
       ],
     });

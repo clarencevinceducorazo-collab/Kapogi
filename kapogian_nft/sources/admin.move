@@ -70,10 +70,6 @@ module kapogian_nft::admin {
     }
 
     /// ADMIN ONLY: Get full receipt details including ALL PRIVATE fields + ENCRYPTED DATA
-    /// This function can access ALL fields because it requires AdminCap
-    /// 
-    /// IMPORTANT: The encrypted_shipping_info needs to be DECRYPTED using your admin private key
-    /// Use the encryption_pubkey to verify it was encrypted with the correct key
     public fun get_receipt_details(
         _admin_cap: &AdminCap,
         receipt: &OrderReceipt
@@ -104,8 +100,8 @@ module kapogian_nft::admin {
             tracking_number,
             carrier,
             estimated_delivery,
-            encrypted_shipping_info,  // RESTORED: This is the encrypted data
-            encryption_pubkey          // RESTORED: This is the public key used
+            encrypted_shipping_info,
+            encryption_pubkey
         ) = order_receipt::get_receipt_info_admin(receipt);
         
         (
@@ -120,7 +116,7 @@ module kapogian_nft::admin {
             tracking_number,
             carrier,
             estimated_delivery,
-            encrypted_shipping_info,  // Admin must decrypt this
+            encrypted_shipping_info,
             encryption_pubkey
         )
     }
