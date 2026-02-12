@@ -380,7 +380,7 @@ export default function RoadmapV3Page() {
               </h1>
               <div className="h-px w-24 bg-slate-300 mb-6"></div>
               <p className="text-xl md:text-2xl font-medium text-slate-500 tracking-tight mb-2 max-w-xl">
-                Master Roadmap <span className="text-slate-900">2026–2027</span>
+                Master Roadmap <span className="text-slate-900">2026 to 2027</span>
               </p>
               <p className="text-sm text-slate-400 font-medium uppercase tracking-widest mb-12">
                 Multi-Dimensional Growth Strategy
