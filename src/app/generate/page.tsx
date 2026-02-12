@@ -18,6 +18,9 @@ import {
   LoaderCircle,
   Check,
   Shuffle,
+  Mouse,
+  User,
+  ShoppingBag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -72,6 +75,33 @@ interface Barangay {
   cityCode: string;
 }
 
+const merchProducts = {
+    tee: {
+        name: 'Tee',
+        colors: ['#3b82f6', '#ef4444', '#22c55e', '#171717', '#f3f4f6'],
+        sizes: ['S', 'M', 'L', 'XL'],
+        icon: Shirt
+    },
+    mug: {
+        name: 'Mug',
+        colors: ['#f3f4f6', '#ef4444', '#3b82f6', '#171717'],
+        sizes: [],
+        icon: Coffee
+    },
+    pad: {
+        name: 'Pad',
+        colors: [],
+        sizes: [],
+        icon: Mouse
+    },
+    hoodie: {
+        name: 'Hoodie',
+        colors: ['#171717', '#ef4444', '#3b82f6', '#d6d3d1'],
+        sizes: ['S', 'M', 'L', 'XL'],
+        icon: User,
+    }
+};
+
 export default function GeneratorPage() {
   const account = useCurrentAccount();
   const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
@@ -125,12 +155,13 @@ export default function GeneratorPage() {
   const [barangaysLoading, setBarangaysLoading] = useState(false);
 
   // Merch selection state
-  const [selection, setSelection] = useState<string | null>(null);
-  const [shirtSize, setShirtSize] = useState<string>("");
-  const [hoodieSize, setHoodieSize] = useState<string>("");
-  const [hoodieColor, setHoodieColor] = useState<string>("");
-  const SIZES = ["S", "M", "L", "XL"];
-  const COLORS = ["Red", "Blue", "Black"];
+  const [selection, setSelection] = useState<string | null>('Tee'); // Can be 'Tee', 'Mug', 'Pad', 'Hoodie', or 'Bundle'
+  const [shirtSize, setShirtSize] = useState<string>("M");
+  const [teeColor, setTeeColor] = useState<string>('#3b82f6');
+  const [mugColor, setMugColor] = useState<string>('#f3f4f6');
+  const [hoodieSize, setHoodieSize] = useState<string>("L");
+  const [hoodieColor, setHoodieColor] = useState<string>("Black");
+
 
   // Result State
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
@@ -750,25 +781,8 @@ export default function GeneratorPage() {
     }
   };
 
-  const handleSelection = (item: string) => {
-    if (selection === item) {
-      setSelection(null);
-      setShirtSize("");
-      setHoodieColor("");
-      setHoodieSize("");
-    } else {
-      setSelection(item);
-      if (item !== "Tee" && item !== "Bundle") {
-        setShirtSize("");
-      }
-      if (item !== "Hoodie" && item !== "Bundle") {
-        setHoodieColor("");
-        setHoodieSize("");
-      }
-    }
-  };
-
   const handleContinueToShipping = () => {
+    // This function is now called from the new merch page
     if (!selection) {
       setError("Please select at least one merchandise item or the bundle.");
       return;
@@ -837,6 +851,114 @@ export default function GeneratorPage() {
         <PageFooter />
       </>
     );
+  }
+
+  const SIZES = ["S", "M", "L", "XL"];
+  const HOODIE_COLORS = ["Black", "Red", "Blue", "Gray"];
+
+  const renderMerchControls = () => {
+    const activeProductKey = selection?.toLowerCase() as keyof typeof merchProducts | null;
+    
+    if (selection === 'Bundle') {
+        return (
+            <div id="bundle-view" className="transition-opacity duration-300 mb-8">
+                <div className="bg-white border-4 border-black rounded-2xl hard-shadow p-6 space-y-6">
+                    <div className="flex items-center justify-between border-b-4 border-black pb-4 mb-2">
+                        <h2 className="text-2xl font-bold uppercase tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Customize Bundle</h2>
+                        <span className="bg-yellow-300 border-2 border-black px-3 py-1 rounded-md text-xs font-bold uppercase">Save 20%</span>
+                    </div>
+
+                    {/* Bundle Item: Tee */}
+                    <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-gray-50 p-4 rounded-xl border-2 border-black/10">
+                        <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0"><Shirt className="text-3xl"/></div>
+                        <div className="flex-grow w-full">
+                            <div className="flex justify-between mb-2"><span className="font-bold uppercase text-sm">Tee Configuration</span></div>
+                            <div className="flex flex-wrap gap-4 items-center">
+                                <div className="flex gap-2">
+                                  {merchProducts.tee.colors.map(c => <button key={c} onClick={() => setTeeColor(c)} className={cn("w-6 h-6 rounded-full border border-black", teeColor === c && 'ring-1 ring-offset-1 ring-black scale-110')} style={{backgroundColor: c}}></button>)}
+                                </div>
+                                <div className="h-6 w-0.5 bg-gray-300 hidden md:block"></div>
+                                <div className="flex gap-1">
+                                  {merchProducts.tee.sizes.map(s => <button key={s} onClick={() => setShirtSize(s)} className={cn("w-8 h-8 rounded border border-black text-xs font-bold", shirtSize === s ? 'bg-black text-white' : 'bg-white text-black')}>{s}</button>)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {/* Bundle Item: Mug */}
+                     <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-gray-50 p-4 rounded-xl border-2 border-black/10">
+                        <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0"><Coffee className="text-3xl"/></div>
+                        <div className="flex-grow w-full">
+                            <div className="flex justify-between mb-2"><span className="font-bold uppercase text-sm">Mug Configuration</span></div>
+                             <div className="flex gap-2">
+                               {merchProducts.mug.colors.map(c => <button key={c} onClick={() => setMugColor(c)} className={cn("w-6 h-6 rounded-full border border-black", mugColor === c && 'ring-1 ring-offset-1 ring-black scale-110')} style={{backgroundColor: c}}></button>)}
+                            </div>
+                        </div>
+                    </div>
+                    {/* Bundle Item: Hoodie */}
+                    <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-gray-50 p-4 rounded-xl border-2 border-black/10">
+                        <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0"><User className="text-3xl"/></div>
+                        <div className="flex-grow w-full">
+                            <div className="flex justify-between mb-2"><span className="font-bold uppercase text-sm">Hoodie Configuration</span></div>
+                            <div className="flex flex-wrap gap-4 items-center">
+                                <div className="flex gap-2">
+                                    {HOODIE_COLORS.map(c => <button key={c} onClick={() => setHoodieColor(c)} className={cn("w-6 h-6 rounded-full border border-black", hoodieColor === c && 'ring-1 ring-offset-1 ring-black scale-110')} style={{backgroundColor: c.toLowerCase()}}></button>)}
+                                </div>
+                                <div className="h-6 w-0.5 bg-gray-300 hidden md:block"></div>
+                                <div className="flex gap-1">
+                                    {SIZES.map(s => <button key={s} onClick={() => setHoodieSize(s)} className={cn("w-8 h-8 rounded border border-black text-xs font-bold", hoodieSize === s ? 'bg-black text-white' : 'bg-white text-black')}>{s}</button>)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    if (!activeProductKey || !merchProducts[activeProductKey]) return null;
+    const product = merchProducts[activeProductKey];
+    const Icon = product.icon;
+
+    return (
+        <div id="single-view" className="transition-opacity duration-300">
+            <div className="bg-white border-4 border-black rounded-2xl hard-shadow mb-8 p-6 md:p-8 flex flex-col items-center justify-center relative min-h-[320px]">
+                <div className="w-48 h-48 md:w-56 md:h-56 flex items-center justify-center transition-all duration-300 mb-6">
+                    <Icon className="text-[10rem] drop-shadow-xl" style={{color: (activeProductKey === 'tee' ? teeColor : (activeProductKey === 'mug' ? mugColor : (activeProductKey === 'hoodie' ? hoodieColor.toLowerCase() : '#4b5563')))}} />
+                </div>
+                <div className="w-full max-w-md mx-auto space-y-5">
+                    <div className="flex justify-between items-end border-b-2 border-black pb-2">
+                        <h2 className="text-2xl font-bold uppercase tracking-tight">{product.name}</h2>
+                        <span className="text-lg font-bold">10 SUI</span>
+                    </div>
+                    <div className="space-y-4">
+                        {product.colors.length > 0 && (
+                            <div className="flex flex-wrap gap-3 justify-center">
+                                {product.colors.map(c => {
+                                    const isActive = (activeProductKey === 'tee' && teeColor === c) || (activeProductKey === 'mug' && mugColor === c) || (activeProductKey === 'hoodie' && hoodieColor.toLowerCase() === c.toLowerCase());
+                                    return <button key={c} onClick={() => {
+                                        if (activeProductKey === 'tee') setTeeColor(c);
+                                        if (activeProductKey === 'mug') setMugColor(c);
+                                        if (activeProductKey === 'hoodie') setHoodieColor(c.charAt(0).toUpperCase() + c.slice(1));
+                                    }} className={cn("w-8 h-8 rounded-full border-2 border-black transition-transform hover:scale-110", isActive && 'ring-2 ring-offset-2 ring-black')} style={{backgroundColor: c}}></button>
+                                })}
+                            </div>
+                        )}
+                        {product.sizes.length > 0 && (
+                            <div className="flex flex-wrap gap-2 justify-center">
+                                {product.sizes.map(s => {
+                                   const isActive = (activeProductKey === 'tee' && shirtSize === s) || (activeProductKey === 'hoodie' && hoodieSize === s);
+                                   return <button key={s} onClick={() => {
+                                        if (activeProductKey === 'tee') setShirtSize(s);
+                                        if (activeProductKey === 'hoodie') setHoodieSize(s);
+                                   }} className={cn("w-10 h-10 rounded-lg border-2 border-black font-bold text-sm transition-colors", isActive ? 'bg-black text-white' : 'bg-white hover:bg-gray-100')}>{s}</button>
+                                })}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
   }
 
   return (
@@ -1375,254 +1497,95 @@ export default function GeneratorPage() {
                   </div>
                 </div>
               </div>
-
-              <div className="stripe-bg p-6 md:p-8 flex-grow flex flex-col justify-center relative border-t-4 border-black">
-                <div className="flex justify-between items-end mb-6 relative z-10">
-                  <div>
-                    <h2
-                      className="font-display text-4xl font-semibold text-white tracking-tight drop-shadow-[4px_4px_0_#000]"
-                      style={{ WebkitTextStroke: "1.5px black" }}
-                    >
-                      THE STYLIST SHOP
-                    </h2>
-                    <div className="bg-white border-2 border-black px-2 py-0.5 rounded text-xs font-bold inline-block mt-1 uppercase tracking-wide shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-                      Holders Only Access
-                    </div>
-                  </div>
-                  <span className="font-display font-semibold text-white text-lg drop-shadow-md">
-                    FALL COLLECTION
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 relative z-10">
+              <div className="p-6 md:p-8 flex justify-between items-center border-t-4 border-black bg-stone-100">
                   <button
-                    onClick={() => handleSelection("Tee")}
-                    className={cn(
-                      "group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all",
-                      selection === "Tee" &&
-                        "bg-pink-100 ring-4 ring-offset-2 ring-pink-500",
-                    )}
+                      onClick={() => navigate("generator")}
+                      className="bg-white text-black border-4 border-black rounded-full w-16 h-16 md:w-20 md:h-20 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all"
                   >
-                    <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
-                      <Image
-                        src="/images/shirtrot.gif"
-                        alt="Tee"
-                        width={128}
-                        height={128}
-                        className="object-contain"
-                      />
-                    </div>
-                    <span className="font-display font-semibold uppercase">
-                      Tee
-                    </span>
+                      <ArrowLeft className="w-8 h-8 md:w-10 md:h-10 stroke-[2.5]" />
                   </button>
-                  <button
-                    onClick={() => handleSelection("Mug")}
-                    className={cn(
-                      "group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all",
-                      selection === "Mug" &&
-                        "bg-pink-100 ring-4 ring-offset-2 ring-pink-500",
-                    )}
-                  >
-                    <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
-                      <Image
-                        src="/images/mugzrot.gif"
-                        alt="Mug"
-                        width={128}
-                        height={128}
-                        className="object-contain"
-                      />
-                    </div>
-                    <span className="font-display font-semibold uppercase">
-                      Mug
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => handleSelection("Pad")}
-                    className={cn(
-                      "group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all",
-                      selection === "Pad" &&
-                        "bg-pink-100 ring-4 ring-offset-2 ring-pink-500",
-                    )}
-                  >
-                    <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
-                      <Image
-                        src="/images/padrot.gif"
-                        alt="Mouse Pad"
-                        width={128}
-                        height={128}
-                        className="object-contain"
-                      />
-                    </div>
-                    <span className="font-display font-semibold uppercase">
-                      Pad
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => handleSelection("Hoodie")}
-                    className={cn(
-                      "group bg-white border-4 border-black rounded-xl p-4 flex flex-col items-center gap-3 hard-shadow-sm hard-shadow-hover transition-all",
-                      selection === "Hoodie" &&
-                        "bg-pink-100 ring-4 ring-offset-2 ring-pink-500",
-                    )}
-                  >
-                    <div className="w-full aspect-square bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors p-2">
-                      <Image
-                        src="/images/hoodie_temp.png"
-                        alt="Hoodie"
-                        width={128}
-                        height={128}
-                        className="object-contain"
-                      />
-                    </div>
-                    <span className="font-display font-semibold uppercase">
-                      Hoodie
-                    </span>
-                  </button>
-                </div>
-
-                {(selection === "Tee" || selection === "Bundle") && (
-                  <div className="mb-6 bg-white border-4 border-black rounded-xl p-4 hard-shadow-sm relative z-10 animate__animated animate__fadeIn">
-                    <h3 className="font-display font-semibold text-xl mb-3 text-center">
-                      Select T-Shirt Size
-                    </h3>
-                    <div className="flex justify-center gap-2">
-                      {SIZES.map((size) => (
-                        <button
-                          key={size}
-                          onClick={() => setShirtSize(size)}
-                          className={cn(
-                            "w-14 h-14 font-display font-semibold text-lg border-4 border-black rounded-lg hard-shadow-sm hard-shadow-hover transition-all",
-                            shirtSize === size
-                              ? "bg-pink-500 text-white"
-                              : "bg-white text-black",
-                          )}
-                        >
-                          {size}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="text-center">
+                    <p className="font-display font-semibold text-lg uppercase">Character Confirmed!</p>
+                    <p className="text-sm text-stone-500">Next, select your merch.</p>
                   </div>
-                )}
-
-                {(selection === "Hoodie" || selection === "Bundle") && (
-                  <div className="mb-6 bg-white border-4 border-black rounded-xl p-4 hard-shadow-sm relative z-10 animate__animated animate__fadeIn">
-                    <h3 className="font-display font-semibold text-xl mb-3 text-center">
-                      Select Hoodie Color & Size
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <h4 className="font-display font-semibold text-lg text-center mb-2">
-                          Color
-                        </h4>
-                        <div className="flex justify-center gap-2">
-                          {COLORS.map((color) => (
-                            <button
-                              key={color}
-                              onClick={() => setHoodieColor(color)}
-                              className={cn(
-                                "w-16 h-10 font-display font-semibold text-sm border-4 border-black rounded-lg hard-shadow-sm hard-shadow-hover transition-all",
-                                "active:translate-y-1 active:translate-x-1 active:shadow-[2px_2px_0px_#000]",
-                                hoodieColor !== color &&
-                                  "bg-gray-200 text-gray-500",
-                              )}
-                              style={{
-                                backgroundColor:
-                                  hoodieColor === color
-                                    ? color.toLowerCase()
-                                    : "",
-                                color:
-                                  hoodieColor === color
-                                    ? color === "Black"
-                                      ? "white"
-                                      : "black"
-                                    : "",
-                              }}
-                            >
-                              {color}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <h4 className="font-display font-semibold text-lg text-center mb-2">
-                          Size
-                        </h4>
-                        <div className="flex justify-center gap-2">
-                          {SIZES.map((size) => (
-                            <button
-                              key={size}
-                              onClick={() => setHoodieSize(size)}
-                              className={cn(
-                                "w-14 h-14 font-display font-semibold text-lg border-4 border-black rounded-lg hard-shadow-sm hard-shadow-hover transition-all",
-                                hoodieSize === size
-                                  ? "bg-pink-500 text-white"
-                                  : "bg-white text-black",
-                              )}
-                            >
-                              {size}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <button
-                  onClick={() => handleSelection("Bundle")}
-                  className={cn(
-                    "bg-[#FFC83D] border-4 border-black rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 hard-shadow-sm relative z-10 transition-all",
-                    selection === "Bundle" &&
-                      "ring-4 ring-offset-2 ring-pink-500",
-                  )}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 bg-white border-4 border-black rounded-md flex items-center justify-center">
-                      {selection === "Bundle" && (
-                        <Check className="w-6 h-6 text-black" />
-                      )}
-                    </div>
-                    <div className="flex flex-col text-left">
-                      <span className="font-display font-semibold text-xl uppercase leading-none">
-                        The "All-In" Bundle
-                      </span>
-                      <span className="text-sm font-medium leading-tight">
-                        Save 20% when you grab the whole set.
-                      </span>
-                    </div>
-                  </div>
-                  <div className="bg-black text-white font-display font-semibold px-6 py-3 rounded-lg border-2 border-white shadow-[4px_4px_0px_rgba(0,0,0,0.2)] hover:scale-105 transition-transform uppercase text-base">
-                    {selection === "Bundle"
-                      ? "Selected (+10 SUI)"
-                      : "Upgrade (+10 SUI)"}
-                  </div>
-                </button>
-
-                {error && (
-                  <div className="mt-4 text-sm text-center bg-red-100 p-3 rounded-lg border border-red-300 text-red-700 relative z-10">
-                    {error}
-                  </div>
-                )}
-
-                <div className="absolute -bottom-4 -left-4 z-20">
                   <button
-                    onClick={() => navigate("generator")}
-                    className="bg-white text-black border-4 border-black rounded-full w-20 h-20 flex items-center justify-center hard-shadow hover:-rotate-12 transition-transform"
+                      onClick={() => navigate("page-merch")}
+                      className="bg-pink-500 text-white border-4 border-black rounded-full w-16 h-16 md:w-20 md:h-20 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all"
                   >
-                    <ArrowLeft className="w-10 h-10 stroke-[2.5]" />
+                      <ArrowRight className="w-8 h-8 md:w-10 md:h-10 stroke-[2.5]" />
                   </button>
-                </div>
-
-                <div className="absolute -bottom-4 -right-4 z-20">
-                  <button
-                    onClick={handleContinueToShipping}
-                    className="bg-pink-500 text-white border-4 border-black rounded-full w-20 h-20 flex items-center justify-center hard-shadow hover:rotate-12 transition-transform"
-                  >
-                    <ArrowRight className="w-10 h-10 stroke-[2.5]" />
-                  </button>
-                </div>
               </div>
+            </section>
+            
+            <section
+                id="page-merch"
+                className={cn(
+                    "page-section flex flex-col h-full bg-blue-500",
+                    { "hidden": page !== "page-merch" },
+                    "bg-blue-500"
+                )}
+                style={{
+                    backgroundImage: "linear-gradient(45deg, #60a5fa 25%, transparent 25%, transparent 75%, #60a5fa 75%, #60a5fa), linear-gradient(45deg, #60a5fa 25%, transparent 25%, transparent 75%, #60a5fa 75%, #60a5fa)",
+                    backgroundPosition: "0 0, 20px 20px",
+                    backgroundSize: "40px 40px"
+                }}
+            >
+                <div className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center shrink-0 border-b-4 border-black">
+                     <div>
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white uppercase drop-shadow-sm" style={{ textShadow: "2px 2px 0px black" }}>
+                            The Stylist Shop
+                        </h1>
+                        <div className="inline-flex items-center gap-2 mt-2 bg-black px-3 py-1 rounded-full shadow-[2px_2px_0px_#000]">
+                             <Sparkles className="text-yellow-400 text-sm w-4 h-4" />
+                            <span className="text-xs font-bold tracking-tight uppercase text-white">Season 2 Collection</span>
+                        </div>
+                    </div>
+                     <div className="mt-2 md:mt-0 bg-white border-2 border-black px-4 py-2 rounded-lg shadow-[2px_2px_0px_#000]">
+                         <span className="text-black font-bold tracking-tight uppercase text-sm">Cart: {selection === 'Bundle' ? 4 : (selection ? 1 : 0)} items</span>
+                    </div>
+                </div>
+
+                <div className="overflow-y-auto flex-grow p-6 md:p-8">
+                  {renderMerchControls()}
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                      {(Object.keys(merchProducts) as Array<keyof typeof merchProducts>).map(key => {
+                          const product = merchProducts[key];
+                          const Icon = product.icon;
+                          return (
+                              <button key={key} onClick={() => setSelection(product.name)} className={cn("group bg-white rounded-xl border-4 border-black p-4 flex flex-col items-center hard-shadow hover:-translate-y-1 transition-all", selection === product.name && "translate-y-1 shadow-none bg-yellow-300")}>
+                                  <Icon className="text-4xl mb-2"/>
+                                  <span className="text-sm font-bold uppercase tracking-tight">{product.name}</span>
+                              </button>
+                          )
+                      })}
+                  </div>
+                  
+                  <div onClick={() => setSelection('Bundle')} className={cn("relative bg-yellow-400 border-4 border-black rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 hard-shadow hover:-translate-y-1 transition-all cursor-pointer group", selection === 'Bundle' && "translate-y-1 shadow-none bg-yellow-300")}>
+                      <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full border-4 border-black bg-white flex items-center justify-center group-hover:bg-black transition-colors">
+                              <ShoppingBag className="text-xl text-black group-hover:text-white"/>
+                          </div>
+                          <div>
+                              <h3 className="text-lg font-bold uppercase tracking-tight leading-none">The All-In Bundle</h3>
+                              <p className="text-xs font-bold text-black/70 mt-1 uppercase tracking-wide">Includes Tee, Mug, Pad, Hoodie</p>
+                          </div>
+                      </div>
+                      <div className="bg-black text-white px-6 py-2 rounded-full text-sm font-bold uppercase tracking-tight whitespace-nowrap">
+                          Upgrade Bundle
+                      </div>
+                  </div>
+                </div>
+
+                <div className="p-4 flex justify-between items-center border-t-4 border-black bg-blue-500 shrink-0">
+                  <button onClick={() => navigate('page-preview')} className="bg-white text-black border-4 border-black rounded-full w-14 h-14 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all">
+                      <ArrowLeft className="w-8 h-8 stroke-[2.5]" />
+                  </button>
+                   {error && <div className="text-sm text-center bg-red-100 p-2 rounded-lg border border-red-300 text-red-700 max-w-xs">{error}</div>}
+                  <button onClick={handleContinueToShipping} className="bg-green-400 text-black border-4 border-black rounded-full w-14 h-14 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all">
+                      <ArrowRight className="w-8 h-8 stroke-[2.5]" />
+                  </button>
+                </div>
             </section>
 
             <section
