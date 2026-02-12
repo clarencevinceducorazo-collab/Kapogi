@@ -165,7 +165,7 @@ export default function PodiumPage() {
     setMode(newMode);
   };
 
-  const podiumData = data.length >= 3 ? [data[1], data[0], data[2]] : [];
+  const podiumData = data.slice(0, 3);
   const listData = data.slice(3);
   const totalPages = Math.ceil(listData.length / ITEMS_PER_PAGE) || 1;
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -186,15 +186,18 @@ export default function PodiumPage() {
     users,
   }: {
     users: (MmrEntry | SummonEntry | undefined)[];
-  }) => (
+  }) => {
+    const podiumOrder = users.length >= 3 ? [users[1], users[0], users[2]] : [];
+    
+    return (
     <div className="flex flex-row justify-center items-end gap-2 md:gap-6 mb-12 w-full max-w-2xl mx-auto pt-4">
       {/* Rank 2 */}
       <div className="w-1/3 flex flex-col items-center animate-float-2 group cursor-pointer">
-        {users[0] && (
+        {podiumOrder[1] && (
           <>
             <div className="relative mb-3 transition-transform group-hover:scale-110 duration-300">
               <Image
-                src={(users[0] as any).avatarImage}
+                src={(podiumOrder[1] as any).avatarImage}
                 width={80}
                 height={80}
                 alt="Rank 2"
@@ -207,13 +210,14 @@ export default function PodiumPage() {
             <div className="w-full h-32 md:h-40 rounded-t-2xl md:rounded-t-3xl podium-silver flex flex-col justify-end items-center p-3 text-center relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-2 bg-white/30"></div>
               <span className="text-xs md:text-sm text-slate-500 font-bold mb-1 truncate w-full px-2">
-                {(users[0] as any).walletAddress.slice(0, 6)}...
-                {(users[0] as any).walletAddress.slice(-4)}
+                {mode === 'mmr' 
+                  ? (podiumOrder[1] as MmrEntry).nftName 
+                  : `${(podiumOrder[1] as any).walletAddress.slice(0, 6)}...${(podiumOrder[1] as any).walletAddress.slice(-4)}`}
               </span>
               <span className="text-sm md:text-lg font-extrabold text-slate-700">
                 {mode === "mmr"
-                  ? (users[0] as MmrEntry)?.mmrScore?.toLocaleString()
-                  : (users[0] as SummonEntry)?.totalNftSummon?.toLocaleString()}
+                  ? (podiumOrder[1] as MmrEntry)?.mmrScore?.toLocaleString()
+                  : (podiumOrder[1] as SummonEntry)?.totalNftSummon?.toLocaleString()}
               </span>
             </div>
           </>
@@ -221,7 +225,7 @@ export default function PodiumPage() {
       </div>
       {/* Rank 1 */}
       <div className="w-1/3 flex flex-col items-center z-10 animate-float-1 group cursor-pointer -mx-1">
-        {users[1] && (
+        {podiumOrder[0] && (
           <>
             <div className="relative mb-4 transition-transform group-hover:scale-110 duration-300">
               <iconify-icon
@@ -229,7 +233,7 @@ export default function PodiumPage() {
                 class="absolute -top-8 left-1/2 -translate-x-1/2 text-yellow-400 drop-shadow-sm text-3xl md:text-4xl animate-bounce"
               ></iconify-icon>
               <Image
-                src={(users[1] as any).avatarImage}
+                src={(podiumOrder[0] as any).avatarImage}
                 width={112}
                 height={112}
                 alt="Rank 1"
@@ -242,13 +246,14 @@ export default function PodiumPage() {
             <div className="w-full h-44 md:h-52 rounded-t-2xl md:rounded-t-3xl podium-gold flex flex-col justify-end items-center p-3 text-center relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-3 bg-white/30"></div>
               <span className="text-xs md:text-sm text-yellow-800/70 font-bold mb-1 truncate w-full px-2">
-                {(users[1] as any).walletAddress.slice(0, 6)}...
-                {(users[1] as any).walletAddress.slice(-4)}
+                 {mode === 'mmr' 
+                  ? (podiumOrder[0] as MmrEntry).nftName 
+                  : `${(podiumOrder[0] as any).walletAddress.slice(0, 6)}...${(podiumOrder[0] as any).walletAddress.slice(-4)}`}
               </span>
               <span className="text-lg md:text-2xl font-extrabold text-yellow-900">
                 {mode === "mmr"
-                  ? (users[1] as MmrEntry)?.mmrScore?.toLocaleString()
-                  : (users[1] as SummonEntry)?.totalNftSummon?.toLocaleString()}
+                  ? (podiumOrder[0] as MmrEntry)?.mmrScore?.toLocaleString()
+                  : (podiumOrder[0] as SummonEntry)?.totalNftSummon?.toLocaleString()}
               </span>
             </div>
           </>
@@ -256,11 +261,11 @@ export default function PodiumPage() {
       </div>
       {/* Rank 3 */}
       <div className="w-1/3 flex flex-col items-center animate-float-3 group cursor-pointer">
-        {users[2] && (
+        {podiumOrder[2] && (
           <>
             <div className="relative mb-3 transition-transform group-hover:scale-110 duration-300">
               <Image
-                src={(users[2] as any).avatarImage}
+                src={(podiumOrder[2] as any).avatarImage}
                 width={80}
                 height={80}
                 alt="Rank 3"
@@ -273,20 +278,21 @@ export default function PodiumPage() {
             <div className="w-full h-24 md:h-32 rounded-t-2xl md:rounded-t-3xl podium-bronze flex flex-col justify-end items-center p-3 text-center relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-2 bg-white/30"></div>
               <span className="text-xs md:text-sm text-orange-800/60 font-bold mb-1 truncate w-full px-2">
-                {(users[2] as any).walletAddress.slice(0, 6)}...
-                {(users[2] as any).walletAddress.slice(-4)}
+                {mode === 'mmr' 
+                  ? (podiumOrder[2] as MmrEntry).nftName 
+                  : `${(podiumOrder[2] as any).walletAddress.slice(0, 6)}...${(podiumOrder[2] as any).walletAddress.slice(-4)}`}
               </span>
               <span className="text-sm md:text-lg font-extrabold text-orange-900">
                 {mode === "mmr"
-                  ? (users[2] as MmrEntry)?.mmrScore?.toLocaleString()
-                  : (users[2] as SummonEntry)?.totalNftSummon?.toLocaleString()}
+                  ? (podiumOrder[2] as MmrEntry)?.mmrScore?.toLocaleString()
+                  : (podiumOrder[2] as SummonEntry)?.totalNftSummon?.toLocaleString()}
               </span>
             </div>
           </>
         )}
       </div>
     </div>
-  );
+  )};
 
   const ListItem = ({
     user,
@@ -397,7 +403,7 @@ export default function PodiumPage() {
             </div>
           ) : (
             <div id="content-area" className="w-full">
-              {data.length >= 3 && <Podium users={podiumData} />}
+              {data.length > 0 && <Podium users={podiumData} />}
               
               <div className="mt-8">
                 {pagedData.length > 0 ? (
@@ -408,14 +414,16 @@ export default function PodiumPage() {
                       delayIndex={index}
                     />
                   ))
-                ) : data.length > 0 ? (
+                ) : data.length > 3 ? (
                    <div className="text-center py-10 text-slate-500 font-semibold">
                      No more users to display.
                    </div>
                 ) : (
-                  <div className="text-center py-10 text-slate-500 font-semibold">
-                    No data to display.
-                  </div>
+                  data.length === 0 && (
+                    <div className="text-center py-10 text-slate-500 font-semibold">
+                      No data to display.
+                    </div>
+                  )
                 )}
               </div>
             </div>
