@@ -30,16 +30,19 @@ export async function mintCharacterNFT(params: {
   signAndExecute: any;
 }) {
   try {
-    console.log('🎨 Preparing mint transaction for address:', params.walletAddress);
-    const kioskClient = new KioskClient({
-      client: suiClient,
-      network: NETWORK_CONFIG.network === 'mainnet' ? Network.MAINNET : Network.TESTNET,
+    const tx = new Transaction();
+    const sender = params.walletAddress;
+    console.log('🎨 Preparing mint transaction for address:', sender);
+
+    // Find the user's KioskOwnerCap directly
+    const ownedObjects = await suiClient.getOwnedObjects({
+        owner: sender,
+        filter: { StructType: '0x2::kiosk::KioskOwnerCap' },
+        options: { showContent: true }
     });
 
-    // Check if the user has an existing kiosk
-    const { kioskOwnerCaps } = await kioskClient.getOwnedKiosks({ address: params.walletAddress });
-
-    const tx = new Transaction();
+    const kioskCapObject = ownedObjects.data.find(obj => obj.data);
+    
     const [coin] = tx.splitCoins(tx.gas, [tx.pure.u64(PRICING.BASE_MINT)]);
     const clock = tx.object('0x6');
     const mintCounter = tx.object(CONTRACT_ADDRESSES.MINT_COUNTER_ID);
@@ -56,34 +59,41 @@ export async function mintCharacterNFT(params: {
       tx.pure.string(params.encryptionPubkey),
     ];
 
-    if (kioskOwnerCaps.length > 0) {
-      console.log('✅ Existing kiosk found. Using mint_to_existing_kiosk.');
-      const firstKioskCap = kioskOwnerCaps[0];
-      
-      tx.moveCall({
-        target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.CHARACTER_NFT}::mint_to_existing_kiosk`,
-        arguments: [
-          mintCounter,
-          coin,
-          ...commonArgs,
-          tx.object(firstKioskCap.kioskId),
-          tx.object(firstKioskCap.objectId),
-          transferPolicy,
-          clock,
-        ],
-      });
+    if (kioskCapObject && kioskCapObject.data?.content?.dataType === 'moveObject') {
+        console.log('✅ Existing KioskOwnerCap found. Using mint_to_existing_kiosk.');
+        
+        const kioskCapId = kioskCapObject.data.objectId;
+        // The Kiosk ID is stored in the `for` field of the KioskOwnerCap's content
+        const kioskId = (kioskCapObject.data.content.fields as any).for;
+
+        if (!kioskId) {
+            throw new Error("Could not determine kioskId from KioskOwnerCap");
+        }
+
+        tx.moveCall({
+            target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.CHARACTER_NFT}::mint_to_existing_kiosk`,
+            arguments: [
+                mintCounter,
+                coin,
+                ...commonArgs,
+                tx.object(kioskId),
+                tx.object(kioskCapId),
+                transferPolicy,
+                clock,
+            ],
+        });
     } else {
-      console.log('ℹ️ No kiosk found. Using mint_character to create a new one.');
-      tx.moveCall({
-        target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.CHARACTER_NFT}::mint_character`,
-        arguments: [
-          mintCounter,
-          coin,
-          ...commonArgs,
-          transferPolicy,
-          clock,
-        ],
-      });
+        console.log('ℹ️ No kiosk found for user. Using mint_character to create a new one.');
+        tx.moveCall({
+            target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.CHARACTER_NFT}::mint_character`,
+            arguments: [
+                mintCounter,
+                coin,
+                ...commonArgs,
+                transferPolicy,
+                clock,
+            ],
+        });
     }
 
     console.log('📝 Executing transaction...');
@@ -163,17 +173,20 @@ export async function getOwnedCharacters(walletAddress: string): Promise<SuiObje
   try {
     console.log("Fetching owned characters for address:", walletAddress);
 
-    // Step 1: Query all mint events and filter for the current user.
+    // Step 1: Query all mint events to find which NFTs were minted by this user.
     const allMintEvents = await suiClient.queryEvents({
       query: {
         MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::CharacterMinted`,
       },
       order: 'descending',
     });
+    console.log(`Found ${allMintEvents.data.length} total mint events.`);
+
 
     const userMintEvents = allMintEvents.data.filter(
         event => (event.parsedJson as any)?.owner === walletAddress
     );
+    console.log(`Found ${userMintEvents.length} mint events for this user.`);
 
     const nftIds = userMintEvents.map(event => (event.parsedJson as any)?.nft_id).filter(Boolean);
 
@@ -183,12 +196,10 @@ export async function getOwnedCharacters(walletAddress: string): Promise<SuiObje
     }
 
     // Step 2: Fetch the full object data for these NFTs.
-    // This is more reliable than kiosk filtering. Note: this shows all minted, not just currently owned.
-    // For a marketplace app, you would need to cross-reference with kiosk contents.
-    console.log(`Found ${nftIds.length} NFTs minted by user. Fetching details...`);
+    console.log(`Found ${nftIds.length} NFTs minted by user. Fetching details for IDs:`, nftIds);
     
     const characterObjects: SuiObjectResponse[] = [];
-    const chunkSize = 50;
+    const chunkSize = 50; // multiGetObjects has a limit of 50
     for (let i = 0; i < nftIds.length; i += chunkSize) {
         const chunk = nftIds.slice(i, i + chunkSize);
         const chunkObjects = await suiClient.multiGetObjects({
@@ -198,7 +209,15 @@ export async function getOwnedCharacters(walletAddress: string): Promise<SuiObje
         characterObjects.push(...chunkObjects);
     }
     
-    const validObjects = characterObjects.filter(obj => obj.data);
+    const validObjects = characterObjects.filter(obj => {
+        // Now, we need to check if the user STILL owns the NFT.
+        // The owner of the NFT object itself will either be the Kiosk ID or an address.
+        // The owner of the Kiosk is the user. This is complex to check here.
+        // A simpler (though not perfect for transfers) approach is to just return all MINTED items.
+        // For a true ownership check, we would need to check kiosk ownership again.
+        // For now, returning all minted items matches the Podium logic.
+        return obj.data;
+    });
 
     console.log(`✅ Successfully fetched ${validObjects.length} character objects.`);
     return validObjects;
