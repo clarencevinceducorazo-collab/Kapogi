@@ -687,8 +687,8 @@ export default function GeneratorPage() {
       setError("Character data is missing.");
       return;
     }
-    if (!account) {
-      setError("Wallet connection is missing.");
+    if (!account || !account.address) {
+      setError("Wallet not connected or address is missing.");
       return;
     }
 
@@ -796,6 +796,7 @@ export default function GeneratorPage() {
         itemsSelected: itemsSelected,
         encryptedShippingInfo: encryptedString,
         encryptionPubkey: ENCRYPTION_CONFIG.adminPublicKey,
+        walletAddress: account.address,
         signAndExecute,
       });
       console.log("✅ Mint successful!", result);
@@ -1911,8 +1912,3 @@ export default function GeneratorPage() {
     </>
   );
 }
-
-
-    
-
-    

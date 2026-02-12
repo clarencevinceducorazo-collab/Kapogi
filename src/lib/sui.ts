@@ -209,15 +209,7 @@ export async function getOwnedCharacters(walletAddress: string): Promise<SuiObje
         characterObjects.push(...chunkObjects);
     }
     
-    const validObjects = characterObjects.filter(obj => {
-        // Now, we need to check if the user STILL owns the NFT.
-        // The owner of the NFT object itself will either be the Kiosk ID or an address.
-        // The owner of the Kiosk is the user. This is complex to check here.
-        // A simpler (though not perfect for transfers) approach is to just return all MINTED items.
-        // For a true ownership check, we would need to check kiosk ownership again.
-        // For now, returning all minted items matches the Podium logic.
-        return obj.data;
-    });
+    const validObjects = characterObjects.filter(obj => obj.data);
 
     console.log(`✅ Successfully fetched ${validObjects.length} character objects.`);
     return validObjects;
