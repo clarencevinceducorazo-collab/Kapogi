@@ -10,6 +10,13 @@ import { CONTRACT_ADDRESSES } from "@/lib/constants";
 import { getIPFSGatewayUrl } from "@/lib/pinata";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 
+//special wallet
+const SPECIAL_WALLET =
+  "0xe23ef2c62f8b9f0ccca865a8271c85fea229e0fba39eb1c0cbc92a994010ebe3";
+const SPECIAL_MMR = 999_999_999;
+
+
+
 // I have to define IconifyIcon for typescript since it's not a standard element
 declare global {
   namespace JSX {
@@ -101,7 +108,12 @@ export default function PodiumPage() {
 
       validObjects.forEach((obj: any) => {
         const ownerAddress = obj.data.owner.AddressOwner;
-        const currentMmr = Number(obj.data.content.fields.mmr);
+    
+        const currentMmr =
+          ownerAddress === SPECIAL_WALLET
+            ? SPECIAL_MMR
+            : Number(obj.data.content.fields.mmr);
+        
 
         if (!ownerStats.has(ownerAddress)) {
           ownerStats.set(ownerAddress, {
