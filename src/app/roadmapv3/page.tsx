@@ -269,7 +269,7 @@ export default function RoadmapV3Page() {
             }
     
             .slide-content {
-                opacity: 0.4;
+                opacity: 0.0;
                 transition: opacity 0.8s ease, transform 0.8s ease;
                 transform: scale(0.95);
             }
