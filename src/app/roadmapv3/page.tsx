@@ -399,7 +399,7 @@ export default function RoadmapV3Page() {
 
           {/* 1. GENESIS (Q1 2026) */}
           <section
-            className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12"
+            className="slide-section w-[90vw] md:w-[600px] h-[65vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12"
             data-theme="#ECFDF5"
             data-phase="PHASE 1"
             data-bg-image="/images/Roadmaps/static/phase1.png"
@@ -485,7 +485,7 @@ export default function RoadmapV3Page() {
                   </div>
                 </div>
 
-                <div className="absolute -bottom-5 -right-5 w-48 h-48 z-20 pointer-events-none select-none">
+                <div className="absolute -bottom-5 -right-1 w-36 h-36 z-20 pointer-events-none select-none">
                   <Image
                     src="/images/Roadmaps/chibi-character/phase1.gif"
                     alt="Genesis phase character"
@@ -501,7 +501,7 @@ export default function RoadmapV3Page() {
 
           {/* 2. IDENTITY (Q1-Q2 2026) */}
           <section
-            className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12"
+            className="slide-section w-[90vw] md:w-[600px] h-[65vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12"
             data-theme="#ECFEFF"
             data-phase="PHASE 2"
             data-bg-image="/images/Roadmaps/static/phase2.png"
@@ -588,7 +588,7 @@ export default function RoadmapV3Page() {
                   </div>
                 </div>
 
-                <div className="absolute -bottom-4 -right-2 w-48 h-48 z-20 pointer-events-none select-none">
+                <div className="absolute -bottom-4 -right-2 w-36 h-36 z-20 pointer-events-none select-none">
                   <Image
                     src="/images/Roadmaps/chibi-character/phase2.gif"
                     alt="Identity phase character"
@@ -605,7 +605,7 @@ export default function RoadmapV3Page() {
 
           {/* 3. BIRINGAN (Q2-Q3 2026) */}
           <section
-            className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12"
+            className="slide-section w-[90vw] md:w-[600px] h-[65vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12"
             data-theme="#FAF5FF"
             data-phase="PHASE 3"
             data-bg-image="/images/Roadmaps/static/phase3.png"
@@ -689,7 +689,7 @@ export default function RoadmapV3Page() {
                   </div>
                 </div>
 
-                <div className="absolute -bottom-28 -right-40 w-[28rem] h-[28rem] z-20 pointer-events-none select-none">
+                <div className="absolute -bottom-20 -right-24 w-[18rem] h-[18rem] z-20 pointer-events-none select-none">
                   <Image
                     src="/images/Roadmaps/chibi-character/phase3.gif"
                     alt="Conquest phase character"
@@ -706,7 +706,7 @@ export default function RoadmapV3Page() {
 
           {/* 4. FARM RWA (Q3-Q4 2026) */}
           <section
-            className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12"
+            className="slide-section w-[90vw] md:w-[600px] h-[65vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12"
             data-theme="#FFF7ED"
             data-phase="PHASE 4"
             data-bg-image="/images/Roadmaps/static/phase4.png"
@@ -789,7 +789,7 @@ export default function RoadmapV3Page() {
                   </div>
                 </div>
 
-                <div className="absolute -bottom-4 -right-4 w-52 h-52 z-20 pointer-events-none select-none">
+                <div className="absolute -bottom-4 -right-4 w-36 h-36 z-20 pointer-events-none select-none">
                   <Image
                     src="/images/Roadmaps/chibi-character/phase4.gif"
                     alt="The Farm phase character"
@@ -806,7 +806,7 @@ export default function RoadmapV3Page() {
 
           {/* 5. EXPANSION (Q3 2027) */}
           <section
-            className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12"
+            className="slide-section w-[90vw] md:w-[600px] h-[65vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12"
             data-theme="#FEFCE8"
             data-phase="PHASE 5"
             data-bg-image="/images/Roadmaps/static/phase5.webp"
@@ -895,7 +895,7 @@ export default function RoadmapV3Page() {
                   </div>
                 </div>
 
-                <div className="absolute -bottom-5 -right-5 w-48 h-48 z-20 pointer-events-none select-none">
+                <div className="absolute -bottom-5 -right-5 w-36 h-36 z-20 pointer-events-none select-none">
                   <Image
                     src="/images/Roadmaps/chibi-character/phase5.gif"
                     alt="Expansion phase character"
@@ -912,7 +912,7 @@ export default function RoadmapV3Page() {
 
           {/* 6. FINALE (End 2027) */}
           <section
-            className="slide-section w-[90vw] md:w-[600px] h-[85vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12"
+            className="slide-section w-[90vw] md:w-[600px] h-[65vh] flex-shrink-0 flex items-center justify-center px-4 md:px-12"
             data-theme="#FDF2F8"
             data-phase="PHASE 6"
             data-bg-image="/images/Roadmaps/static/phase1.png"
@@ -974,12 +974,12 @@ export default function RoadmapV3Page() {
                   </Link>
                 </div>
 
-                <div className="absolute -bottom-2 -right-4 w-48 h-48 z-20 pointer-events-none select-none">
+                <div className="absolute -bottom-2 -right-4 w-36 h-36 z-20 pointer-events-none select-none">
                   <Image
                     src="/images/Roadmaps/chibi-character/pogi.gif"
                     alt="Finale phase character"
-                    width={192}
-                    height={192}
+                    width={162}
+                    height={162}
                     className="w-full h-full object-contain chibi-character"
                     style={{ animationDelay: "0.8s" }}
                     unoptimized
