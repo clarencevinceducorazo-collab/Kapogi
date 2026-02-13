@@ -692,7 +692,7 @@ export default function GeneratorPage() {
       setOriginDescription("");
       setTxHash("");
       setLoadingStepIndex(0);
-      setGeneratedMmr(calculateMMR());
+      setGeneratedMmr(4000);
       // Clear any previous egg overrides
       setEggRank(null);
       setEggLineage(null);

@@ -150,8 +150,10 @@ export default {
           '50%': { opacity: '0' },
         },
         'mythic-flow': {
-          '0%': { 'background-position': '0% 50%' },
-          '100%': { 'background-position': '200% 50%' },
+          '0%, 100%': { filter: 'drop-shadow(0 0 8px #ef4444)' },
+          '25%': { filter: 'drop-shadow(0 0 8px #8b5cf6)' },
+          '50%': { filter: 'drop-shadow(0 0 8px #facc15)' },
+          '75%': { filter: 'drop-shadow(0 0 8px #34d399)' },
         },
         'flame-pulse': {
           '0%, 100%': { 'text-shadow': '0 -2px 4px #ef4444, 0 -4px 10px #f59e0b, 0 0 5px rgba(239, 68, 68, 0.5)' },
@@ -179,7 +181,7 @@ export default {
         drive: 'drive 15s linear infinite',
         'drive-reverse': 'drive-reverse 20s linear infinite',
         'blink': 'blink 1s step-end infinite',
-        'mythic-flow': 'mythic-flow 3s linear infinite',
+        'mythic-flow': 'mythic-flow 4s ease-in-out infinite',
         'flame-pulse': 'flame-pulse 1.5s infinite alternate',
         'aura-breathe': 'aura-breathe 3s infinite ease-in-out',
       },
