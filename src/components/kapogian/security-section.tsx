@@ -38,9 +38,9 @@ export const SecuritySection = () => {
   // Secondary Summons List
   const summonsList = [
     { id: "0xe23e...ebe3", count: 10 },
-    { id: "0x4a99...2c31", count: 3 },
-    { id: "0x615a...48eb", count: 2 },
-    { id: "0x1189...2a8f", count: 2 },
+    { id: "0x4a99...2c31", count: 10 },
+    { id: "0x615a...48eb", count: 10 },
+    { id: "0x1189...2a8f", count: 10 },
   ];
 
   useEffect(() => {
