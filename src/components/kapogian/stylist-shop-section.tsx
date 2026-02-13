@@ -1,31 +1,39 @@
-import Image from 'next/image';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import Image from "next/image";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const StylistShopSection = () => {
   const products = [
-    { id: 'stylist-shop-tee', name: 'TEE' },
-    { id: 'stylist-shop-mug', name: 'MUG' },
-    { id: 'stylist-shop-pad', name: 'PAD' },
-    { id: 'stylist-shop-hoodie', name: 'Hoodie' },
+    { id: "stylist-shop-tee", name: "TEE" },
+    { id: "stylist-shop-mug", name: "MUG" },
+    { id: "stylist-shop-pad", name: "PAD" },
+    { id: "stylist-shop-hoodie", name: "Hoodie" },
   ];
 
   const productImages = [
     "/images/shirtrot.gif",
     "/images/mugzrot.gif",
     "/images/padrot.gif",
-    "/images/hoodie_temp.png"
+    "/images/merch-selection/hoodies/greyhoodie.gif",
+  ];
+
+  // Static versions of the images (first frame or separate static image)
+  const productImagesStatic = [
+    "/images/merch-selection/shirts/shirtLogo.png",
+    "/images/merch-selection/mug/mugLogo.png",
+    "/images/merch-selection/pads/mousepadLogo.png",
+    "/images/merch-selection/hoodies/hodieLogo.png", // Already static
   ];
 
   const avatar = PlaceHolderImages.find(
-    (img) => img.id === 'stylist-shop-avatar'
+    (img) => img.id === "stylist-shop-avatar",
   );
   const charLeft = PlaceHolderImages.find(
-    (img) => img.id === 'stylist-shop-char-left'
+    (img) => img.id === "stylist-shop-char-left",
   );
   const charRight = PlaceHolderImages.find(
-    (img) => img.id === 'stylist-shop-char-right'
+    (img) => img.id === "stylist-shop-char-right",
   );
 
   return (
@@ -33,7 +41,7 @@ export const StylistShopSection = () => {
       <div className="container mx-auto relative z-10 text-center">
         <h2
           className="font-headline text-6xl md:text-8xl font-bold text-white uppercase mb-16"
-          style={{ textShadow: '3px 3px 0 #000' }}
+          style={{ textShadow: "3px 3px 0 #000" }}
         >
           The Stylist Shop
         </h2>
@@ -42,7 +50,7 @@ export const StylistShopSection = () => {
           {charLeft && (
             <div
               className="absolute -bottom-24 -left-20 z-20 hidden md:block"
-              style={{ transform: 'translateX(-20%)' }}
+              style={{ transform: "translateX(-20%)" }}
             >
               <Image
                 src="/images/long.png"
@@ -57,7 +65,7 @@ export const StylistShopSection = () => {
 
           <div
             className="relative z-10 bg-primary rounded-3xl border-4 border-black p-6 md:p-8"
-            style={{ boxShadow: '8px 8px 0px #000' }}
+            style={{ boxShadow: "8px 8px 0px #000" }}
           >
             <div className="flex flex-col md:flex-row items-center justify-between border-b-2 border-primary-foreground/20 pb-4 mb-6">
               <div className="flex items-center gap-4">
@@ -83,22 +91,33 @@ export const StylistShopSection = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
               {products.map((product, index) => {
                 const image = PlaceHolderImages.find(
-                  (img) => img.id === product.id
+                  (img) => img.id === product.id,
                 );
                 return (
                   <div
                     key={product.id}
-                    className="bg-white rounded-2xl border-4 border-black p-4 flex flex-col items-center justify-between text-center aspect-[3/4]"
+                    className="bg-white rounded-2xl border-4 border-black p-4 flex flex-col items-center justify-between text-center aspect-[3/4] group cursor-pointer transition-transform hover:scale-105"
                   >
-                    <div className="relative w-full flex-grow mb-4">
+                    <div className="relative w-full flex-grow mb-4 overflow-hidden">
                       {image && (
-                        <Image
-                          src={productImages[index]}
-                          alt={image.description}
-                          fill
-                          className="object-contain"
-                          data-ai-hint={image.imageHint}
-                        />
+                        <>
+                          {/* Static image - visible by default */}
+                          <Image
+                            src={productImagesStatic[index]}
+                            alt={image.description}
+                            fill
+                            className="object-contain transition-opacity duration-300 group-hover:opacity-0"
+                            data-ai-hint={image.imageHint}
+                          />
+                          {/* Animated GIF - visible on hover */}
+                          <Image
+                            src={productImages[index]}
+                            alt={image.description}
+                            fill
+                            className="object-contain absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                            data-ai-hint={image.imageHint}
+                          />
+                        </>
                       )}
                     </div>
                     <p className="font-headline text-black text-xl font-bold">
@@ -136,7 +155,7 @@ export const StylistShopSection = () => {
           {charRight && (
             <div
               className="absolute -bottom-24 -right-20 z-20 hidden md:block"
-              style={{ transform: 'translateX(20%)' }}
+              style={{ transform: "translateX(20%)" }}
             >
               <Image
                 src="/images/longs.png"
