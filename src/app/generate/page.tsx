@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   useCurrentAccount,
   useSignAndExecuteTransaction,
@@ -271,25 +271,25 @@ export default function GeneratorPage() {
     skinColor,
   });
 
-  const getRankFromMmr = (mmr: number): string => {
-    if (mmr >= 3951) return "Kapogian Ascendant";
-    if (mmr >= 3851) return "Master Rancher";
-    if (mmr >= 3701) return "Generational Tycoon";
-    if (mmr >= 3501) return "Cultural Icon";
-    if (mmr >= 3301) return "Eternal Light Bearer";
-    if (mmr >= 3101) return "Ritual Architect";
-    if (mmr >= 2801) return "Hall of Fame Immortal";
-    if (mmr >= 2501) return "Supreme Pogi";
-    if (mmr >= 2201) return "Proof of Pogi Elite";
-    if (mmr >= 1901) return "Aura God";
-    if (mmr >= 1601) return "Lord of Biringan";
-    if (mmr >= 1301) return "Fearless Descent";
-    if (mmr >= 1001) return "Dalaketnon Slayer";
-    if (mmr >= 701) return "Ghost Walker";
-    if (mmr >= 401) return "Initiate of Pogi";
-    if (mmr >= 251) return "Aura Touched";
-    if (mmr >= 101) return "Pogi Spark";
-    return "Spirit Seed";
+  const getRankFromMmr = (mmr: number): { name: string; color: string; rarity: string; } => {
+    if (mmr >= 3951) return { name: "Kapogian Ascendant", color: "bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-red-500 to-purple-600", rarity: "Top 0.005%" };
+    if (mmr >= 3851) return { name: "Master Rancher", color: "text-purple-600", rarity: "Top 0.02%" };
+    if (mmr >= 3701) return { name: "Generational Tycoon", color: "text-purple-600", rarity: "Top 0.04%" };
+    if (mmr >= 3501) return { name: "Cultural Icon", color: "text-red-600", rarity: "Top 0.08%" };
+    if (mmr >= 3301) return { name: "Eternal Light Bearer", color: "text-red-600", rarity: "Top 0.18%" };
+    if (mmr >= 3101) return { name: "Ritual Architect", color: "text-yellow-500", rarity: "Top 0.35%" };
+    if (mmr >= 2801) return { name: "Hall of Fame Immortal", color: "text-yellow-500", rarity: "Top 0.6%" };
+    if (mmr >= 2501) return { name: "Supreme Pogi", color: "text-yellow-500", rarity: "Top 1.2%" };
+    if (mmr >= 2201) return { name: "Proof of Pogi Elite", color: "text-emerald-500", rarity: "Top 2.5%" };
+    if (mmr >= 1901) return { name: "Aura God", color: "text-emerald-500", rarity: "Top 4%" };
+    if (mmr >= 1601) return { name: "Lord of Biringan", color: "text-emerald-500", rarity: "Top 7%" };
+    if (mmr >= 1301) return { name: "Fearless Descent", color: "text-sky-500", rarity: "Top 12%" };
+    if (mmr >= 1001) return { name: "Dalaketnon Slayer", color: "text-sky-500", rarity: "Top 18%" };
+    if (mmr >= 701) return { name: "Ghost Walker", color: "text-sky-500", rarity: "Top 28%" };
+    if (mmr >= 401) return { name: "Initiate of Pogi", color: "text-amber-800", rarity: "Top 45%" };
+    if (mmr >= 251) return { name: "Aura Touched", color: "text-amber-800", rarity: "Top 65%" };
+    if (mmr >= 101) return { name: "Pogi Spark", color: "text-amber-800", rarity: "Top 85%" };
+    return { name: "Spirit Seed", color: "text-slate-500", rarity: "Top 100%" };
   };
 
   const loadingSteps = [
@@ -915,7 +915,7 @@ export default function GeneratorPage() {
         imageUrl: finalImageUrl!,
         attributes: JSON.stringify({
           lineage: gender,
-          rank: displayRank,
+          rank: displayRankInfo.name,
           cuteness,
           confidence,
           tiliFactor,
@@ -1002,14 +1002,15 @@ export default function GeneratorPage() {
   };
 
   // Derived display values — egg overrides win when set
-  const displayRank = eggRank
-    ? eggRank
-    : getRankFromMmr(generatedMmr);
+  const displayRankInfo = useMemo(() => {
+    if (eggRank) {
+        return { name: eggRank, color: 'bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-red-500 to-purple-600', rarity: 'Legendary Find' };
+    }
+    return getRankFromMmr(generatedMmr);
+  }, [eggRank, generatedMmr]);
 
   const displayLineage = eggLineage ? eggLineage : gender || "Ancient";
-
-  const isEggActive = !!eggRank; // true after an egg has been revealed
-
+  
   if (!account) {
     return (
       <>
@@ -1664,7 +1665,7 @@ export default function GeneratorPage() {
                             style={{ fontSize: "42px" }}
                             className={cn(
                               "font-display font-bold uppercase tracking-tight leading-none inline-block animate__animated animate__fadeInUp",
-                              isEggActive
+                              (eggRank)
                                 ? "border-b-8 border-yellow-400"
                                 : "border-b-8 border-yellow-300",
                             )}
@@ -1724,7 +1725,7 @@ export default function GeneratorPage() {
                           style={{ fontSize: "24px" }}
                           className={cn(
                             "font-display font-bold uppercase leading-none drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp",
-                            isEggActive ? "text-yellow-500" : "text-black",
+                            (eggRank) ? "text-yellow-500" : "text-black",
                           )}
                         >
                           {generatedMmr}
@@ -1733,22 +1734,30 @@ export default function GeneratorPage() {
                     </div>
 
                     {/* 3. Rank */}
-                    <div className="flex-1 p-6 flex flex-col items-center justify-center bg-white">
+                    <div className="flex-1 p-6 flex flex-col items-center justify-center bg-white text-center">
                       <p className="text-[14px] font-bold text-stone-500 uppercase tracking-widest mb-1">
                         Rank
                       </p>
                       {loading ? (
-                        <Skeleton className="h-6 w-24 mt-1" />
+                        <div className="flex flex-col items-center gap-1 mt-1">
+                           <Skeleton className="h-6 w-32" />
+                           <Skeleton className="h-4 w-24" />
+                        </div>
                       ) : (
-                        <h3
-                          style={{ fontSize: "24px" }}
-                          className={cn(
-                            "font-display font-bold uppercase leading-none drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp",
-                            isEggActive ? "text-yellow-500" : "text-black",
-                          )}
-                        >
-                          {displayRank}
-                        </h3>
+                        <>
+                          <h3
+                            style={{ fontSize: "24px" }}
+                            className={cn(
+                              "font-display font-bold uppercase leading-none drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp",
+                              displayRankInfo.color,
+                            )}
+                          >
+                            {displayRankInfo.name}
+                          </h3>
+                           <p className={cn("text-xs font-bold mt-1 animate__animated animate__fadeInUp", displayRankInfo.color, "opacity-70")} style={{animationDelay: '100ms'}}>
+                            {displayRankInfo.rarity}
+                           </p>
+                        </>
                       )}
                     </div>
 
@@ -1764,7 +1773,7 @@ export default function GeneratorPage() {
                           style={{ fontSize: "24px" }}
                           className={cn(
                             "font-display font-bold uppercase leading-none drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp",
-                            isEggActive ? "text-yellow-500" : "text-black",
+                            (eggRank) ? "text-yellow-500" : "text-black",
                           )}
                         >
                           {displayLineage}
