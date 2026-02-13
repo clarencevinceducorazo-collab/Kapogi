@@ -261,6 +261,27 @@ export default function GeneratorPage() {
       }
     };
   }, [loading, showExitLoader, loadingSteps.length]);
+  
+  // Load shipping data from localStorage on mount/account change
+  useEffect(() => {
+    if (!account?.address) return;
+
+    const savedDataRaw = localStorage.getItem(`kapogian_shipping_${account.address}`);
+    if (savedDataRaw) {
+      try {
+        const data = JSON.parse(savedDataRaw);
+        setShippingName(data.name ?? "");
+        setShippingContact(data.contact ?? "");
+        setStreetAddress(data.street ?? "");
+        if (data.province) setSelectedProvince(data.province);
+        if (data.city) setSelectedCity(data.city);
+        if (data.barangay) setSelectedBarangay(data.barangay);
+      } catch (e) {
+        console.error("Failed to parse saved shipping data", e);
+      }
+    }
+  }, [account?.address]);
+
 
   // Fetch provinces on mount
   useEffect(() => {
@@ -287,10 +308,6 @@ export default function GeneratorPage() {
     if (selectedProvince) {
       const fetchCities = async () => {
         setCitiesLoading(true);
-        setCities([]);
-        setSelectedCity(null);
-        setBarangays([]);
-        setSelectedBarangay(null);
         try {
           const response = await fetch(
             `https://psgc.gitlab.io/api/provinces/${selectedProvince.code}/cities-municipalities/`,
@@ -306,7 +323,18 @@ export default function GeneratorPage() {
           setCitiesLoading(false);
         }
       };
-      fetchCities();
+
+      // If we are restoring from local storage, we don't want to reset the city
+      if (selectedCity?.provinceCode === selectedProvince.code) {
+        fetchCities();
+      } else {
+        // This is a manual change, so reset children
+        setCities([]);
+        setSelectedCity(null);
+        setBarangays([]);
+        setSelectedBarangay(null);
+        fetchCities();
+      }
     } else {
       setCities([]);
       setSelectedCity(null);
@@ -318,8 +346,6 @@ export default function GeneratorPage() {
     if (selectedCity) {
       const fetchBarangays = async () => {
         setBarangaysLoading(true);
-        setBarangays([]);
-        setSelectedBarangay(null);
         try {
           const response = await fetch(
             `https://psgc.gitlab.io/api/cities-municipalities/${selectedCity.code}/barangays/`,
@@ -335,7 +361,15 @@ export default function GeneratorPage() {
           setBarangaysLoading(false);
         }
       };
-      fetchBarangays();
+      
+      // If we are restoring from local storage, don't reset the barangay
+      if (selectedBarangay?.cityCode === selectedCity.code) {
+        fetchBarangays();
+      } else {
+        setBarangays([]);
+        setSelectedBarangay(null);
+        fetchBarangays();
+      }
     } else {
       setBarangays([]);
       setSelectedBarangay(null);
@@ -681,6 +715,25 @@ export default function GeneratorPage() {
       setShowExitLoader(false);
     }
   };
+  
+  const saveShippingToLocal = () => {
+    if (!account?.address) return;
+
+    const data = {
+      name: shippingName,
+      contact: shippingContact,
+      province: selectedProvince,
+      city: selectedCity,
+      barangay: selectedBarangay,
+      street: streetAddress,
+    };
+
+    localStorage.setItem(
+      `kapogian_shipping_${account.address}`,
+      JSON.stringify(data),
+    );
+    console.log("📦 Shipping info saved to local storage.");
+  };
 
   const handleMint = async () => {
     if (!generatedImageBlob && !activeEgg) {
@@ -803,6 +856,7 @@ export default function GeneratorPage() {
 
       if ("digest" in result) {
         setTxHash(result.digest);
+        saveShippingToLocal();
         navigate("page-receipt");
       } else {
         throw new Error("Minting did not return a transaction digest.");
