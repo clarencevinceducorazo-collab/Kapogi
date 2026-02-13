@@ -337,7 +337,7 @@ export default function RoadmapV3Page() {
         <div
           id="nav-ui"
           ref={navUiRef}
-          className="fixed top-0 left-0 w-full z-50 px-8 py-6 flex justify-end items-start transition-all duration-500 opacity-0 -translate-y-4"
+          className="fixed bottom-0 left-0 w-full z-50 px-8 py-6 flex justify-end items-start transition-all duration-500 opacity-0 -translate-y-4"
         >
           <div className="flex items-center gap-4 bg-white/80 backdrop-blur-md border border-black/5 px-4 py-2 rounded-full shadow-sm">
             <span
@@ -690,16 +690,16 @@ export default function RoadmapV3Page() {
                 </div>
 
                 <div className="absolute -bottom-28 -right-40 w-[28rem] h-[28rem] z-20 pointer-events-none select-none">
-  <Image
-    src="/images/Roadmaps/chibi-character/phase3.gif"
-    alt="Conquest phase character"
-    width={796}
-    height={796}
-    className="w-full h-full object-contain chibi-character"
-    style={{ animationDelay: '1s' }}
-    unoptimized
-  />
-</div>
+                  <Image
+                    src="/images/Roadmaps/chibi-character/phase3.gif"
+                    alt="Conquest phase character"
+                    width={796}
+                    height={796}
+                    className="w-full h-full object-contain chibi-character"
+                    style={{ animationDelay: "1s" }}
+                    unoptimized
+                  />
+                </div>
               </div>
             </div>
           </section>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -77,46 +76,98 @@ interface Barangay {
 }
 
 const merchProducts = {
-    tee: {
-        name: 'Tee',
-        icon: Shirt,
-        sizes: ['S', 'M', 'L', 'XL'],
-        colors: [
-            { name: 'Blue', value: '#3b82f6', image: '/images/merch-selection/shirts/blueshirt.gif' },
-            { name: 'Red', value: '#ef4444', image: '/images/merch-selection/shirts/redshirt.gif' },
-            { name: 'Black', value: '#171717', image: '/images/merch-selection/shirts/blackshirt.gif' },
-        ]
-    },
-    mug: {
-        name: 'Mug',
-        icon: Coffee,
-        sizes: [],
-        colors: [
-            { name: 'White', value: '#f3f4f6', image: '/images/merch-selection/mug/gifWhiteMug.gif' },
-            { name: 'Red', value: '#ef4444', image: '/images/merch-selection/mug/gifRedMug.gif' },
-            { name: 'Blue', value: '#3b82f6', image: '/images/merch-selection/mug/gifBlueMug.gif' },
-            { name: 'Black', value: '#171717', image: '/images/merch-selection/mug/gifBlackMug.gif' },
-        ]
-    },
-    pad: {
-        name: 'Pad',
-        icon: Mouse,
-        sizes: [],
-        colors: []
-    },
-    hoodie: {
-        name: 'Hoodie',
-        icon: User,
-        sizes: ['S', 'M', 'L', 'XL'],
-        colors: [
-            { name: 'Black', value: '#171717', image: '/images/merch-selection/hoodies/blackhoodie.gif' },
-            { name: 'Red', value: '#ef4444', image: '/images/merch-selection/hoodies/redhoodie.gif' },
-            { name: 'Blue', value: '#3b82f6', image: '/images/merch-selection/hoodies/bluehoodie.gif' },
-            { name: 'Grey', value: '#d6d3d1', image: '/images/merch-selection/hoodies/greyhoodie.gif' },
-            { name: 'Beige', value: '#f5f5dc', image: '/images/merch-selection/hoodies/biegehoodie.gif' },
-            { name: 'Cyan', value: '#22d3ee', image: '/images/merch-selection/hoodies/cyanhoodie.gif' },
-        ]
-    }
+  tee: {
+    name: "Tee",
+    icon: Shirt,
+    sizes: ["S", "M", "L", "XL"],
+    colors: [
+      {
+        name: "Blue",
+        value: "#3b82f6",
+        image: "/images/merch-selection/shirts/blueshirt.gif",
+      },
+      {
+        name: "Red",
+        value: "#ef4444",
+        image: "/images/merch-selection/shirts/redshirt.gif",
+      },
+      {
+        name: "Black",
+        value: "#171717",
+        image: "/images/merch-selection/shirts/blackshirt.gif",
+      },
+    ],
+  },
+  mug: {
+    name: "Mug",
+    icon: Coffee,
+    sizes: [],
+    colors: [
+      {
+        name: "White",
+        value: "#f3f4f6",
+        image: "/images/merch-selection/mug/gifWhiteMug.gif",
+      },
+      {
+        name: "Red",
+        value: "#ef4444",
+        image: "/images/merch-selection/mug/gifRedMug.gif",
+      },
+      {
+        name: "Blue",
+        value: "#3b82f6",
+        image: "/images/merch-selection/mug/gifBlueMug.gif",
+      },
+      {
+        name: "Black",
+        value: "#171717",
+        image: "/images/merch-selection/mug/gifBlackMug.gif",
+      },
+    ],
+  },
+  pad: {
+    name: "Pad",
+    icon: Mouse,
+    sizes: [],
+    colors: [],
+  },
+  hoodie: {
+    name: "Hoodie",
+    icon: User,
+    sizes: ["S", "M", "L", "XL"],
+    colors: [
+      {
+        name: "Black",
+        value: "#171717",
+        image: "/images/merch-selection/hoodies/blackhoodie.gif",
+      },
+      {
+        name: "Red",
+        value: "#ef4444",
+        image: "/images/merch-selection/hoodies/redhoodie.gif",
+      },
+      {
+        name: "Blue",
+        value: "#3b82f6",
+        image: "/images/merch-selection/hoodies/bluehoodie.gif",
+      },
+      {
+        name: "Grey",
+        value: "#d6d3d1",
+        image: "/images/merch-selection/hoodies/greyhoodie.gif",
+      },
+      {
+        name: "Beige",
+        value: "#f5f5dc",
+        image: "/images/merch-selection/hoodies/biegehoodie.gif",
+      },
+      {
+        name: "Cyan",
+        value: "#22d3ee",
+        image: "/images/merch-selection/hoodies/cyanhoodie.gif",
+      },
+    ],
+  },
 };
 
 export default function GeneratorPage() {
@@ -172,13 +223,12 @@ export default function GeneratorPage() {
   const [barangaysLoading, setBarangaysLoading] = useState(false);
 
   // Merch selection state
-  const [selection, setSelection] = useState<string | null>('Tee'); // Can be 'Tee', 'Mug', 'Pad', 'Hoodie', or 'Bundle'
+  const [selection, setSelection] = useState<string | null>("Tee"); // Can be 'Tee', 'Mug', 'Pad', 'Hoodie', or 'Bundle'
   const [shirtSize, setShirtSize] = useState<string>("M");
-  const [teeColor, setTeeColor] = useState<string>('#3b82f6');
-  const [mugColor, setMugColor] = useState<string>('#f3f4f6');
+  const [teeColor, setTeeColor] = useState<string>("#3b82f6");
+  const [mugColor, setMugColor] = useState<string>("#f3f4f6");
   const [hoodieSize, setHoodieSize] = useState<string>("L");
-  const [hoodieColor, setHoodieColor] = useState<string>('#171717');
-
+  const [hoodieColor, setHoodieColor] = useState<string>("#171717");
 
   // Result State
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
@@ -192,7 +242,9 @@ export default function GeneratorPage() {
   const [generatedMmr, setGeneratedMmr] = useState(0);
   const [shufflingMmr, setShufflingMmr] = useState(0);
 
-  const [generatedNamesHistory, setGeneratedNamesHistory] = useState<string[]>([]);
+  const [generatedNamesHistory, setGeneratedNamesHistory] = useState<string[]>(
+    [],
+  );
 
   const displayedLore = useTypewriter(generatedLore || "", 20);
   const isLoreTyping =
@@ -409,16 +461,17 @@ export default function GeneratorPage() {
   const generateName = async (): Promise<string> => {
     try {
       const context = getIdentityContext(gender);
-      const excludeList = generatedNamesHistory.length > 0
-        ? `Do not use any of these names: ${generatedNamesHistory.join(', ')}.`
-        : "";
+      const excludeList =
+        generatedNamesHistory.length > 0
+          ? `Do not use any of these names: ${generatedNamesHistory.join(", ")}.`
+          : "";
 
       const result = await generateText({
         prompt: `Generate a single unique name for a character who belongs to the ${gender} lineage (Identity Context: ${context}). The name can be from ANY country or culture in the world (Filipino, Spanish, Japanese, American, European, etc.). ${excludeList} Make it unique, catchy, and fitting for a heroic Chibi. Only return the name, no extra text.`,
       });
 
       const newName = result.text?.replace(/["']+/g, "") || "Pogi";
-      setGeneratedNamesHistory(prev => [...prev, newName]);
+      setGeneratedNamesHistory((prev) => [...prev, newName]);
       return newName;
     } catch (e) {
       console.error("Name generation failed:", e);
@@ -610,39 +663,39 @@ export default function GeneratorPage() {
   const handleGenerate = async () => {
     let shuffleInterval: NodeJS.Timeout | undefined;
     try {
-        setLoading(true);
-        setShowExitLoader(false);
-        setError("");
-        setGeneratedImage(null);
-        setGeneratedLore(null);
-        setGeneratedImageBlob(null);
-        setGeneratedName("");
-        setOriginDescription("");
-        setTxHash("");
-        setLoadingStepIndex(0);
-        setGeneratedMmr(calculateMMR());
-        
-        shuffleInterval = setInterval(() => {
-          setShufflingMmr(Math.floor(Math.random() * 999));
-        }, 75);
+      setLoading(true);
+      setShowExitLoader(false);
+      setError("");
+      setGeneratedImage(null);
+      setGeneratedLore(null);
+      setGeneratedImageBlob(null);
+      setGeneratedName("");
+      setOriginDescription("");
+      setTxHash("");
+      setLoadingStepIndex(0);
+      setGeneratedMmr(calculateMMR());
 
-        navigate("page-preview");
+      shuffleInterval = setInterval(() => {
+        setShufflingMmr(Math.floor(Math.random() * 999));
+      }, 75);
 
-        // ── Easter Egg Short-Circuit ──
-        if (activeEgg) {
-          if (shuffleInterval) clearInterval(shuffleInterval);
-          setShowExitLoader(true);
-          setTimeout(() => {
-            setGeneratedName(activeEgg.name);
-            setOriginDescription("a legend of the Kapogian realm");
-            setGeneratedLore(activeEgg.lore);
-            setGeneratedImage(activeEgg.imagePath);
-            setGeneratedImageBlob(null);
-            setLoading(false);
-            setShowExitLoader(false);
-          }, 6500);
-          return;
-        }
+      navigate("page-preview");
+
+      // ── Easter Egg Short-Circuit ──
+      if (activeEgg) {
+        if (shuffleInterval) clearInterval(shuffleInterval);
+        setShowExitLoader(true);
+        setTimeout(() => {
+          setGeneratedName(activeEgg.name);
+          setOriginDescription("a legend of the Kapogian realm");
+          setGeneratedLore(activeEgg.lore);
+          setGeneratedImage(activeEgg.imagePath);
+          setGeneratedImageBlob(null);
+          setLoading(false);
+          setShowExitLoader(false);
+        }, 6500);
+        return;
+      }
 
       // Step 1: Generate name and origin description
       const namePromise = characterName
@@ -775,8 +828,12 @@ export default function GeneratorPage() {
       });
 
       // 1. Map selection to contract-expected value
-      const hoodieColorObject = merchProducts.hoodie.colors.find(c => c.value === hoodieColor);
-      const hoodieColorName = hoodieColorObject ? hoodieColorObject.name : 'Black';
+      const hoodieColorObject = merchProducts.hoodie.colors.find(
+        (c) => c.value === hoodieColor,
+      );
+      const hoodieColorName = hoodieColorObject
+        ? hoodieColorObject.name
+        : "Black";
 
       let itemsSelected = "";
       switch (selection) {
@@ -947,143 +1004,295 @@ export default function GeneratorPage() {
   }
 
   const SIZES = ["S", "M", "L", "XL"];
-  
+
   const renderMerchControls = () => {
-    const activeProductKey = selection?.toLowerCase() as keyof typeof merchProducts | null;
-    
-    if (selection === 'Bundle') {
-        const teeColorObject = merchProducts.tee.colors.find(c => c.value === teeColor);
-        const teeImage = teeColorObject ? teeColorObject.image : merchProducts.tee.colors[0]!.image;
-        const mugColorObject = merchProducts.mug.colors.find(c => c.value === mugColor);
-        const mugImage = mugColorObject ? mugColorObject.image : merchProducts.mug.colors[0]!.image;
-        const hoodieColorObject = merchProducts.hoodie.colors.find(c => c.value === hoodieColor);
-        const hoodieImage = hoodieColorObject ? hoodieColorObject.image : merchProducts.hoodie.colors[0]!.image;
+    const activeProductKey = selection?.toLowerCase() as
+      | keyof typeof merchProducts
+      | null;
 
-        return (
-            <div id="bundle-view" className="transition-opacity duration-300 mb-8">
-                <div className="bg-white border-4 border-black rounded-2xl hard-shadow p-6 space-y-6">
-                    <div className="flex items-center justify-between border-b-4 border-black pb-4 mb-2">
-                        <h2 className="text-2xl font-bold uppercase tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Customize Bundle</h2>
-                        <span className="bg-yellow-300 border-2 border-black px-3 py-1 rounded-md text-xs font-bold uppercase">Save 20%</span>
-                    </div>
+    if (selection === "Bundle") {
+      const teeColorObject = merchProducts.tee.colors.find(
+        (c) => c.value === teeColor,
+      );
+      const teeImage = teeColorObject
+        ? teeColorObject.image
+        : merchProducts.tee.colors[0]!.image;
+      const mugColorObject = merchProducts.mug.colors.find(
+        (c) => c.value === mugColor,
+      );
+      const mugImage = mugColorObject
+        ? mugColorObject.image
+        : merchProducts.mug.colors[0]!.image;
+      const hoodieColorObject = merchProducts.hoodie.colors.find(
+        (c) => c.value === hoodieColor,
+      );
+      const hoodieImage = hoodieColorObject
+        ? hoodieColorObject.image
+        : merchProducts.hoodie.colors[0]!.image;
 
-                    {/* Bundle Item: Tee */}
-                    <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-gray-50 p-4 rounded-xl border-2 border-black/10">
-                        <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0">
-                           <Image src={teeImage} alt="Tee" width={64} height={64} className="object-contain p-1" unoptimized/>
-                        </div>
-                        <div className="flex-grow w-full">
-                            <div className="flex justify-between mb-2"><span className="font-bold uppercase text-sm">Tee Configuration</span></div>
-                            <div className="flex flex-wrap gap-4 items-center">
-                                <div className="flex gap-2">
-                                  {merchProducts.tee.colors.map(c => <button key={c.value} onClick={() => setTeeColor(c.value)} className={cn("w-6 h-6 rounded-full border border-black", teeColor === c.value && 'ring-1 ring-offset-1 ring-black scale-110')} style={{backgroundColor: c.value}}></button>)}
-                                </div>
-                                <div className="h-6 w-0.5 bg-gray-300 hidden md:block"></div>
-                                <div className="flex gap-1">
-                                  {merchProducts.tee.sizes.map(s => <button key={s} onClick={() => setShirtSize(s)} className={cn("w-8 h-8 rounded border border-black text-xs font-bold", shirtSize === s ? 'bg-black text-white' : 'bg-white text-black')}>{s}</button>)}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {/* Bundle Item: Mug */}
-                     <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-gray-50 p-4 rounded-xl border-2 border-black/10">
-                        <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0">
-                           <Image src={mugImage} alt="Mug" width={64} height={64} className="object-contain p-1" unoptimized/>
-                        </div>
-                        <div className="flex-grow w-full">
-                            <div className="flex justify-between mb-2"><span className="font-bold uppercase text-sm">Mug Configuration</span></div>
-                             <div className="flex gap-2">
-                               {merchProducts.mug.colors.map(c => <button key={c.value} onClick={() => setMugColor(c.value)} className={cn("w-6 h-6 rounded-full border border-black", mugColor === c.value && 'ring-1 ring-offset-1 ring-black scale-110')} style={{backgroundColor: c.value}}></button>)}
-                            </div>
-                        </div>
-                    </div>
-                    {/* Bundle Item: Hoodie */}
-                    <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-gray-50 p-4 rounded-xl border-2 border-black/10">
-                        <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0">
-                           <Image src={hoodieImage} alt="Hoodie" width={64} height={64} className="object-contain p-1" unoptimized/>
-                        </div>
-                        <div className="flex-grow w-full">
-                            <div className="flex justify-between mb-2"><span className="font-bold uppercase text-sm">Hoodie Configuration</span></div>
-                            <div className="flex flex-wrap gap-4 items-center">
-                                <div className="flex gap-2">
-                                    {merchProducts.hoodie.colors.map(c => <button key={c.value} onClick={() => setHoodieColor(c.value)} className={cn("w-6 h-6 rounded-full border border-black", hoodieColor === c.value && 'ring-1 ring-offset-1 ring-black scale-110')} style={{backgroundColor: c.value}}></button>)}
-                                </div>
-                                <div className="h-6 w-0.5 bg-gray-300 hidden md:block"></div>
-                                <div className="flex gap-1">
-                                    {merchProducts.hoodie.sizes.map(s => <button key={s} onClick={() => setHoodieSize(s)} className={cn("w-8 h-8 rounded border border-black text-xs font-bold", hoodieSize === s ? 'bg-black text-white' : 'bg-white text-black')}>{s}</button>)}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+      return (
+        <div id="bundle-view" className="transition-opacity duration-300 mb-8">
+          <div className="bg-white border-4 border-black rounded-2xl hard-shadow p-6 space-y-6">
+            <div className="flex items-center justify-between border-b-4 border-black pb-4 mb-2">
+              <h2
+                className="text-2xl font-bold uppercase tracking-tight"
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                Customize Bundle
+              </h2>
+              <span className="bg-yellow-300 border-2 border-black px-3 py-1 rounded-md text-xs font-bold uppercase">
+                Save 20%
+              </span>
             </div>
-        )
+
+            {/* Bundle Item: Tee */}
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-gray-50 p-4 rounded-xl border-2 border-black/10">
+              <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0">
+                <Image
+                  src={teeImage}
+                  alt="Tee"
+                  width={64}
+                  height={64}
+                  className="object-contain p-1"
+                  unoptimized
+                />
+              </div>
+              <div className="flex-grow w-full">
+                <div className="flex justify-between mb-2">
+                  <span className="font-bold uppercase text-sm">
+                    Tee Configuration
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-4 items-center">
+                  <div className="flex gap-2">
+                    {merchProducts.tee.colors.map((c) => (
+                      <button
+                        key={c.value}
+                        onClick={() => setTeeColor(c.value)}
+                        className={cn(
+                          "w-6 h-6 rounded-full border border-black",
+                          teeColor === c.value &&
+                            "ring-1 ring-offset-1 ring-black scale-110",
+                        )}
+                        style={{ backgroundColor: c.value }}
+                      ></button>
+                    ))}
+                  </div>
+                  <div className="h-6 w-0.5 bg-gray-300 hidden md:block"></div>
+                  <div className="flex gap-1">
+                    {merchProducts.tee.sizes.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setShirtSize(s)}
+                        className={cn(
+                          "w-8 h-8 rounded border border-black text-xs font-bold",
+                          shirtSize === s
+                            ? "bg-black text-white"
+                            : "bg-white text-black",
+                        )}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Bundle Item: Mug */}
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-gray-50 p-4 rounded-xl border-2 border-black/10">
+              <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0">
+                <Image
+                  src={mugImage}
+                  alt="Mug"
+                  width={64}
+                  height={64}
+                  className="object-contain p-1"
+                  unoptimized
+                />
+              </div>
+              <div className="flex-grow w-full">
+                <div className="flex justify-between mb-2">
+                  <span className="font-bold uppercase text-sm">
+                    Mug Configuration
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  {merchProducts.mug.colors.map((c) => (
+                    <button
+                      key={c.value}
+                      onClick={() => setMugColor(c.value)}
+                      className={cn(
+                        "w-6 h-6 rounded-full border border-black",
+                        mugColor === c.value &&
+                          "ring-1 ring-offset-1 ring-black scale-110",
+                      )}
+                      style={{ backgroundColor: c.value }}
+                    ></button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            {/* Bundle Item: Hoodie */}
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-gray-50 p-4 rounded-xl border-2 border-black/10">
+              <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0">
+                <Image
+                  src={hoodieImage}
+                  alt="Hoodie"
+                  width={64}
+                  height={64}
+                  className="object-contain p-1"
+                  unoptimized
+                />
+              </div>
+              <div className="flex-grow w-full">
+                <div className="flex justify-between mb-2">
+                  <span className="font-bold uppercase text-sm">
+                    Hoodie Configuration
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-4 items-center">
+                  <div className="flex gap-2">
+                    {merchProducts.hoodie.colors.map((c) => (
+                      <button
+                        key={c.value}
+                        onClick={() => setHoodieColor(c.value)}
+                        className={cn(
+                          "w-6 h-6 rounded-full border border-black",
+                          hoodieColor === c.value &&
+                            "ring-1 ring-offset-1 ring-black scale-110",
+                        )}
+                        style={{ backgroundColor: c.value }}
+                      ></button>
+                    ))}
+                  </div>
+                  <div className="h-6 w-0.5 bg-gray-300 hidden md:block"></div>
+                  <div className="flex gap-1">
+                    {merchProducts.hoodie.sizes.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setHoodieSize(s)}
+                        className={cn(
+                          "w-8 h-8 rounded border border-black text-xs font-bold",
+                          hoodieSize === s
+                            ? "bg-black text-white"
+                            : "bg-white text-black",
+                        )}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
     }
 
     if (!activeProductKey || !merchProducts[activeProductKey]) return null;
-    const product = merchProducts[activeProductKey as keyof typeof merchProducts];
+    const product =
+      merchProducts[activeProductKey as keyof typeof merchProducts];
     const Icon = product.icon;
 
-    let currentImageUrl = '';
+    let currentImageUrl = "";
     let selectedColorValue: string | undefined = undefined;
 
-    if ('image' in product && typeof product.image === 'string') {
-        currentImageUrl = product.image;
+    if ("image" in product && typeof product.image === "string") {
+      currentImageUrl = product.image;
     } else if (product.colors.length > 0) {
-        if (activeProductKey === 'tee') selectedColorValue = teeColor;
-        else if (activeProductKey === 'mug') selectedColorValue = mugColor;
-        else if (activeProductKey === 'hoodie') selectedColorValue = hoodieColor;
+      if (activeProductKey === "tee") selectedColorValue = teeColor;
+      else if (activeProductKey === "mug") selectedColorValue = mugColor;
+      else if (activeProductKey === "hoodie") selectedColorValue = hoodieColor;
 
-        const selectedColorObject = product.colors.find(c => c.value === selectedColorValue);
-        currentImageUrl = selectedColorObject ? selectedColorObject.image : product.colors[0]!.image;
+      const selectedColorObject = product.colors.find(
+        (c) => c.value === selectedColorValue,
+      );
+      currentImageUrl = selectedColorObject
+        ? selectedColorObject.image
+        : product.colors[0]!.image;
     }
 
-
     return (
-        <div id="single-view" className="transition-opacity duration-300">
-            <div className="bg-white border-4 border-black rounded-2xl hard-shadow mb-8 p-6 md:p-8 flex flex-col items-center justify-center relative min-h-[320px]">
-                <div className="w-48 h-48 md:w-56 md:h-56 flex items-center justify-center transition-all duration-300 mb-6">
-                    {currentImageUrl ? (
-                        <Image src={currentImageUrl} alt={product.name} width={224} height={224} className="object-contain" unoptimized/>
-                    ) : (
-                        <Icon className="text-[10rem] drop-shadow-xl" />
-                    )}
-                </div>
-                <div className="w-full max-w-md mx-auto space-y-5">
-                    <div className="flex justify-between items-end border-b-2 border-black pb-2">
-                        <h2 className="text-2xl font-bold uppercase tracking-tight">{product.name}</h2>
-                        <span className="text-lg font-bold">10 SUI</span>
-                    </div>
-                    <div className="space-y-4">
-                        {product.colors.length > 0 && (
-                            <div className="flex flex-wrap gap-3 justify-center">
-                                {product.colors.map(c => {
-                                    const isActive = selectedColorValue === c.value;
-                                    return <button key={c.value} onClick={() => {
-                                        if (activeProductKey === 'tee') setTeeColor(c.value);
-                                        if (activeProductKey === 'mug') setMugColor(c.value);
-                                        if (activeProductKey === 'hoodie') setHoodieColor(c.value);
-                                    }} className={cn("w-8 h-8 rounded-full border-2 border-black transition-transform hover:scale-110", isActive && 'ring-2 ring-offset-2 ring-black')} style={{backgroundColor: c.value}}></button>
-                                })}
-                            </div>
-                        )}
-                        {product.sizes.length > 0 && (
-                            <div className="flex flex-wrap gap-2 justify-center">
-                                {product.sizes.map(s => {
-                                   const isActive = (activeProductKey === 'tee' && shirtSize === s) || (activeProductKey === 'hoodie' && hoodieSize === s);
-                                   return <button key={s} onClick={() => {
-                                        if (activeProductKey === 'tee') setShirtSize(s);
-                                        if (activeProductKey === 'hoodie') setHoodieSize(s);
-                                   }} className={cn("w-10 h-10 rounded-lg border-2 border-black font-bold text-sm transition-colors", isActive ? 'bg-black text-white' : 'bg-white hover:bg-gray-100')}>{s}</button>
-                                })}
-                            </div>
-                        )}
-                    </div>
-                </div>
+      <div id="single-view" className="transition-opacity duration-300">
+        <div className="bg-white border-4 border-black rounded-2xl hard-shadow mb-8 p-6 md:p-8 flex flex-col items-center justify-center relative min-h-[320px]">
+          <div className="w-48 h-48 md:w-56 md:h-56 flex items-center justify-center transition-all duration-300 mb-6">
+            {currentImageUrl ? (
+              <Image
+                src={currentImageUrl}
+                alt={product.name}
+                width={224}
+                height={224}
+                className="object-contain"
+                unoptimized
+              />
+            ) : (
+              <Icon className="text-[10rem] drop-shadow-xl" />
+            )}
+          </div>
+          <div className="w-full max-w-md mx-auto space-y-5">
+            <div className="flex justify-between items-end border-b-2 border-black pb-2">
+              <h2 className="text-2xl font-bold uppercase tracking-tight">
+                {product.name}
+              </h2>
+              <span className="text-lg font-bold">10 SUI</span>
             </div>
+            <div className="space-y-4">
+              {product.colors.length > 0 && (
+                <div className="flex flex-wrap gap-3 justify-center">
+                  {product.colors.map((c) => {
+                    const isActive = selectedColorValue === c.value;
+                    return (
+                      <button
+                        key={c.value}
+                        onClick={() => {
+                          if (activeProductKey === "tee") setTeeColor(c.value);
+                          if (activeProductKey === "mug") setMugColor(c.value);
+                          if (activeProductKey === "hoodie")
+                            setHoodieColor(c.value);
+                        }}
+                        className={cn(
+                          "w-8 h-8 rounded-full border-2 border-black transition-transform hover:scale-110",
+                          isActive && "ring-2 ring-offset-2 ring-black",
+                        )}
+                        style={{ backgroundColor: c.value }}
+                      ></button>
+                    );
+                  })}
+                </div>
+              )}
+              {product.sizes.length > 0 && (
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {product.sizes.map((s) => {
+                    const isActive =
+                      (activeProductKey === "tee" && shirtSize === s) ||
+                      (activeProductKey === "hoodie" && hoodieSize === s);
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => {
+                          if (activeProductKey === "tee") setShirtSize(s);
+                          if (activeProductKey === "hoodie") setHoodieSize(s);
+                        }}
+                        className={cn(
+                          "w-10 h-10 rounded-lg border-2 border-black font-bold text-sm transition-colors",
+                          isActive
+                            ? "bg-black text-white"
+                            : "bg-white hover:bg-gray-100",
+                        )}
+                      >
+                        {s}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-    )
-  }
+      </div>
+    );
+  };
 
   return (
     <>
@@ -1148,7 +1357,7 @@ export default function GeneratorPage() {
               </div>
 
               <div className="border-4 border-black rounded-2xl bg-white hard-shadow-sm p-6 grid grid-cols-1 md:grid-cols-2 gap-8 relative overflow-hidden">
-                <div className="absolute top-2 right-2 rotate-12 bg-yellow-400 text-black text-xs font-bold px-2 py-1 border-2 border-black rounded shadow-[2px_2px_0px_#000]">
+                <div className="absolute top-2 right-2 z-50 rotate-12 bg-yellow-400 text-black text-xs font-bold px-2 py-1 border-2 border-black rounded shadow-[2px_2px_0px_#000]">
                   NEW!
                 </div>
 
@@ -1583,15 +1792,21 @@ export default function GeneratorPage() {
                       >
                         Battle MMR
                       </p>
-                        {loading ? (
-                            <p style={{ fontSize: "24px" }} className="font-display font-bold uppercase leading-none text-black/50 w-24 text-center">
-                                {shufflingMmr.toString().padStart(3, '0')}
-                            </p>
-                        ) : (
-                            <p style={{ fontSize: "24px" }} className="font-display font-bold uppercase leading-none text-black drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp">
-                                {generatedMmr}
-                            </p>
-                        )}
+                      {loading ? (
+                        <p
+                          style={{ fontSize: "24px" }}
+                          className="font-display font-bold uppercase leading-none text-black/50 w-24 text-center"
+                        >
+                          {shufflingMmr.toString().padStart(3, "0")}
+                        </p>
+                      ) : (
+                        <p
+                          style={{ fontSize: "24px" }}
+                          className="font-display font-bold uppercase leading-none text-black drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp"
+                        >
+                          {generatedMmr}
+                        </p>
+                      )}
                     </div>
 
                     {/* 3. Rank Display */}
@@ -1599,13 +1814,20 @@ export default function GeneratorPage() {
                       <p className="text-[14px] font-bold text-stone-500 uppercase tracking-widest mb-1">
                         Rank
                       </p>
-                        {loading ? (
-                            <Skeleton className="h-6 w-24 mt-1" />
-                        ) : (
-                            <h3 style={{ fontSize: "24px" }} className="font-display font-bold uppercase leading-none text-black drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp">
-                                {generatedMmr > 800 ? "Mythic" : generatedMmr > 500 ? "Elite" : "Adept"}
-                            </h3>
-                        )}
+                      {loading ? (
+                        <Skeleton className="h-6 w-24 mt-1" />
+                      ) : (
+                        <h3
+                          style={{ fontSize: "24px" }}
+                          className="font-display font-bold uppercase leading-none text-black drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp"
+                        >
+                          {generatedMmr > 800
+                            ? "Mythic"
+                            : generatedMmr > 500
+                              ? "Elite"
+                              : "Adept"}
+                        </h3>
+                      )}
                     </div>
 
                     {/* 4. Lineage/Stats */}
@@ -1613,117 +1835,172 @@ export default function GeneratorPage() {
                       <p className="text-[14px] font-bold text-stone-500 uppercase tracking-widest mb-1">
                         Lineage
                       </p>
-                        {loading ? (
-                            <Skeleton className="h-6 w-32 mt-1" />
-                        ) : (
-                            <p style={{ fontSize: "24px" }} className="font-display font-bold uppercase leading-none text-black drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp">
-                                {gender || "Ancient"}
-                            </p>
-                        )}
+                      {loading ? (
+                        <Skeleton className="h-6 w-32 mt-1" />
+                      ) : (
+                        <p
+                          style={{ fontSize: "24px" }}
+                          className="font-display font-bold uppercase leading-none text-black drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp"
+                        >
+                          {gender || "Ancient"}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
               <div className="p-6 md:p-8 flex justify-between items-center border-t-4 border-black bg-stone-100">
-                  <button
-                      onClick={() => navigate("generator")}
-                      disabled={loading}
-                      className="bg-white text-black border-4 border-black rounded-full w-16 h-16 md:w-20 md:h-20 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                      <ArrowLeft className="w-8 h-8 md:w-10 md:h-10 stroke-[2.5]" />
-                  </button>
-                  <div className="text-center">
-                    {loading ? (
-                        <>
-                            <p className="font-display font-semibold text-lg uppercase">Summoning in Progress...</p>
-                            <p className="text-sm text-stone-500">Please wait, this can take a moment.</p>
-                        </>
-                    ) : (
-                        <>
-                            <p className="font-display font-semibold text-lg uppercase">Character Confirmed!</p>
-                            <p className="text-sm text-stone-500">Next, select your merch.</p>
-                        </>
-                    )}
-                  </div>
-                  <button
-                      onClick={() => navigate("page-merch")}
-                      disabled={loading}
-                      className="bg-pink-500 text-white border-4 border-black rounded-full w-16 h-16 md:w-20 md:h-20 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-pink-300"
-                  >
-                      <ArrowRight className="w-8 h-8 md:w-10 md:h-10 stroke-[2.5]" />
-                  </button>
+                <button
+                  onClick={() => navigate("generator")}
+                  disabled={loading}
+                  className="bg-white text-black border-4 border-black rounded-full w-16 h-16 md:w-20 md:h-20 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ArrowLeft className="w-8 h-8 md:w-10 md:h-10 stroke-[2.5]" />
+                </button>
+                <div className="text-center">
+                  {loading ? (
+                    <>
+                      <p className="font-display font-semibold text-lg uppercase">
+                        Summoning in Progress...
+                      </p>
+                      <p className="text-sm text-stone-500">
+                        Please wait, this can take a moment.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-display font-semibold text-lg uppercase">
+                        Character Confirmed!
+                      </p>
+                      <p className="text-sm text-stone-500">
+                        Next, select your merch.
+                      </p>
+                    </>
+                  )}
+                </div>
+                <button
+                  onClick={() => navigate("page-merch")}
+                  disabled={loading}
+                  className="bg-pink-500 text-white border-4 border-black rounded-full w-16 h-16 md:w-20 md:h-20 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-pink-300"
+                >
+                  <ArrowRight className="w-8 h-8 md:w-10 md:h-10 stroke-[2.5]" />
+                </button>
               </div>
             </section>
-            
+
             <section
-                id="page-merch"
-                className={cn(
-                    "page-section flex flex-col h-full bg-blue-500",
-                    { "hidden": page !== "page-merch" },
-                    "bg-blue-500"
-                )}
-                style={{
-                    backgroundImage: "linear-gradient(45deg, #60a5fa 25%, transparent 25%, transparent 75%, #60a5fa 75%, #60a5fa), linear-gradient(45deg, #60a5fa 25%, transparent 25%, transparent 75%, #60a5fa 75%, #60a5fa)",
-                    backgroundPosition: "0 0, 20px 20px",
-                    backgroundSize: "40px 40px"
-                }}
+              id="page-merch"
+              className={cn(
+                "page-section flex flex-col h-full bg-blue-500",
+                { hidden: page !== "page-merch" },
+                "bg-blue-500",
+              )}
+              style={{
+                backgroundImage:
+                  "linear-gradient(45deg, #60a5fa 25%, transparent 25%, transparent 75%, #60a5fa 75%, #60a5fa), linear-gradient(45deg, #60a5fa 25%, transparent 25%, transparent 75%, #60a5fa 75%, #60a5fa)",
+                backgroundPosition: "0 0, 20px 20px",
+                backgroundSize: "40px 40px",
+              }}
             >
-                <div className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center shrink-0 border-b-4 border-black">
-                     <div>
-                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white uppercase drop-shadow-sm" style={{ textShadow: "2px 2px 0px black" }}>
-                            The Stylist Shop
-                        </h1>
-                        <div className="inline-flex items-center gap-2 mt-2 bg-black px-3 py-1 rounded-full shadow-[2px_2px_0px_#000]">
-                             <Sparkles className="text-yellow-400 text-sm w-4 h-4" />
-                            <span className="text-xs font-bold tracking-tight uppercase text-white">Season 2 Collection</span>
-                        </div>
-                    </div>
-                     <div className="mt-2 md:mt-0 bg-white border-2 border-black px-4 py-2 rounded-lg shadow-[2px_2px_0px_#000]">
-                         <span className="text-black font-bold tracking-tight uppercase text-sm">Cart: {selection === 'Bundle' ? 4 : (selection ? 1 : 0)} items</span>
-                    </div>
-                </div>
-
-                <div className="overflow-y-auto flex-grow p-6 md:p-8">
-                  {renderMerchControls()}
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                      {(Object.keys(merchProducts) as Array<keyof typeof merchProducts>).map(key => {
-                          const product = merchProducts[key as keyof typeof merchProducts];
-                          const Icon = product.icon;
-                          return (
-                              <button key={key} onClick={() => setSelection(product.name)} className={cn("group bg-white rounded-xl border-4 border-black p-4 flex flex-col items-center hard-shadow hover:-translate-y-1 transition-all", selection === product.name && "translate-y-1 shadow-none bg-yellow-300")}>
-                                  <Icon className="text-4xl mb-2"/>
-                                  <span className="text-sm font-bold uppercase tracking-tight">{product.name}</span>
-                              </button>
-                          )
-                      })}
-                  </div>
-                  
-                  <div onClick={() => setSelection('Bundle')} className={cn("relative bg-yellow-400 border-4 border-black rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 hard-shadow hover:-translate-y-1 transition-all cursor-pointer group", selection === 'Bundle' && "translate-y-1 shadow-none bg-yellow-300")}>
-                      <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full border-4 border-black bg-white flex items-center justify-center group-hover:bg-black transition-colors">
-                              <ShoppingBag className="text-xl text-black group-hover:text-white"/>
-                          </div>
-                          <div>
-                              <h3 className="text-lg font-bold uppercase tracking-tight leading-none">The All-In Bundle</h3>
-                              <p className="text-xs font-bold text-black/70 mt-1 uppercase tracking-wide">Includes Tee, Mug, Pad, Hoodie</p>
-                          </div>
-                      </div>
-                      <div className="bg-black text-white px-6 py-2 rounded-full text-sm font-bold uppercase tracking-tight whitespace-nowrap">
-                          Upgrade Bundle
-                      </div>
+              <div className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center shrink-0 border-b-4 border-black">
+                <div>
+                  <h1
+                    className="text-2xl md:text-3xl font-bold tracking-tight text-white uppercase drop-shadow-sm"
+                    style={{ textShadow: "2px 2px 0px black" }}
+                  >
+                    The Stylist Shop
+                  </h1>
+                  <div className="inline-flex items-center gap-2 mt-2 bg-black px-3 py-1 rounded-full shadow-[2px_2px_0px_#000]">
+                    <Sparkles className="text-yellow-400 text-sm w-4 h-4" />
+                    <span className="text-xs font-bold tracking-tight uppercase text-white">
+                      Season 2 Collection
+                    </span>
                   </div>
                 </div>
-
-                <div className="p-4 flex justify-between items-center border-t-4 border-black bg-blue-500 shrink-0">
-                  <button onClick={() => navigate('page-preview')} className="bg-white text-black border-4 border-black rounded-full w-14 h-14 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all">
-                      <ArrowLeft className="w-8 h-8 stroke-[2.5]" />
-                  </button>
-                   {error && <div className="text-sm text-center bg-red-100 p-2 rounded-lg border border-red-300 text-red-700 max-w-xs">{error}</div>}
-                  <button onClick={handleContinueToShipping} className="bg-green-400 text-black border-4 border-black rounded-full w-14 h-14 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all">
-                      <ArrowRight className="w-8 h-8 stroke-[2.5]" />
-                  </button>
+                <div className="mt-2 md:mt-0 bg-white border-2 border-black px-4 py-2 rounded-lg shadow-[2px_2px_0px_#000]">
+                  <span className="text-black font-bold tracking-tight uppercase text-sm">
+                    Cart: {selection === "Bundle" ? 4 : selection ? 1 : 0} items
+                  </span>
                 </div>
+              </div>
+
+              <div className="overflow-y-auto flex-grow p-6 md:p-8">
+                {renderMerchControls()}
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  {(
+                    Object.keys(merchProducts) as Array<
+                      keyof typeof merchProducts
+                    >
+                  ).map((key) => {
+                    const product =
+                      merchProducts[key as keyof typeof merchProducts];
+                    const Icon = product.icon;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setSelection(product.name)}
+                        className={cn(
+                          "group bg-white rounded-xl border-4 border-black p-4 flex flex-col items-center hard-shadow hover:-translate-y-1 transition-all",
+                          selection === product.name &&
+                            "translate-y-1 shadow-none bg-yellow-300",
+                        )}
+                      >
+                        <Icon className="text-4xl mb-2" />
+                        <span className="text-sm font-bold uppercase tracking-tight">
+                          {product.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div
+                  onClick={() => setSelection("Bundle")}
+                  className={cn(
+                    "relative bg-yellow-400 border-4 border-black rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 hard-shadow hover:-translate-y-1 transition-all cursor-pointer group",
+                    selection === "Bundle" &&
+                      "translate-y-1 shadow-none bg-yellow-300",
+                  )}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full border-4 border-black bg-white flex items-center justify-center group-hover:bg-black transition-colors">
+                      <ShoppingBag className="text-xl text-black group-hover:text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold uppercase tracking-tight leading-none">
+                        The All-In Bundle
+                      </h3>
+                      <p className="text-xs font-bold text-black/70 mt-1 uppercase tracking-wide">
+                        Includes Tee, Mug, Pad, Hoodie
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-black text-white px-6 py-2 rounded-full text-sm font-bold uppercase tracking-tight whitespace-nowrap">
+                    Upgrade Bundle
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 flex justify-between items-center border-t-4 border-black bg-blue-500 shrink-0">
+                <button
+                  onClick={() => navigate("page-preview")}
+                  className="bg-white text-black border-4 border-black rounded-full w-14 h-14 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all"
+                >
+                  <ArrowLeft className="w-8 h-8 stroke-[2.5]" />
+                </button>
+                {error && (
+                  <div className="text-sm text-center bg-red-100 p-2 rounded-lg border border-red-300 text-red-700 max-w-xs">
+                    {error}
+                  </div>
+                )}
+                <button
+                  onClick={handleContinueToShipping}
+                  className="bg-green-400 text-black border-4 border-black rounded-full w-14 h-14 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all"
+                >
+                  <ArrowRight className="w-8 h-8 stroke-[2.5]" />
+                </button>
+              </div>
             </section>
 
             <section
