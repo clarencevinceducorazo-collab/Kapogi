@@ -9,9 +9,11 @@ import { suiClient } from "@/lib/sui";
 import { CONTRACT_ADDRESSES } from "@/lib/constants";
 import { getIPFSGatewayUrl } from "@/lib/pinata";
 import { useCurrentAccount } from "@mysten/dapp-kit";
-
-
-
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // I have to define IconifyIcon for typescript since it's not a standard element
 declare global {
@@ -32,20 +34,21 @@ declare global {
 const ITEMS_PER_PAGE = 10;
 
 // Type definitions for our data
-interface MmrEntry {
+interface PodiumUser {
   rank: number;
   walletAddress: string;
   avatarImage: string;
   mmrScore: number;
   nftName: string;
+  lineage: string;
 }
 
-interface SummonEntry {
-  rank: number;
-  walletAddress: string;
-  avatarImage: string;
+interface MmrEntry extends PodiumUser {}
+
+interface SummonEntry extends PodiumUser {
   totalNftSummon: number;
 }
+
 
 export default function PodiumPage() {
   const [mode, setMode] = useState<"mmr" | "summon">("mmr");
@@ -54,6 +57,7 @@ export default function PodiumPage() {
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const account = useCurrentAccount();
+  const [selectedUser, setSelectedUser] = useState<MmrEntry | SummonEntry | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -107,6 +111,7 @@ export default function PodiumPage() {
           mmrScore: number;
           avatarImage: string;
           nftName: string;
+          lineage: string;
         }
       > = new Map();
 
@@ -115,6 +120,8 @@ export default function PodiumPage() {
         if (!ownerAddress) return;
 
         const currentMmr = Number(obj.data.content.fields.mmr);
+        const attributes = JSON.parse(obj.data.content.fields.attributes || '{}');
+        const lineage = attributes.gender || 'Unknown';
 
         if (!ownerStats.has(ownerAddress)) {
           ownerStats.set(ownerAddress, {
@@ -123,6 +130,7 @@ export default function PodiumPage() {
             mmrScore: -1,
             avatarImage: "",
             nftName: "",
+            lineage: "Unknown",
           });
         }
 
@@ -135,6 +143,7 @@ export default function PodiumPage() {
             (obj.data.display.data as any).image_url,
           );
           stats.nftName = obj.data.content.fields.name;
+          stats.lineage = lineage;
         }
       });
 
@@ -319,7 +328,8 @@ export default function PodiumPage() {
     const rank = user.rank;
     return (
       <div
-        className="card-toy rounded-2xl md:rounded-3xl p-3 md:p-4 mb-3 flex items-center gap-3 md:gap-5 animate-pop-in cursor-default group transition-all"
+        onClick={() => setSelectedUser(user)}
+        className="card-toy rounded-2xl md:rounded-3xl p-3 md:p-4 mb-3 flex items-center gap-3 md:gap-5 animate-pop-in cursor-pointer group transition-all"
         style={{ animationDelay: `${delayIndex * 50}ms` }}
       >
         <div className="w-10 md:w-12 flex-shrink-0 flex justify-center">
@@ -444,6 +454,45 @@ export default function PodiumPage() {
               </div>
             </div>
           )}
+
+        <Dialog open={!!selectedUser} onOpenChange={(isOpen) => !isOpen && setSelectedUser(null)}>
+            <DialogContent className="max-w-sm bg-white border-4 border-black rounded-3xl shadow-hard p-0">
+                {selectedUser && (
+                    <>
+                        <div className="p-6 border-b-4 border-black">
+                            <DialogTitle className="font-headline text-center text-3xl tracking-tight uppercase">{selectedUser.nftName}</DialogTitle>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="aspect-square w-full relative bg-slate-100 rounded-2xl border-2 border-black">
+                                <Image 
+                                    src={selectedUser.avatarImage} 
+                                    alt={selectedUser.nftName} 
+                                    fill 
+                                    className="object-cover rounded-xl"
+                                />
+                           </div>
+                           <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-4 grid grid-cols-3 text-center divide-x-2 divide-dashed divide-slate-300">
+                                <div>
+                                    <p className="text-xs font-bold text-slate-500 uppercase">Rank</p>
+                                    <p className="font-headline text-2xl text-black">#{selectedUser.rank}</p>
+                                </div>
+                                <div className="px-2">
+                                    <p className="text-xs font-bold text-slate-500 uppercase">MMR</p>
+                                    <p className="font-headline text-2xl text-black">{selectedUser.mmrScore.toLocaleString()}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-slate-500 uppercase">Lineage</p>
+                                    <p className="font-headline text-2xl text-black">{selectedUser.lineage}</p>
+                                </div>
+                           </div>
+                           <div className="font-mono text-xs text-slate-400 text-center break-all pt-2">
+                                {selectedUser.walletAddress}
+                           </div>
+                        </div>
+                    </>
+                )}
+            </DialogContent>
+        </Dialog>
         </main>
       </div>
 

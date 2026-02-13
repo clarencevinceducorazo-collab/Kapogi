@@ -70,7 +70,7 @@ export const EASTER_EGG_SECRETS: EasterEggSecret[] = [
     reveal: {
       name: 'Dito Man',
       lore: '**Dito Man** is the legendary guardian of the Kapogian realm — the one who was always there, even before the others knew. Born under the golden light of Luzon\'s peak, he carries an aura so pure that even the stars tilt toward him.\n\nHe never sought fame, yet fame found him at every corner. His smile disarms enemies, and his presence alone turns chaos into calm. They say if you set the stars just right, he will appear — not because he wants to be found, but because *you finally looked.*',
-      imagePath: '/images/easter-eggs/rave.png',
+      imagePath: '/images/easter-eggs/raven.png',
       mmr: 9999,
       rank: 'Eternal',
       lineage: 'Primordial',
@@ -80,17 +80,17 @@ export const EASTER_EGG_SECRETS: EasterEggSecret[] = [
     id: 'secret_02',
     sliders: {
       cuteness: 0, confidence: 0, tiliFactor: 0,
-      luzon: 0, visayas: 50, mindanao: 0,
+      luzon: 50, visayas: 0, mindanao: 50,
       hairAmount: 0, facialHair: 50, clothingStyle: 0,
       hairColor: 50, eyewear: 50, skinColor: 50,
     },
     reveal: {
       name: 'Vince',
-      lore: '**Vince** — *The Sniper* — is a phantom wanderer from the deep forests of Visayas. No one has ever seen him stand still. He drifts between islands like a whisper, leaving behind only the faint scent of salt and old wood.\n\nThey say he was once a sailor who lost his ship to a storm and was reborn by the sea itself. Now he roams, chill and untouchable, a living legend wrapped in mist. Those who catch a glimpse of him in the dead of night know one thing: *the wind chose you.*',
-      imagePath: '/images/easter-eggs/vin.png',
-      mmr: 9999999999999999999999999999999,
-      rank: 'Supernova Ascendant',
-      lineage: 'Alien',
+      lore: '**Vince** — *The Sniper* — is a legendary watcher born of the forests and seas of the Visayas. He moves without sound, guided by wind and instinct, never remaining in one place for long.\n\nOnce a sailor lost to a violent storm, he was reborn by the sea itself. The ocean sharpened his sight, steadied his breath, and bound his soul to the horizon. From that day on, he became a guardian of distance—calm, patient, and unstoppable.\n\nThose who see him beneath moonlight know the truth:\n\n*When the wind calls your name, Vince is already watching.*',
+      imagePath: '/images/easter-eggs/vince.png',
+      mmr: 9999999999,
+      rank: 'Eternal Overwatch',
+      lineage: 'Range Watcher',
     },
   },
   {
