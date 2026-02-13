@@ -892,7 +892,8 @@ export default function GeneratorPage() {
         description: plainTextLore,
         imageUrl: finalImageUrl!,
         attributes: JSON.stringify({
-          gender,
+          lineage: gender,
+          rank: displayRank,
           cuteness,
           confidence,
           tiliFactor,
