@@ -508,7 +508,7 @@ export default function RoadmapV3Page() {
               <button 
                 onClick={() => {
                   // TODO: Add community page route here
-                  window.location.href = '#';
+                  window.location.href = 'https://discord.gg/VHgx9EnX';
                 }}
                 className="px-8 py-4 bg-white text-slate-900 font-semibold text-lg rounded-full hover:bg-white/90 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
               >
