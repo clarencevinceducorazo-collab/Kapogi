@@ -216,7 +216,7 @@ export default function PodiumPage() {
     return (
     <div className="flex flex-row justify-center items-end gap-2 md:gap-6 mb-12 w-full max-w-2xl mx-auto pt-4">
       {/* Rank 2 */}
-      <div className="w-1/3 flex flex-col items-center animate-float-2 group cursor-pointer">
+      <div className="w-1/3 flex flex-col items-center animate-float-2 group cursor-pointer" onClick={() => podiumOrder[0] && setSelectedUser(podiumOrder[0])}>
         {podiumOrder[0] && (
           <>
             <div className="relative mb-3 transition-transform group-hover:scale-110 duration-300">
@@ -248,7 +248,7 @@ export default function PodiumPage() {
         )}
       </div>
       {/* Rank 1 */}
-      <div className="w-1/3 flex flex-col items-center z-10 animate-float-1 group cursor-pointer -mx-1">
+      <div className="w-1/3 flex flex-col items-center z-10 animate-float-1 group cursor-pointer -mx-1" onClick={() => podiumOrder[1] && setSelectedUser(podiumOrder[1])}>
         {podiumOrder[1] && (
           <>
             <div className="relative mb-4 transition-transform group-hover:scale-110 duration-300">
@@ -284,7 +284,7 @@ export default function PodiumPage() {
         )}
       </div>
       {/* Rank 3 */}
-      <div className="w-1/3 flex flex-col items-center animate-float-3 group cursor-pointer">
+      <div className="w-1/3 flex flex-col items-center animate-float-3 group cursor-pointer" onClick={() => podiumOrder[2] && setSelectedUser(podiumOrder[2])}>
         {podiumOrder[2] && (
           <>
             <div className="relative mb-3 transition-transform group-hover:scale-110 duration-300">
