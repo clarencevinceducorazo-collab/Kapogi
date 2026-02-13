@@ -579,3 +579,15 @@
     animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
+.whitepaper-content h2 {
+  @apply font-headline text-3xl mt-12 mb-6 pb-2 border-b-4 border-yellow-400 inline-block;
+}
+.whitepaper-content p {
+  @apply text-lg leading-relaxed mb-6 text-slate-800;
+}
+.whitepaper-content ul {
+  @apply space-y-3 mb-8;
+}
+.whitepaper-content li {
+  @apply flex items-start before:content-['▹'] before:mr-2 before:text-yellow-500 before:font-bold;
+}
