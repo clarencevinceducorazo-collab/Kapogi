@@ -121,7 +121,7 @@ export default function PodiumPage() {
 
         const currentMmr = Number(obj.data.content.fields.mmr);
         const attributes = JSON.parse(obj.data.content.fields.attributes || '{}');
-        const lineage = attributes.gender || 'Unknown';
+        const lineage = attributes.lineage || 'Unknown';
 
         if (!ownerStats.has(ownerAddress)) {
           ownerStats.set(ownerAddress, {

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -304,25 +305,51 @@ export default function GeneratorPage() {
     "Finalizing character pose",
   ];
 
-  // MMR Calculation
-  const calculateMMR = () => {
-    const base = cuteness * 1.5 + confidence * 2.5 + tiliFactor * 2.0;
-    const originBonus = (luzon + visayas + mindanao) / 2;
-    const styleBonus = clothingStyle * 1.2;
-    return Math.floor(base + originBonus + styleBonus);
+  const generateProbabilisticMMR = (): number => {
+    const random = Math.random();
+    let minMMR, maxMMR;
+
+    if (random <= 0.00005) { // 0.005% Kapogian Ascendant
+        minMMR = 3951; maxMMR = 4000;
+    } else if (random <= 0.0002) { // 0.015% Master Rancher
+        minMMR = 3851; maxMMR = 3950;
+    } else if (random <= 0.0004) { // 0.02% Generational Tycoon
+        minMMR = 3701; maxMMR = 3850;
+    } else if (random <= 0.0008) { // 0.04% Cultural Icon
+        minMMR = 3501; maxMMR = 3700;
+    } else if (random <= 0.0018) { // 0.1% Eternal Light Bearer
+        minMMR = 3301; maxMMR = 3500;
+    } else if (random <= 0.0035) { // 0.17% Ritual Architect
+        minMMR = 3101; maxMMR = 3300;
+    } else if (random <= 0.006) { // 0.25% Hall of Fame Immortal
+        minMMR = 2801; maxMMR = 3100;
+    } else if (random <= 0.012) { // 0.6% Supreme Pogi
+        minMMR = 2501; maxMMR = 2800;
+    } else if (random <= 0.025) { // 1.3% Proof of Pogi Elite
+        minMMR = 2201; maxMMR = 2500;
+    } else if (random <= 0.04) { // 1.5% Aura God
+        minMMR = 1901; maxMMR = 2200;
+    } else if (random <= 0.07) { // 3% Lord of Biringan
+        minMMR = 1601; maxMMR = 1900;
+    } else if (random <= 0.12) { // 5% Fearless Descent
+        minMMR = 1301; maxMMR = 1600;
+    } else if (random <= 0.18) { // 6% Dalaketnon Slayer
+        minMMR = 1001; maxMMR = 1300;
+    } else if (random <= 0.28) { // 10% Ghost Walker
+        minMMR = 701; maxMMR = 1000;
+    } else if (random <= 0.45) { // 17% Initiate of Pogi
+        minMMR = 401; maxMMR = 700;
+    } else if (random <= 0.65) { // 20% Aura Touched
+        minMMR = 251; maxMMR = 400;
+    } else if (random <= 0.85) { // 20% Pogi Spark
+        minMMR = 101; maxMMR = 250;
+    } else { // 15% Spirit Seed
+        minMMR = 1; maxMMR = 100;
+    }
+
+    return Math.floor(Math.random() * (maxMMR - minMMR + 1)) + minMMR;
   };
 
-  useEffect(() => {
-    setGeneratedMmr(calculateMMR());
-  }, [
-    cuteness,
-    confidence,
-    tiliFactor,
-    luzon,
-    visayas,
-    mindanao,
-    clothingStyle,
-  ]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | undefined;
@@ -663,7 +690,6 @@ export default function GeneratorPage() {
     setSkinColor(Math.floor(Math.random() * 51));
     setBodyFat(Math.floor(Math.random() * 51));
     setPosture(Math.floor(Math.random() * 51));
-    setGeneratedMmr(Math.floor(Math.random() * 5000));
 
     const items = [
       "None",
@@ -692,7 +718,10 @@ export default function GeneratorPage() {
       setOriginDescription("");
       setTxHash("");
       setLoadingStepIndex(0);
-      setGeneratedMmr(calculateMMR());
+      
+      const finalMMR = generateProbabilisticMMR();
+      setGeneratedMmr(finalMMR);
+
       // Clear any previous egg overrides
       setEggRank(null);
       setEggLineage(null);
