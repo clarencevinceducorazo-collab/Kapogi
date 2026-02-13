@@ -1,153 +1,248 @@
-import Image from 'next/image';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import React, { useState, useEffect } from "react";
 import {
-  CheckCircle,
-  Circle,
-  Database,
-  Lock,
-  MapPin,
-  ShieldCheck,
-} from 'lucide-react';
+  Zap,
+  Activity,
+  Terminal,
+  Loader2,
+  Sparkles,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 
 export const SecuritySection = () => {
-  const roadmapChar = PlaceHolderImages.find(
-    (img) => img.id === 'security-roadmap-char'
-  );
+  const [encryptionLog, setEncryptionLog] = useState([]);
+  const [mintProgress, setMintProgress] = useState(0);
+  const [activeMinter, setActiveMinter] = useState("0x1189...2a8f");
+
+  // Updated Leaderboard data with new entries and MMR ranks
+  const [liveActivity, setLiveActivity] = useState([
+    {
+      id: "Vince",
+      count: "9,999,999,999",
+      label: "MMR",
+      rank: 1,
+      color: "bg-yellow-400",
+    },
+    {
+      id: "Lakson",
+      count: "511",
+      label: "MMR",
+      rank: 2,
+      color: "bg-slate-200",
+    },
+    { id: "Koa", count: "504", label: "MMR", rank: 3, color: "bg-orange-400" },
+    { id: "Zeko", count: "487", label: "MMR", rank: 4, color: "bg-white" },
+    { id: "Rakan", count: "482", label: "MMR", rank: 5, color: "bg-white" },
+  ]);
+
+  // Secondary Summons List
+  const summonsList = [
+    { id: "0xe23e...ebe3", count: 10 },
+    { id: "0x4a99...2c31", count: 3 },
+    { id: "0x615a...48eb", count: 2 },
+    { id: "0x1189...2a8f", count: 2 },
+  ];
+
+  useEffect(() => {
+    const logs = [
+      "> ENCRYPTING SHIPPING BLOBS...",
+      "> GENERATING SOULBOUND RECEIPT...",
+      "> PUSHING TO ON-CHAIN STORAGE...",
+      "> VALIDATING CLIENT-SIDE HASH...",
+      "> DATA PACKET SEALED",
+      "> SECURE SOCKET TUNNELING...",
+    ];
+    const wallets = [
+      "0xe23e...ebe3",
+      "0x615a...48eb",
+      "0x262d...aa7a",
+      "0x1189...2a8f",
+    ];
+    let i = 0;
+    const interval = setInterval(() => {
+      setEncryptionLog((prev) => [logs[i % logs.length], ...prev.slice(0, 3)]);
+      setMintProgress((prev) => {
+        if (prev >= 100) {
+          setActiveMinter(wallets[Math.floor(Math.random() * wallets.length)]);
+          return 0;
+        }
+        return prev + 10;
+      });
+      i++;
+    }, 1200);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <section
-      className="relative text-primary-foreground py-20 lg:py-32 overflow-hidden"
-      style={{ background: 'linear-gradient(to bottom, #4DABF7, #2D6491)' }}
-    >
-      <div className="container mx-auto px-4 text-center relative z-10">
-        <div className="relative mb-20 lg:mb-40 text-center">
+    <div className="min-h-[80vh] bg-[#3B82F6] text-slate-900 font-sans p-4 py-8 flex flex-col items-center justify-center overflow-x-hidden relative pb-20">
+      {/* Background Elements */}
+      <div className="absolute top-[-5%] left-[-5%] w-48 h-48 bg-yellow-400 border-8 border-black rounded-full opacity-10 animate-pulse" />
+      <div className="absolute bottom-10 right-[-5%] w-72 h-16 bg-white border-8 border-black rounded-full rotate-12 opacity-10" />
+
+      {/* Main Header - Reduced margins and text sizes */}
+      <h2
+        className="font-headline text-5xl md:text-8xl font-bold text-white uppercase pt-20 pb-20"
+        style={{
+          textShadow:
+            "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        }}
+      >
+        Live Activity
+      </h2>
+
+      <div className="w-full max-w-4xl relative z-10">
+        <div className="relative pt-8">
+          {/* Adjusted Chibi positioning for smaller height */}
           <div
-            className="inline-block bg-primary border-[6px] border-black p-4 transform -rotate-3"
-            style={{ boxShadow: '12px 12px 0 #000' }}
+            className="absolute 
+    -top-10 -left-4 w-32 h-32 
+    md:-top-36 md:-left-12 md:w-64 md:h-64 
+    z-0 pointer-events-none transition-all duration-300"
           >
-            <h2
-              className="font-headline text-4xl md:text-6xl font-bold text-white uppercase"
-              style={{ textShadow: '3px 3px 0 #000' }}
-            >
-              Built for Security <br /> & Transparency
-            </h2>
+            <img
+              src="/images/rihee.png"
+              alt="Chibi"
+              className="w-full h-full object-contain drop-shadow-[0_8px_8px_rgba(0,0,0,0.3)]"
+            />
           </div>
-        </div>
+          {/* Right Chibi: Lowered further into the container on mobile */}
+          <div
+            className="absolute 
+    /* Mobile: Pushed 3rem (48px) down from the top edge */
+    -top-4 -right-2 w-28 h-28 
+    /* Desktop: Remains in its high 'peek' position */
+    md:-top-28 md:-right-12 md:w-64 md:h-64 
+    z-0 pointer-events-none transition-all duration-300"
+          >
+            <img
+              src="/images/rihe.png"
+              alt="Chibi Right"
+              className="w-full h-full object-contain drop-shadow-[0_6px_6px_rgba(0,0,0,0.3)]"
+            />
+          </div>
 
-        <div className="grid lg:grid-cols-2 gap-16 lg:gap-36 max-w-7xl mx-auto items-start">
-          {/* Roadmap Card */}
-          <div className="relative">
-            {roadmapChar && (
-              <div className="absolute top-[-330px] left-1/2 -translate-x-1/2 z-0 w-[600px] h-[600px] hidden lg:block">
-                <Image
-                  src="/images/rihee.png"
-                  alt={roadmapChar.description}
-                  fill
-                  className="object-contain"
-                  data-ai-hint={roadmapChar.imageHint}
-                />
-              </div>
-            )}
+          {/* Main Content Card - Reduced padding and shadow size */}
+          <div className="bg-white border-[5px] border-black rounded-[2rem] p-6 md:p-8 shadow-[12px_12px_0px_black] relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Side: Live Summons */}
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2 mb-4 border-b-4 border-black pb-2">
+                  <Zap className="w-8 h-8 text-blue-500 fill-blue-500" />
+                  <h2 className="font-black text-2xl uppercase italic tracking-tighter">
+                    Recent Activity
+                  </h2>
+                </div>
 
-            <div
-              className="relative z-10 mt-8 bg-white text-black rounded-3xl border-4 border-black p-6 pt-8 transform -rotate-3"
-              style={{ boxShadow: '8px 8px 0px #000' }}
-            >
-              <div className="flex items-center gap-2 mb-6">
-                <MapPin className="text-red-500 w-8 h-8" />
-                <h3 className="font-headline text-2xl font-bold text-black">
-                  ROADMAP
-                </h3>
+                {/* Recent Summons - Slimmed list */}
+                <div className="space-y-1.5 mb-4">
+                  {summonsList.slice(0, 3).map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex justify-between items-center border-2 border-black rounded-lg p-1.5 bg-slate-50 font-mono text-[10px] font-bold"
+                    >
+                      <span>{item.id}</span>
+                      <span className="bg-black text-white px-2 py-0.5 rounded-md">
+                        {item.count} NFTs
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bg-black rounded-xl p-4 border-[3px] border-black shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)] h-64 overflow-y-auto">
+                  <div className="flex items-center gap-2 mb-2 border-b border-green-900 pb-1">
+                    <Terminal size={12} className="text-green-500" />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-green-500 font-mono">
+                      Pipeline
+                    </span>
+                  </div>
+                  <div className="font-mono text-[10px] text-green-500/90 space-y-1">
+                    {encryptionLog.map((log, idx) => (
+                      <div
+                        key={idx}
+                        className={idx === 0 ? "text-green-400" : "opacity-30"}
+                      >
+                        {idx === 0 ? "> " : "  "}
+                        {log}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-              <div className="space-y-4 text-left">
-                <div className="bg-green-100 border-2 border-green-300 rounded-lg p-3 flex items-center gap-3">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                  <div>
-                    <p className="font-bold">PHASE 1: GENESIS</p>
-                    <p className="text-sm text-black/70">
-                      Character Engine Live
+
+              {/* Right Side: MMR Leaderboard */}
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2 mb-4 border-b-4 border-black pb-2">
+                  <TrendingUp className="w-8 h-8 text-purple-500" />
+                  <h2 className="font-black text-2xl uppercase italic tracking-tighter">
+                    MMR RANK
+                  </h2>
+                </div>
+
+                <div className="space-y-2">
+                  {liveActivity.map((activity, i) => (
+                    <div
+                      key={i}
+                      className={`flex justify-between items-center bg-white border-[3px] border-black p-3 rounded-xl shadow-[4px_4px_0px_black] transition-all transform hover:scale-[1.01] ${activity.id === "Vince" ? "ring-2 ring-yellow-400/30" : ""}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm border-2 border-black shadow-[2px_2px_0px_black] ${activity.color}`}
+                        >
+                          #{activity.rank}
+                        </div>
+                        <div>
+                          <p className="font-black text-sm uppercase italic tracking-tighter leading-none">
+                            {activity.id}
+                          </p>
+                          <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest">
+                            Global
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span
+                          className={`font-black font-mono block leading-none ${activity.id === "Vince" ? "text-lg text-blue-600" : "text-base"}`}
+                        >
+                          {activity.count}
+                        </span>
+                        <p className="text-[8px] font-black uppercase text-purple-600 mt-0.5">
+                          {activity.label}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Bottom stats - More compact */}
+                <div className="mt-6 pt-4 flex justify-around border-t-[3px] border-slate-100 border-dashed">
+                  <div className="text-center">
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
+                      Users
                     </p>
+                    <div className="flex items-center gap-1.5 justify-center">
+                      <Users size={14} className="text-blue-500" />
+                      <p className="font-black text-lg">4.2k</p>
+                    </div>
                   </div>
-                </div>
-                <div className="bg-yellow-100 border-2 border-yellow-300 rounded-lg p-3 flex items-center gap-3">
-                  <Circle className="w-6 h-6 text-yellow-500" />
-                  <div>
-                    <p className="font-bold">PHASE 2: PHYSICAL</p>
-                    <p className="text-sm text-black/70">Merch Shop Open</p>
-                  </div>
-                </div>
-                <div className="bg-gray-100 border-2 border-gray-300 rounded-lg p-3 flex items-center gap-3">
-                  <Circle className="w-6 h-6 text-gray-500" />
-                  <div>
-                    <p className="font-bold">PHASE 3: EXPANSION</p>
-                    <p className="text-sm text-black/70">Holder-Only Drops</p>
+                  <div className="text-center">
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
+                      Server
+                    </p>
+                    <div className="flex items-center gap-1.5 justify-center">
+                      <Activity size={14} className="text-green-500" />
+                      <p className="font-black text-lg text-green-500 uppercase">
+                        Legend
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Secure Data Card */}
-          <div className="relative">
-            {roadmapChar && (
-              <div className="absolute top-[-330px] left-1/2 -translate-x-1/2 z-30 w-[700px] h-[700px] hidden lg:block">
-                <Image
-                  src="/images/rihe.png"
-                  alt={roadmapChar.description}
-                  fill
-                  className="object-contain"
-                  data-ai-hint={roadmapChar.imageHint}
-                />
-              </div>
-            )}
-            <div
-              className="relative z-10 bg-white text-black rounded-3xl border-4 z-40 border-black 
-                p-8 pt-10 w-full max-w-xl transform rotate-3"
-              style={{ boxShadow: '8px 8px 0px #000' }}
-            >
-              <div className="flex items-center gap-2 mb-6">
-                <ShieldCheck className="text-green-500 w-8 h-8" />
-                <h3 className="font-headline text-2xl font-bold text-black">
-                  SECURE DATA
-                </h3>
-              </div>
-              <div className="space-y-4 text-left">
-                <div className="flex items-start gap-3">
-                  <Lock className="w-10 h-10 text-black/70 mt-1" />
-                  <div>
-                    <p className="font-bold">Client-Side Encryption</p>
-                    <p className="text-sm text-black/70">
-                      Your address is encrypted before it leaves your device.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Database className="w-10 h-10 text-black/70 mt-1" />
-                  <div>
-                    <p className="font-bold">On-Chain Storage</p>
-                    <p className="text-sm text-black/70">
-                      Only encrypted blobs are stored. No plain text databases.
-                    </p>
-                  </div>
-                </div>
-                <div className="bg-black text-green-400 border border-green-500 rounded-lg p-4 font-code text-sm mt-4">
-                  <p>&gt; STATUS: ENCRYPTED</p>
-                  <p>&gt; PROTOCOL: AES-256</p>
-                  <p>&gt; ACCESS: ADMIN ONLY</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
-        <p
-          className="font-headline text-xl md:text-2xl font-bold text-white uppercase mt-24 max-w-4xl mx-auto"
-          style={{ textShadow: '2px 2px 0 #000' }}
-        >
-          EACH MINT GENERATES A SOULBOUND RECEIPT NFT THAT SECURELY STORES YOUR
-          ENCRYPTED SHIPPING DATA. THIS RECEIPT IS NON - TRANSFERABLE AND
-          PROTECTS YOUR OWNERSHIP RIGHTS.
-        </p>
       </div>
-    </section>
+    </div>
   );
 };
+
+export default SecuritySection;
