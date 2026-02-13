@@ -223,7 +223,7 @@ export default function GeneratorPage() {
   const [barangaysLoading, setBarangaysLoading] = useState(false);
 
   // Merch selection state
-  const [selection, setSelection] = useState<string | null>("Tee"); // Can be 'Tee', 'Mug', 'Pad', 'Hoodie', or 'Bundle'
+  const [selection, setSelection] = useState<string | null>("Tee");
   const [shirtSize, setShirtSize] = useState<string>("M");
   const [teeColor, setTeeColor] = useState<string>("#3b82f6");
   const [mugColor, setMugColor] = useState<string>("#f3f4f6");
@@ -242,6 +242,10 @@ export default function GeneratorPage() {
   const [generatedMmr, setGeneratedMmr] = useState(0);
   const [shufflingMmr, setShufflingMmr] = useState(0);
 
+  // Easter egg override state — stored after reveal so it persists on the preview page
+  const [eggRank, setEggRank] = useState<string | null>(null);
+  const [eggLineage, setEggLineage] = useState<string | null>(null);
+
   const [generatedNamesHistory, setGeneratedNamesHistory] = useState<string[]>(
     [],
   );
@@ -251,6 +255,7 @@ export default function GeneratorPage() {
     generatedLore && displayedLore.length < generatedLore.length;
 
   // ── Easter Egg Detection ──
+  // bodyFat and posture are intentionally excluded — they don't affect matching
   const activeEgg = useEasterEgg({
     cuteness,
     confidence,
@@ -264,8 +269,6 @@ export default function GeneratorPage() {
     hairColor,
     eyewear,
     skinColor,
-    bodyFat,
-    posture,
   });
 
   const loadingSteps = [
@@ -305,7 +308,7 @@ export default function GeneratorPage() {
         setLoadingStepIndex(
           (prevIndex) => (prevIndex + 1) % loadingSteps.length,
         );
-      }, 3600); // Cycle every 1.2 seconds
+      }, 3600);
     }
     return () => {
       if (interval) {
@@ -313,12 +316,14 @@ export default function GeneratorPage() {
       }
     };
   }, [loading, showExitLoader, loadingSteps.length]);
-  
+
   // Load shipping data from localStorage on mount/account change
   useEffect(() => {
     if (!account?.address) return;
 
-    const savedDataRaw = localStorage.getItem(`kapogian_shipping_${account.address}`);
+    const savedDataRaw = localStorage.getItem(
+      `kapogian_shipping_${account.address}`,
+    );
     if (savedDataRaw) {
       try {
         const data = JSON.parse(savedDataRaw);
@@ -333,7 +338,6 @@ export default function GeneratorPage() {
       }
     }
   }, [account?.address]);
-
 
   // Fetch provinces on mount
   useEffect(() => {
@@ -376,11 +380,9 @@ export default function GeneratorPage() {
         }
       };
 
-      // If we are restoring from local storage, we don't want to reset the city
       if (selectedCity?.provinceCode === selectedProvince.code) {
         fetchCities();
       } else {
-        // This is a manual change, so reset children
         setCities([]);
         setSelectedCity(null);
         setBarangays([]);
@@ -413,8 +415,7 @@ export default function GeneratorPage() {
           setBarangaysLoading(false);
         }
       };
-      
-      // If we are restoring from local storage, don't reset the barangay
+
       if (selectedBarangay?.cityCode === selectedCity.code) {
         fetchBarangays();
       } else {
@@ -436,9 +437,9 @@ export default function GeneratorPage() {
   const renderMarkdown = (text: string | null) => {
     if (!text) return null;
     let html = text
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") // Bold
-      .replace(/\*(.*?)\*/g, "<em>$1</em>") // Italic
-      .replace(/\n/g, "<br />"); // Newlines
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.*?)\*/g, "<em>$1</em>")
+      .replace(/\n/g, "<br />");
 
     return <div dangerouslySetInnerHTML={{ __html: html }} />;
   };
@@ -546,7 +547,6 @@ export default function GeneratorPage() {
       }
     }
 
-    // Hair Amount
     let hairDescriptor = "medium length hair";
     if (hairAmount <= 5)
       hairDescriptor =
@@ -557,7 +557,6 @@ export default function GeneratorPage() {
     else if (hairAmount <= 35) hairDescriptor = "medium length hair";
     else hairDescriptor = "long, flowing hair";
 
-    // Facial Hair
     let facialHairDescriptor = "clean shaven";
     if (identityContext === "Male" || identityContext === "Gay") {
       if (facialHair > 5) facialHairDescriptor = "light stubble";
@@ -566,7 +565,6 @@ export default function GeneratorPage() {
         facialHairDescriptor = "long, full beard and a stylish mustache";
     }
 
-    // Clothing
     let clothingDescriptor = "casual streetwear";
     if (clothingStyle <= 5)
       clothingDescriptor = "only a Sleeveless colored SHirt and shorts";
@@ -585,31 +583,26 @@ export default function GeneratorPage() {
           ? "elegant colorful Filipiniana attire"
           : "elegant filipino formal attire, like a barong tagalog";
 
-    // Hair Color
     let hairColorDescriptor = "black hair";
     if (hairColor > 5) hairColorDescriptor = "dark brown hair";
     if (hairColor > 15) hairColorDescriptor = "light brown hair";
     if (hairColor > 30) hairColorDescriptor = "blonde hair";
     if (hairColor > 45) hairColorDescriptor = "white hair";
 
-    // Eyewear
     let eyewearDescriptor = "no eyewear";
     if (eyewear > 5) eyewearDescriptor = "stylish eyeglasses";
     if (eyewear > 20) eyewearDescriptor = "cool sunglasses";
     if (eyewear > 40) eyewearDescriptor = "futuristic sporty eyewear";
 
-    // Skin Color
     let skinColorDescriptor = "kayumangi skin";
     if (skinColor > 25)
       skinColorDescriptor = "dark-skinned, Aeta-like skin color";
 
-    // Body Fat
     let bodyFatDescriptor = "";
     if (bodyFat <= 15) bodyFatDescriptor = "thin and slender body";
     else if (bodyFat <= 35) bodyFatDescriptor = "average body type";
     else bodyFatDescriptor = "chubby and plump body";
 
-    // Holding Item
     let holdingItemDescriptor = "not holding anything";
     switch (holdingItem) {
       case "Cash":
@@ -662,6 +655,9 @@ export default function GeneratorPage() {
 
   const handleGenerate = async () => {
     let shuffleInterval: NodeJS.Timeout | undefined;
+    let eggTimer1: NodeJS.Timeout | undefined;
+    let eggTimer2: NodeJS.Timeout | undefined;
+
     try {
       setLoading(true);
       setShowExitLoader(false);
@@ -674,6 +670,9 @@ export default function GeneratorPage() {
       setTxHash("");
       setLoadingStepIndex(0);
       setGeneratedMmr(calculateMMR());
+      // Clear any previous egg overrides
+      setEggRank(null);
+      setEggLineage(null);
 
       shuffleInterval = setInterval(() => {
         setShufflingMmr(Math.floor(Math.random() * 999));
@@ -683,17 +682,30 @@ export default function GeneratorPage() {
 
       // ── Easter Egg Short-Circuit ──
       if (activeEgg) {
-        if (shuffleInterval) clearInterval(shuffleInterval);
-        setShowExitLoader(true);
-        setTimeout(() => {
+        // Stage 1: run the normal loading GIF + step text for 8 seconds
+        // (the existing loadingStepIndex interval drives the text cycling)
+
+        // Stage 2: swap to exit GIF at 8s
+        eggTimer1 = setTimeout(() => {
+          setShowExitLoader(true);
+        }, 8000);
+
+        // Stage 3: reveal at 10s — same timing feel as normal generation
+        eggTimer2 = setTimeout(() => {
+          if (shuffleInterval) clearInterval(shuffleInterval);
           setGeneratedName(activeEgg.name);
           setOriginDescription("a legend of the Kapogian realm");
           setGeneratedLore(activeEgg.lore);
           setGeneratedImage(activeEgg.imagePath);
           setGeneratedImageBlob(null);
+          // Set the easter egg's custom stats
+          setGeneratedMmr(activeEgg.mmr);
+          setEggRank(activeEgg.rank);
+          setEggLineage(activeEgg.lineage);
           setLoading(false);
           setShowExitLoader(false);
-        }, 6500);
+        }, 10000);
+
         return;
       }
 
@@ -746,7 +758,7 @@ export default function GeneratorPage() {
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: "image/png" });
 
-      // Step 4: Trigger the exit animation then update state
+      // Step 4: Trigger exit animation then update state
       setShowExitLoader(true);
       setTimeout(() => {
         if (shuffleInterval) clearInterval(shuffleInterval);
@@ -757,9 +769,11 @@ export default function GeneratorPage() {
         setGeneratedLore(loreResult);
         setLoading(false);
         setShowExitLoader(false);
-      }, 6500); // Duration for exit GIF
+      }, 6500);
     } catch (err: any) {
       if (shuffleInterval) clearInterval(shuffleInterval);
+      if (eggTimer1) clearTimeout(eggTimer1);
+      if (eggTimer2) clearTimeout(eggTimer2);
       console.error("Generation failed:", err);
       setError(
         err.message || "Failed to generate character. Please try again.",
@@ -768,7 +782,7 @@ export default function GeneratorPage() {
       setShowExitLoader(false);
     }
   };
-  
+
   const saveShippingToLocal = () => {
     if (!account?.address) return;
 
@@ -789,7 +803,7 @@ export default function GeneratorPage() {
   };
 
   const handleMint = async () => {
-    if (!generatedImageBlob && !activeEgg) {
+    if (!generatedImageBlob && !eggRank) {
       setError("Character data is missing.");
       return;
     }
@@ -804,7 +818,6 @@ export default function GeneratorPage() {
     let imageHash: string | null = null;
 
     try {
-      // Validate and encrypt shipping information
       const { valid, errors, fullAddress } = validateShippingInfo(
         { full_name: shippingName, contact_number: shippingContact },
         {
@@ -827,7 +840,6 @@ export default function GeneratorPage() {
         address: fullAddress,
       });
 
-      // 1. Map selection to contract-expected value
       const hoodieColorObject = merchProducts.hoodie.colors.find(
         (c) => c.value === hoodieColor,
       );
@@ -858,23 +870,18 @@ export default function GeneratorPage() {
           return;
       }
 
-      // 2. Upload to IPFS (only if it was an AI generated image)
       let finalImageUrl = generatedImage;
       if (generatedImageBlob) {
         console.log("📤 Uploading to IPFS...");
         const { imageUrl, imageHash: imgHash } = await uploadCharacterToIPFS(
           generatedImageBlob,
-          {
-            name: generatedName,
-          },
+          { name: generatedName },
         );
-
         finalImageUrl = imageUrl;
         imageHash = imgHash;
         console.log("✅ IPFS upload complete:", finalImageUrl);
       }
 
-      // 3. Mint on SUI blockchain
       console.log("⛓️ Minting on SUI blockchain...");
       const plainTextLore = (
         generatedLore || `A Kapogian character from ${originDescription}`
@@ -921,8 +928,6 @@ export default function GeneratorPage() {
     } catch (err: any) {
       console.error("❌ Mint failed:", err);
       setError(err.message || "Failed to mint NFT. Please try again.");
-
-      // Cleanup IPFS file if it was uploaded
       if (imageHash) {
         await unpinFromIPFS(imageHash);
       }
@@ -932,7 +937,6 @@ export default function GeneratorPage() {
   };
 
   const handleContinueToShipping = () => {
-    // This function is now called from the new merch page
     if (!selection) {
       setError("Please select at least one merchandise item or the bundle.");
       return;
@@ -973,6 +977,19 @@ export default function GeneratorPage() {
     Mahawari: "bg-violet-500",
     Maharaba: "bg-rose-700",
   };
+
+  // Derived display values — egg overrides win when set
+  const displayRank = eggRank
+    ? eggRank
+    : generatedMmr > 800
+      ? "Mythic"
+      : generatedMmr > 500
+        ? "Elite"
+        : "Adept";
+
+  const displayLineage = eggLineage ? eggLineage : gender || "Ancient";
+
+  const isEggActive = !!eggRank; // true after an egg has been revealed
 
   if (!account) {
     return (
@@ -1075,10 +1092,10 @@ export default function GeneratorPage() {
                             "ring-1 ring-offset-1 ring-black scale-110",
                         )}
                         style={{ backgroundColor: c.value }}
-                      ></button>
+                      />
                     ))}
                   </div>
-                  <div className="h-6 w-0.5 bg-gray-300 hidden md:block"></div>
+                  <div className="h-6 w-0.5 bg-gray-300 hidden md:block" />
                   <div className="flex gap-1">
                     {merchProducts.tee.sizes.map((s) => (
                       <button
@@ -1098,6 +1115,7 @@ export default function GeneratorPage() {
                 </div>
               </div>
             </div>
+
             {/* Bundle Item: Mug */}
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-gray-50 p-4 rounded-xl border-2 border-black/10">
               <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0">
@@ -1127,11 +1145,12 @@ export default function GeneratorPage() {
                           "ring-1 ring-offset-1 ring-black scale-110",
                       )}
                       style={{ backgroundColor: c.value }}
-                    ></button>
+                    />
                   ))}
                 </div>
               </div>
             </div>
+
             {/* Bundle Item: Hoodie */}
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-gray-50 p-4 rounded-xl border-2 border-black/10">
               <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0">
@@ -1162,10 +1181,10 @@ export default function GeneratorPage() {
                             "ring-1 ring-offset-1 ring-black scale-110",
                         )}
                         style={{ backgroundColor: c.value }}
-                      ></button>
+                      />
                     ))}
                   </div>
-                  <div className="h-6 w-0.5 bg-gray-300 hidden md:block"></div>
+                  <div className="h-6 w-0.5 bg-gray-300 hidden md:block" />
                   <div className="flex gap-1">
                     {merchProducts.hoodie.sizes.map((s) => (
                       <button
@@ -1256,7 +1275,7 @@ export default function GeneratorPage() {
                           isActive && "ring-2 ring-offset-2 ring-black",
                         )}
                         style={{ backgroundColor: c.value }}
-                      ></button>
+                      />
                     );
                   })}
                 </div>
@@ -1307,9 +1326,7 @@ export default function GeneratorPage() {
         />
         <main className="generate-page relative w-full max-w-4xl bg-white border-4 border-black rounded-3xl hard-shadow overflow-hidden flex flex-col">
           <header className="bg-black text-white p-4 border-b-4 border-black flex justify-between items-center">
-            <div className="w-1/3">
-              {/* Home button removed, handled by PageHeader */}
-            </div>
+            <div className="w-1/3" />
             <div className="w-1/3 flex justify-center items-center gap-2">
               <Package className="w-6 h-6 text-yellow-400" />
               <span className="font-display font-semibold tracking-tight text-xl text-yellow-400">
@@ -1320,25 +1337,22 @@ export default function GeneratorPage() {
               <div
                 className="w-4 h-4 rounded-full bg-red-500 border-2 border-white animate-pulse"
                 style={{ boxShadow: "0 0 8px #ef4444" }}
-              ></div>
+              />
               <div
                 className="w-4 h-4 rounded-full bg-yellow-400 border-2 border-white animate-pulse"
-                style={{
-                  animationDelay: "200ms",
-                  boxShadow: "0 0 8px #f59e0b",
-                }}
-              ></div>
+                style={{ animationDelay: "200ms", boxShadow: "0 0 8px #f59e0b" }}
+              />
               <div
                 className="w-4 h-4 rounded-full bg-green-500 border-2 border-white animate-pulse"
-                style={{
-                  animationDelay: "400ms",
-                  boxShadow: "0 0 8px #22c55e",
-                }}
-              ></div>
+                style={{ animationDelay: "400ms", boxShadow: "0 0 8px #22c55e" }}
+              />
             </div>
           </header>
 
           <div className="bg-stone-50 min-h-[600px] relative">
+            {/* ═══════════════════════════════════════════════
+                PAGE: GENERATOR
+            ═══════════════════════════════════════════════ */}
             <section
               id="page-generator"
               className={cn(
@@ -1405,45 +1419,24 @@ export default function GeneratorPage() {
                     </h3>
                     <div className="space-y-1">
                       <div className="flex justify-between font-semibold text-sm">
-                        <span>Cuteness</span>
-                        <span>{cuteness}</span>
+                        <span>Cuteness</span><span>{cuteness}</span>
                       </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={cuteness}
-                        onChange={(e) => setCuteness(Number(e.target.value))}
-                        className="w-full"
-                      />
+                      <input type="range" min="0" max="100" value={cuteness}
+                        onChange={(e) => setCuteness(Number(e.target.value))} className="w-full" />
                     </div>
                     <div className="space-y-1">
                       <div className="flex justify-between font-semibold text-sm">
-                        <span>Confidence</span>
-                        <span>{confidence}</span>
+                        <span>Confidence</span><span>{confidence}</span>
                       </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={confidence}
-                        onChange={(e) => setConfidence(Number(e.target.value))}
-                        className="w-full"
-                      />
+                      <input type="range" min="0" max="100" value={confidence}
+                        onChange={(e) => setConfidence(Number(e.target.value))} className="w-full" />
                     </div>
                     <div className="space-y-1">
                       <div className="flex justify-between font-semibold text-sm">
-                        <span>Tili Factor</span>
-                        <span>{tiliFactor}</span>
+                        <span>Tili Factor</span><span>{tiliFactor}</span>
                       </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={tiliFactor}
-                        onChange={(e) => setTiliFactor(Number(e.target.value))}
-                        className="w-full"
-                      />
+                      <input type="range" min="0" max="100" value={tiliFactor}
+                        onChange={(e) => setTiliFactor(Number(e.target.value))} className="w-full" />
                     </div>
                   </div>
 
@@ -1453,45 +1446,24 @@ export default function GeneratorPage() {
                     </h3>
                     <div className="space-y-1">
                       <div className="flex justify-between font-semibold text-sm">
-                        <span>Luzon</span>
-                        <span>{luzon}</span>
+                        <span>Luzon</span><span>{luzon}</span>
                       </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="50"
-                        value={luzon}
-                        onChange={(e) => setLuzon(Number(e.target.value))}
-                        className="w-full"
-                      />
+                      <input type="range" min="0" max="50" value={luzon}
+                        onChange={(e) => setLuzon(Number(e.target.value))} className="w-full" />
                     </div>
                     <div className="space-y-1">
                       <div className="flex justify-between font-semibold text-sm">
-                        <span>Visayas</span>
-                        <span>{visayas}</span>
+                        <span>Visayas</span><span>{visayas}</span>
                       </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="50"
-                        value={visayas}
-                        onChange={(e) => setVisayas(Number(e.target.value))}
-                        className="w-full"
-                      />
+                      <input type="range" min="0" max="50" value={visayas}
+                        onChange={(e) => setVisayas(Number(e.target.value))} className="w-full" />
                     </div>
                     <div className="space-y-1">
                       <div className="flex justify-between font-semibold text-sm">
-                        <span>Mindanao</span>
-                        <span>{mindanao}</span>
+                        <span>Mindanao</span><span>{mindanao}</span>
                       </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="50"
-                        value={mindanao}
-                        onChange={(e) => setMindanao(Number(e.target.value))}
-                        className="w-full"
-                      />
+                      <input type="range" min="0" max="50" value={mindanao}
+                        onChange={(e) => setMindanao(Number(e.target.value))} className="w-full" />
                     </div>
                   </div>
                 </div>
@@ -1501,117 +1473,46 @@ export default function GeneratorPage() {
                     <div className="absolute -top-4 left-4 bg-black text-white px-3 py-1 font-display font-semibold text-sm border-2 border-white rounded-full">
                       PORMA CONTROLS
                     </div>
-
                     <div className="grid grid-cols-2 gap-4 mt-2">
                       <div className="space-y-1">
-                        <label className="text-sm font-semibold">
-                          Clothing Style: {clothingStyle}
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="50"
-                          value={clothingStyle}
-                          onChange={(e) =>
-                            setClothingStyle(Number(e.target.value))
-                          }
-                          className="w-full"
-                        />
+                        <label className="text-sm font-semibold">Clothing Style: {clothingStyle}</label>
+                        <input type="range" min="0" max="50" value={clothingStyle}
+                          onChange={(e) => setClothingStyle(Number(e.target.value))} className="w-full" />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-sm font-semibold">
-                          Hair Amount: {hairAmount}
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="50"
-                          value={hairAmount}
-                          onChange={(e) =>
-                            setHairAmount(Number(e.target.value))
-                          }
-                          className="w-full"
-                        />
+                        <label className="text-sm font-semibold">Hair Amount: {hairAmount}</label>
+                        <input type="range" min="0" max="50" value={hairAmount}
+                          onChange={(e) => setHairAmount(Number(e.target.value))} className="w-full" />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-sm font-semibold">
-                          Hair Color: {hairColor}
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="50"
-                          value={hairColor}
-                          onChange={(e) => setHairColor(Number(e.target.value))}
-                          className="w-full"
-                        />
+                        <label className="text-sm font-semibold">Hair Color: {hairColor}</label>
+                        <input type="range" min="0" max="50" value={hairColor}
+                          onChange={(e) => setHairColor(Number(e.target.value))} className="w-full" />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-sm font-semibold">
-                          Facial Hair: {facialHair}
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="50"
-                          value={facialHair}
-                          onChange={(e) =>
-                            setFacialHair(Number(e.target.value))
-                          }
-                          className="w-full"
-                        />
+                        <label className="text-sm font-semibold">Facial Hair: {facialHair}</label>
+                        <input type="range" min="0" max="50" value={facialHair}
+                          onChange={(e) => setFacialHair(Number(e.target.value))} className="w-full" />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-sm font-semibold">
-                          Eyewear: {eyewear}
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="50"
-                          value={eyewear}
-                          onChange={(e) => setEyewear(Number(e.target.value))}
-                          className="w-full"
-                        />
+                        <label className="text-sm font-semibold">Eyewear: {eyewear}</label>
+                        <input type="range" min="0" max="50" value={eyewear}
+                          onChange={(e) => setEyewear(Number(e.target.value))} className="w-full" />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-sm font-semibold">
-                          Skin Tone: {skinColor}
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="50"
-                          value={skinColor}
-                          onChange={(e) => setSkinColor(Number(e.target.value))}
-                          className="w-full"
-                        />
+                        <label className="text-sm font-semibold">Skin Tone: {skinColor}</label>
+                        <input type="range" min="0" max="50" value={skinColor}
+                          onChange={(e) => setSkinColor(Number(e.target.value))} className="w-full" />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-sm font-semibold">
-                          Body Fat: {bodyFat}
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="50"
-                          value={bodyFat}
-                          onChange={(e) => setBodyFat(Number(e.target.value))}
-                          className="w-full"
-                        />
+                        <label className="text-sm font-semibold">Body Fat: {bodyFat}</label>
+                        <input type="range" min="0" max="50" value={bodyFat}
+                          onChange={(e) => setBodyFat(Number(e.target.value))} className="w-full" />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-sm font-semibold">
-                          Posture: {posture}
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="50"
-                          value={posture}
-                          onChange={(e) => setPosture(Number(e.target.value))}
-                          className="w-full"
-                        />
+                        <label className="text-sm font-semibold">Posture: {posture}</label>
+                        <input type="range" min="0" max="50" value={posture}
+                          onChange={(e) => setPosture(Number(e.target.value))} className="w-full" />
                       </div>
                     </div>
 
@@ -1628,12 +1529,8 @@ export default function GeneratorPage() {
                           <option value="None">Nothing</option>
                           <option value="Cash">Cash</option>
                           <option value="Random Food">Filipino Food</option>
-                          <option value="Random Bouquet of Flowers">
-                            Flowers
-                          </option>
-                          <option value="Random Home Utensils">
-                            Home Utensils
-                          </option>
+                          <option value="Random Bouquet of Flowers">Flowers</option>
+                          <option value="Random Home Utensils">Home Utensils</option>
                         </select>
                       </div>
                     </div>
@@ -1670,6 +1567,9 @@ export default function GeneratorPage() {
               </div>
             </section>
 
+            {/* ═══════════════════════════════════════════════
+                PAGE: PREVIEW
+            ═══════════════════════════════════════════════ */}
             <section
               id="page-preview"
               className={cn("page-section flex flex-col h-full", {
@@ -1677,15 +1577,14 @@ export default function GeneratorPage() {
               })}
             >
               <div className="flex flex-col md:flex-row border-b-4 border-black">
-                {/* MAIN CONTAINER */}
                 <div className="flex flex-col w-full border-4 border-black bg-white overflow-hidden">
-                  {/* TOP SECTION: Split Image & Lore */}
+                  {/* TOP: Image + Lore */}
                   <div className="flex flex-col md:flex-row border-b-4 border-black">
-                    {/* LEFT COLUMN: Image/Loader Area */}
+                    {/* LEFT: Image / Loader */}
                     <div className="relative w-full md:w-1/2 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px]">
                       {loading ? (
                         showExitLoader ? (
-                          /* STAGE 2: Final Exit Loader */
+                          /* STAGE 2: Exit GIF */
                           <div className="relative w-full h-full flex items-center justify-center">
                             <Image
                               src="/images/finalexit.gif"
@@ -1697,7 +1596,7 @@ export default function GeneratorPage() {
                             />
                           </div>
                         ) : (
-                          /* STAGE 1: Primary Generation Loader */
+                          /* STAGE 1: Primary loader — same for both normal & easter egg */
                           <div className="relative w-full h-full flex flex-col items-center justify-center">
                             <Image
                               src="/images/loadscreens.gif"
@@ -1717,29 +1616,26 @@ export default function GeneratorPage() {
                           </div>
                         )
                       ) : generatedImage ? (
-                        /* FINAL STATE: Character Revealed */
+                        /* REVEALED */
                         <Image
                           src={generatedImage}
                           alt="Kapogian Character"
                           width={512}
                           height={512}
-                          className=" animate__animated animate__zoomIn"
+                          className="animate__animated animate__zoomIn"
                         />
                       ) : (
-                        /* ERROR STATE: Failed Summon */
+                        /* ERROR */
                         <div className="flex flex-col items-center justify-center w-full h-full text-stone-500">
                           <Ghost size={48} className="mb-2" />
-                          <p
-                            style={{ fontSize: "16px" }}
-                            className="font-semibold"
-                          >
+                          <p style={{ fontSize: "16px" }} className="font-semibold">
                             Summon failed or not started
                           </p>
                         </div>
                       )}
                     </div>
 
-                    {/* RIGHT COLUMN: Lore Section */}
+                    {/* RIGHT: Lore */}
                     <div className="w-full md:w-1/2 p-8 flex flex-col justify-center bg-white">
                       <div className="mb-6">
                         {loading ? (
@@ -1747,7 +1643,12 @@ export default function GeneratorPage() {
                         ) : (
                           <h1
                             style={{ fontSize: "42px" }}
-                            className="font-display font-bold uppercase tracking-tight leading-none border-b-8 border-yellow-300 inline-block animate__animated animate__fadeInUp"
+                            className={cn(
+                              "font-display font-bold uppercase tracking-tight leading-none inline-block animate__animated animate__fadeInUp",
+                              isEggActive
+                                ? "border-b-8 border-yellow-400"
+                                : "border-b-8 border-yellow-300",
+                            )}
                           >
                             {generatedName || "..."}
                           </h1>
@@ -1772,9 +1673,9 @@ export default function GeneratorPage() {
                     </div>
                   </div>
 
-                  {/* BOTTOM SECTION: The 4-Column Bar (As per your wireframe) */}
+                  {/* BOTTOM: 4-column stat bar */}
                   <div className="flex flex-col md:flex-row w-full divide-y-4 md:divide-y-0 md:divide-x-4 divide-black bg-white">
-                    {/* 1. Game Stats Title */}
+                    {/* 1. Title */}
                     <div className="flex-1 p-6 flex items-center justify-center text-center">
                       <h3
                         style={{ fontSize: "24px" }}
@@ -1802,14 +1703,17 @@ export default function GeneratorPage() {
                       ) : (
                         <p
                           style={{ fontSize: "24px" }}
-                          className="font-display font-bold uppercase leading-none text-black drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp"
+                          className={cn(
+                            "font-display font-bold uppercase leading-none drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp",
+                            isEggActive ? "text-yellow-500" : "text-black",
+                          )}
                         >
                           {generatedMmr}
                         </p>
                       )}
                     </div>
 
-                    {/* 3. Rank Display */}
+                    {/* 3. Rank */}
                     <div className="flex-1 p-6 flex flex-col items-center justify-center bg-white">
                       <p className="text-[14px] font-bold text-stone-500 uppercase tracking-widest mb-1">
                         Rank
@@ -1819,18 +1723,17 @@ export default function GeneratorPage() {
                       ) : (
                         <h3
                           style={{ fontSize: "24px" }}
-                          className="font-display font-bold uppercase leading-none text-black drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp"
+                          className={cn(
+                            "font-display font-bold uppercase leading-none drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp",
+                            isEggActive ? "text-yellow-500" : "text-black",
+                          )}
                         >
-                          {generatedMmr > 800
-                            ? "Mythic"
-                            : generatedMmr > 500
-                              ? "Elite"
-                              : "Adept"}
+                          {displayRank}
                         </h3>
                       )}
                     </div>
 
-                    {/* 4. Lineage/Stats */}
+                    {/* 4. Lineage */}
                     <div className="flex-1 p-6 flex flex-col items-center justify-center bg-white">
                       <p className="text-[14px] font-bold text-stone-500 uppercase tracking-widest mb-1">
                         Lineage
@@ -1840,15 +1743,19 @@ export default function GeneratorPage() {
                       ) : (
                         <p
                           style={{ fontSize: "24px" }}
-                          className="font-display font-bold uppercase leading-none text-black drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp"
+                          className={cn(
+                            "font-display font-bold uppercase leading-none drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp",
+                            isEggActive ? "text-yellow-500" : "text-black",
+                          )}
                         >
-                          {gender || "Ancient"}
+                          {displayLineage}
                         </p>
                       )}
                     </div>
                   </div>
                 </div>
               </div>
+
               <div className="p-6 md:p-8 flex justify-between items-center border-t-4 border-black bg-stone-100">
                 <button
                   onClick={() => navigate("generator")}
@@ -1888,12 +1795,14 @@ export default function GeneratorPage() {
               </div>
             </section>
 
+            {/* ═══════════════════════════════════════════════
+                PAGE: MERCH
+            ═══════════════════════════════════════════════ */}
             <section
               id="page-merch"
               className={cn(
                 "page-section flex flex-col h-full bg-blue-500",
                 { hidden: page !== "page-merch" },
-                "bg-blue-500",
               )}
               style={{
                 backgroundImage:
@@ -2003,6 +1912,9 @@ export default function GeneratorPage() {
               </div>
             </section>
 
+            {/* ═══════════════════════════════════════════════
+                PAGE: SHIPPING
+            ═══════════════════════════════════════════════ */}
             <section
               id="page-shipping"
               className={cn(
@@ -2019,9 +1931,7 @@ export default function GeneratorPage() {
                 </h2>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="font-semibold uppercase text-sm tracking-wide">
-                      Full Name
-                    </label>
+                    <label className="font-semibold uppercase text-sm tracking-wide">Full Name</label>
                     <Input
                       type="text"
                       value={shippingName}
@@ -2030,9 +1940,7 @@ export default function GeneratorPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="font-semibold uppercase text-sm tracking-wide">
-                      Contact Number
-                    </label>
+                    <label className="font-semibold uppercase text-sm tracking-wide">Contact Number</label>
                     <Input
                       type="text"
                       value={shippingContact}
@@ -2042,36 +1950,24 @@ export default function GeneratorPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="font-semibold uppercase text-sm tracking-wide">
-                      Province
-                    </label>
+                    <label className="font-semibold uppercase text-sm tracking-wide">Province</label>
                     <Select
                       onValueChange={handleProvinceChange}
                       value={selectedProvince?.code}
                       disabled={provincesLoading}
                     >
                       <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto">
-                        <SelectValue
-                          placeholder={
-                            provincesLoading
-                              ? "Loading provinces..."
-                              : "Select Province"
-                          }
-                        />
+                        <SelectValue placeholder={provincesLoading ? "Loading provinces..." : "Select Province"} />
                       </SelectTrigger>
                       <SelectContent>
                         {provinces.map((p) => (
-                          <SelectItem key={p.code} value={p.code}>
-                            {p.name}
-                          </SelectItem>
+                          <SelectItem key={p.code} value={p.code}>{p.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <label className="font-semibold uppercase text-sm tracking-wide">
-                      City / Municipality
-                    </label>
+                    <label className="font-semibold uppercase text-sm tracking-wide">City / Municipality</label>
                     <Select
                       onValueChange={handleCityChange}
                       value={selectedCity?.code}
@@ -2081,27 +1977,17 @@ export default function GeneratorPage() {
                         className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto"
                         disabled={!selectedProvince || citiesLoading}
                       >
-                        <SelectValue
-                          placeholder={
-                            citiesLoading
-                              ? "Loading cities..."
-                              : "Select City/Municipality"
-                          }
-                        />
+                        <SelectValue placeholder={citiesLoading ? "Loading cities..." : "Select City/Municipality"} />
                       </SelectTrigger>
                       <SelectContent>
                         {cities.map((c) => (
-                          <SelectItem key={c.code} value={c.code}>
-                            {c.name}
-                          </SelectItem>
+                          <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <label className="font-semibold uppercase text-sm tracking-wide">
-                      Barangay
-                    </label>
+                    <label className="font-semibold uppercase text-sm tracking-wide">Barangay</label>
                     <Select
                       onValueChange={handleBarangayChange}
                       value={selectedBarangay?.code}
@@ -2111,19 +1997,11 @@ export default function GeneratorPage() {
                         className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto"
                         disabled={!selectedCity || barangaysLoading}
                       >
-                        <SelectValue
-                          placeholder={
-                            barangaysLoading
-                              ? "Loading barangays..."
-                              : "Select Barangay"
-                          }
-                        />
+                        <SelectValue placeholder={barangaysLoading ? "Loading barangays..." : "Select Barangay"} />
                       </SelectTrigger>
                       <SelectContent>
                         {barangays.map((b) => (
-                          <SelectItem key={b.code} value={b.code}>
-                            {b.name}
-                          </SelectItem>
+                          <SelectItem key={b.code} value={b.code}>{b.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -2161,6 +2039,9 @@ export default function GeneratorPage() {
               </div>
             </section>
 
+            {/* ═══════════════════════════════════════════════
+                PAGE: RECEIPT
+            ═══════════════════════════════════════════════ */}
             <section
               id="page-receipt"
               className={cn(
@@ -2169,7 +2050,7 @@ export default function GeneratorPage() {
               )}
             >
               <div className="w-full max-w-sm bg-white border-x-4 border-t-4 border-b-[12px] border-dotted border-black rounded-t-xl relative p-6 shadow-2xl">
-                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-green-200 rounded-full border-4 border-black"></div>
+                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-green-200 rounded-full border-4 border-black" />
                 <div className="text-center mb-6 border-b-2 border-dashed border-stone-300 pb-4">
                   <h2 className="font-display text-3xl font-semibold uppercase tracking-tight">
                     Order Receipt
@@ -2191,12 +2072,8 @@ export default function GeneratorPage() {
                     )}
                   </div>
                   <div className="flex flex-col justify-center">
-                    <span className="font-semibold text-lg">
-                      {generatedName}
-                    </span>
-                    <span className="text-sm text-stone-500">
-                      Includes Digital Asset
-                    </span>
+                    <span className="font-semibold text-lg">{generatedName}</span>
+                    <span className="text-sm text-stone-500">Includes Digital Asset</span>
                   </div>
                 </div>
 
