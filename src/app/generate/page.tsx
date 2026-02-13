@@ -1364,11 +1364,17 @@ export default function GeneratorPage() {
               />
               <div
                 className="w-4 h-4 rounded-full bg-yellow-400 border-2 border-white animate-pulse"
-                style={{ animationDelay: "200ms", boxShadow: "0 0 8px #f59e0b" }}
+                style={{
+                  animationDelay: "200ms",
+                  boxShadow: "0 0 8px #f59e0b",
+                }}
               />
               <div
                 className="w-4 h-4 rounded-full bg-green-500 border-2 border-white animate-pulse"
-                style={{ animationDelay: "400ms", boxShadow: "0 0 8px #22c55e" }}
+                style={{
+                  animationDelay: "400ms",
+                  boxShadow: "0 0 8px #22c55e",
+                }}
               />
             </div>
           </header>
@@ -1443,24 +1449,45 @@ export default function GeneratorPage() {
                     </h3>
                     <div className="space-y-1">
                       <div className="flex justify-between font-semibold text-sm">
-                        <span>Cuteness</span><span>{cuteness}</span>
+                        <span>Cuteness</span>
+                        <span>{cuteness}</span>
                       </div>
-                      <input type="range" min="0" max="100" value={cuteness}
-                        onChange={(e) => setCuteness(Number(e.target.value))} className="w-full" />
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={cuteness}
+                        onChange={(e) => setCuteness(Number(e.target.value))}
+                        className="w-full"
+                      />
                     </div>
                     <div className="space-y-1">
                       <div className="flex justify-between font-semibold text-sm">
-                        <span>Confidence</span><span>{confidence}</span>
+                        <span>Confidence</span>
+                        <span>{confidence}</span>
                       </div>
-                      <input type="range" min="0" max="100" value={confidence}
-                        onChange={(e) => setConfidence(Number(e.target.value))} className="w-full" />
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={confidence}
+                        onChange={(e) => setConfidence(Number(e.target.value))}
+                        className="w-full"
+                      />
                     </div>
                     <div className="space-y-1">
                       <div className="flex justify-between font-semibold text-sm">
-                        <span>Tili Factor</span><span>{tiliFactor}</span>
+                        <span>Tili Factor</span>
+                        <span>{tiliFactor}</span>
                       </div>
-                      <input type="range" min="0" max="100" value={tiliFactor}
-                        onChange={(e) => setTiliFactor(Number(e.target.value))} className="w-full" />
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={tiliFactor}
+                        onChange={(e) => setTiliFactor(Number(e.target.value))}
+                        className="w-full"
+                      />
                     </div>
                   </div>
 
@@ -1470,24 +1497,45 @@ export default function GeneratorPage() {
                     </h3>
                     <div className="space-y-1">
                       <div className="flex justify-between font-semibold text-sm">
-                        <span>Luzon</span><span>{luzon}</span>
+                        <span>Luzon</span>
+                        <span>{luzon}</span>
                       </div>
-                      <input type="range" min="0" max="50" value={luzon}
-                        onChange={(e) => setLuzon(Number(e.target.value))} className="w-full" />
+                      <input
+                        type="range"
+                        min="0"
+                        max="50"
+                        value={luzon}
+                        onChange={(e) => setLuzon(Number(e.target.value))}
+                        className="w-full"
+                      />
                     </div>
                     <div className="space-y-1">
                       <div className="flex justify-between font-semibold text-sm">
-                        <span>Visayas</span><span>{visayas}</span>
+                        <span>Visayas</span>
+                        <span>{visayas}</span>
                       </div>
-                      <input type="range" min="0" max="50" value={visayas}
-                        onChange={(e) => setVisayas(Number(e.target.value))} className="w-full" />
+                      <input
+                        type="range"
+                        min="0"
+                        max="50"
+                        value={visayas}
+                        onChange={(e) => setVisayas(Number(e.target.value))}
+                        className="w-full"
+                      />
                     </div>
                     <div className="space-y-1">
                       <div className="flex justify-between font-semibold text-sm">
-                        <span>Mindanao</span><span>{mindanao}</span>
+                        <span>Mindanao</span>
+                        <span>{mindanao}</span>
                       </div>
-                      <input type="range" min="0" max="50" value={mindanao}
-                        onChange={(e) => setMindanao(Number(e.target.value))} className="w-full" />
+                      <input
+                        type="range"
+                        min="0"
+                        max="50"
+                        value={mindanao}
+                        onChange={(e) => setMindanao(Number(e.target.value))}
+                        className="w-full"
+                      />
                     </div>
                   </div>
                 </div>
@@ -1499,44 +1547,114 @@ export default function GeneratorPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4 mt-2">
                       <div className="space-y-1">
-                        <label className="text-sm font-semibold">Clothing Style: {clothingStyle}</label>
-                        <input type="range" min="0" max="50" value={clothingStyle}
-                          onChange={(e) => setClothingStyle(Number(e.target.value))} className="w-full" />
+                        <label className="text-sm font-semibold">
+                          Clothing Style: {clothingStyle}
+                        </label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="50"
+                          value={clothingStyle}
+                          onChange={(e) =>
+                            setClothingStyle(Number(e.target.value))
+                          }
+                          className="w-full"
+                        />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-sm font-semibold">Hair Amount: {hairAmount}</label>
-                        <input type="range" min="0" max="50" value={hairAmount}
-                          onChange={(e) => setHairAmount(Number(e.target.value))} className="w-full" />
+                        <label className="text-sm font-semibold">
+                          Hair Amount: {hairAmount}
+                        </label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="50"
+                          value={hairAmount}
+                          onChange={(e) =>
+                            setHairAmount(Number(e.target.value))
+                          }
+                          className="w-full"
+                        />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-sm font-semibold">Hair Color: {hairColor}</label>
-                        <input type="range" min="0" max="50" value={hairColor}
-                          onChange={(e) => setHairColor(Number(e.target.value))} className="w-full" />
+                        <label className="text-sm font-semibold">
+                          Hair Color: {hairColor}
+                        </label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="50"
+                          value={hairColor}
+                          onChange={(e) => setHairColor(Number(e.target.value))}
+                          className="w-full"
+                        />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-sm font-semibold">Facial Hair: {facialHair}</label>
-                        <input type="range" min="0" max="50" value={facialHair}
-                          onChange={(e) => setFacialHair(Number(e.target.value))} className="w-full" />
+                        <label className="text-sm font-semibold">
+                          Facial Hair: {facialHair}
+                        </label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="50"
+                          value={facialHair}
+                          onChange={(e) =>
+                            setFacialHair(Number(e.target.value))
+                          }
+                          className="w-full"
+                        />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-sm font-semibold">Eyewear: {eyewear}</label>
-                        <input type="range" min="0" max="50" value={eyewear}
-                          onChange={(e) => setEyewear(Number(e.target.value))} className="w-full" />
+                        <label className="text-sm font-semibold">
+                          Eyewear: {eyewear}
+                        </label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="50"
+                          value={eyewear}
+                          onChange={(e) => setEyewear(Number(e.target.value))}
+                          className="w-full"
+                        />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-sm font-semibold">Skin Tone: {skinColor}</label>
-                        <input type="range" min="0" max="50" value={skinColor}
-                          onChange={(e) => setSkinColor(Number(e.target.value))} className="w-full" />
+                        <label className="text-sm font-semibold">
+                          Skin Tone: {skinColor}
+                        </label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="50"
+                          value={skinColor}
+                          onChange={(e) => setSkinColor(Number(e.target.value))}
+                          className="w-full"
+                        />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-sm font-semibold">Body Fat: {bodyFat}</label>
-                        <input type="range" min="0" max="50" value={bodyFat}
-                          onChange={(e) => setBodyFat(Number(e.target.value))} className="w-full" />
+                        <label className="text-sm font-semibold">
+                          Body Fat: {bodyFat}
+                        </label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="50"
+                          value={bodyFat}
+                          onChange={(e) => setBodyFat(Number(e.target.value))}
+                          className="w-full"
+                        />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-sm font-semibold">Posture: {posture}</label>
-                        <input type="range" min="0" max="50" value={posture}
-                          onChange={(e) => setPosture(Number(e.target.value))} className="w-full" />
+                        <label className="text-sm font-semibold">
+                          Posture: {posture}
+                        </label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="50"
+                          value={posture}
+                          onChange={(e) => setPosture(Number(e.target.value))}
+                          className="w-full"
+                        />
                       </div>
                     </div>
 
@@ -1553,8 +1671,12 @@ export default function GeneratorPage() {
                           <option value="None">Nothing</option>
                           <option value="Cash">Cash</option>
                           <option value="Random Food">Filipino Food</option>
-                          <option value="Random Bouquet of Flowers">Flowers</option>
-                          <option value="Random Home Utensils">Home Utensils</option>
+                          <option value="Random Bouquet of Flowers">
+                            Flowers
+                          </option>
+                          <option value="Random Home Utensils">
+                            Home Utensils
+                          </option>
                         </select>
                       </div>
                     </div>
@@ -1652,7 +1774,10 @@ export default function GeneratorPage() {
                         /* ERROR */
                         <div className="flex flex-col items-center justify-center w-full h-full text-stone-500">
                           <Ghost size={48} className="mb-2" />
-                          <p style={{ fontSize: "16px" }} className="font-semibold">
+                          <p
+                            style={{ fontSize: "16px" }}
+                            className="font-semibold"
+                          >
                             Summon failed or not started
                           </p>
                         </div>
@@ -1839,10 +1964,9 @@ export default function GeneratorPage() {
             ═══════════════════════════════════════════════ */}
             <section
               id="page-merch"
-              className={cn(
-                "page-section flex flex-col h-full bg-blue-500",
-                { hidden: page !== "page-merch" },
-              )}
+              className={cn("page-section flex flex-col h-full bg-blue-500", {
+                hidden: page !== "page-merch",
+              })}
               style={{
                 backgroundImage:
                   "linear-gradient(45deg, #60a5fa 25%, transparent 25%, transparent 75%, #60a5fa 75%, #60a5fa), linear-gradient(45deg, #60a5fa 25%, transparent 25%, transparent 75%, #60a5fa 75%, #60a5fa)",
@@ -1970,7 +2094,9 @@ export default function GeneratorPage() {
                 </h2>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="font-semibold uppercase text-sm tracking-wide">Full Name</label>
+                    <label className="font-semibold uppercase text-sm tracking-wide">
+                      Full Name
+                    </label>
                     <Input
                       type="text"
                       value={shippingName}
@@ -1979,7 +2105,9 @@ export default function GeneratorPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="font-semibold uppercase text-sm tracking-wide">Contact Number</label>
+                    <label className="font-semibold uppercase text-sm tracking-wide">
+                      Contact Number
+                    </label>
                     <Input
                       type="text"
                       value={shippingContact}
@@ -1989,24 +2117,36 @@ export default function GeneratorPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="font-semibold uppercase text-sm tracking-wide">Province</label>
+                    <label className="font-semibold uppercase text-sm tracking-wide">
+                      Province
+                    </label>
                     <Select
                       onValueChange={handleProvinceChange}
                       value={selectedProvince?.code}
                       disabled={provincesLoading}
                     >
                       <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto">
-                        <SelectValue placeholder={provincesLoading ? "Loading provinces..." : "Select Province"} />
+                        <SelectValue
+                          placeholder={
+                            provincesLoading
+                              ? "Loading provinces..."
+                              : "Select Province"
+                          }
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {provinces.map((p) => (
-                          <SelectItem key={p.code} value={p.code}>{p.name}</SelectItem>
+                          <SelectItem key={p.code} value={p.code}>
+                            {p.name}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <label className="font-semibold uppercase text-sm tracking-wide">City / Municipality</label>
+                    <label className="font-semibold uppercase text-sm tracking-wide">
+                      City / Municipality
+                    </label>
                     <Select
                       onValueChange={handleCityChange}
                       value={selectedCity?.code}
@@ -2016,17 +2156,27 @@ export default function GeneratorPage() {
                         className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto"
                         disabled={!selectedProvince || citiesLoading}
                       >
-                        <SelectValue placeholder={citiesLoading ? "Loading cities..." : "Select City/Municipality"} />
+                        <SelectValue
+                          placeholder={
+                            citiesLoading
+                              ? "Loading cities..."
+                              : "Select City/Municipality"
+                          }
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {cities.map((c) => (
-                          <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                          <SelectItem key={c.code} value={c.code}>
+                            {c.name}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <label className="font-semibold uppercase text-sm tracking-wide">Barangay</label>
+                    <label className="font-semibold uppercase text-sm tracking-wide">
+                      Barangay
+                    </label>
                     <Select
                       onValueChange={handleBarangayChange}
                       value={selectedBarangay?.code}
@@ -2036,11 +2186,19 @@ export default function GeneratorPage() {
                         className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto"
                         disabled={!selectedCity || barangaysLoading}
                       >
-                        <SelectValue placeholder={barangaysLoading ? "Loading barangays..." : "Select Barangay"} />
+                        <SelectValue
+                          placeholder={
+                            barangaysLoading
+                              ? "Loading barangays..."
+                              : "Select Barangay"
+                          }
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {barangays.map((b) => (
-                          <SelectItem key={b.code} value={b.code}>{b.name}</SelectItem>
+                          <SelectItem key={b.code} value={b.code}>
+                            {b.name}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -2111,8 +2269,12 @@ export default function GeneratorPage() {
                     )}
                   </div>
                   <div className="flex flex-col justify-center">
-                    <span className="font-semibold text-lg">{generatedName}</span>
-                    <span className="text-sm text-stone-500">Includes Digital Asset</span>
+                    <span className="font-semibold text-lg">
+                      {generatedName}
+                    </span>
+                    <span className="text-sm text-stone-500">
+                      Includes Digital Asset
+                    </span>
                   </div>
                 </div>
 
