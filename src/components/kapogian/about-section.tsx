@@ -50,13 +50,13 @@ export const AboutSection = () => {
                         {/* Headline */}
                         <h1 className="font-headline text-4xl sm:text-5xl lg:text-6xl tracking-tight text-white leading-[1.1] mb-8">
                             A magical universe <br className="hidden lg:block" />
-                            powered by <span className="text-accent">Web3</span>.
+                            powered by <span className="text-accent">Web 3</span>.
                         </h1>
 
                         {/* Body Text */}
                         <div className="space-y-6 text-lg lg:text-xl text-slate-400 font-body leading-relaxed max-w-2xl mx-auto lg:mx-0">
                              <p>
-                                Kapogian is a magical character universe powered by Web3. Every Kapogian is strictly <strong className="text-slate-200 font-medium">1-of-1</strong>, algorithmically generated, permanently stored on IPFS, and minted on the <strong className="text-slate-200 font-medium">SUI Network</strong>. But Kapogian isn't just digital.
+                                Kapogian is a magical character universe powered by Web 3. Every Kapogian is strictly <strong className="text-slate-200 font-medium">1-of-1</strong>, algorithmically generated, permanently stored on IPFS, and minted on the <strong className="text-slate-200 font-medium">SUI Network</strong>. But Kapogian isn't just digital.
                             </p>
                             <p>
                                 Every mint unlocks real world merchandise, turning your character into something you can actually hold.
