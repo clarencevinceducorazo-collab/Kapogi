@@ -461,6 +461,29 @@
         border-color: #cbd5e1;
       }
 
+  .effect-mythic {
+    background: linear-gradient(90deg, #facc15, #ef4444, #8b5cf6, #facc15);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: mythic-flow 3s linear infinite;
+    filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6));
+  }
+
+  .effect-flame {
+    animation: flame-pulse 1.5s infinite alternate;
+    color: #ffffff;
+  }
+
+  .effect-gold {
+    color: #fbbf24;
+    text-shadow: 1px 1px 0px #b45309, 2px 2px 0px #92400e, 0 0 12px rgba(251, 191, 36, 0.3);
+    font-weight: 900;
+  }
+
+  .effect-aura {
+    animation: aura-breathe 3s infinite ease-in-out;
+  }
 }
 
 @keyframes fadeIn {
@@ -578,4 +601,3 @@
 .animate-pop-in {
     animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
-

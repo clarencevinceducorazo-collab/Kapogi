@@ -241,7 +241,7 @@ export default function GeneratorPage() {
   const [txHash, setTxHash] = useState<string>("");
   const [generatedMmr, setGeneratedMmr] = useState(0);
   const [shufflingMmr, setShufflingMmr] = useState(0);
-  const [shufflingRank, setShufflingRank] = useState({ name: 'Shuffling...', color: 'text-slate-500', rarity: '??%' });
+  const [shufflingRank, setShufflingRank] = useState({ name: 'Shuffling...', style: 'text-slate-500', rarity: '??%' });
 
 
   // Easter egg override state — stored after reveal so it persists on the preview page
@@ -273,25 +273,25 @@ export default function GeneratorPage() {
     skinColor,
   });
 
-  const getRankFromMmr = (mmr: number): { name: string; color: string; rarity: string; } => {
-    if (mmr >= 3951) return { name: "Kapogian Ascendant", color: "bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-red-500 to-purple-600", rarity: "Top 0.005%" };
-    if (mmr >= 3851) return { name: "Master Rancher", color: "text-purple-600", rarity: "Top 0.02%" };
-    if (mmr >= 3701) return { name: "Generational Tycoon", color: "text-purple-600", rarity: "Top 0.04%" };
-    if (mmr >= 3501) return { name: "Cultural Icon", color: "text-red-600", rarity: "Top 0.08%" };
-    if (mmr >= 3301) return { name: "Eternal Light Bearer", color: "text-red-600", rarity: "Top 0.18%" };
-    if (mmr >= 3101) return { name: "Ritual Architect", color: "text-yellow-500", rarity: "Top 0.35%" };
-    if (mmr >= 2801) return { name: "Hall of Fame Immortal", color: "text-yellow-500", rarity: "Top 0.6%" };
-    if (mmr >= 2501) return { name: "Supreme Pogi", color: "text-yellow-500", rarity: "Top 1.2%" };
-    if (mmr >= 2201) return { name: "Proof of Pogi Elite", color: "text-emerald-500", rarity: "Top 2.5%" };
-    if (mmr >= 1901) return { name: "Aura God", color: "text-emerald-500", rarity: "Top 4%" };
-    if (mmr >= 1601) return { name: "Lord of Biringan", color: "text-emerald-500", rarity: "Top 7%" };
-    if (mmr >= 1301) return { name: "Fearless Descent", color: "text-sky-500", rarity: "Top 12%" };
-    if (mmr >= 1001) return { name: "Dalaketnon Slayer", color: "text-sky-500", rarity: "Top 18%" };
-    if (mmr >= 701) return { name: "Ghost Walker", color: "text-sky-500", rarity: "Top 28%" };
-    if (mmr >= 401) return { name: "Initiate of Pogi", color: "text-amber-800", rarity: "Top 45%" };
-    if (mmr >= 251) return { name: "Aura Touched", color: "text-amber-800", rarity: "Top 65%" };
-    if (mmr >= 101) return { name: "Pogi Spark", color: "text-amber-800", rarity: "Top 85%" };
-    return { name: "Spirit Seed", color: "text-slate-500", rarity: "Top 100%" };
+  const getRankFromMmr = (mmr: number): { name: string; style: string; rarity: string; } => {
+    if (mmr >= 3951) return { name: "Kapogian Ascendant", style: "effect-mythic text-4xl font-black uppercase tracking-tighter", rarity: "Top 0.005%" };
+    if (mmr >= 3851) return { name: "Master Rancher", style: "text-purple-400 effect-aura text-2xl font-bold", rarity: "Top 0.02%" };
+    if (mmr >= 3701) return { name: "Generational Tycoon", style: "effect-gold text-2xl uppercase", rarity: "Top 0.04%" };
+    if (mmr >= 3501) return { name: "Cultural Icon", style: "effect-flame text-2xl font-black uppercase", rarity: "Top 0.08%" };
+    if (mmr >= 3301) return { name: "Eternal Light Bearer", style: "effect-flame text-xl", rarity: "Top 0.18%" };
+    if (mmr >= 3101) return { name: "Ritual Architect", style: "effect-gold text-xl", rarity: "Top 0.35%" };
+    if (mmr >= 2801) return { name: "Hall of Fame Immortal", style: "text-yellow-500 font-bold text-xl drop-shadow-lg", rarity: "Top 0.6%" };
+    if (mmr >= 2501) return { name: "Supreme Pogi", style: "text-yellow-400 font-bold", rarity: "Top 1.2%" };
+    if (mmr >= 2201) return { name: "Proof of Pogi Elite", style: "text-emerald-400 font-bold", rarity: "Top 2.5%" };
+    if (mmr >= 1901) return { name: "Aura God", style: "text-emerald-500 effect-aura font-bold", rarity: "Top 4%" };
+    if (mmr >= 1601) return { name: "Lord of Biringan", style: "text-emerald-600 effect-aura", rarity: "Top 7%" };
+    if (mmr >= 1301) return { name: "Fearless Descent", style: "text-sky-400 font-medium", rarity: "Top 12%" };
+    if (mmr >= 1001) return { name: "Dalaketnon Slayer", style: "text-sky-500", rarity: "Top 18%" };
+    if (mmr >= 701) return { name: "Ghost Walker", style: "text-sky-600 italic", rarity: "Top 28%" };
+    if (mmr >= 401) return { name: "Initiate of Pogi", style: "text-amber-700 font-medium", rarity: "Top 45%" };
+    if (mmr >= 251) return { name: "Aura Touched", style: "text-amber-800", rarity: "Top 65%" };
+    if (mmr >= 101) return { name: "Pogi Spark", style: "text-amber-900", rarity: "Top 85%" };
+    return { name: "Spirit Seed", style: "text-slate-500 italic", rarity: "Top 100%" };
   };
 
   const loadingSteps = [
@@ -1008,7 +1008,7 @@ export default function GeneratorPage() {
   // Derived display values — egg overrides win when set
   const displayRankInfo = useMemo(() => {
     if (eggRank) {
-        return { name: eggRank, color: 'bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-red-500 to-purple-600', rarity: 'Legendary Find' };
+        return { name: eggRank, style: 'effect-mythic text-4xl font-black uppercase tracking-tighter', rarity: 'Legendary Find' };
     }
     return getRankFromMmr(generatedMmr);
   }, [eggRank, generatedMmr]);
@@ -1746,7 +1746,7 @@ export default function GeneratorPage() {
                          <>
                             <h3
                                 style={{ fontSize: "24px" }}
-                                className={cn("font-display font-bold uppercase leading-none w-48 text-center truncate", shufflingRank.color)}
+                                className={cn("font-display font-bold uppercase leading-none w-48 text-center truncate", shufflingRank.style)}
                             >
                                 {shufflingRank.name}
                             </h3>
@@ -1760,7 +1760,7 @@ export default function GeneratorPage() {
                             style={{ fontSize: "24px" }}
                             className={cn(
                               "font-display font-bold uppercase leading-none drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp",
-                              displayRankInfo.color,
+                              displayRankInfo.style,
                             )}
                           >
                             {displayRankInfo.name}
