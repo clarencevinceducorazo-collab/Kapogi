@@ -271,6 +271,27 @@ export default function GeneratorPage() {
     skinColor,
   });
 
+  const getRankFromMmr = (mmr: number): string => {
+    if (mmr >= 3951) return "Kapogian Ascendant";
+    if (mmr >= 3851) return "Master Rancher";
+    if (mmr >= 3701) return "Generational Tycoon";
+    if (mmr >= 3501) return "Cultural Icon";
+    if (mmr >= 3301) return "Eternal Light Bearer";
+    if (mmr >= 3101) return "Ritual Architect";
+    if (mmr >= 2801) return "Hall of Fame Immortal";
+    if (mmr >= 2501) return "Supreme Pogi";
+    if (mmr >= 2201) return "Proof of Pogi Elite";
+    if (mmr >= 1901) return "Aura God";
+    if (mmr >= 1601) return "Lord of Biringan";
+    if (mmr >= 1301) return "Fearless Descent";
+    if (mmr >= 1001) return "Dalaketnon Slayer";
+    if (mmr >= 701) return "Ghost Walker";
+    if (mmr >= 401) return "Initiate of Pogi";
+    if (mmr >= 251) return "Aura Touched";
+    if (mmr >= 101) return "Pogi Spark";
+    return "Spirit Seed";
+  };
+
   const loadingSteps = [
     "Preparing clothing style",
     "Generating hairstyle",
@@ -803,12 +824,13 @@ export default function GeneratorPage() {
   };
 
   const handleMint = async () => {
-    if (!generatedImageBlob && !eggRank) {
-      setError("Character data is missing.");
-      return;
-    }
     if (!account || !account.address) {
       setError("Wallet not connected or address is missing.");
+      return;
+    }
+
+    if (!generatedImageBlob && !eggRank) {
+      setError("Character data is missing.");
       return;
     }
 
@@ -982,11 +1004,7 @@ export default function GeneratorPage() {
   // Derived display values — egg overrides win when set
   const displayRank = eggRank
     ? eggRank
-    : generatedMmr > 800
-      ? "Mythic"
-      : generatedMmr > 500
-        ? "Elite"
-        : "Adept";
+    : getRankFromMmr(generatedMmr);
 
   const displayLineage = eggLineage ? eggLineage : gender || "Ancient";
 
