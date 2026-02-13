@@ -241,6 +241,8 @@ export default function GeneratorPage() {
   const [txHash, setTxHash] = useState<string>("");
   const [generatedMmr, setGeneratedMmr] = useState(0);
   const [shufflingMmr, setShufflingMmr] = useState(0);
+  const [shufflingRank, setShufflingRank] = useState({ name: 'Shuffling...', color: 'text-slate-500', rarity: '??%' });
+
 
   // Easter egg override state — stored after reveal so it persists on the preview page
   const [eggRank, setEggRank] = useState<string | null>(null);
@@ -696,7 +698,9 @@ export default function GeneratorPage() {
       setEggLineage(null);
 
       shuffleInterval = setInterval(() => {
-        setShufflingMmr(Math.floor(Math.random() * 999));
+        const randomMmr = Math.floor(Math.random() * 4001);
+        setShufflingMmr(randomMmr);
+        setShufflingRank(getRankFromMmr(randomMmr));
       }, 75);
 
       navigate("page-preview");
@@ -1739,10 +1743,17 @@ export default function GeneratorPage() {
                         Rank
                       </p>
                       {loading ? (
-                        <div className="flex flex-col items-center gap-1 mt-1">
-                           <Skeleton className="h-6 w-32" />
-                           <Skeleton className="h-4 w-24" />
-                        </div>
+                         <>
+                            <h3
+                                style={{ fontSize: "24px" }}
+                                className={cn("font-display font-bold uppercase leading-none w-48 text-center truncate", shufflingRank.color)}
+                            >
+                                {shufflingRank.name}
+                            </h3>
+                            <p className="text-[12px] font-bold text-stone-400 mt-1 uppercase tracking-wide h-4">
+                                (Top {shufflingRank.rarity})
+                            </p>
+                        </>
                       ) : (
                         <>
                           <h3
@@ -1754,9 +1765,9 @@ export default function GeneratorPage() {
                           >
                             {displayRankInfo.name}
                           </h3>
-                           <p className={cn("text-xs font-bold mt-1 animate__animated animate__fadeInUp", displayRankInfo.color, "opacity-70")} style={{animationDelay: '100ms'}}>
-                            {displayRankInfo.rarity}
-                           </p>
+                          <p className="text-[12px] font-bold text-stone-400 mt-1 uppercase tracking-wide">
+                            (Top {displayRankInfo.rarity})
+                          </p>
                         </>
                       )}
                     </div>
