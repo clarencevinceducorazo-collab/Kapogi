@@ -663,7 +663,7 @@ export default function GeneratorPage() {
     setSkinColor(Math.floor(Math.random() * 51));
     setBodyFat(Math.floor(Math.random() * 51));
     setPosture(Math.floor(Math.random() * 51));
-    setGeneratedMmr(Math.floor(Math.random() * 1001));
+    setGeneratedMmr(Math.floor(Math.random() * 5000));
 
     const items = [
       "None",
