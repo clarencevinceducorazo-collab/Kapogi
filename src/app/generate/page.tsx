@@ -692,7 +692,7 @@ export default function GeneratorPage() {
       setOriginDescription("");
       setTxHash("");
       setLoadingStepIndex(0);
-      setGeneratedMmr(4000);
+      setGeneratedMmr(calculateMMR());
       // Clear any previous egg overrides
       setEggRank(null);
       setEggLineage(null);
@@ -1875,9 +1875,7 @@ export default function GeneratorPage() {
                             >
                                 {shufflingRank.name}
                             </h3>
-                            <p className="text-[12px] font-bold text-stone-400 mt-1 uppercase tracking-wide h-4">
-                                (Top {shufflingRank.rarity})
-                            </p>
+                         
                         </>
                       ) : (
                         <>
