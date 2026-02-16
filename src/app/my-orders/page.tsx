@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useCurrentAccount } from '@mysten/dapp-kit';
-import { suiClient, getOwnedReceipts } from '@/lib/sui';
+import { suiClient } from '@/lib/sui';
 import { getIPFSGatewayUrl } from '@/lib/pinata';
+import { CONTRACT_ADDRESSES, MODULES } from '@/lib/constants';
 import { 
   LoaderCircle, 
   ShieldAlert, 
@@ -60,14 +61,63 @@ export default function MyOrdersPage() {
     setLoading(true);
     setError('');
     try {
-      const ownedReceipts = await getOwnedReceipts(account.address);
-      if (ownedReceipts.length === 0) {
+      console.log('🔍 Fetching orders for:', account.address);
+
+      // Fetch ALL ReceiptCreated events
+      let allReceiptIds: string[] = [];
+      let allBuyerAddresses: string[] = [];
+      let hasNextPage = true;
+      let cursor: string | null = null;
+
+      while (hasNextPage) {
+        const page: any = await suiClient.queryEvents({
+          query: { 
+            MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ORDER_RECEIPT}::ReceiptCreated` 
+          },
+          cursor: cursor,
+          order: 'ascending',
+        });
+
+        page.data.forEach((event: any) => {
+          allReceiptIds.push(event.parsedJson?.receipt_id);
+          allBuyerAddresses.push(event.parsedJson?.buyer);
+        });
+        
+        if (page.hasNextPage && page.nextCursor) {
+          cursor = page.nextCursor;
+        } else {
+          hasNextPage = false;
+        }
+      }
+
+      // Filter receipts by current user's address
+      const userReceiptIds = allReceiptIds.filter((_, idx) => 
+        allBuyerAddresses[idx] === account.address
+      );
+
+      console.log(`✨ Found ${userReceiptIds.length} receipts for this user`);
+
+      if (userReceiptIds.length === 0) {
         setOrders([]);
         setLoading(false);
         return;
       }
 
-      const parsedReceipts: Omit<Order, 'character'>[] = ownedReceipts
+      // Fetch full receipt objects in chunks
+      const receipts = [];
+      const chunkSize = 50;
+      for (let i = 0; i < userReceiptIds.length; i += chunkSize) {
+        const chunk = userReceiptIds.slice(i, i + chunkSize);
+        const chunkReceipts = await suiClient.multiGetObjects({
+          ids: chunk,
+          options: { showContent: true }
+        });
+        receipts.push(...chunkReceipts);
+      }
+
+      const validReceipts = receipts.filter(r => r.data);
+
+      const parsedReceipts: Omit<Order, 'character'>[] = validReceipts
         .map((obj: any) => ({
           objectId: obj.data.objectId,
           nftId: obj.data.content.fields.nft_id,
@@ -81,6 +131,7 @@ export default function MyOrdersPage() {
         }))
         .sort((a, b) => b.createdAt - a.createdAt);
 
+      // Fetch NFT data
       const nftIds = parsedReceipts.map(r => r.nftId);
       const nftObjects = await suiClient.multiGetObjects({
         ids: nftIds,
@@ -88,13 +139,15 @@ export default function MyOrdersPage() {
       });
 
       const nftsMap = new Map(
-        nftObjects.map(obj => [
-          obj.data?.objectId,
-          {
-            imageUrl: getIPFSGatewayUrl((obj.data?.display?.data as any)?.image_url),
-            name: (obj.data?.display?.data as any)?.name,
-          },
-        ])
+        nftObjects
+          .filter(obj => obj.data)
+          .map(obj => [
+            obj.data?.objectId,
+            {
+              imageUrl: getIPFSGatewayUrl((obj.data?.display?.data as any)?.image_url),
+              name: (obj.data?.display?.data as any)?.name,
+            },
+          ])
       );
 
       const combinedOrders = parsedReceipts.map(receipt => ({
@@ -104,6 +157,7 @@ export default function MyOrdersPage() {
 
       setOrders(combinedOrders as Order[]);
     } catch (err) {
+      console.error('Failed to load orders:', err);
       setError('Failed to load orders. Please try again later.');
     } finally {
       setLoading(false);
@@ -291,19 +345,19 @@ export default function MyOrdersPage() {
                         <div className="bg-white border-4 border-black rounded-2xl p-6 space-y-4 shadow-hard-sm">
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                             <div className="space-y-1">
-                              <span className="font-black uppercase text-xs text-gray-400">Carrier Service</span>
+                              <span className="font-black uppercase text-xs text-gray-400">Carrier Service : </span>
                               <p className="font-bold border-b-2 border-black inline-block">{selectedOrder.carrier}</p>
                             </div>
                             <div className="space-y-1">
-                              <span className="font-black uppercase text-xs text-gray-400">Tracking Number</span>
+                              <span className="font-black uppercase text-xs text-gray-400">Tracking Number : </span>
                               <p className="font-mono font-bold break-all">{selectedOrder.trackingNumber}</p>
                             </div>
                             <div className="space-y-1">
-                              <span className="font-black uppercase text-xs text-gray-400">Estimated Delivery</span>
+                              <span className="font-black uppercase text-xs text-gray-400">Estimated Delivery : </span>
                               <p className="font-bold">{new Date(selectedOrder.estimatedDelivery).toLocaleDateString()}</p>
                             </div>
                             <div className="space-y-1">
-                              <span className="font-black uppercase text-xs text-gray-400">Status</span>
+                              <span className="font-black uppercase text-xs text-gray-400">Status : </span>
                               <span className={`px-2 py-0.5 border-2 border-black rounded-md font-black uppercase text-[10px] ${getStatusInfo(selectedOrder.status).color}`}>
                                 {getStatusInfo(selectedOrder.status).text}
                               </span>
