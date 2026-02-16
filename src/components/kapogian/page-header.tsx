@@ -51,7 +51,7 @@ export const PageHeader = () => {
   const avatar = PlaceHolderImages.find((img) => img.id === "header-avatar");
 
   return (
-    <header className="absolute top-0 left-0 right-0 z-50 p-4">
+    <header className="absolute top-4 left-0 right-0 z-50 mx-4 lg:mx-16">
       <div className="container mx-auto">
         <div className="flex h-20 items-center justify-between rounded-full bg-primary/90 backdrop-blur-sm p-2 border-2 border-primary-foreground/20 shadow-lg">
           {/* LOGO SECTION */}
