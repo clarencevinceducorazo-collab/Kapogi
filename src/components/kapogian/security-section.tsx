@@ -177,7 +177,7 @@ export const SecuritySection = () => {
                   </div>
                 ) : (
                   <div className="space-y-2 h-[24rem] overflow-y-auto pr-2 custom-scrollbar">
-                    {recentMints.slice(0, 20).map((mint, idx) => (
+                    {recentMints.slice(0, 10).map((mint, idx) => (
                       <a
                         key={mint.id.txDigest}
                         href={`https://suiscan.xyz/${NETWORK_CONFIG.network}/tx/${mint.id.txDigest}`}
@@ -187,7 +187,7 @@ export const SecuritySection = () => {
                         style={{ animationDelay: `${idx * 30}ms` }}
                       >
                         <div className="flex justify-between items-center mb-1">
-                          <p className="font-bold text-sm tracking-tight truncate pr-2">{mint.parsedJson.name}</p>
+                          <p className="font-bold text-sm tracking-tight truncate pr-2">{mint.parsedJson.name || 'Unnamed Character'}</p>
                           {idx === 0 && Date.now() - parseInt(mint.timestampMs) < 15000 && (
                             <span className="bg-yellow-400 text-black text-[9px] font-black px-2 py-0.5 rounded-full border border-black animate-pulse">NEW!</span>
                           )}
