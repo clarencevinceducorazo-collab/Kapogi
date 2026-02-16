@@ -4,7 +4,7 @@
  */
 
 import EthCrypto from 'eth-crypto';
-import { ENCRYPTION_CONFIG } from './constants';
+import { ENCRYPTION_CONFIG, getEncryptionConfig } from './constants';
 
 /**
  * Shipping information interface
@@ -23,7 +23,10 @@ export async function encryptShippingInfo(shippingInfo: ShippingInfo): Promise<s
   try {
     console.log('🔐 Encrypting shipping information...');
     
-    const adminPublicKey = ENCRYPTION_CONFIG.adminPublicKey;
+    // Fetch config at runtime (falls back to build-time values)
+    const config = await getEncryptionConfig();
+    const adminPublicKey = config.adminPublicKey;
+    
     if (!adminPublicKey || adminPublicKey.includes('YOUR_ADMIN_PUBLIC_KEY')) {
       throw new Error('Admin public key is not configured. Please set NEXT_PUBLIC_ADMIN_PUBLIC_KEY in your .env file.');
     }
