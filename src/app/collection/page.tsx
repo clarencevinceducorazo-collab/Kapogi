@@ -14,7 +14,8 @@ import {
   ExternalLink,
   Sparkles,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Crown
 } from 'lucide-react';
 import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
 import { Button } from '@/components/ui/button';
@@ -145,7 +146,7 @@ export default function CollectionPage() {
                     <span className="text-3xl font-black text-black">{characters.length} <span className="text-sm font-bold text-gray-500 uppercase">Squad</span></span>
                   </div>
                   <div className="w-12 h-12 bg-yellow-400 rounded-xl flex items-center justify-center border-2 border-black shadow-hard-sm">
-                    <Sparkles className="text-black" size={24} />
+                    <Crown className="text-black" size={24} />
                   </div>
                 </div>
               </header>
