@@ -505,6 +505,31 @@ export default function SummoningPage() {
               </span>
             </div>
           </div>
+
+          {/* --- SKIP BUTTON --- */}
+          {/* Z-index 60 ensures it is clickable even during the Z-50 Flash effect */}
+          <button
+            onClick={() => router.push("/generate")}
+            className="absolute bottom-6 right-6 z-[60] group flex items-center gap-2 px-4 py-2 text-white/40 hover:text-white transition-all duration-300 hover:bg-white/5 rounded-full cursor-pointer outline-none focus:text-white ring-1 ring-white"
+          >
+            <span className="uppercase tracking-widest text-[10px] font-sans font-medium">
+              Skip Ritual
+            </span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="group-hover:translate-x-1 transition-transform"
+            >
+              <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
+            </svg>
+          </button>
         </main>
       </div>
     </>
