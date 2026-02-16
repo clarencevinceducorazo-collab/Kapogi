@@ -12,18 +12,18 @@ export const StylistShopSection = () => {
   ];
 
   const productImages = [
-    "/images/shirtrot.gif",
-    "/images/mugzrot.gif",
-    "/images/padrot.gif",
+    "/images/merch-selection/shirts/whiteshirt.gif",
+    "/images/merch-selection/mug/gifBlackMug.gif",
+    "/images/merch-selection/pads/spinPad3.gif",
     "/images/merch-selection/hoodies/greyhoodie.gif",
   ];
 
   // Static versions of the images (first frame or separate static image)
   const productImagesStatic = [
-    "/images/merch-selection/shirts/shirtLogo.png",
-    "/images/merch-selection/mug/mugLogo.png",
-    "/images/merch-selection/pads/mousepadLogo.png",
-    "/images/merch-selection/hoodies/hodieLogo.png", // Already static
+    "/images/merch-selection/shirts/whiteNoBG.png",
+    "/images/merch-selection/mug/staticBlackMUG.png",
+    "/images/merch-selection/pads/mousePad.png",
+    "/images/merch-selection/hoodies/greyhoodiestatic.png", // Already static
   ];
 
   const avatar = PlaceHolderImages.find(
