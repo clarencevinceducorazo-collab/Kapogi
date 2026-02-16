@@ -515,9 +515,13 @@ export default function SummoningPage() {
              hover:text-white hover:bg-white/10 hover:border-white 
              transition-all duration-300 outline-none focus:ring-2 focus:ring-white/50"
           >
-            <span className="uppercase tracking-[0.2em] text-[10px] font-sans font-semibold leading-none">
+            {/* Just use a span or plain text instead of a button */}
+            <button
+              onClick={() => (window.location.href = "/generate")}
+              className="uppercase tracking-[0.2em] text-[10px] font-sans font-semibold leading-none"
+            >
               Skip Ritual
-            </span>
+            </button>
 
             <svg
               xmlns="http://www.w3.org/2000/svg"
