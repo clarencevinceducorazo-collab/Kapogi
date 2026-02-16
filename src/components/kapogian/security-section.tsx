@@ -11,6 +11,7 @@ import {
 import { suiClient } from "@/lib/sui";
 import { CONTRACT_ADDRESSES, NETWORK_CONFIG } from "@/lib/constants";
 import { timeAgo, formatAddress } from "@/lib/utils";
+import { SuiObjectResponse } from "@mysten/sui/client";
 
 // Type for the parsed data from a CharacterMinted event
 interface MintEvent {
@@ -59,22 +60,38 @@ export const SecuritySection = () => {
           return;
         }
 
-        // --- Part 1: Update Recent Mints ---
-        setRecentMints(mintEvents.data as MintEvent[]);
-
-        // --- Part 2: Calculate Live Leaderboard ---
         const nftIds = mintEvents.data.map(event => (event.parsedJson as any)?.nft_id).filter(Boolean);
-        const ownerMmrMap = new Map<string, { address: string; highestMmr: number; name: string }>();
+        let nftObjectMap = new Map<string, SuiObjectResponse['data']>();
 
         if (nftIds.length > 0) {
-          const nftObjects = await suiClient.multiGetObjects({
-            ids: nftIds,
-            options: { showContent: true },
-          });
+            const nftObjects = await suiClient.multiGetObjects({
+                ids: nftIds,
+                options: { showContent: true },
+            });
+            nftObjectMap = new Map(nftObjects.map(obj => [obj.data?.objectId, obj.data]));
+        }
 
-          const nftObjectMap = new Map(nftObjects.map(obj => [obj.data?.objectId, obj.data]));
+        // Enhance mint events with the real NFT name from the object
+        const enhancedMints = mintEvents.data.map(event => {
+            const parsed = { ...event.parsedJson } as any; // Clone to avoid mutation issues
+            const nftObject = nftObjectMap.get(parsed.nft_id);
+            if (nftObject?.content?.dataType === 'moveObject') {
+                const fields = nftObject.content.fields as any;
+                if (fields.name) {
+                    parsed.name = fields.name; // Set the correct name
+                }
+            }
+            return { ...event, parsedJson: parsed };
+        });
 
-          mintEvents.data.forEach(event => {
+        // --- Part 1: Update Recent Mints ---
+        setRecentMints(enhancedMints as MintEvent[]);
+
+        // --- Part 2: Calculate Live Leaderboard ---
+        const ownerMmrMap = new Map<string, { address: string; highestMmr: number; name: string }>();
+
+        // Use the enhanced data for leaderboard as well to be consistent
+        enhancedMints.forEach(event => {
             const parsed = event.parsedJson as any;
             if (!parsed.owner || !parsed.nft_id) return;
 
@@ -83,17 +100,18 @@ export const SecuritySection = () => {
 
             const fields = nftObject.content.fields as any;
             const currentMmr = Number(fields.mmr);
-            const nftName = fields.name;
+
+            // The name is already correct in `parsed.name` from enhancedMints
+            const nftName = parsed.name; 
 
             if (!ownerMmrMap.has(parsed.owner) || currentMmr > ownerMmrMap.get(parsed.owner)!.highestMmr) {
-              ownerMmrMap.set(parsed.owner, {
-                address: parsed.owner,
-                highestMmr: currentMmr,
-                name: nftName,
-              });
+                ownerMmrMap.set(parsed.owner, {
+                    address: parsed.owner,
+                    highestMmr: currentMmr,
+                    name: nftName,
+                });
             }
-          });
-        }
+        });
         
         const sortedLeaderboard = Array.from(ownerMmrMap.values())
           .sort((a, b) => b.highestMmr - a.highestMmr)
