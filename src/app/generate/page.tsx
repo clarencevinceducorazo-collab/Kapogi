@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   useCurrentAccount,
   useSignAndExecuteTransaction,
@@ -22,6 +21,27 @@ import {
   Mouse,
   User,
   ShoppingBag,
+  Crown,
+  Palette,
+  Dna,
+  ChevronDown,
+  Info,
+  Wind,
+  Zap,
+  Accessibility,
+  Scissors,
+  Shield,
+  Frown,
+  Smile,
+  Flame,
+  ChevronLeft,
+  ChevronRight,
+  Cpu,
+  History,
+  Leaf,
+  Target,
+  Cloud,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -50,126 +70,105 @@ import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/kapogian/page-header";
 import { PageFooter } from "@/components/kapogian/page-footer";
 
-interface CharacterData {
-  imageBlob: Blob;
-  name: string;
-  description: string;
-  attributes: any;
-  lore: string;
-  imageUrl?: string;
-  previewUrl?: string;
-}
 
-// PSGC API data types
+// Reusable Enchantment Slider
+const EnchantmentControl = ({ label, value, color, onChange }: {label: string, value: number, color: string, onChange: (value: number) => void}) => (
+  <div className="space-y-2">
+    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
+      <span>{label}</span>
+      <span className="font-mono">{value}%</span>
+    </div>
+    <CustomSlider value={value} color={color} onChange={onChange} />
+  </div>
+);
+
+// Carousel Selectors with Dynamic Themes
+const CarouselSelector = ({ label, options, currentIndex, onPrev, onNext }: {label:string, options: any[], currentIndex: number, onPrev: () => void, onNext: () => void}) => {
+  const current = options[currentIndex];
+  const Icon = current.icon;
+  
+  return (
+    <div className="space-y-3">
+      <label className="text-xs font-black uppercase text-slate-500 flex items-center gap-2">
+        {label}
+      </label>
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={onPrev}
+          className="p-3 bg-white border-2 border-black rounded-xl hover:bg-slate-50 shadow-[2px_2px_0_0_#000] active:translate-y-[1px] active:shadow-none transition-all"
+        >
+          <ChevronLeft size={20} />
+        </button>
+        
+        <div className={`flex-1 flex flex-col items-center justify-center gap-2 p-6 rounded-3xl border-4 border-black transition-all duration-300 ${current.color} shadow-[4px_4px_0_0_#000]`}>
+          <Icon size={32} strokeWidth={2.5} className="text-black" />
+          <span className="font-black text-sm uppercase tracking-tighter text-black">{current.name}</span>
+          <div className="flex gap-1 mt-1">
+            {options.map((_, i) => (
+              <div key={i} className={`w-1.5 h-1.5 rounded-full border border-black/20 ${i === currentIndex ? 'bg-black w-4' : 'bg-black/10'}`} />
+            ))}
+          </div>
+        </div>
+
+        <button 
+          onClick={onNext}
+          className="p-3 bg-white border-2 border-black rounded-xl hover:bg-slate-50 shadow-[2px_2px_0_0_#000] active:translate-y-[1px] active:shadow-none transition-all"
+        >
+          <ChevronRight size={20} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Optimized Tactile Slider
+const CustomSlider = ({ value, color, customStyle, onChange }: { value: number; color?: string; customStyle?: React.CSSProperties; onChange: (value: number) => void; }) => (
+  <div className="relative flex items-center h-8">
+    <div className="absolute inset-0 h-4 my-auto bg-white rounded-full border-2 border-black overflow-hidden shadow-inner">
+      <div 
+        className={`h-full transition-all duration-150 ${color || ''}`}
+        style={{ 
+          width: `${value}%`,
+          ...(customStyle || {})
+        }}
+      />
+    </div>
+    <input 
+      type="range" 
+      min="0"
+      max="100"
+      value={value}
+      onChange={(e) => onChange(Number(e.target.value))}
+      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+    />
+    <div 
+      className="absolute w-7 h-7 bg-white border-2 border-black rounded-xl shadow-[2px_2px_0_0_#000] pointer-events-none transition-all duration-75"
+      style={{ left: `calc(${value}% - 14px)`, top: '50%', transform: 'translateY(-50%)' }}
+    />
+  </div>
+);
+
+// Helper function for skin tone
+const getSkinToneDescription = (hex: string): string => {
+  const skinToneMap: { [key: string]: string } = {
+    '#FFF5E1': 'very light, fair skin',
+    '#F7E2C4': 'light, pale skin',
+    '#F1C27D': 'fair skin',
+    '#E0AC69': 'light tan skin',
+    '#D2B48C': 'tan, classic kayumanggi skin',
+    '#BB8353': 'medium brown skin',
+    '#8D5524': 'deep brown skin',
+    '#634439': 'dark brown skin',
+    '#4A2C2A': 'very dark brown skin',
+    '#2E1D1A': 'deep, dark brown skin',
+  };
+  return skinToneMap[hex] || 'kayumanggi skin';
+};
+
 interface Province {
   code: string;
   name: string;
 }
-interface City {
-  code: string;
-  name: string;
-  provinceCode: string;
-}
-interface Barangay {
-  code: string;
-  name: string;
-  cityCode: string;
-}
-
-const merchProducts = {
-  tee: {
-    name: "Tee",
-    icon: Shirt,
-    sizes: ["S", "M", "L", "XL"],
-    colors: [
-      {
-        name: "Blue",
-        value: "#3b82f6",
-        image: "/images/merch-selection/shirts/blueshirt.gif",
-      },
-      {
-        name: "Red",
-        value: "#ef4444",
-        image: "/images/merch-selection/shirts/redshirt.gif",
-      },
-      {
-        name: "Black",
-        value: "#171717",
-        image: "/images/merch-selection/shirts/blackshirt.gif",
-      },
-    ],
-  },
-  mug: {
-    name: "Mug",
-    icon: Coffee,
-    sizes: [],
-    colors: [
-      {
-        name: "White",
-        value: "#f3f4f6",
-        image: "/images/merch-selection/mug/gifWhiteMug.gif",
-      },
-      {
-        name: "Red",
-        value: "#ef4444",
-        image: "/images/merch-selection/mug/gifRedMug.gif",
-      },
-      {
-        name: "Blue",
-        value: "#3b82f6",
-        image: "/images/merch-selection/mug/gifBlueMug.gif",
-      },
-      {
-        name: "Black",
-        value: "#171717",
-        image: "/images/merch-selection/mug/gifBlackMug.gif",
-      },
-    ],
-  },
-  pad: {
-    name: "Pad",
-    icon: Mouse,
-    sizes: [],
-    colors: [],
-  },
-  hoodie: {
-    name: "Hoodie",
-    icon: User,
-    sizes: ["S", "M", "L", "XL"],
-    colors: [
-      {
-        name: "Black",
-        value: "#171717",
-        image: "/images/merch-selection/hoodies/blackhoodie.gif",
-      },
-      {
-        name: "Red",
-        value: "#ef4444",
-        image: "/images/merch-selection/hoodies/redhoodie.gif",
-      },
-      {
-        name: "Blue",
-        value: "#3b82f6",
-        image: "/images/merch-selection/hoodies/bluehoodie.gif",
-      },
-      {
-        name: "Grey",
-        value: "#d6d3d1",
-        image: "/images/merch-selection/hoodies/greyhoodie.gif",
-      },
-      {
-        name: "Beige",
-        value: "#f5f5dc",
-        image: "/images/merch-selection/hoodies/biegehoodie.gif",
-      },
-      {
-        name: "Cyan",
-        value: "#22d3ee",
-        image: "/images/merch-selection/hoodies/cyanhoodie.gif",
-      },
-    ],
-  },
-};
 
 export default function GeneratorPage() {
   const account = useCurrentAccount();
@@ -183,31 +182,98 @@ export default function GeneratorPage() {
   const [minting, setMinting] = useState(false);
   const [error, setError] = useState("");
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
+  
+  // New design state
+  const [lineage, setLineage] = useState('Malakas'); 
+  const [characterName, setCharacterName] = useState('');
+  
+  const [attributes, setAttributes] = useState({
+    clothingStyle: 'Casual',
+    hairAmount: 25,
+    hairColor: '#4A2C2A',
+    skinTone: '#D2B48C',
+    bodyFat: 25,
+    posture: 'Neutral',
+    heldItem: 'Nothing',
+    facialHair: 0,
+    eyewear: 0,
+  });
 
-  // Form State
-  const [characterName, setCharacterName] = useState("");
-  const [gender, setGender] = useState("Malakas"); // Malakas, Maganda, Mahawari, Maharaba
-  const [cuteness, setCuteness] = useState(50);
-  const [confidence, setConfidence] = useState(50);
-  const [tiliFactor, setTiliFactor] = useState(50);
-  const [luzon, setLuzon] = useState(0);
-  const [visayas, setVisayas] = useState(0);
-  const [mindanao, setMindanao] = useState(0);
-  const [hairAmount, setHairAmount] = useState(25);
-  const [facialHair, setFacialHair] = useState(0);
-  const [clothingStyle, setClothingStyle] = useState(25);
-  const [hairColor, setHairColor] = useState(0);
-  const [eyewear, setEyewear] = useState(0);
-  const [skinColor, setSkinColor] = useState(0);
-  const [bodyFat, setBodyFat] = useState(25);
-  const [posture, setPosture] = useState(25);
-  const [holdingItem, setHoldingItem] = useState("None");
+  const [stats, setStats] = useState({
+    cuteness: 50,
+    confidence: 50,
+    tiliFactor: 50
+  });
+
+  const [outfitIndex, setOutfitIndex] = useState(0);
+  const [postureIndex, setPostureIndex] = useState(1);
+
+  // Configuration from new design
+  const lineages = [
+    { name: 'Malakas', color: 'bg-blue-500' },
+    { name: 'Maganda', color: 'bg-pink-400' },
+    { name: 'Mahawari', color: 'bg-yellow-500' },
+    { name: 'Maharaba', color: 'bg-emerald-500' }
+  ];
+
+  const items = ['Nothing', 'Balut', 'Sampaguita', 'Kalis', 'Buko Juice', 'Arnis Sticks'];
+  
+  const clothingOptions = [
+    { name: 'Casual', icon: Shirt, color: 'bg-emerald-400' },
+    { name: 'Formal', icon: Crown, color: 'bg-yellow-400' },
+    { name: 'Warrior', icon: Shield, color: 'bg-red-400' },
+    { name: 'Spirit', icon: Ghost, color: 'bg-purple-400' },
+    { name: 'Cyber', icon: Cpu, color: 'bg-blue-400' },
+    { name: 'Classic', icon: History, color: 'bg-amber-600' },
+    { name: 'Nature', icon: Leaf, color: 'bg-green-400' }
+  ];
+
+  const postureOptions = [
+    { name: 'Slumped', icon: Frown, color: 'bg-slate-400' },
+    { name: 'Neutral', icon: Accessibility, color: 'bg-sky-400' },
+    { name: 'Heroic', icon: Smile, color: 'bg-indigo-400' },
+    { name: 'Divine', icon: Flame, color: 'bg-orange-400' },
+    { name: 'Meditation', icon: Wind, color: 'bg-teal-300' },
+    { name: 'Ready', icon: Target, color: 'bg-rose-400' },
+    { name: 'Floating', icon: Cloud, color: 'bg-cyan-200' }
+  ];
+  
+  const skinTones = [
+    '#FFF5E1', '#F7E2C4', '#F1C27D', '#E0AC69', 
+    '#D2B48C', '#BB8353', '#8D5524', '#634439', 
+    '#4A2C2A', '#2E1D1A'
+  ];
+
+  // Carousel handlers
+  const handleNextOutfit = () => {
+    const next = (outfitIndex + 1) % clothingOptions.length;
+    setOutfitIndex(next);
+    setAttributes(prev => ({ ...prev, clothingStyle: clothingOptions[next].name }));
+  };
+
+  const handlePrevOutfit = () => {
+    const prev = (outfitIndex - 1 + clothingOptions.length) % clothingOptions.length;
+    setOutfitIndex(prev);
+    setAttributes(prevAttr => ({ ...prevAttr, clothingStyle: clothingOptions[prev].name }));
+  };
+
+  const handleNextPosture = () => {
+    const next = (postureIndex + 1) % postureOptions.length;
+    setPostureIndex(next);
+    setAttributes(prev => ({ ...prev, posture: postureOptions[next].name }));
+  };
+
+  const handlePrevPosture = () => {
+    const prev = (postureIndex - 1 + postureOptions.length) % postureOptions.length;
+    setPostureIndex(prev);
+    setAttributes(prevAttr => ({ ...prevAttr, posture: postureOptions[prev].name }));
+  };
+
 
   // Shipping State
   const [shippingName, setShippingName] = useState("");
   const [shippingContact, setShippingContact] = useState("");
 
-  // New PSGC-based address state
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [cities, setCities] = useState<any[]>([]);
   const [barangays, setBarangays] = useState<any[]>([]);
@@ -245,7 +311,6 @@ export default function GeneratorPage() {
   const [shufflingRank, setShufflingRank] = useState({ name: 'Shuffling...', style: 'text-slate-500', rarity: '??%' });
 
 
-  // Easter egg override state — stored after reveal so it persists on the preview page
   const [eggRank, setEggRank] = useState<string | null>(null);
   const [eggLineage, setEggLineage] = useState<string | null>(null);
 
@@ -254,24 +319,22 @@ export default function GeneratorPage() {
   );
 
   const displayedLore = useTypewriter(generatedLore || "", 20);
-  const isLoreTyping =
-    generatedLore && displayedLore.length < generatedLore.length;
 
-  // ── Easter Egg Detection ──
-  // bodyFat and posture are intentionally excluded — they don't affect matching
   const activeEgg = useEasterEgg({
-    cuteness,
-    confidence,
-    tiliFactor,
-    luzon,
-    visayas,
-    mindanao,
-    hairAmount,
-    facialHair,
-    clothingStyle,
-    hairColor,
-    eyewear,
-    skinColor,
+    cuteness: stats.cuteness,
+    confidence: stats.confidence,
+    tiliFactor: stats.tiliFactor,
+    // The following are not part of the new UI, so default to 0 for easter egg check
+    luzon: 0,
+    visayas: 0,
+    mindanao: 0,
+    hairColor: 0,
+    clothingStyle: 0,
+    skinColor: 0,
+    // End of defaults
+    hairAmount: attributes.hairAmount,
+    facialHair: attributes.facialHair,
+    eyewear: attributes.eyewear,
   });
 
   const getRankFromMmr = (mmr: number): { name: string; style: string; rarity: string; } => {
@@ -367,7 +430,6 @@ export default function GeneratorPage() {
     };
   }, [loading, showExitLoader, loadingSteps.length]);
 
-  // Load shipping data from localStorage on mount/account change
   useEffect(() => {
     if (!account?.address) return;
 
@@ -389,7 +451,6 @@ export default function GeneratorPage() {
     }
   }, [account?.address]);
 
-  // Fetch provinces on mount
   useEffect(() => {
     const fetchProvinces = async () => {
       setProvincesLoading(true);
@@ -409,7 +470,6 @@ export default function GeneratorPage() {
     fetchProvinces();
   }, []);
 
-  // Fetch cities when province changes
   useEffect(() => {
     if (selectedProvince) {
       const fetchCities = async () => {
@@ -445,7 +505,6 @@ export default function GeneratorPage() {
     }
   }, [selectedProvince]);
 
-  // Fetch barangays when city changes
   useEffect(() => {
     if (selectedCity) {
       const fetchBarangays = async () => {
@@ -511,35 +570,22 @@ export default function GeneratorPage() {
 
   const generateName = async (): Promise<string> => {
     try {
-      const context = getIdentityContext(gender);
+      const context = getIdentityContext(lineage);
       const excludeList =
         generatedNamesHistory.length > 0
           ? `Do not use any of these names: ${generatedNamesHistory.join(", ")}.`
           : "";
   
       const result = await generateText({
-        prompt: `Generate a single unique name for a character who belongs to the ${gender} lineage (Identity Context: ${context}). The name can be from ANY country or culture in the world (Filipino, Spanish, Japanese, American, European, etc.). ${excludeList} Make it unique, catchy, and fitting for a heroic Chibi. Only return the name, no extra text.`,
+        prompt: `Generate a single unique name for a character who belongs to the ${lineage} lineage (Identity Context: ${context}). The name can be from ANY country or culture in the world (Filipino, Spanish, Japanese, American, European, etc.). ${excludeList} Make it unique, catchy, and fitting for a heroic Chibi. Only return the name, no extra text.`,
       });
   
       const newName = result.text?.replace(/["']+/g, "") || "Pogi";
-      setGeneratedNamesHistory((prev) => [...prev, newName]); // ✅ SAVES TO HISTORY
+      setGeneratedNamesHistory((prev) => [...prev, newName]);
       return newName;
     } catch (e) {
       console.error("Name generation failed:", e);
       return "Pogi";
-    }
-  };
-
-  const generateCountry = async (): Promise<string> => {
-    try {
-      const result = await generateText({
-        prompt:
-          "Generate a name of a foreign country, do not include any other text.",
-      });
-      return result.text?.replace(/["']+/g, "") || "a foreign land";
-    } catch (e) {
-      console.error("Country generation failed:", e);
-      return "a foreign land";
     }
   };
 
@@ -548,15 +594,31 @@ export default function GeneratorPage() {
     originDesc: string,
   ): Promise<string> => {
     try {
-      const identityContext = getIdentityContext(gender);
+      const identityContext = getIdentityContext(lineage);
+      const skinToneDescriptor = getSkinToneDescription(attributes.skinTone);
       const promptText = `
         You are a lore generator for a fictional universe called "Kapogian Chibis".
         A Kapogian Chibi is a confident, good-looking Filipino character.
-        Their stats are: Cuteness is ${cuteness} out of 100, Confidence is ${confidence} out of 100, and Tili Factor is ${tiliFactor} out of 100.
-        Create a detailed lore for a Kapogian Chibi named **${name}**, a ${originDesc} of the ${gender} lineage.
-        (Note to AI: ${gender} maps to ${identityContext} identity, but NEVER use the word "${identityContext.toLowerCase()}" in your response. Only use the term "${gender}").
-        The lore should be about 150 words and include a backstory, personality description influenced by their stats, a heroic anecdote, and a concluding sentence.
-        Do not mention the exact stat numbers in the narrative. Focus on the creative description.
+
+        Here is the character's profile:
+        - Name: **${name}**
+        - Lineage: ${lineage} (Identity Context: ${identityContext})
+        - Origin: ${originDesc}
+        - Core Stats: Cuteness is ${stats.cuteness}/100, Confidence is ${stats.confidence}/100, and Tili Factor (energy) is ${stats.tiliFactor}/100.
+        - Appearance:
+            - Clothing: ${attributes.clothingStyle} outfit
+            - Stance: ${attributes.posture}
+            - Body Type: A body fat ratio of ${attributes.bodyFat}/100.
+            - Hair: ${attributes.hairAmount}/100 amount, with the color ${attributes.hairColor}.
+            - Facial Hair: ${attributes.facialHair}/100 amount.
+            - Eyewear: ${attributes.eyewear}/100 amount.
+            - Skin Tone: ${skinToneDescriptor}.
+            - Held Item: ${attributes.heldItem}.
+
+        Create a detailed lore for this character.
+        The lore should be about 150 words and include a backstory, a personality description influenced by their stats and appearance, a heroic anecdote, and a concluding sentence.
+        Do not mention the exact stat numbers or colors in the narrative. Instead, interpret them creatively. For example, high confidence could mean they are bold, while low cuteness could mean they are more rugged. A ${attributes.clothingStyle} outfit might mean they are practical or flamboyant.
+        (Note to AI: NEVER use the word "${identityContext.toLowerCase()}" in your response. Only use the term "${lineage}").
         Use markdown formatting like bolding and italics to make the text stylish.`;
 
       const result = await generateText({
@@ -570,136 +632,85 @@ export default function GeneratorPage() {
   };
 
   const buildCharacterPrompt = (name: string, originDesc: string): string => {
-    const identityContext = getIdentityContext(gender);
+    const identityContext = getIdentityContext(lineage);
+    const skinToneDescriptor = getSkinToneDescription(attributes.skinTone);
 
     let pose = "standing confidently";
-    if (cuteness > 30 && confidence > 30) {
-      if (posture === 50) {
-        pose =
-          gender === "Maganda" || gender === "Mahawari"
-            ? "striking a charming finger heart pose with a playful wink and high-fashion poise"
-            : "striking a cool finger heart pose with a bold smirk";
-      } else if (posture >= 20) {
-        pose =
-          gender === "Maganda" || gender === "Mahawari"
-            ? "posing with high energy and sassy confidence, hand on hip"
-            : "flexing heroically in a bodybuilder-inspired stance";
-      } else {
-        pose = "with a casual, charismatic pose, slightly flexing";
-      }
-    } else {
-      if (posture === 50) {
-        pose = "standing very well-postured and proud";
-      } else if (posture > 20) {
-        pose = "with an upright, well-postured stance";
-      } else {
-        pose = "with a very casual, relaxed posture";
-      }
+    switch (attributes.posture) {
+        case 'Slumped': pose = "with a shy, slumped posture"; break;
+        case 'Neutral': pose = "with a casual, relaxed posture"; break;
+        case 'Heroic': pose = "flexing heroically in a bodybuilder-inspired stance"; break;
+        case 'Divine': pose = "glowing with divine energy, floating slightly"; break;
+        case 'Meditation': pose = "in a peaceful meditation pose"; break;
+        case 'Ready': pose = "in a ready stance, as if preparing for battle"; break;
+        case 'Floating': pose = "floating gracefully in the air"; break;
     }
 
     let hairDescriptor = "medium length hair";
-    if (hairAmount <= 5)
-      hairDescriptor =
-        identityContext === "Female" || identityContext === "Lesbian"
-          ? "stylish pixie cut"
-          : "bald";
-    else if (hairAmount <= 15) hairDescriptor = "short spiky hair";
-    else if (hairAmount <= 35) hairDescriptor = "medium length hair";
+    if (attributes.hairAmount <= 10) hairDescriptor = (identityContext === 'Female' || identityContext === 'Lesbian') ? "stylish pixie cut" : "bald";
+    else if (attributes.hairAmount <= 25) hairDescriptor = "short spiky hair";
+    else if (attributes.hairAmount <= 75) hairDescriptor = "medium length hair";
     else hairDescriptor = "long, flowing hair";
 
     let facialHairDescriptor = "clean shaven";
-    if (identityContext === "Male" || identityContext === "Gay") {
-      if (facialHair > 5) facialHairDescriptor = "light stubble";
-      if (facialHair > 20) facialHairDescriptor = "short, neat beard";
-      if (facialHair > 40)
-        facialHairDescriptor = "long, full beard and a stylish mustache";
+    if (identityContext === 'Male' || identityContext === 'Gay') {
+        if (attributes.facialHair > 10) facialHairDescriptor = "light stubble";
+        if (attributes.facialHair > 40) facialHairDescriptor = "short, neat beard";
+        if (attributes.facialHair > 80) facialHairDescriptor = "long, full beard and a stylish mustache";
     }
 
-    let clothingDescriptor = "casual streetwear";
-    if (clothingStyle <= 5)
-      clothingDescriptor = "only a Sleeveless colored SHirt and shorts";
-    else if (clothingStyle <= 15)
-      clothingDescriptor = "simple t-shirt and shorts";
-    else if (clothingStyle <= 30)
-      clothingDescriptor = "stylish streetwear with a hoodie";
-    else if (clothingStyle <= 45)
-      clothingDescriptor =
-        identityContext === "Female" || identityContext === "Gay"
-          ? "fashionable modern attire"
-          : "formal attire with a crisp polo";
-    else
-      clothingDescriptor =
-        identityContext === "Female" || identityContext === "Gay"
-          ? "elegant colorful Filipiniana attire"
-          : "elegant filipino formal attire, like a barong tagalog";
-
-    let hairColorDescriptor = "black hair";
-    if (hairColor > 5) hairColorDescriptor = "dark brown hair";
-    if (hairColor > 15) hairColorDescriptor = "light brown hair";
-    if (hairColor > 30) hairColorDescriptor = "blonde hair";
-    if (hairColor > 45) hairColorDescriptor = "white hair";
+    let clothingDescriptor = "wearing casual streetwear";
+     switch (attributes.clothingStyle) {
+        case 'Casual': clothingDescriptor = "wearing simple t-shirt and shorts"; break;
+        case 'Formal': clothingDescriptor = (identityContext === 'Female' || identityContext === 'Gay') ? "wearing elegant formal attire" : "wearing a crisp barong tagalog"; break;
+        case 'Warrior': clothingDescriptor = "wearing epic warrior armor"; break;
+        case 'Spirit': clothingDescriptor = "adorned in mystical spirit garments"; break;
+        case 'Cyber': clothingDescriptor = "wearing futuristic cyberpunk gear"; break;
+        case 'Classic': clothingDescriptor = "wearing retro filipiniana attire"; break;
+        case 'Nature': clothingDescriptor = "wearing clothes made of leaves and vines"; break;
+    }
 
     let eyewearDescriptor = "no eyewear";
-    if (eyewear > 5) eyewearDescriptor = "stylish eyeglasses";
-    if (eyewear > 20) eyewearDescriptor = "cool sunglasses";
-    if (eyewear > 40) eyewearDescriptor = "futuristic sporty eyewear";
+    if (attributes.eyewear > 10) eyewearDescriptor = "stylish eyeglasses";
+    if (attributes.eyewear > 40) eyewearDescriptor = "cool sunglasses";
+    if (attributes.eyewear > 80) eyewearDescriptor = "futuristic sporty eyewear";
 
-    let skinColorDescriptor = "kayumangi skin";
-    if (skinColor > 25)
-      skinColorDescriptor = "dark-skinned, Aeta-like skin color";
-
-    let bodyFatDescriptor = "";
-    if (bodyFat <= 15) bodyFatDescriptor = "thin and slender body";
-    else if (bodyFat <= 35) bodyFatDescriptor = "average body type";
+    let bodyFatDescriptor = "average body type";
+    if (attributes.bodyFat <= 20) bodyFatDescriptor = "thin and slender body";
+    else if (attributes.bodyFat <= 60) bodyFatDescriptor = "average body type";
     else bodyFatDescriptor = "chubby and plump body";
-
+    
     let holdingItemDescriptor = "not holding anything";
-    switch (holdingItem) {
-      case "Cash":
-        holdingItemDescriptor = "holding a wad of cash";
-        break;
-      case "Random Food":
-        holdingItemDescriptor =
-          "holding a plate of random Filipino food like Chicken Adobo, Pork BBQ, and Lechon";
-        break;
-      case "Random Bouquet of Flowers":
-        holdingItemDescriptor =
-          "holding a random bouquet of flowers, including roses, tulips, and sunflowers";
-        break;
-      case "Random Home Utensils":
-        holdingItemDescriptor =
-          "holding a random home utensil, such as a broomstick or a pan";
-        break;
+    if (attributes.heldItem && attributes.heldItem !== "Nothing") {
+        holdingItemDescriptor = `holding ${attributes.heldItem}`;
     }
 
-    return `full body shot of a cute chubby chibi pinoy character of the ${gender} lineage (${identityContext}), named ${name}, ${originDesc}, with ${skinColorDescriptor}, with ${hairColorDescriptor} and ${hairDescriptor}, ${facialHairDescriptor}, wearing ${clothingDescriptor}, with ${eyewearDescriptor}, ${bodyFatDescriptor}, ${pose}, ${holdingItemDescriptor}, showing confident pose, smiling. Chibi character art, clean vector line art, cel-shaded, sticker style, simple white background.`;
+    return `full body shot of a high quality, well-proportioned, anatomically correct cute ${bodyFatDescriptor} chibi pinoy character with two arms and two legs, of the ${lineage} lineage (${identityContext}), named ${name}, from ${originDesc}, with ${skinToneDescriptor}. The character has ${hairDescriptor} and the hair color must be exactly ${attributes.hairColor}. The character has ${facialHairDescriptor}, is wearing ${clothingDescriptor}, with ${eyewearDescriptor}, in a ${pose}, and is ${holdingItemDescriptor}, showing confident pose, smiling. Chibi character art, clean vector line art, cel-shaded, sticker style, simple white background.`;
   };
 
   const handleShuffle = () => {
-    setCuteness(Math.floor(Math.random() * 101));
-    setConfidence(Math.floor(Math.random() * 101));
-    setTiliFactor(Math.floor(Math.random() * 101));
-    setLuzon(Math.floor(Math.random() * 51));
-    setVisayas(Math.floor(Math.random() * 51));
-    setMindanao(Math.floor(Math.random() * 51));
-    setHairAmount(Math.floor(Math.random() * 51));
-    setFacialHair(Math.floor(Math.random() * 51));
-    setClothingStyle(Math.floor(Math.random() * 51));
-    setHairColor(Math.floor(Math.random() * 51));
-    setEyewear(Math.floor(Math.random() * 51));
-    setSkinColor(Math.floor(Math.random() * 51));
-    setBodyFat(Math.floor(Math.random() * 51));
-    setPosture(Math.floor(Math.random() * 51));
+    const rOutfit = Math.floor(Math.random() * clothingOptions.length);
+    const rPosture = Math.floor(Math.random() * postureOptions.length);
+    setOutfitIndex(rOutfit);
+    setPostureIndex(rPosture);
 
-    const items = [
-      "None",
-      "Cash",
-      "Random Food",
-      "Random Bouquet of Flowers",
-      "Random Home Utensils",
-    ];
-    const randomItem = items[Math.floor(Math.random() * items.length)];
-    setHoldingItem(randomItem);
+    setAttributes({
+      clothingStyle: clothingOptions[rOutfit].name,
+      hairAmount: Math.floor(Math.random() * 101),
+      hairColor: `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`,
+      skinTone: skinTones[Math.floor(Math.random() * skinTones.length)],
+      bodyFat: Math.floor(Math.random() * 101),
+      posture: postureOptions[rPosture].name,
+      heldItem: items[Math.floor(Math.random() * items.length)],
+      facialHair: Math.floor(Math.random() * 101),
+      eyewear: Math.floor(Math.random() * 101),
+    });
+    setStats({
+      cuteness: Math.floor(Math.random() * 101),
+      confidence: Math.floor(Math.random() * 101),
+      tiliFactor: Math.floor(Math.random() * 101)
+    });
+    setLineage(lineages[Math.floor(Math.random() * lineages.length)].name);
   };
 
   const handleGenerate = async () => {
@@ -722,7 +733,6 @@ export default function GeneratorPage() {
       const finalMMR = generateProbabilisticMMR();
       setGeneratedMmr(finalMMR);
 
-      // Clear any previous egg overrides
       setEggRank(null);
       setEggLineage(null);
 
@@ -734,72 +744,20 @@ export default function GeneratorPage() {
 
       navigate("page-preview");
 
-      // ── Easter Egg Short-Circuit ──
-      if (activeEgg) {
-        // Stage 1: run the normal loading GIF + step text for 8 seconds
-        // (the existing loadingStepIndex interval drives the text cycling)
+      const originDescResult = `a native of the Philippines`;
 
-        // Stage 2: swap to exit GIF at 8s
-        eggTimer1 = setTimeout(() => {
-          setShowExitLoader(true);
-        }, 8000);
+      const nameToUse = characterName || await generateName();
 
-        // Stage 3: reveal at 10s — same timing feel as normal generation
-        eggTimer2 = setTimeout(() => {
-          if (shuffleInterval) clearInterval(shuffleInterval);
-          setGeneratedName(activeEgg.name);
-          setOriginDescription("a legend of the Kapogian realm");
-          setGeneratedLore(activeEgg.lore);
-          setGeneratedImage(activeEgg.imagePath);
-          setGeneratedImageBlob(null);
-          // Set the easter egg's custom stats
-          setGeneratedMmr(activeEgg.mmr);
-          setEggRank(activeEgg.rank);
-          setEggLineage(activeEgg.lineage);
-          setLoading(false);
-          setShowExitLoader(false);
-        }, 10000);
-
-        return;
-      }
-
-      // Step 1: Generate name and origin description
-      const namePromise = characterName
-        ? Promise.resolve(characterName)
-        : generateName();
-
-      const originPromise = (async () => {
-        if (luzon === 0 && visayas === 0 && mindanao === 0) {
-          const country = await generateCountry();
-          return `a naturalized Filipino from ${country}`;
-        } else {
-          const origins = [
-            { region: "Luzon", value: luzon },
-            { region: "Visayas", value: visayas },
-            { region: "Mindanao", value: mindanao },
-          ];
-          origins.sort((a, b) => b.value - a.value);
-          return `a native of the ${origins[0].region} region of the Philippines`;
-        }
-      })();
-
-      const [nameToUse, originDesc] = await Promise.all([
-        namePromise,
-        originPromise,
-      ]);
-
-      // Step 2: Build prompt and run image/lore generation in parallel
-      const fullPrompt = buildCharacterPrompt(nameToUse, originDesc);
+      const fullPrompt = buildCharacterPrompt(nameToUse, originDescResult);
 
       const imagePromise = generateImage({ prompt: fullPrompt });
-      const lorePromise = generateLore(nameToUse, originDesc);
+      const lorePromise = generateLore(nameToUse, originDescResult);
 
       const [imageResult, loreResult] = await Promise.all([
         imagePromise,
         lorePromise,
       ]);
 
-      // Step 3: Process image result
       const imageUrl = imageResult?.imageUrl;
       if (!imageUrl) throw new Error("No image data received from the API.");
 
@@ -812,12 +770,11 @@ export default function GeneratorPage() {
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: "image/png" });
 
-      // Step 4: Trigger exit animation then update state
       setShowExitLoader(true);
       setTimeout(() => {
         if (shuffleInterval) clearInterval(shuffleInterval);
         setGeneratedName(nameToUse);
-        setOriginDescription(originDesc);
+        setOriginDescription(originDescResult);
         setGeneratedImageBlob(blob);
         setGeneratedImage(imageUrl);
         setGeneratedLore(loreResult);
@@ -941,29 +898,18 @@ export default function GeneratorPage() {
       const plainTextLore = (
         generatedLore || `A Kapogian character from ${originDescription}`
       ).replace(/\*/g, "");
+      
+      const displayRankInfo = getRankFromMmr(generatedMmr);
 
       const result = await mintCharacterNFT({
         name: generatedName,
         description: plainTextLore,
         imageUrl: finalImageUrl!,
         attributes: JSON.stringify({
-          lineage: gender,
+          lineage: lineage,
           rank: displayRankInfo.name,
-          cuteness,
-          confidence,
-          tiliFactor,
-          luzon,
-          visayas,
-          mindanao,
-          hairAmount,
-          facialHair,
-          clothingStyle,
-          hairColor,
-          eyewear,
-          skinColor,
-          bodyFat,
-          posture,
-          holdingItem,
+          ...stats,
+          ...attributes,
         }),
         mmr: generatedMmr,
         itemsSelected: itemsSelected,
@@ -1027,14 +973,6 @@ export default function GeneratorPage() {
     setSelectedBarangay(barangay);
   };
 
-  const lineageColors: { [key: string]: string } = {
-    Malakas: "bg-blue-500",
-    Maganda: "bg-pink-500",
-    Mahawari: "bg-violet-500",
-    Maharaba: "bg-rose-700",
-  };
-
-  // Derived display values — egg overrides win when set
   const displayRankInfo = useMemo(() => {
     if (eggRank) {
         return { name: eggRank, style: 'effect-mythic text-4xl font-black uppercase tracking-tighter', rarity: 'Legendary Find' };
@@ -1042,7 +980,7 @@ export default function GeneratorPage() {
     return getRankFromMmr(generatedMmr);
   }, [eggRank, generatedMmr]);
 
-  const displayLineage = eggLineage ? eggLineage : gender || "Ancient";
+  const displayLineage = eggLineage ? eggLineage : lineage || "Ancient";
   
   if (!account) {
     return (
@@ -1073,7 +1011,43 @@ export default function GeneratorPage() {
     );
   }
 
-  const SIZES = ["S", "M", "L", "XL"];
+  const merchProducts = {
+    tee: {
+      name: "Tee",
+      icon: Shirt,
+      sizes: ["S", "M", "L", "XL"],
+      colors: [
+        { name: "Blue", value: "#3b82f6", image: "/images/merch-selection/shirts/blueshirt.gif" },
+        { name: "Red", value: "#ef4444", image: "/images/merch-selection/shirts/redshirt.gif" },
+        { name: "Black", value: "#171717", image: "/images/merch-selection/shirts/blackshirt.gif" },
+      ],
+    },
+    mug: {
+      name: "Mug",
+      icon: Coffee,
+      sizes: [],
+      colors: [
+        { name: "White", value: "#f3f4f6", image: "/images/merch-selection/mug/gifWhiteMug.gif" },
+        { name: "Red", value: "#ef4444", image: "/images/merch-selection/mug/gifRedMug.gif" },
+        { name: "Blue", value: "#3b82f6", image: "/images/merch-selection/mug/gifBlueMug.gif" },
+        { name: "Black", value: "#171717", image: "/images/merch-selection/mug/gifBlackMug.gif" },
+      ],
+    },
+    pad: { name: "Pad", icon: Mouse, sizes: [], colors: [], },
+    hoodie: {
+      name: "Hoodie",
+      icon: User,
+      sizes: ["S", "M", "L", "XL"],
+      colors: [
+        { name: "Black", value: "#171717", image: "/images/merch-selection/hoodies/blackhoodie.gif" },
+        { name: "Red", value: "#ef4444", image: "/images/merch-selection/hoodies/redhoodie.gif" },
+        { name: "Blue", value: "#3b82f6", image: "/images/merch-selection/hoodies/bluehoodie.gif" },
+        { name: "Grey", value: "#d6d3d1", image: "/images/merch-selection/hoodies/greyhoodie.gif" },
+        { name: "Beige", value: "#f5f5dc", image: "/images/merch-selection/hoodies/biegehoodie.gif" },
+        { name: "Cyan", value: "#22d3ee", image: "/images/merch-selection/hoodies/cyanhoodie.gif" },
+      ],
+    },
+  };
 
   const renderMerchControls = () => {
     const activeProductKey = selection?.toLowerCase() as
@@ -1101,7 +1075,7 @@ export default function GeneratorPage() {
         : merchProducts.hoodie.colors[0]!.image;
 
       return (
-        <div id="bundle-view" className="transition-opacity duration-300 mb-8">
+        <div id="bundle-view" className="transition-opacity duration-300 min-h-[520px]">
           <div className="bg-white border-4 border-black rounded-2xl hard-shadow p-6 space-y-6">
             <div className="flex items-center justify-between border-b-4 border-black pb-4 mb-2">
               <h2
@@ -1115,7 +1089,6 @@ export default function GeneratorPage() {
               </span>
             </div>
 
-            {/* Bundle Item: Tee */}
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-gray-50 p-4 rounded-xl border-2 border-black/10">
               <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0">
                 <Image
@@ -1169,7 +1142,6 @@ export default function GeneratorPage() {
               </div>
             </div>
 
-            {/* Bundle Item: Mug */}
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-gray-50 p-4 rounded-xl border-2 border-black/10">
               <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0">
                 <Image
@@ -1204,7 +1176,6 @@ export default function GeneratorPage() {
               </div>
             </div>
 
-            {/* Bundle Item: Hoodie */}
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-gray-50 p-4 rounded-xl border-2 border-black/10">
               <div className="w-16 h-16 bg-white border-2 border-black rounded-lg flex items-center justify-center shrink-0">
                 <Image
@@ -1286,7 +1257,7 @@ export default function GeneratorPage() {
     }
 
     return (
-      <div id="single-view" className="transition-opacity duration-300">
+      <div id="single-view" className="transition-opacity duration-300 min-h-[520px]">
         <div className="bg-white border-4 border-black rounded-2xl hard-shadow mb-8 p-6 md:p-8 flex flex-col items-center justify-center relative min-h-[320px]">
           <div className="w-48 h-48 md:w-56 md:h-56 flex items-center justify-center transition-all duration-300 mb-6">
             {currentImageUrl ? (
@@ -1377,585 +1348,385 @@ export default function GeneratorPage() {
           className="object-cover -z-10"
           priority
         />
-        <main className="generate-page relative w-full max-w-4xl bg-white border-4 border-black rounded-3xl hard-shadow overflow-hidden flex flex-col">
-          <header className="bg-black text-white p-4 border-b-4 border-black flex justify-between items-center">
-            <div className="w-1/3" />
-            <div className="w-1/3 flex justify-center items-center gap-2">
-              <Package className="w-6 h-6 text-yellow-400" />
-              <span className="font-display font-semibold tracking-tight text-xl text-yellow-400">
-                KAPOGIAN CUSTOMIZATION
-              </span>
-            </div>
-            <div className="w-1/3 flex justify-end gap-2">
-              <div
-                className="w-4 h-4 rounded-full bg-red-500 border-2 border-white animate-pulse"
-                style={{ boxShadow: "0 0 8px #ef4444" }}
-              />
-              <div
-                className="w-4 h-4 rounded-full bg-yellow-400 border-2 border-white animate-pulse"
-                style={{
-                  animationDelay: "200ms",
-                  boxShadow: "0 0 8px #f59e0b",
-                }}
-              />
-              <div
-                className="w-4 h-4 rounded-full bg-green-500 border-2 border-white animate-pulse"
-                style={{
-                  animationDelay: "400ms",
-                  boxShadow: "0 0 8px #22c55e",
-                }}
-              />
-            </div>
-          </header>
-
-          <div className="bg-stone-50 min-h-[600px] relative">
-            {/* ═══════════════════════════════════════════════
-                PAGE: GENERATOR
-            ═══════════════════════════════════════════════ */}
+        <main className="generate-page relative w-full max-w-7xl bg-white border-4 border-black rounded-3xl hard-shadow overflow-hidden flex flex-col">
+           <div className="bg-stone-50 min-h-[600px] relative">
             <section
               id="page-generator"
-              className={cn(
-                "page-section p-6 md:p-8 flex flex-col gap-8 h-full",
-                { hidden: page !== "generator" },
-              )}
-            >
-              <div className="text-center space-y-2">
-                <h1 className="font-display text-4xl font-semibold tracking-tight uppercase">
-                  Kapogian Spirit Summoner
-                </h1>
-                <p className="text-xl text-stone-600 font-medium max-w-lg mx-auto">
-                  Summon a unique character image and its corresponding lore for
-                  your collection.
-                </p>
-              </div>
+              className={cn("page-section h-full",{ hidden: page !== "generator" })}>
+              <div className="bg-white border-4 border-black rounded-3xl hard-shadow overflow-hidden flex flex-col">
+                <header className="bg-black text-white p-4 border-b-4 border-black flex justify-between items-center">
+                    <div className="w-1/3" />
+                    <div className="w-1/3 flex justify-center items-center gap-2">
+                        <Package className="w-6 h-6 text-yellow-400" />
+                        <span className="font-display font-semibold tracking-tight text-xl text-yellow-400">
+                        KAPOGIAN CUSTOMIZATION
+                        </span>
+                    </div>
+                    <div className="w-1/3 flex justify-end gap-2">
+                        <div
+                        className="w-4 h-4 rounded-full bg-red-500 border-2 border-white animate-pulse"
+                        style={{ boxShadow: "0 0 8px #ef4444" }}
+                        />
+                        <div
+                        className="w-4 h-4 rounded-full bg-yellow-400 border-2 border-white animate-pulse"
+                        style={{
+                            animationDelay: "200ms",
+                            boxShadow: "0 0 8px #f59e0b",
+                        }}
+                        />
+                        <div
+                        className="w-4 h-4 rounded-full bg-green-500 border-2 border-white animate-pulse"
+                        style={{
+                            animationDelay: "400ms",
+                            boxShadow: "0 0 8px #22c55e",
+                        }}
+                        />
+                    </div>
+                </header>
+                 <div className="min-h-screen text-slate-900 font-sans p-4 md:p-8">
+                  <header className="max-w-6xl mx-auto text-center mb-10">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <div className="bg-yellow-400 p-1.5 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                        <Sparkles size={24} strokeWidth={2.5} />
+                      </div>
+                      <h1 className="text-3xl font-black uppercase tracking-tighter text-black">Kapogian Spirit Summoner</h1>
+                    </div>
+                    <p className="text-slate-500 font-medium tracking-tight">Fine-tune the essence of your summoned guardian.</p>
+                  </header>
 
-              <div className="border-4 border-black rounded-2xl bg-white hard-shadow-sm p-6 grid grid-cols-1 md:grid-cols-2 gap-8 relative overflow-hidden">
-                <div className="absolute top-2 right-2 z-50 rotate-12 bg-yellow-400 text-black text-xs font-bold px-2 py-1 border-2 border-black rounded shadow-[2px_2px_0px_#000]">
-                  NEW!
-                </div>
+                  <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    
+                    <section className="lg:col-span-4 space-y-6 flex flex-col">
+                      
+                      <div className="bg-white border-4 border-black p-6 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Dna size={20} className="text-blue-600" />
+                          <h2 className="font-bold text-lg uppercase tracking-tight">Spirit Lineage</h2>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {lineages.map((l) => (
+                            <button
+                              key={l.name}
+                              onClick={() => setLineage(l.name)}
+                              className={`py-3 px-2 rounded-xl border-2 font-black text-xs uppercase transition-all ${
+                                lineage === l.name 
+                                ? `${l.color} text-white border-black shadow-[0_4px_0_0_rgba(0,0,0,1)] -translate-y-0.5` 
+                                : 'bg-slate-50 text-slate-400 border-slate-200 hover:border-slate-300 active:translate-y-0'
+                              }`}
+                            >
+                              {l.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
 
-                <div className="space-y-6">
-                  <div className="p-4 border-4 border-stone-200 border-dashed rounded-xl bg-stone-50">
-                    <h3 className="font-display font-semibold text-lg text-stone-500 uppercase mb-4">
-                      Character Lineage
-                    </h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      {["Malakas", "Maganda", "Mahawari", "Maharaba"].map(
-                        (g) => (
-                          <button
-                            key={g}
-                            onClick={() => setGender(g)}
-                            className={cn(
-                              "py-3 text-xs font-display font-bold rounded-lg transition-all border-2 border-black hard-shadow-sm active:translate-y-1 active:shadow-none",
-                              gender === g
-                                ? `${lineageColors[g]} text-white`
-                                : "bg-white text-black hover:bg-stone-100",
-                            )}
-                          >
-                            {g.toUpperCase()}
-                          </button>
-                        ),
-                      )}
-                    </div>
-                  </div>
+                      <div className="bg-white border-4 border-black p-6 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                        <div className="flex items-center gap-2 mb-4">
+                          <User size={20} className="text-purple-600" />
+                          <h2 className="font-bold text-lg uppercase tracking-tight">Identity</h2>
+                        </div>
+                        <input 
+                          type="text"
+                          placeholder="Leave blank for random..."
+                          value={characterName}
+                          onChange={(e) => setCharacterName(e.target.value)}
+                          className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-4 font-bold outline-none focus:border-purple-400 focus:bg-white transition-all shadow-inner"
+                        />
+                      </div>
 
-                  <div className="space-y-2">
-                    <label className="font-display font-semibold text-xl uppercase">
-                      Character Name
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Leave blank for random..."
-                      className="w-full border-4 border-black rounded-lg p-3 text-lg font-medium outline-none focus:ring-4 ring-yellow-300 transition-all placeholder:text-stone-400"
-                      value={characterName}
-                      onChange={(e) => setCharacterName(e.target.value)}
-                    />
-                  </div>
+                      <div className="bg-white border-4 border-black p-6 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-1">
+                        <div className="flex items-center gap-2 mb-6">
+                          <Crown size={20} className="text-yellow-600" />
+                          <h2 className="font-bold text-lg uppercase tracking-tight">Enchantments</h2>
+                        </div>
+                        <div className="space-y-6">
+                          <EnchantmentControl 
+                            label="Cuteness" 
+                            value={stats.cuteness} 
+                            color="bg-pink-400" 
+                            onChange={(v) => setStats({...stats, cuteness: v})} 
+                          />
+                          <EnchantmentControl 
+                            label="Confidence" 
+                            value={stats.confidence} 
+                            color="bg-blue-400" 
+                            onChange={(v) => setStats({...stats, confidence: v})} 
+                          />
+                          <EnchantmentControl 
+                            label="Tili Factor" 
+                            value={stats.tiliFactor} 
+                            color="bg-orange-400" 
+                            onChange={(v) => setStats({...stats, tiliFactor: v})} 
+                          />
+                        </div>
+                      </div>
+                    </section>
 
-                  <div className="space-y-4 p-4 border-4 border-stone-200 border-dashed rounded-xl bg-stone-50">
-                    <h3 className="font-display font-semibold text-lg text-stone-500 uppercase">
-                      Enchantments
-                    </h3>
-                    <div className="space-y-1">
-                      <div className="flex justify-between font-semibold text-sm">
-                        <span>Cuteness</span>
-                        <span>{cuteness}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={cuteness}
-                        onChange={(e) => setCuteness(Number(e.target.value))}
-                        className="w-full"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex justify-between font-semibold text-sm">
-                        <span>Confidence</span>
-                        <span>{confidence}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={confidence}
-                        onChange={(e) => setConfidence(Number(e.target.value))}
-                        className="w-full"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex justify-between font-semibold text-sm">
-                        <span>Tili Factor</span>
-                        <span>{tiliFactor}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={tiliFactor}
-                        onChange={(e) => setTiliFactor(Number(e.target.value))}
-                        className="w-full"
-                      />
-                    </div>
-                  </div>
+                    <section className="lg:col-span-8 flex flex-col">
+                      
+                      <div className="bg-[#E6F4F1] border-4 border-black p-8 rounded-[2.5rem] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-1 flex flex-col">
+                        <div className="flex items-center justify-between mb-8">
+                          <div className="flex items-center gap-2">
+                            <Palette size={24} className="text-emerald-600" />
+                            <h2 className="font-black text-2xl uppercase tracking-tighter italic">Porma Designer</h2>
+                          </div>
+                          <div className="bg-white px-3 py-1 border-2 border-black rounded-full text-[10px] font-black uppercase shadow-[2px_2px_0_0_#000]">
+                            V5.0 Dynamic
+                          </div>
+                        </div>
 
-                  <div className="space-y-4 p-4 border-4 border-stone-200 border-dashed rounded-xl bg-stone-50">
-                    <h3 className="font-display font-semibold text-lg text-stone-500 uppercase">
-                      Origin Stats
-                    </h3>
-                    <div className="space-y-1">
-                      <div className="flex justify-between font-semibold text-sm">
-                        <span>Luzon</span>
-                        <span>{luzon}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="50"
-                        value={luzon}
-                        onChange={(e) => setLuzon(Number(e.target.value))}
-                        className="w-full"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex justify-between font-semibold text-sm">
-                        <span>Visayas</span>
-                        <span>{visayas}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="50"
-                        value={visayas}
-                        onChange={(e) => setVisayas(Number(e.target.value))}
-                        className="w-full"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex justify-between font-semibold text-sm">
-                        <span>Mindanao</span>
-                        <span>{mindanao}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="50"
-                        value={mindanao}
-                        onChange={(e) => setMindanao(Number(e.target.value))}
-                        className="w-full"
-                      />
-                    </div>
-                  </div>
-                </div>
+                        <div className="flex-1 flex flex-col justify-between">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                            <CarouselSelector 
+                              label="Outfit Style" 
+                              options={clothingOptions} 
+                              currentIndex={outfitIndex} 
+                              onPrev={handlePrevOutfit} 
+                              onNext={handleNextOutfit}
+                            />
+                            <CarouselSelector 
+                              label="Posture & Stance" 
+                              options={postureOptions} 
+                              currentIndex={postureIndex} 
+                              onPrev={handlePrevPosture} 
+                              onNext={handleNextPosture}
+                            />
+                          </div>
 
-                <div className="space-y-6">
-                  <div className="border-4 border-black bg-blue-50 rounded-xl p-5 space-y-4 relative">
-                    <div className="absolute -top-4 left-4 bg-black text-white px-3 py-1 font-display font-semibold text-sm border-2 border-white rounded-full">
-                      PORMA CONTROLS
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                      <div className="space-y-1">
-                        <label className="text-sm font-semibold">
-                          Clothing Style: {clothingStyle}
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="50"
-                          value={clothingStyle}
-                          onChange={(e) =>
-                            setClothingStyle(Number(e.target.value))
-                          }
-                          className="w-full"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-sm font-semibold">
-                          Hair Amount: {hairAmount}
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="50"
-                          value={hairAmount}
-                          onChange={(e) =>
-                            setHairAmount(Number(e.target.value))
-                          }
-                          className="w-full"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-sm font-semibold">
-                          Hair Color: {hairColor}
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="50"
-                          value={hairColor}
-                          onChange={(e) => setHairColor(Number(e.target.value))}
-                          className="w-full"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-sm font-semibold">
-                          Facial Hair: {facialHair}
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="50"
-                          value={facialHair}
-                          onChange={(e) =>
-                            setFacialHair(Number(e.target.value))
-                          }
-                          className="w-full"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-sm font-semibold">
-                          Eyewear: {eyewear}
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="50"
-                          value={eyewear}
-                          onChange={(e) => setEyewear(Number(e.target.value))}
-                          className="w-full"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-sm font-semibold">
-                          Skin Tone: {skinColor}
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="50"
-                          value={skinColor}
-                          onChange={(e) => setSkinColor(Number(e.target.value))}
-                          className="w-full"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-sm font-semibold">
-                          Body Fat: {bodyFat}
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="50"
-                          value={bodyFat}
-                          onChange={(e) => setBodyFat(Number(e.target.value))}
-                          className="w-full"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-sm font-semibold">
-                          Posture: {posture}
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="50"
-                          value={posture}
-                          onChange={(e) => setPosture(Number(e.target.value))}
-                          className="w-full"
-                        />
-                      </div>
-                    </div>
+                          <div className="bg-white border-2 border-black rounded-3xl p-6 mb-8 grid grid-cols-1 md:grid-cols-2 gap-10">
+                            <div className="space-y-6">
+                              <div className="space-y-2">
+                                <label className="text-xs font-black uppercase text-slate-500 flex items-center gap-2">
+                                  <Palette size={14} /> Hair Color
+                                </label>
+                                <div className="flex gap-4 items-center">
+                                  <input 
+                                    type="color" 
+                                    value={attributes.hairColor}
+                                    onChange={(e) => setAttributes({...attributes, hairColor: e.target.value})}
+                                    className="w-16 h-12 border-4 border-black rounded-2xl cursor-pointer p-0 overflow-hidden shadow-[2px_2px_0_0_#000]"
+                                  />
+                                  <div className="flex-1 bg-slate-50 border-2 border-black/10 rounded-xl px-3 py-2 font-mono text-xs font-bold uppercase text-center">
+                                    {attributes.hairColor}
+                                  </div>
+                                </div>
+                              </div>
 
-                    <div className="space-y-1 pt-2">
-                      <label className="text-sm font-semibold">
-                        Held Item (Food/Flower)
-                      </label>
-                      <div className="relative">
-                        <select
-                          value={holdingItem}
-                          onChange={(e) => setHoldingItem(e.target.value)}
-                          className="w-full border-2 border-black rounded-lg p-2 bg-white font-medium"
+                              <div className="space-y-2">
+                                <label className="text-xs font-black uppercase text-slate-500 flex items-center gap-2">
+                                  <Scissors size={14} /> Hair Style Amount
+                                </label>
+                                <CustomSlider 
+                                  value={attributes.hairAmount} 
+                                  customStyle={{ backgroundColor: attributes.hairColor }}
+                                  onChange={(v) => setAttributes({...attributes, hairAmount: v})}
+                                />
+                              </div>
+                               <div className="space-y-2">
+                                <label className="text-xs font-black uppercase text-slate-500 flex items-center gap-2">Facial Hair</label>
+                                <CustomSlider 
+                                  value={attributes.facialHair} 
+                                  color="bg-slate-400"
+                                  onChange={(v) => setAttributes({...attributes, facialHair: v})}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-4">
+                              <label className="text-xs font-black uppercase text-slate-500">Skin Tone (Light → Dark)</label>
+                              <div className="grid grid-cols-5 gap-2 p-2 bg-slate-50 border-2 border-black/10 rounded-2xl">
+                                {skinTones.map(tone => (
+                                  <button
+                                    key={tone}
+                                    onClick={() => setAttributes({...attributes, skinTone: tone})}
+                                    className={`h-10 rounded-lg border-2 transition-all ${attributes.skinTone === tone ? 'border-black scale-[1.15] shadow-[2px_2px_0_0_#000] z-10' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                                    style={{ backgroundColor: tone }}
+                                  />
+                                ))}
+                              </div>
+                              <div className="space-y-2 pt-2">
+                                <label className="text-xs font-black uppercase text-slate-500 flex items-center gap-2">
+                                  <Eye size={14} /> Eyewear
+                                </label>
+                                <CustomSlider 
+                                  value={attributes.eyewear} 
+                                  color="bg-sky-400"
+                                  onChange={(v) => setAttributes({...attributes, eyewear: v})}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                             <div className="space-y-4">
+                                <label className="text-xs font-black uppercase text-slate-500">Body Mass Ratio</label>
+                                <CustomSlider 
+                                  value={attributes.bodyFat} 
+                                  color="bg-emerald-400"
+                                  onChange={(v) => setAttributes({...attributes, bodyFat: v})}
+                                />
+                             </div>
+                             <div className="space-y-3">
+                                <label className="text-xs font-black uppercase text-slate-500">Ritual Item</label>
+                                <div className="relative">
+                                  <select 
+                                    value={attributes.heldItem}
+                                    onChange={(e) => setAttributes({...attributes, heldItem: e.target.value})}
+                                    className="w-full bg-white border-2 border-black rounded-xl p-3 font-black text-sm appearance-none outline-none shadow-[3px_3px_0_0_#000] focus:translate-y-[-2px] focus:shadow-[5px_5px_0_0_#000] transition-all"
+                                  >
+                                    {items.map(item => <option key={item} value={item}>{item}</option>)}
+                                  </select>
+                                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" size={16} />
+                                </div>
+                             </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                        <button 
+                          onClick={handleShuffle}
+                          className="flex-1 flex items-center justify-center gap-3 bg-white hover:bg-slate-50 border-4 border-black p-6 rounded-[2rem] font-black text-xl uppercase shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
                         >
-                          <option value="None">Nothing</option>
-                          <option value="Cash">Cash</option>
-                          <option value="Random Food">Filipino Food</option>
-                          <option value="Random Bouquet of Flowers">
-                            Flowers
-                          </option>
-                          <option value="Random Home Utensils">
-                            Home Utensils
-                          </option>
-                        </select>
+                          <Shuffle size={24} strokeWidth={3} />
+                          Randomize
+                        </button>
+                        <button 
+                          onClick={handleGenerate}
+                          disabled={loading}
+                          className={`flex-[1.5] flex items-center justify-center gap-3 ${loading ? 'bg-emerald-200' : 'bg-yellow-400 hover:bg-yellow-300'} border-4 border-black p-6 rounded-[2rem] font-black text-2xl uppercase shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all group`}
+                        >
+                          {loading ? (
+                            <LoaderCircle className="w-8 h-8 animate-spin" />
+                          ) : (
+                            <Sparkles size={28} strokeWidth={3} className={loading ? '' : 'group-hover:rotate-12 transition-transform'} />
+                          )}
+                          {loading ? "Summoning..." : "Summon Spirit"}
+                        </button>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 flex flex-col gap-4">
-                    <button
-                      onClick={handleShuffle}
-                      disabled={loading}
-                      className="w-full bg-yellow-400 text-black border-4 border-black rounded-xl py-3 px-6 text-xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hard-shadow-hover transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Shuffle className="w-7 h-7" />
-                      Shuffle
-                    </button>
-                    <button
-                      onClick={handleGenerate}
-                      disabled={loading}
-                      className="w-full bg-green-400 text-black border-4 border-black rounded-xl py-4 px-6 text-2xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hard-shadow-hover transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {loading ? (
-                        <LoaderCircle className="w-8 h-8 animate-spin" />
-                      ) : (
-                        <Sparkles className="w-8 h-8" />
+                      {error && (
+                        <div className="mt-4 text-sm text-center bg-red-100 p-3 rounded-lg border border-red-300 text-red-700">
+                          {error}
+                        </div>
                       )}
-                      {loading ? "Generating..." : "Summon"}
-                    </button>
-                  </div>
-                  {error && (
-                    <div className="mt-4 text-sm text-center bg-red-100 p-3 rounded-lg border border-red-300 text-red-700">
-                      {error}
-                    </div>
-                  )}
+                    </section>
+                  </main>
                 </div>
               </div>
             </section>
-
-            {/* ═══════════════════════════════════════════════
-                PAGE: PREVIEW
-            ═══════════════════════════════════════════════ */}
             <section
               id="page-preview"
-              className={cn("page-section flex flex-col h-full", {
-                hidden: page !== "page-preview",
-              })}
+              className={cn("page-section flex flex-col h-full", { hidden: page !== "page-preview", })}
             >
-              <div className="flex flex-col md:flex-row border-b-4 border-black">
-                <div className="flex flex-col w-full border-4 border-black bg-white overflow-hidden">
-                  {/* TOP: Image + Lore */}
-                  <div className="flex flex-col md:flex-row border-b-4 border-black">
-                    {/* LEFT: Image / Loader */}
-                    <div className="relative w-full md:w-1/2 bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-[450px]">
+              <div className="grid md:grid-cols-2 flex-1">
+                <div className="relative bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-0">
                       {loading ? (
                         showExitLoader ? (
-                          /* STAGE 2: Exit GIF */
                           <div className="relative w-full h-full flex items-center justify-center">
-                            <Image
-                              src="/images/finalexit.gif"
-                              alt="Finishing up..."
-                              width={400}
-                              height={400}
-                              className="object-contain"
-                              unoptimized
-                            />
+                            <Image src="/images/finalexit.gif" alt="Finishing up..." width={400} height={400} className="object-contain" unoptimized />
                           </div>
                         ) : (
-                          /* STAGE 1: Primary loader — same for both normal & easter egg */
                           <div className="relative w-full h-full flex flex-col items-center justify-center">
-                            <Image
-                              src="/images/loadscreens.gif"
-                              alt="Generating..."
-                              width={400}
-                              height={400}
-                              className="object-contain"
-                              unoptimized
-                            />
-                            <p
-                              key={loadingStepIndex}
-                              style={{ fontSize: "16px" }}
-                              className="font-semibold h-6 animate__animated animate__fadeIn mt-2 text-stone-600"
-                            >
+                            <Image src="/images/loadscreens.gif" alt="Generating..." width={400} height={400} className="object-contain" unoptimized />
+                            <p key={loadingStepIndex} style={{ fontSize: "16px" }} className="font-semibold h-6 animate__animated animate__fadeIn mt-2 text-stone-600">
                               {loadingSteps[loadingStepIndex]}...
                             </p>
                           </div>
                         )
                       ) : generatedImage ? (
-                        /* REVEALED */
-                        <Image
-                          src={generatedImage}
-                          alt="Kapogian Character"
-                          width={512}
-                          height={512}
-                          className="animate__animated animate__zoomIn"
-                        />
+                        <Image src={generatedImage} alt="Kapogian Character" width={512} height={512} className="animate__animated animate__zoomIn" />
                       ) : (
-                        /* ERROR */
                         <div className="flex flex-col items-center justify-center w-full h-full text-stone-500">
                           <Ghost size={48} className="mb-2" />
-                          <p
-                            style={{ fontSize: "16px" }}
-                            className="font-semibold"
-                          >
+                          <p style={{ fontSize: "16px" }} className="font-semibold">
                             Summon failed or not started
                           </p>
                         </div>
                       )}
                     </div>
 
-                    {/* RIGHT: Lore */}
-                    <div className="w-full md:w-1/2 p-8 flex flex-col justify-center bg-white">
-                      <div className="mb-6">
-                        {loading ? (
-                          <Skeleton className="h-10 w-48" />
-                        ) : (
-                          <h1
-                            style={{ fontSize: "42px" }}
-                            className={cn(
-                              "font-display font-bold uppercase tracking-tight leading-none inline-block animate__animated animate__fadeInUp",
-                              (eggRank)
-                                ? "border-b-8 border-yellow-400"
-                                : "border-b-8 border-yellow-300",
-                            )}
-                          >
-                            {generatedName || "..."}
-                          </h1>
-                        )}
-                      </div>
-
-                      <div
-                        style={{ fontSize: "16px" }}
-                        className="font-medium text-stone-700 leading-relaxed max-h-64 overflow-y-auto pr-2 custom-scrollbar animate__animated animate__fadeInUp"
-                      >
-                        {loading || !generatedLore ? (
-                          <div className="space-y-3">
-                            <Skeleton className="h-4 w-full" />
-                            <Skeleton className="h-4 w-[90%]" />
-                            <Skeleton className="h-4 w-full" />
-                            <Skeleton className="h-4 w-[85%]" />
-                          </div>
-                        ) : (
-                          renderMarkdown(generatedLore)
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* BOTTOM: 4-column stat bar */}
-                  <div className="flex flex-col md:flex-row w-full divide-y-4 md:divide-y-0 md:divide-x-4 divide-black bg-white">
-                    {/* 1. Title */}
-                    <div className="flex-1 p-6 flex items-center justify-center text-center">
-                      <h3
-                        style={{ fontSize: "24px" }}
-                        className="font-display font-bold uppercase tracking-tighter"
-                      >
-                        Game Stats
-                      </h3>
-                    </div>
-
-                    {/* 2. Battle MMR */}
-                    <div className="flex-1 p-6 bg-white flex flex-col items-center justify-center border-black">
-                      <p
-                        style={{ fontSize: "14px" }}
-                        className="font-bold text-stone-500 uppercase tracking-widest mb-1"
-                      >
-                        Battle MMR
-                      </p>
-                      {loading ? (
-                        <p
-                          style={{ fontSize: "24px" }}
-                          className="font-display font-bold uppercase leading-none text-black/50 w-24 text-center"
-                        >
-                          {shufflingMmr.toString().padStart(3, "0")}
-                        </p>
-                      ) : (
-                        <p
-                          style={{ fontSize: "24px" }}
-                          className={cn(
-                            "font-display font-bold uppercase leading-none drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp",
-                            (eggRank) ? "text-yellow-500" : "text-black",
+                    <div className="p-8 flex flex-col justify-between bg-white">
+                      <div>
+                        <div className="mb-6">
+                          {loading ? (
+                            <Skeleton className="h-10 w-48" />
+                          ) : (
+                            <h1 style={{ fontSize: "42px" }} className={cn("font-display font-bold uppercase tracking-tight leading-none inline-block animate__animated animate__fadeInUp", (eggRank) ? "border-b-8 border-yellow-400" : "border-b-8 border-yellow-300",)}>
+                              {generatedName || "..."}
+                            </h1>
                           )}
-                        >
-                          {generatedMmr}
-                        </p>
-                      )}
-                    </div>
+                        </div>
 
-                    {/* 3. Rank */}
-                    <div className="flex-1 p-6 flex flex-col items-center justify-center bg-white text-center">
-                      <p className="text-[14px] font-bold text-stone-500 uppercase tracking-widest mb-1">
-                        Rank
-                      </p>
-                      {loading ? (
-                         <>
-                            <h3
-                                style={{ fontSize: "24px" }}
-                                className={cn("font-display font-bold uppercase leading-none w-48 text-center truncate", shufflingRank.style)}
-                            >
+                        <div style={{ fontSize: "16px" }} className="font-medium text-stone-700 leading-relaxed max-h-64 overflow-y-auto pr-2 custom-scrollbar animate__animated animate__fadeInUp">
+                          {loading || !generatedLore ? (
+                            <div className="space-y-3">
+                              <Skeleton className="h-4 w-full" />
+                              <Skeleton className="h-4 w-[90%]" />
+                              <Skeleton className="h-4 w-full" />
+                              <Skeleton className="h-4 w-[85%]" />
+                            </div>
+                          ) : (
+                            renderMarkdown(generatedLore)
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-8 grid grid-cols-3 w-full divide-x-2 divide-black bg-white border-2 border-black rounded-xl overflow-hidden hard-shadow-sm">
+                        <div className="p-4 flex flex-col items-center justify-center text-center">
+                          <p style={{ fontSize: "12px" }} className="font-bold text-stone-500 uppercase tracking-widest mb-1">
+                            Battle MMR
+                          </p>
+                          {loading ? (
+                            <p style={{ fontSize: "20px" }} className="font-display font-bold uppercase leading-none text-black/50 w-16 text-center">
+                              {shufflingMmr.toString().padStart(3, "0")}
+                            </p>
+                          ) : (
+                            <p style={{ fontSize: "20px" }} className={cn("font-display font-bold uppercase leading-none drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp", (eggRank) ? "text-yellow-500" : "text-black",)}>
+                              {generatedMmr}
+                            </p>
+                          )}
+                        </div>
+                        <div className="p-4 flex flex-col items-center justify-center bg-white text-center">
+                          <p className="text-[12px] font-bold text-stone-500 uppercase tracking-widest mb-1">
+                            Rank
+                          </p>
+                           {loading ? (
+                            <h3 style={{ fontSize: "16px" }} className={cn("font-display font-bold uppercase leading-none w-32 text-center truncate", shufflingRank.style)}>
                                 {shufflingRank.name}
                             </h3>
-                         
-                        </>
-                      ) : (
-                        <>
-                          <h3
-                            style={{ fontSize: "24px" }}
-                            className={cn(
-                              "font-display font-bold uppercase leading-none drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp",
-                              displayRankInfo.style,
-                            )}
-                          >
-                            {displayRankInfo.name}
-                          </h3>
-                          <p className="text-[12px] font-bold text-stone-400 mt-1 uppercase tracking-wide">
-                            (Top {displayRankInfo.rarity})
-                          </p>
-                        </>
-                      )}
-                    </div>
-
-                    {/* 4. Lineage */}
-                    <div className="flex-1 p-6 flex flex-col items-center justify-center bg-white">
-                      <p className="text-[14px] font-bold text-stone-500 uppercase tracking-widest mb-1">
-                        Lineage
-                      </p>
-                      {loading ? (
-                        <Skeleton className="h-6 w-32 mt-1" />
-                      ) : (
-                        <p
-                          style={{ fontSize: "24px" }}
-                          className={cn(
-                            "font-display font-bold uppercase leading-none drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp",
-                            (eggRank) ? "text-yellow-500" : "text-black",
+                          ) : (
+                            <>
+                              <h3 style={{ fontSize: "16px" }} className={cn("font-display font-bold uppercase leading-none drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp", displayRankInfo.style,)}>
+                                {displayRankInfo.name}
+                              </h3>
+                              <p className="text-[10px] font-bold text-stone-400 mt-1 uppercase tracking-wide">
+                                (Top {displayRankInfo.rarity})
+                              </p>
+                            </>
                           )}
-                        >
-                          {displayLineage}
-                        </p>
-                      )}
+                        </div>
+
+                        <div className="p-4 flex flex-col items-center justify-center bg-white">
+                          <p className="text-[12px] font-bold text-stone-500 uppercase tracking-widest mb-1">
+                            Lineage
+                          </p>
+                          {loading ? (
+                            <Skeleton className="h-5 w-24 mt-1" />
+                          ) : (
+                            <p style={{ fontSize: "16px" }} className={cn("font-display font-bold uppercase leading-none drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp", (eggRank) ? "text-yellow-500" : "text-black",)}>
+                              {displayLineage}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
               </div>
 
               <div className="p-6 md:p-8 flex justify-between items-center border-t-4 border-black bg-stone-100">
-                <button
-                  onClick={() => navigate("generator")}
-                  disabled={loading}
-                  className="bg-white text-black border-4 border-black rounded-full w-16 h-16 md:w-20 md:h-20 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
+                <button onClick={() => navigate("generator")} disabled={loading} className="bg-white text-black border-4 border-black rounded-full w-16 h-16 md:w-20 md:h-20 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                   <ArrowLeft className="w-8 h-8 md:w-10 md:h-10 stroke-[2.5]" />
                 </button>
-                <div className="text-center">
+                <div className="text-center min-h-[56px] flex flex-col justify-center">
                   {loading ? (
                     <>
                       <p className="font-display font-semibold text-lg uppercase">
@@ -1976,37 +1747,18 @@ export default function GeneratorPage() {
                     </>
                   )}
                 </div>
-                <button
-                  onClick={() => navigate("page-merch")}
-                  disabled={loading}
-                  className="bg-pink-500 text-white border-4 border-black rounded-full w-16 h-16 md:w-20 md:h-20 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-pink-300"
-                >
+                <button onClick={() => navigate("page-merch")} disabled={loading} className="bg-pink-500 text-white border-4 border-black rounded-full w-16 h-16 md:w-20 md:h-20 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-pink-300">
                   <ArrowRight className="w-8 h-8 md:w-10 md:h-10 stroke-[2.5]" />
                 </button>
               </div>
             </section>
 
-            {/* ═══════════════════════════════════════════════
-                PAGE: MERCH
-            ═══════════════════════════════════════════════ */}
-            <section
-              id="page-merch"
-              className={cn("page-section flex flex-col h-full bg-blue-500", {
-                hidden: page !== "page-merch",
-              })}
-              style={{
-                backgroundImage:
-                  "linear-gradient(45deg, #60a5fa 25%, transparent 25%, transparent 75%, #60a5fa 75%, #60a5fa), linear-gradient(45deg, #60a5fa 25%, transparent 25%, transparent 75%, #60a5fa 75%, #60a5fa)",
-                backgroundPosition: "0 0, 20px 20px",
-                backgroundSize: "40px 40px",
-              }}
+            <section id="page-merch" className={cn("page-section flex flex-col h-full bg-blue-500", { hidden: page !== "page-merch", })}
+              style={{ backgroundImage: "linear-gradient(45deg, #60a5fa 25%, transparent 25%, transparent 75%, #60a5fa 75%, #60a5fa), linear-gradient(45deg, #60a5fa 25%, transparent 25%, transparent 75%, #60a5fa 75%, #60a5fa)", backgroundPosition: "0 0, 20px 20px", backgroundSize: "40px 40px", }}
             >
               <div className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center shrink-0 border-b-4 border-black">
                 <div>
-                  <h1
-                    className="text-2xl md:text-3xl font-bold tracking-tight text-white uppercase drop-shadow-sm"
-                    style={{ textShadow: "2px 2px 0px black" }}
-                  >
+                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white uppercase drop-shadow-sm" style={{ textShadow: "2px 2px 0px black" }}>
                     The Stylist Shop
                   </h1>
                   <div className="inline-flex items-center gap-2 mt-2 bg-black px-3 py-1 rounded-full shadow-[2px_2px_0px_#000]">
@@ -2027,23 +1779,14 @@ export default function GeneratorPage() {
                 {renderMerchControls()}
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  {(
-                    Object.keys(merchProducts) as Array<
-                      keyof typeof merchProducts
-                    >
-                  ).map((key) => {
-                    const product =
-                      merchProducts[key as keyof typeof merchProducts];
+                  {( Object.keys(merchProducts) as Array<keyof typeof merchProducts>).map((key) => {
+                    const product = merchProducts[key as keyof typeof merchProducts];
                     const Icon = product.icon;
                     return (
                       <button
                         key={key}
                         onClick={() => setSelection(product.name)}
-                        className={cn(
-                          "group bg-white rounded-xl border-4 border-black p-4 flex flex-col items-center hard-shadow hover:-translate-y-1 transition-all",
-                          selection === product.name &&
-                            "translate-y-1 shadow-none bg-yellow-300",
-                        )}
+                        className={cn( "group bg-white rounded-xl border-4 border-black p-4 flex flex-col items-center hard-shadow hover:-translate-y-1 transition-all", selection === product.name && "translate-y-1 shadow-none bg-yellow-300",)}
                       >
                         <Icon className="text-4xl mb-2" />
                         <span className="text-sm font-bold uppercase tracking-tight">
@@ -2054,13 +1797,8 @@ export default function GeneratorPage() {
                   })}
                 </div>
 
-                <div
-                  onClick={() => setSelection("Bundle")}
-                  className={cn(
-                    "relative bg-yellow-400 border-4 border-black rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 hard-shadow hover:-translate-y-1 transition-all cursor-pointer group",
-                    selection === "Bundle" &&
-                      "translate-y-1 shadow-none bg-yellow-300",
-                  )}
+                <div onClick={() => setSelection("Bundle")}
+                  className={cn("relative bg-yellow-400 border-4 border-black rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 hard-shadow hover:-translate-y-1 transition-all cursor-pointer group", selection === "Bundle" && "translate-y-1 shadow-none bg-yellow-300",)}
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full border-4 border-black bg-white flex items-center justify-center group-hover:bg-black transition-colors">
@@ -2082,10 +1820,7 @@ export default function GeneratorPage() {
               </div>
 
               <div className="p-4 flex justify-between items-center border-t-4 border-black bg-blue-500 shrink-0">
-                <button
-                  onClick={() => navigate("page-preview")}
-                  className="bg-white text-black border-4 border-black rounded-full w-14 h-14 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all"
-                >
+                <button onClick={() => navigate("page-preview")} className="bg-white text-black border-4 border-black rounded-full w-14 h-14 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all">
                   <ArrowLeft className="w-8 h-8 stroke-[2.5]" />
                 </button>
                 {error && (
@@ -2093,25 +1828,13 @@ export default function GeneratorPage() {
                     {error}
                   </div>
                 )}
-                <button
-                  onClick={handleContinueToShipping}
-                  className="bg-green-400 text-black border-4 border-black rounded-full w-14 h-14 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all"
-                >
+                <button onClick={handleContinueToShipping} className="bg-green-400 text-black border-4 border-black rounded-full w-14 h-14 flex items-center justify-center hard-shadow-sm hard-shadow-hover transition-all">
                   <ArrowRight className="w-8 h-8 stroke-[2.5]" />
                 </button>
               </div>
             </section>
-
-            {/* ═══════════════════════════════════════════════
-                PAGE: SHIPPING
-            ═══════════════════════════════════════════════ */}
-            <section
-              id="page-shipping"
-              className={cn(
-                "page-section p-8 flex flex-col items-center justify-center h-full min-h-[600px] bg-sky-100",
-                { hidden: page !== "page-shipping" },
-              )}
-            >
+            
+            <section id="page-shipping" className={cn("page-section p-8 flex flex-col items-center justify-center h-full min-h-[600px] bg-sky-100", { hidden: page !== "page-shipping" }, )}>
               <div className="w-full max-w-md bg-white border-4 border-black rounded-2xl p-8 hard-shadow-sm relative">
                 <div className="absolute -top-6 -left-6 bg-red-500 text-white font-display font-semibold px-4 py-2 rotate-[-6deg] border-4 border-black rounded-lg shadow-md uppercase">
                   Fragile!
@@ -2124,49 +1847,24 @@ export default function GeneratorPage() {
                     <label className="font-semibold uppercase text-sm tracking-wide">
                       Full Name
                     </label>
-                    <Input
-                      type="text"
-                      value={shippingName}
-                      onChange={(e) => setShippingName(e.target.value)}
-                      className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto"
-                    />
+                    <Input type="text" value={shippingName} onChange={(e) => setShippingName(e.target.value)} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" />
                   </div>
                   <div className="space-y-2">
                     <label className="font-semibold uppercase text-sm tracking-wide">
                       Contact Number
                     </label>
-                    <Input
-                      type="text"
-                      value={shippingContact}
-                      onChange={(e) => setShippingContact(e.target.value)}
-                      className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto"
-                      placeholder="09123456789"
-                    />
+                    <Input type="text" value={shippingContact} onChange={(e) => setShippingContact(e.target.value)} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" placeholder="09123456789" />
                   </div>
                   <div className="space-y-2">
                     <label className="font-semibold uppercase text-sm tracking-wide">
                       Province
                     </label>
-                    <Select
-                      onValueChange={handleProvinceChange}
-                      value={selectedProvince?.code}
-                      disabled={provincesLoading}
-                    >
+                    <Select onValueChange={handleProvinceChange} value={selectedProvince?.code} disabled={provincesLoading}>
                       <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto">
-                        <SelectValue
-                          placeholder={
-                            provincesLoading
-                              ? "Loading provinces..."
-                              : "Select Province"
-                          }
-                        />
+                        <SelectValue placeholder={provincesLoading ? "Loading provinces..." : "Select Province"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {provinces.map((p) => (
-                          <SelectItem key={p.code} value={p.code}>
-                            {p.name}
-                          </SelectItem>
-                        ))}
+                        {provinces.map((p) => ( <SelectItem key={p.code} value={p.code}> {p.name} </SelectItem> ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -2174,29 +1872,12 @@ export default function GeneratorPage() {
                     <label className="font-semibold uppercase text-sm tracking-wide">
                       City / Municipality
                     </label>
-                    <Select
-                      onValueChange={handleCityChange}
-                      value={selectedCity?.code}
-                      disabled={!selectedProvince || citiesLoading}
-                    >
-                      <SelectTrigger
-                        className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto"
-                        disabled={!selectedProvince || citiesLoading}
-                      >
-                        <SelectValue
-                          placeholder={
-                            citiesLoading
-                              ? "Loading cities..."
-                              : "Select City/Municipality"
-                          }
-                        />
+                    <Select onValueChange={handleCityChange} value={selectedCity?.code} disabled={!selectedProvince || citiesLoading}>
+                      <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" disabled={!selectedProvince || citiesLoading}>
+                        <SelectValue placeholder={ citiesLoading ? "Loading cities..." : "Select City/Municipality"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {cities.map((c) => (
-                          <SelectItem key={c.code} value={c.code}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
+                        {cities.map((c) => ( <SelectItem key={c.code} value={c.code}> {c.name} </SelectItem> ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -2204,29 +1885,12 @@ export default function GeneratorPage() {
                     <label className="font-semibold uppercase text-sm tracking-wide">
                       Barangay
                     </label>
-                    <Select
-                      onValueChange={handleBarangayChange}
-                      value={selectedBarangay?.code}
-                      disabled={!selectedCity || barangaysLoading}
-                    >
-                      <SelectTrigger
-                        className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto"
-                        disabled={!selectedCity || barangaysLoading}
-                      >
-                        <SelectValue
-                          placeholder={
-                            barangaysLoading
-                              ? "Loading barangays..."
-                              : "Select Barangay"
-                          }
-                        />
+                    <Select onValueChange={handleBarangayChange} value={selectedBarangay?.code} disabled={!selectedCity || barangaysLoading}>
+                      <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto" disabled={!selectedCity || barangaysLoading}>
+                        <SelectValue placeholder={ barangaysLoading ? "Loading barangays..." : "Select Barangay"}/>
                       </SelectTrigger>
                       <SelectContent>
-                        {barangays.map((b) => (
-                          <SelectItem key={b.code} value={b.code}>
-                            {b.name}
-                          </SelectItem>
-                        ))}
+                        {barangays.map((b) => ( <SelectItem key={b.code} value={b.code}> {b.name} </SelectItem> ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -2234,25 +1898,12 @@ export default function GeneratorPage() {
                     <label className="font-semibold uppercase text-sm tracking-wide">
                       Street Address, House/Bldg No.
                     </label>
-                    <Input
-                      type="text"
-                      value={streetAddress}
-                      onChange={(e) => setStreetAddress(e.target.value)}
-                      className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto"
-                    />
+                    <Input type="text" value={streetAddress} onChange={(e) => setStreetAddress(e.target.value)} className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto"/>
                   </div>
                 </div>
 
-                <button
-                  onClick={handleMint}
-                  disabled={minting}
-                  className="mt-8 w-full bg-blue-500 text-white border-4 border-black rounded-xl py-3 text-xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hard-shadow-hover transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {minting ? (
-                    <LoaderCircle className="w-6 h-6 animate-spin" />
-                  ) : (
-                    <Truck className="w-6 h-6" />
-                  )}
+                <button onClick={handleMint} disabled={minting} className="mt-8 w-full bg-blue-500 text-white border-4 border-black rounded-xl py-3 text-xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hard-shadow-hover transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {minting ? ( <LoaderCircle className="w-6 h-6 animate-spin" /> ) : ( <Truck className="w-6 h-6" /> )}
                   {minting ? "Minting & Shipping..." : "Ship It"}
                 </button>
                 {error && (
@@ -2263,16 +1914,7 @@ export default function GeneratorPage() {
               </div>
             </section>
 
-            {/* ═══════════════════════════════════════════════
-                PAGE: RECEIPT
-            ═══════════════════════════════════════════════ */}
-            <section
-              id="page-receipt"
-              className={cn(
-                "page-section p-8 flex flex-col items-center justify-center h-full min-h-[600px] bg-green-200",
-                { hidden: page !== "page-receipt" },
-              )}
-            >
+            <section id="page-receipt" className={cn("page-section p-8 flex flex-col items-center justify-center h-full min-h-[600px] bg-green-200", { hidden: page !== "page-receipt" },)}>
               <div className="w-full max-w-sm bg-white border-x-4 border-t-4 border-b-[12px] border-dotted border-black rounded-t-xl relative p-6 shadow-2xl">
                 <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-green-200 rounded-full border-4 border-black" />
                 <div className="text-center mb-6 border-b-2 border-dashed border-stone-300 pb-4">
@@ -2287,12 +1929,7 @@ export default function GeneratorPage() {
                 <div className="flex gap-4 mb-6">
                   <div className="w-20 h-20 bg-stone-100 border-2 border-black rounded-md shrink-0 overflow-hidden">
                     {generatedImage && (
-                      <Image
-                        src={generatedImage}
-                        alt="Kapogian Character"
-                        width={80}
-                        height={80}
-                      />
+                      <Image src={generatedImage} alt="Kapogian Character" width={80} height={80}/>
                     )}
                   </div>
                   <div className="flex flex-col justify-center">
@@ -2326,17 +1963,11 @@ export default function GeneratorPage() {
                   </span>
                 </div>
 
-                <a
-                  href="/generate"
-                  className="block text-center w-full bg-white text-black border-4 border-black rounded-xl py-3 text-lg font-display font-semibold uppercase tracking-tight hover:bg-stone-100 transition-all"
-                >
+                <a href="/generate" className="block text-center w-full bg-white text-black border-4 border-black rounded-xl py-3 text-lg font-display font-semibold uppercase tracking-tight hover:bg-stone-100 transition-all">
                   Make Another
                 </a>
 
-                <div
-                  className="absolute bottom-20 right-4 border-4 border-red-500 text-red-500 rounded-full w-24 h-24 flex items-center justify-center font-bold text-xl uppercase rotate-[-20deg] opacity-80 pointer-events-none"
-                  style={{ mixBlendMode: "multiply" }}
-                >
+                <div className="absolute bottom-20 right-4 border-4 border-red-500 text-red-500 rounded-full w-24 h-24 flex items-center justify-center font-bold text-xl uppercase rotate-[-20deg] opacity-80 pointer-events-none" style={{ mixBlendMode: "multiply" }}>
                   PAID
                 </div>
               </div>
@@ -2348,3 +1979,4 @@ export default function GeneratorPage() {
     </>
   );
 }
+    
