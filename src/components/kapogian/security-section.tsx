@@ -1,77 +1,121 @@
+'use client';
+
 import React, { useState, useEffect } from "react";
 import {
   Zap,
   Activity,
-  Terminal,
   Loader2,
-  Sparkles,
   TrendingUp,
   Users,
 } from "lucide-react";
+import { suiClient } from "@/lib/sui";
+import { CONTRACT_ADDRESSES, NETWORK_CONFIG } from "@/lib/constants";
+import { timeAgo, formatAddress } from "@/lib/utils";
+
+// Type for the parsed data from a CharacterMinted event
+interface MintEvent {
+  id: { txDigest: string; eventSeq: string };
+  packageId: string;
+  transactionModule: string;
+  sender: string;
+  type: string;
+  parsedJson: {
+    edition: string;
+    kiosk_id: string;
+    name: string;
+    nft_id: string;
+    owner: string;
+    timestamp: string;
+  };
+  timestampMs: string;
+}
+
+// Type for a user's entry on the leaderboard
+interface LeaderboardEntry {
+  rank: number;
+  address: string;
+  name: string; // The name of their highest MMR NFT
+  highestMmr: number;
+}
 
 export const SecuritySection = () => {
-  const [encryptionLog, setEncryptionLog] = useState([]);
-  const [mintProgress, setMintProgress] = useState(0);
-  const [activeMinter, setActiveMinter] = useState("0x1189...2a8f");
-
-  // Updated Leaderboard data with new entries and MMR ranks
-  const [liveActivity, setLiveActivity] = useState([
-    {
-      id: "Vince",
-      count: "9,999,999,999",
-      label: "MMR",
-      rank: 1,
-      color: "bg-yellow-400",
-    },
-    {
-      id: "Lakson",
-      count: "511",
-      label: "MMR",
-      rank: 2,
-      color: "bg-slate-200",
-    },
-    { id: "Koa", count: "504", label: "MMR", rank: 3, color: "bg-orange-400" },
-    { id: "Zeko", count: "487", label: "MMR", rank: 4, color: "bg-white" },
-    { id: "Rakan", count: "482", label: "MMR", rank: 5, color: "bg-white" },
-  ]);
-
-  // Secondary Summons List
-  const summonsList = [
-    { id: "0xe23e...ebe3", count: 10 },
-    { id: "0x4a99...2c31", count: 10 },
-    { id: "0x615a...48eb", count: 10 },
-    { id: "0x1189...2a8f", count: 10 },
-  ];
+  const [recentMints, setRecentMints] = useState<MintEvent[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isLive, setIsLive] = useState(true);
 
   useEffect(() => {
-    const logs = [
-      "> ENCRYPTING SHIPPING BLOBS...",
-      "> GENERATING SOULBOUND RECEIPT...",
-      "> PUSHING TO ON-CHAIN STORAGE...",
-      "> VALIDATING CLIENT-SIDE HASH...",
-      "> DATA PACKET SEALED",
-      "> SECURE SOCKET TUNNELING...",
-    ];
-    const wallets = [
-      "0xe23e...ebe3",
-      "0x615a...48eb",
-      "0x262d...aa7a",
-      "0x1189...2a8f",
-    ];
-    let i = 0;
-    const interval = setInterval(() => {
-      setEncryptionLog((prev) => [logs[i % logs.length], ...prev.slice(0, 3)]);
-      setMintProgress((prev) => {
-        if (prev >= 100) {
-          setActiveMinter(wallets[Math.floor(Math.random() * wallets.length)]);
-          return 0;
+    const fetchData = async () => {
+      try {
+        // Fetch last 100 mints for both recent activity and live leaderboard
+        const mintEvents = await suiClient.queryEvents({
+          query: { MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::CharacterMinted` },
+          limit: 100,
+          order: 'descending',
+        });
+
+        if (!mintEvents.data || mintEvents.data.length === 0) {
+          if (loading) setLoading(false);
+          return;
         }
-        return prev + 10;
-      });
-      i++;
-    }, 1200);
+
+        // --- Part 1: Update Recent Mints ---
+        setRecentMints(mintEvents.data as MintEvent[]);
+
+        // --- Part 2: Calculate Live Leaderboard ---
+        const nftIds = mintEvents.data.map(event => (event.parsedJson as any)?.nft_id).filter(Boolean);
+        const ownerMmrMap = new Map<string, { address: string; highestMmr: number; name: string }>();
+
+        if (nftIds.length > 0) {
+          const nftObjects = await suiClient.multiGetObjects({
+            ids: nftIds,
+            options: { showContent: true },
+          });
+
+          const nftObjectMap = new Map(nftObjects.map(obj => [obj.data?.objectId, obj.data]));
+
+          mintEvents.data.forEach(event => {
+            const parsed = event.parsedJson as any;
+            if (!parsed.owner || !parsed.nft_id) return;
+
+            const nftObject = nftObjectMap.get(parsed.nft_id);
+            if (!nftObject?.content || nftObject.content.dataType !== 'moveObject') return;
+
+            const fields = nftObject.content.fields as any;
+            const currentMmr = Number(fields.mmr);
+            const nftName = fields.name;
+
+            if (!ownerMmrMap.has(parsed.owner) || currentMmr > ownerMmrMap.get(parsed.owner)!.highestMmr) {
+              ownerMmrMap.set(parsed.owner, {
+                address: parsed.owner,
+                highestMmr: currentMmr,
+                name: nftName,
+              });
+            }
+          });
+        }
+        
+        const sortedLeaderboard = Array.from(ownerMmrMap.values())
+          .sort((a, b) => b.highestMmr - a.highestMmr)
+          .slice(0, 5)
+          .map((entry, index) => ({ ...entry, rank: index + 1 }));
+
+        setLeaderboard(sortedLeaderboard);
+        
+      } catch (error) {
+        console.error("Failed to fetch live activity:", error);
+      } finally {
+        if (loading) setLoading(false);
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(() => {
+      if (isLive) fetchData();
+    }, 8000); // Refresh every 8 seconds
+
     return () => clearInterval(interval);
-  }, []);
+  }, [isLive, loading]);
 
   return (
     <div className="min-h-[80vh] bg-[#3B82F6] text-slate-900 font-sans p-4 py-8 flex flex-col items-center justify-center overflow-x-hidden relative pb-20">
@@ -79,12 +123,11 @@ export const SecuritySection = () => {
       <div className="absolute top-[-5%] left-[-5%] w-48 h-48 bg-yellow-400 border-8 border-black rounded-full opacity-10 animate-pulse" />
       <div className="absolute bottom-10 right-[-5%] w-72 h-16 bg-white border-8 border-black rounded-full rotate-12 opacity-10" />
 
-      {/* Main Header - Reduced margins and text sizes */}
+      {/* Main Header */}
       <h2
         className="font-headline text-5xl md:text-8xl font-bold text-white uppercase pt-20 pb-20"
         style={{
-          textShadow:
-            "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+          textShadow: "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
         }}
       >
         Live Activity
@@ -92,12 +135,8 @@ export const SecuritySection = () => {
 
       <div className="w-full max-w-4xl relative z-10">
         <div className="relative pt-8">
-          {/* Adjusted Chibi positioning for smaller height */}
           <div
-            className="absolute 
-    -top-10 -left-4 w-32 h-32 
-    md:-top-36 md:-left-12 md:w-64 md:h-64 
-    z-0 pointer-events-none transition-all duration-300"
+            className="absolute -top-10 -left-4 w-32 h-32 md:-top-36 md:-left-12 md:w-64 md:h-64 z-0 pointer-events-none transition-all duration-300"
           >
             <img
               src="/images/rihee.png"
@@ -105,14 +144,8 @@ export const SecuritySection = () => {
               className="w-full h-full object-contain drop-shadow-[0_8px_8px_rgba(0,0,0,0.3)]"
             />
           </div>
-          {/* Right Chibi: Lowered further into the container on mobile */}
           <div
-            className="absolute 
-    /* Mobile: Pushed 3rem (48px) down from the top edge */
-    -top-4 -right-2 w-28 h-28 
-    /* Desktop: Remains in its high 'peek' position */
-    md:-top-28 md:-right-12 md:w-64 md:h-64 
-    z-0 pointer-events-none transition-all duration-300"
+            className="absolute -top-4 -right-2 w-28 h-28 md:-top-28 md:-right-12 md:w-64 md:h-64 z-0 pointer-events-none transition-all duration-300"
           >
             <img
               src="/images/rihe.png"
@@ -121,52 +154,52 @@ export const SecuritySection = () => {
             />
           </div>
 
-          {/* Main Content Card - Reduced padding and shadow size */}
           <div className="bg-white border-[5px] border-black rounded-[2rem] p-6 md:p-8 shadow-[12px_12px_0px_black] relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left Side: Live Summons */}
               <div className="flex flex-col">
-                <div className="flex items-center gap-2 mb-4 border-b-4 border-black pb-2">
-                  <Zap className="w-8 h-8 text-blue-500 fill-blue-500" />
-                  <h2 className="font-black text-2xl uppercase italic tracking-tighter">
-                    Recent Activity
-                  </h2>
-                </div>
-
-                {/* Recent Summons - Slimmed list */}
-                <div className="space-y-1.5 mb-4">
-                  {summonsList.slice(0, 3).map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex justify-between items-center border-2 border-black rounded-lg p-1.5 bg-slate-50 font-mono text-[10px] font-bold"
-                    >
-                      <span>{item.id}</span>
-                      <span className="bg-black text-white px-2 py-0.5 rounded-md">
-                        {item.count} NFTs
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="bg-black rounded-xl p-4 border-[3px] border-black shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)] h-64 overflow-y-auto">
-                  <div className="flex items-center gap-2 mb-2 border-b border-green-900 pb-1">
-                    <Terminal size={12} className="text-green-500" />
-                    <span className="text-[9px] font-black uppercase tracking-widest text-green-500 font-mono">
-                      Pipeline
-                    </span>
+                <div className="flex items-center justify-between gap-2 mb-4 border-b-4 border-black pb-2">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-8 h-8 text-blue-500 fill-blue-500" />
+                    <h2 className="font-black text-2xl uppercase italic tracking-tighter">
+                      Live Summons
+                    </h2>
                   </div>
-                  <div className="font-mono text-[10px] text-green-500/90 space-y-1">
-                    {encryptionLog.map((log, idx) => (
-                      <div
-                        key={idx}
-                        className={idx === 0 ? "text-green-400" : "opacity-30"}
+                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsLive(!isLive)}>
+                    <div className={`w-2.5 h-2.5 rounded-full transition-colors ${isLive ? 'bg-green-500 animate-pulse' : 'bg-slate-400'}`}></div>
+                    <span className="text-xs font-bold text-slate-500">{isLive ? 'LIVE' : 'PAUSED'}</span>
+                  </div>
+                </div>
+
+                {loading && recentMints.length === 0 ? (
+                  <div className="flex items-center justify-center h-full min-h-[24rem] text-slate-400">
+                    <Loader2 className="w-8 h-8 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="space-y-2 h-[24rem] overflow-y-auto pr-2 custom-scrollbar">
+                    {recentMints.slice(0, 20).map((mint, idx) => (
+                      <a
+                        key={mint.id.txDigest}
+                        href={`https://suiscan.xyz/${NETWORK_CONFIG.network}/tx/${mint.id.txDigest}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block p-2.5 border-2 border-black rounded-xl bg-slate-50 hover:bg-white hover:border-blue-500 hover:shadow-md transition-all animate-slide-in-top"
+                        style={{ animationDelay: `${idx * 30}ms` }}
                       >
-                        {idx === 0 ? "> " : "  "}
-                        {log}
-                      </div>
+                        <div className="flex justify-between items-center mb-1">
+                          <p className="font-bold text-sm tracking-tight truncate pr-2">{mint.parsedJson.name}</p>
+                          {idx === 0 && Date.now() - parseInt(mint.timestampMs) < 15000 && (
+                            <span className="bg-yellow-400 text-black text-[9px] font-black px-2 py-0.5 rounded-full border border-black animate-pulse">NEW!</span>
+                          )}
+                        </div>
+                        <div className="flex justify-between items-center text-xs font-mono">
+                          <span className="text-slate-500">{formatAddress(mint.sender)}</span>
+                          <span className="text-slate-400">{timeAgo(mint.timestampMs)}</span>
+                        </div>
+                      </a>
                     ))}
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Right Side: MMR Leaderboard */}
@@ -174,46 +207,52 @@ export const SecuritySection = () => {
                 <div className="flex items-center gap-2 mb-4 border-b-4 border-black pb-2">
                   <TrendingUp className="w-8 h-8 text-purple-500" />
                   <h2 className="font-black text-2xl uppercase italic tracking-tighter">
-                    MMR RANK
+                    Live MMR
                   </h2>
                 </div>
 
-                <div className="space-y-2">
-                  {liveActivity.map((activity, i) => (
-                    <div
-                      key={i}
-                      className={`flex justify-between items-center bg-white border-[3px] border-black p-3 rounded-xl shadow-[4px_4px_0px_black] transition-all transform hover:scale-[1.01] ${activity.id === "Vince" ? "ring-2 ring-yellow-400/30" : ""}`}
-                    >
-                      <div className="flex items-center gap-3">
+                {loading && leaderboard.length === 0 ? (
+                  <div className="space-y-2">
+                    {[...Array(5)].map((_, i) => <div key={i} className="bg-slate-100 border-[3px] border-black p-3 rounded-xl h-[76px] animate-pulse" />)}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {leaderboard.map((entry, i) => {
+                      const rankColors = ["bg-yellow-400", "bg-slate-200", "bg-orange-400"];
+                      return (
                         <div
-                          className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm border-2 border-black shadow-[2px_2px_0px_black] ${activity.color}`}
+                          key={i}
+                          className={`flex justify-between items-center bg-white border-[3px] border-black p-3 rounded-xl shadow-[4px_4px_0px_black]`}
                         >
-                          #{activity.rank}
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm border-2 border-black shadow-[2px_2px_0px_black] ${rankColors[i] || 'bg-white'}`}
+                            >
+                              #{entry.rank}
+                            </div>
+                            <div className="max-w-[120px]">
+                              <p className="font-black text-sm uppercase italic tracking-tighter leading-none truncate">
+                                {entry.name || 'Unnamed'}
+                              </p>
+                              <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest font-mono">
+                                {formatAddress(entry.address)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-black font-mono block leading-none text-base">
+                              {entry.highestMmr.toLocaleString()}
+                            </span>
+                            <p className="text-[8px] font-black uppercase text-purple-600 mt-0.5">
+                              MMR
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-black text-sm uppercase italic tracking-tighter leading-none">
-                            {activity.id}
-                          </p>
-                          <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest">
-                            Global
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span
-                          className={`font-black font-mono block leading-none ${activity.id === "Vince" ? "text-lg text-blue-600" : "text-base"}`}
-                        >
-                          {activity.count}
-                        </span>
-                        <p className="text-[8px] font-black uppercase text-purple-600 mt-0.5">
-                          {activity.label}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
 
-                {/* Bottom stats - More compact */}
                 <div className="mt-6 pt-4 flex justify-around border-t-[3px] border-slate-100 border-dashed">
                   <div className="text-center">
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
