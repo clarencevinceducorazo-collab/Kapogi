@@ -37,7 +37,7 @@ export const HeroSection = () => {
       <div className="absolute bottom-0 right-0 w-1/4 z-10 transform scale-x-[-1]"></div>
 
       <div className="relative z-20 container mx-auto grid lg:grid-cols-2 gap-10 items-start lg:items-center">
-        <div className="text-center lg:text-left space-y-4">
+        <div className="text-center lg:text-left space-y-4 mx-4 lg:mx-16">
           <div className="inline-flex items-center gap-2 bg-[#FFC83D] text-black px-4 py-1 rounded-full text-sm font-bold ml-0 lg:ml-2">
             <span className="relative flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -46,7 +46,7 @@ export const HeroSection = () => {
             MINT LIVE
           </div>
           <h1
-            className="font-headline text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold text-white"
+            className="font-headline text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold text-white "
             style={{
               textShadow:
                 "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 5px 5px 0 #000",
@@ -57,11 +57,11 @@ export const HeroSection = () => {
           <p className="text-xl md:text-2xl font-bold text-white [text-shadow:2px_2px_0_#000,-2px_2px_0_#000,2px_-2px_0_#000,-2px_-2px_0_#000]">
             Be Pogi! Be Confident Everyday
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4 ">
             <Link href="/summoning">
               <Button
                 size="lg"
-                className="rounded-full bg-[#FFC83D] text-black hover:bg-[#EAC35F] font-bold text-lg px-8 py-7"
+                className="rounded-full bg-[#FFC83D] text-black hover:bg-[#EAC35F] font-bold text-lg px-8 py-7 "
               >
                 <Sparkles className="mr-2 h-5 w-5" />
                 Summon my Kapogian Spirit

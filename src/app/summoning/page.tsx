@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function SummoningPage() {
   const router = useRouter();
@@ -505,6 +506,34 @@ export default function SummoningPage() {
               </span>
             </div>
           </div>
+
+          {/* --- SKIP BUTTON --- */}
+          <Link
+            href="/generate"
+            className="absolute bottom-6 right-6 z-[60] group flex items-center gap-2 px-4 py-2 
+             rounded-full border border-white/20 bg-transparent text-white/40 
+             hover:text-white hover:bg-white/10 hover:border-white 
+             transition-all duration-300 outline-none focus:ring-2 focus:ring-white/50"
+          >
+            <span className="uppercase tracking-[0.2em] text-[10px] font-sans font-semibold leading-none">
+              Skip Ritual
+            </span>
+
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="transform group-hover:translate-x-1 transition-transform duration-300"
+            >
+              <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
+            </svg>
+          </Link>
         </main>
       </div>
     </>
