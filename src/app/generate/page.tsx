@@ -788,6 +788,18 @@ export default function GeneratorPage() {
     }
   };
 
+  const generateCountry = async (): Promise<string> => {
+    try {
+      const result = await generateText({
+        prompt: `Generate a single name of a random country from anywhere in the world. Only return the country name, no extra text.`,
+      });
+      return result.text?.replace(/["'.]+/g, "") || "a foreign land";
+    } catch (e) {
+      console.error("Country generation failed:", e);
+      return "a foreign land";
+    }
+  };
+
   const generateLore = async (
     name: string,
     originDesc: string,
@@ -957,8 +969,6 @@ export default function GeneratorPage() {
 
   const handleGenerate = async () => {
     let shuffleInterval: NodeJS.Timeout | undefined;
-    let eggTimer1: NodeJS.Timeout | undefined;
-    let eggTimer2: NodeJS.Timeout | undefined;
 
     try {
       setLoading(true);
@@ -986,20 +996,45 @@ export default function GeneratorPage() {
 
       navigate("page-preview");
 
-      const originDescResult = `a native of the Philippines`;
+      const { luzon, visayas, mindanao } = stats;
 
-      const nameToUse = characterName || (await generateName());
+      // Step 1: Generate name and origin description
+      const namePromise = characterName
+        ? Promise.resolve(characterName)
+        : generateName();
 
-      const fullPrompt = buildCharacterPrompt(nameToUse, originDescResult);
+      const originPromise = (async () => {
+        if (luzon === 0 && visayas === 0 && mindanao === 0) {
+          const country = await generateCountry();
+          return `a naturalized Filipino from ${country}`;
+        } else {
+          const origins = [
+            { region: "Luzon", value: luzon },
+            { region: "Visayas", value: visayas },
+            { region: "Mindanao", value: mindanao },
+          ];
+          origins.sort((a, b) => b.value - a.value);
+          return `a native of the ${origins[0].region} region of the Philippines`;
+        }
+      })();
+
+      const [nameToUse, originDesc] = await Promise.all([
+        namePromise,
+        originPromise,
+      ]);
+
+      // Step 2: Build prompt and run image/lore generation in parallel
+      const fullPrompt = buildCharacterPrompt(nameToUse, originDesc);
 
       const imagePromise = generateImage({ prompt: fullPrompt });
-      const lorePromise = generateLore(nameToUse, originDescResult);
+      const lorePromise = generateLore(nameToUse, originDesc);
 
       const [imageResult, loreResult] = await Promise.all([
         imagePromise,
         lorePromise,
       ]);
 
+      // Step 3: Process image result
       const imageUrl = imageResult?.imageUrl;
       if (!imageUrl) throw new Error("No image data received from the API.");
 
@@ -1012,21 +1047,20 @@ export default function GeneratorPage() {
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: "image/png" });
 
+      // Step 4: Trigger the exit animation then update state
       setShowExitLoader(true);
       setTimeout(() => {
         if (shuffleInterval) clearInterval(shuffleInterval);
         setGeneratedName(nameToUse);
-        setOriginDescription(originDescResult);
+        setOriginDescription(originDesc);
         setGeneratedImageBlob(blob);
         setGeneratedImage(imageUrl);
         setGeneratedLore(loreResult);
         setLoading(false);
         setShowExitLoader(false);
-      }, 6500);
+      }, 6500); // Duration for exit GIF
     } catch (err: any) {
       if (shuffleInterval) clearInterval(shuffleInterval);
-      if (eggTimer1) clearTimeout(eggTimer1);
-      if (eggTimer2) clearTimeout(eggTimer2);
       console.error("Generation failed:", err);
       setError(
         err.message || "Failed to generate character. Please try again.",
