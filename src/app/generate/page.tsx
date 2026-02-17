@@ -2042,7 +2042,7 @@ export default function GeneratorPage() {
                     showExitLoader ? (
                       <div className="relative w-full h-full flex items-center justify-center">
                         <Image
-                          src="/images/finalExitgif.gif"
+                          src="/images/latefinalexit.gif"
                           alt="Finishing up..."
                           width={800}
                           height={1400}
