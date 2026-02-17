@@ -420,7 +420,7 @@ export default function GeneratorPage() {
     if (mmr >= 3951)
       return {
         name: "Kapogian Ascendant",
-        style: "effect-mythic text-4xl font-black uppercase tracking-tighter",
+        style: "effect-mythic-glow text-4xl font-black uppercase tracking-tighter",
         rarity: "Top 0.005%",
       };
     if (mmr >= 3851)
@@ -788,18 +788,6 @@ export default function GeneratorPage() {
     }
   };
 
-  const generateCountry = async (): Promise<string> => {
-    try {
-      const result = await generateText({
-        prompt: `Generate a single name of a random country from anywhere in the world. Only return the country name, no extra text.`,
-      });
-      return result.text?.replace(/["'.]+/g, "") || "a foreign land";
-    } catch (e) {
-      console.error("Country generation failed:", e);
-      return "a foreign land";
-    }
-  };
-
   const generateLore = async (
     name: string,
     originDesc: string,
@@ -987,7 +975,7 @@ export default function GeneratorPage() {
 
       setEggRank(null);
       setEggLineage(null);
-
+      
       shuffleInterval = setInterval(() => {
         const randomMmr = Math.floor(Math.random() * 4001);
         setShufflingMmr(randomMmr);
@@ -996,45 +984,15 @@ export default function GeneratorPage() {
 
       navigate("page-preview");
 
-      const { luzon, visayas, mindanao } = stats;
-
-      // Step 1: Generate name and origin description
-      const namePromise = characterName
-        ? Promise.resolve(characterName)
-        : generateName();
-
-      const originPromise = (async () => {
-        if (luzon === 0 && visayas === 0 && mindanao === 0) {
-          const country = await generateCountry();
-          return `a naturalized Filipino from ${country}`;
-        } else {
-          const origins = [
-            { region: "Luzon", value: luzon },
-            { region: "Visayas", value: visayas },
-            { region: "Mindanao", value: mindanao },
-          ];
-          origins.sort((a, b) => b.value - a.value);
-          return `a native of the ${origins[0].region} region of the Philippines`;
-        }
-      })();
-
-      const [nameToUse, originDesc] = await Promise.all([
-        namePromise,
-        originPromise,
-      ]);
-
-      // Step 2: Build prompt and run image/lore generation in parallel
+      const originDesc = "the Philippines"; // Hardcoded
+      const nameToUse = characterName ? characterName : await generateName();
       const fullPrompt = buildCharacterPrompt(nameToUse, originDesc);
 
-      const imagePromise = generateImage({ prompt: fullPrompt });
-      const lorePromise = generateLore(nameToUse, originDesc);
-
       const [imageResult, loreResult] = await Promise.all([
-        imagePromise,
-        lorePromise,
+        generateImage({ prompt: fullPrompt }),
+        generateLore(nameToUse, originDesc),
       ]);
 
-      // Step 3: Process image result
       const imageUrl = imageResult?.imageUrl;
       if (!imageUrl) throw new Error("No image data received from the API.");
 
@@ -1047,7 +1005,6 @@ export default function GeneratorPage() {
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: "image/png" });
 
-      // Step 4: Trigger the exit animation then update state
       setShowExitLoader(true);
       setTimeout(() => {
         if (shuffleInterval) clearInterval(shuffleInterval);
@@ -1253,7 +1210,7 @@ export default function GeneratorPage() {
     if (eggRank) {
       return {
         name: eggRank,
-        style: "effect-mythic text-4xl font-black uppercase tracking-tighter",
+        style: "effect-mythic-glow text-4xl font-black uppercase tracking-tighter",
         rarity: "Legendary Find",
       };
     }
