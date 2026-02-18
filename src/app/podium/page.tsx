@@ -9,7 +9,13 @@ import { suiClient } from "@/lib/sui";
 import { CONTRACT_ADDRESSES } from "@/lib/constants";
 import { getIPFSGatewayUrl } from "@/lib/pinata";
 import { useCurrentAccount } from "@mysten/dapp-kit";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 // I have to define IconifyIcon for typescript since it's not a standard element
@@ -583,6 +589,13 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
   return (
      <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl w-full p-0 bg-transparent border-none shadow-none !rounded-[2rem] ">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Character Details: {user.nftName}</DialogTitle>
+            <DialogDescription>
+              Detailed statistics and traits for {user.nftName}, including MMR,
+              core skills, and visual attributes.
+            </DialogDescription>
+          </DialogHeader>
           <div className="w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row">
            {/* Left Side */}
             <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r border-slate-100">
