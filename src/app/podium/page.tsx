@@ -608,9 +608,9 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
                   </div>
 
                   {/* Image (Middle) */}
-                  <div className="relative w-48 h-48 md:w-56 md:h-56 my-4 z-10">
-                      <Image src={user.avatarImage} alt={user.nftName} fill className="object-contain animate-float mix-blend-darken" />
-                  </div>
+                  <div className="relative w-48 h-48 md:w-56 md:h-56 my-4">
+                    <Image src={user.avatarImage} alt={user.nftName} fill className="object-contain animate-float mix-blend-darken" />
+                </div>
 
                   {/* Name (Bottom) */}
                   <div className="slide-up-delay-2 text-center z-20">
