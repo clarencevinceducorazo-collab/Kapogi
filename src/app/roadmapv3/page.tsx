@@ -33,7 +33,8 @@ export default function RoadmapV3Page() {
     "/images/Roadmaps/static/phase2.png",
     "/images/Roadmaps/static/phase3.png",
     "/images/Roadmaps/static/phase4.png",
-    "/images/Roadmaps/static/phase5.webp",
+    "/images/Roadmaps/static/expansionKapogian.png",
+    "/images/Roadmaps/static/future.png",
   ];
 
   useEffect(() => {
@@ -715,7 +716,7 @@ export default function RoadmapV3Page() {
           <section
             className="slide-section w-[90vw] md:w-[600px] h-screen flex-shrink-0 flex items-center justify-center px-4 md:px-12"
             data-phase="PHASE 5"
-            data-bg-image="/images/Roadmaps/static/phase5.webp"
+            data-bg-image="/images/Roadmaps/static/expansionKapogian.png"
           >
             <div className="slide-content w-full h-full max-h-[580px] pt-28 md:pt-24">
               <div className="pogi-card p-8 md:p-10 h-full flex flex-col relative group">
@@ -897,7 +898,7 @@ export default function RoadmapV3Page() {
           <section
             className="slide-section w-screen h-screen flex-shrink-0 flex items-center justify-center"
             data-phase="FUTURE"
-            data-bg-image="/images/Roadmaps/static/phase5.webp"
+            data-bg-image="/images/Roadmaps/static/future.png"
           >
             <div className="slide-content text-center pt-20">
               <h2 className="text-6xl font-bold tracking-tight text-white drop-shadow-lg">
