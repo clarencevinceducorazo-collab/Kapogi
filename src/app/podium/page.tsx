@@ -235,7 +235,7 @@ export default function PodiumPage() {
                   width={80}
                   height={80}
                   alt="Rank 2"
-                  className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-white bg-slate-200 object-cover shadow-md mix-blend-darken"
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-white bg-slate-200 object-cover shadow-md"
                 />
                 <div className="absolute -bottom-2 -right-2 bg-slate-200 border-2 border-white text-slate-600 text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full shadow-sm">
                   2
@@ -274,7 +274,7 @@ export default function PodiumPage() {
                   width={112}
                   height={112}
                   alt="Rank 1"
-                  className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-white bg-yellow-100 object-cover shadow-lg ring-4 ring-yellow-200/50 mix-blend-darken"
+                  className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-white bg-yellow-100 object-cover shadow-lg ring-4 ring-yellow-200/50"
                 />
                 <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-yellow-400 border-2 border-white text-white text-sm font-bold px-3 py-0.5 rounded-full shadow-sm">
                   #1
@@ -309,7 +309,7 @@ export default function PodiumPage() {
                   width={80}
                   height={80}
                   alt="Rank 3"
-                  className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-white bg-orange-100 object-cover shadow-md mix-blend-darken"
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-white bg-orange-100 object-cover shadow-md"
                 />
                 <div className="absolute -bottom-2 -right-2 bg-orange-200 border-2 border-white text-orange-700 text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full shadow-sm">
                   3
@@ -354,7 +354,7 @@ export default function PodiumPage() {
             width={48}
             height={48}
             alt="Avatar"
-            className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-100 border-2 border-white shadow-sm object-cover mix-blend-darken"
+            className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-100 border-2 border-white shadow-sm object-cover"
           />
         </div>
         <div className="flex-1 min-w-0">
@@ -596,20 +596,39 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
           <div className="w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row">
            {/* Left Side */}
             <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r border-slate-100 flex flex-col items-center justify-center p-4">
-              <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-slate-100 text-slate-500 text-xs font-medium z-20">
-                          Global Rank #{user.rank}
-                      </div>
                   {/* Rank (Top) */}
                   <div className="slide-up-delay-1 text-center z-20">
-                      <span className={cn("inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider", rankInfo.style)}>
+                      <span className="text-xs text-slate-500 font-medium">Global Rank #{user.rank}</span>
+                      <h2 className={cn("text-lg font-semibold uppercase tracking-wider", rankInfo.style)}>
                           <iconify-icon icon={rankInfo.icon}></iconify-icon>
                           {user.attributes?.rank || 'Spirit Seed'}
-                      </span>
+                      </h2>
                   </div>
 
-                  {/* Image (Middle) */}
-                  <div className="relative w-48 h-48 md:w-56 md:h-56 my-4">
-                    <Image src={user.avatarImage} alt={user.nftName} fill className="object-contain animate-float mix-blend-darken" />
+                {/* Main Stage Area */}
+                <div className="relative w-full flex-1 flex flex-col items-center justify-center">
+                    {/* Character Image */}
+                    <div className="relative z-20 w-48 h-48 md:w-56 md:h-56 -mb-16">
+                        <Image
+                            src={user.avatarImage}
+                            alt={user.nftName}
+                            fill
+                            className="object-contain animate-float"
+                            style={{ filter: "drop-shadow(0 20px 15px rgba(0,0,0,0.2))" }}
+                        />
+                    </div>
+                    {/* Podium Base */}
+                    <div className="relative w-72 h-32 z-10">
+                        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-64 h-8 bg-emerald-900/20 blur-xl rounded-[100%]"></div>
+                        <div className="absolute top-1/2 left-[2%] w-[96%] h-full bg-gradient-to-b from-emerald-600 to-emerald-800 rounded-b-[100%] border-b border-emerald-900/30 shadow-2xl z-0"></div>
+                        <div className="absolute top-0 w-full h-full bg-gradient-to-b from-emerald-400 to-emerald-500 rounded-[100%] border-[4px] border-emerald-300/50 shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] z-10 flex items-center justify-center overflow-hidden">
+                            <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[90%] h-[40%] bg-emerald-300/40 rounded-[100%] blur-[2px]"></div>
+                            <div className="mt-4 text-emerald-900 font-display font-bold text-7xl opacity-20 select-none mix-blend-overlay">
+                                {user.rank}
+                            </div>
+                        </div>
+                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-[110%] h-[110%] border-2 border-emerald-300/30 rounded-[100%] animate-pulse z-20"></div>
+                    </div>
                 </div>
 
                   {/* Name (Bottom) */}
@@ -622,26 +641,6 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
                           <span>Lineage: <strong className="text-orange-500 drop-shadow-sm font-semibold">{user.lineage}</strong></span>
                       </div>
                   </div>
-
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-72 h-32 z-0">
-                  {/* Drop Shadow */}
-                  <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-64 h-8 bg-emerald-900/20 blur-xl rounded-[100%]"></div>
-                  
-                  {/* Base Structure (Cylinder Side) */}
-                  <div className="absolute top-1/2 left-[2%] w-[96%] h-full bg-gradient-to-b from-emerald-600 to-emerald-800 rounded-b-[100%] border-b border-emerald-900/30 shadow-2xl z-0"></div>
-                  
-                  {/* Top Platform (Surface) */}
-                  <div className="absolute top-0 w-full h-full bg-gradient-to-b from-emerald-400 to-emerald-500 rounded-[100%] border-[4px] border-emerald-300/50 shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] z-10 flex items-center justify-center overflow-hidden">
-                      {/* Reflection Highlight */}
-                      <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[90%] h-[40%] bg-emerald-300/40 rounded-[100%] blur-[2px]"></div>
-                      {/* Rank Number embedded */}
-                      <div className="mt-4 text-emerald-900 font-display font-bold text-7xl opacity-20 select-none mix-blend-overlay">{user.rank}</div>
-                  </div>
-
-                  {/* Magical Glow Ring */}
-                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-[110%] h-[110%] border-2 border-emerald-300/30 rounded-[100%] animate-pulse z-20"></div>
-              </div>
-
             </div>
 
             {/* Right Side */}
