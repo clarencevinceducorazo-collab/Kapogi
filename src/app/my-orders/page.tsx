@@ -5,23 +5,24 @@ import Image from 'next/image';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { suiClient } from '@/lib/sui';
 import { getIPFSGatewayUrl } from '@/lib/pinata';
-import { CONTRACT_ADDRESSES, MODULES } from '@/lib/constants';
-import { 
-  LoaderCircle, 
-  ShieldAlert, 
-  Package, 
-  Truck, 
-  CheckCircle, 
-  Wallet, 
+import { CONTRACT_ADDRESSES, MODULES, ORDER_STATUS } from '@/lib/constants';
+import {
+  LoaderCircle,
+  ShieldAlert,
+  Package,
+  Truck,
+  CheckCircle,
+  Wallet,
   ExternalLink,
   Calendar,
   Hash,
-  ShoppingBag
+  ShoppingBag,
+  ChevronRight,
+  MapPin,
+  Clock,
+  X,
 } from 'lucide-react';
-import { ORDER_STATUS } from '@/lib/constants';
 import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/kapogian/page-header';
 import { PageFooter } from '@/components/kapogian/page-footer';
 
@@ -39,6 +40,13 @@ interface Order {
     name: string;
     imageUrl: string;
   };
+}
+
+interface StatusInfo {
+  text: string;
+  icon: React.ReactNode;
+  bg: string;
+  textColor: string;
 }
 
 export default function MyOrdersPage() {
@@ -61,9 +69,7 @@ export default function MyOrdersPage() {
     setLoading(true);
     setError('');
     try {
-      console.log('🔍 Fetching orders for:', account.address);
-
-      // Fetch ALL ReceiptCreated events
+      // Fetch ALL ReceiptCreated events with pagination
       let allReceiptIds: string[] = [];
       let allBuyerAddresses: string[] = [];
       let hasNextPage = true;
@@ -71,8 +77,8 @@ export default function MyOrdersPage() {
 
       while (hasNextPage) {
         const page: any = await suiClient.queryEvents({
-          query: { 
-            MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ORDER_RECEIPT}::ReceiptCreated` 
+          query: {
+            MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ORDER_RECEIPT}::ReceiptCreated`,
           },
           cursor: cursor,
           order: 'ascending',
@@ -82,7 +88,7 @@ export default function MyOrdersPage() {
           allReceiptIds.push(event.parsedJson?.receipt_id);
           allBuyerAddresses.push(event.parsedJson?.buyer);
         });
-        
+
         if (page.hasNextPage && page.nextCursor) {
           cursor = page.nextCursor;
         } else {
@@ -90,12 +96,10 @@ export default function MyOrdersPage() {
         }
       }
 
-      // Filter receipts by current user's address
-      const userReceiptIds = allReceiptIds.filter((_, idx) => 
-        allBuyerAddresses[idx] === account.address
+      // Filter to current user's receipts only
+      const userReceiptIds = allReceiptIds.filter(
+        (_, idx) => allBuyerAddresses[idx] === account.address
       );
-
-      console.log(`✨ Found ${userReceiptIds.length} receipts for this user`);
 
       if (userReceiptIds.length === 0) {
         setOrders([]);
@@ -103,19 +107,19 @@ export default function MyOrdersPage() {
         return;
       }
 
-      // Fetch full receipt objects in chunks
+      // Fetch receipt objects in chunks of 50
       const receipts = [];
       const chunkSize = 50;
       for (let i = 0; i < userReceiptIds.length; i += chunkSize) {
         const chunk = userReceiptIds.slice(i, i + chunkSize);
         const chunkReceipts = await suiClient.multiGetObjects({
           ids: chunk,
-          options: { showContent: true }
+          options: { showContent: true },
         });
         receipts.push(...chunkReceipts);
       }
 
-      const validReceipts = receipts.filter(r => r.data);
+      const validReceipts = receipts.filter((r) => r.data);
 
       const parsedReceipts: Omit<Order, 'character'>[] = validReceipts
         .map((obj: any) => ({
@@ -131,8 +135,8 @@ export default function MyOrdersPage() {
         }))
         .sort((a, b) => b.createdAt - a.createdAt);
 
-      // Fetch NFT data
-      const nftIds = parsedReceipts.map(r => r.nftId);
+      // Fetch NFT display data
+      const nftIds = parsedReceipts.map((r) => r.nftId);
       const nftObjects = await suiClient.multiGetObjects({
         ids: nftIds,
         options: { showDisplay: true },
@@ -140,8 +144,8 @@ export default function MyOrdersPage() {
 
       const nftsMap = new Map(
         nftObjects
-          .filter(obj => obj.data)
-          .map(obj => [
+          .filter((obj) => obj.data)
+          .map((obj) => [
             obj.data?.objectId,
             {
               imageUrl: getIPFSGatewayUrl((obj.data?.display?.data as any)?.image_url),
@@ -150,7 +154,7 @@ export default function MyOrdersPage() {
           ])
       );
 
-      const combinedOrders = parsedReceipts.map(receipt => ({
+      const combinedOrders = parsedReceipts.map((receipt) => ({
         ...receipt,
         character: nftsMap.get(receipt.nftId),
       }));
@@ -163,15 +167,30 @@ export default function MyOrdersPage() {
       setLoading(false);
     }
   };
-  
-  const getStatusInfo = (status: number) => {
+
+  const getStatusInfo = (status: number): StatusInfo => {
     switch (status) {
       case ORDER_STATUS.SHIPPED:
-        return { text: 'In Transit', icon: <Truck className="w-4 h-4" />, color: 'bg-accent text-white' };
+        return {
+          text: 'In Transit',
+          icon: <Truck className="w-4 h-4" />,
+          bg: 'bg-blue-400',
+          textColor: 'text-white',
+        };
       case ORDER_STATUS.DELIVERED:
-        return { text: 'Delivered', icon: <CheckCircle className="w-4 h-4" />, color: 'bg-green-500 text-white' };
+        return {
+          text: 'Delivered',
+          icon: <CheckCircle className="w-4 h-4" />,
+          bg: 'bg-green-500',
+          textColor: 'text-white',
+        };
       default:
-        return { text: 'Processing', icon: <Package className="w-4 h-4" />, color: 'bg-yellow-400 text-black' };
+        return {
+          text: 'Processing',
+          icon: <Package className="w-4 h-4" />,
+          bg: 'bg-yellow-400',
+          textColor: 'text-black',
+        };
     }
   };
 
@@ -182,224 +201,407 @@ export default function MyOrdersPage() {
     if (c.includes('LBC')) return `https://www.lbcexpress.com/track/?tracking_no=${trackingNumber}`;
     if (c.includes('J&T')) return `https://jtexpress.ph/tracking/${trackingNumber}`;
     return '';
-  }
+  };
 
   return (
-    <div className="min-h-screen flex flex-col font-body antialiased selection:bg-black selection:text-white relative">
+    <div className="min-h-screen flex flex-col font-sans antialiased selection:bg-black selection:text-white relative">
+      {/* Background image */}
       <div className="fixed inset-0 -z-10">
         <Image src="/images/kapogian_background.png" alt="bg" fill className="object-cover" priority />
       </div>
 
       <PageHeader />
-      
-      <main className="flex-grow">
-        <div className="max-w-5xl mx-auto px-6 pt-32 pb-20 relative z-10">
-          
-          <header className="mb-12">
-            <h1 className="font-headline text-6xl md:text-8xl font-bold text-black uppercase" 
-                style={{ textShadow: '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff, 6px 6px 0px #000' }}>
-              Order History
+
+      <main className="flex-grow relative z-10">
+        <div className="max-w-6xl mx-auto px-6 pt-32 pb-20">
+
+          {/* Page Header */}
+          <header className="mb-12 text-center md:text-left">
+            <div className="inline-block bg-black text-white px-4 py-1 mb-4 rounded-lg font-black text-xs uppercase tracking-widest">
+              Inventory & Logistics
+            </div>
+            <h1
+              className="text-6xl md:text-8xl font-black uppercase leading-[0.9] whitespace-nowrap"
+              style={{ textShadow: '6px 6px 0px #000' }}
+            >
+              <span className="text-black" style={{ WebkitTextStroke: '2px black' }}>Order </span>
+              <span className="text-white" style={{ WebkitTextStroke: '2px black' }}>History</span>
             </h1>
           </header>
 
+          {/* States */}
           {!account ? (
-            <div className="bg-white border-4 border-black rounded-3xl p-12 shadow-hard text-center max-w-md mx-auto">
-              <Wallet size={48} className="mx-auto mb-6 text-accent" />
-              <h2 className="font-headline text-3xl mb-4 uppercase">Sync Required</h2>
-              <p className="font-bold mb-8">Connect your wallet to track your physical gear.</p>
-              <CustomConnectButton className="!w-full !bg-accent !border-4 !border-black !text-white !font-black !rounded-full !shadow-hard-sm uppercase" />
+            <div className="bg-white border-4 border-black rounded-[3rem] p-16 text-center shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+              <div className="w-24 h-24 bg-gray-100 rounded-full border-4 border-black flex items-center justify-center mx-auto mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                <Wallet size={48} />
+              </div>
+              <h3 className="text-4xl font-black uppercase mb-4 tracking-tighter italic">Sync Required</h3>
+              <p className="font-bold text-gray-500 uppercase max-w-xs mx-auto mb-10 leading-snug">
+                Connect your wallet to track your physical gear.
+              </p>
+              <CustomConnectButton className="!bg-yellow-400 !hover:bg-yellow-300 !text-black !border-4 !border-black !font-black !px-12 !py-5 !rounded-2xl !text-xl !shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] uppercase italic" />
             </div>
+
           ) : loading ? (
-            <div className="h-[40vh] flex flex-col items-center justify-center gap-4 bg-white border-4 border-black rounded-3xl shadow-hard">
-              <LoaderCircle size={48} className="animate-spin text-black" />
-              <p className="font-black uppercase tracking-widest">Scanning Blockchain...</p>
+            <div className="h-[40vh] flex flex-col items-center justify-center gap-6 bg-white border-4 border-black rounded-[2rem] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <LoaderCircle size={64} className="animate-spin text-black" />
+              <p className="font-black uppercase tracking-widest text-xl">Scanning Blockchain...</p>
             </div>
+
           ) : error ? (
-            <div className="bg-red-50 border-4 border-black rounded-3xl p-12 text-center shadow-hard">
-              <ShieldAlert size={48} className="mx-auto text-red-600 mb-4" />
-              <h3 className="font-headline text-2xl uppercase">System Error</h3>
-              <p className="font-bold">{error}</p>
+            <div className="bg-white border-4 border-black rounded-[2rem] p-12 text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <div className="w-24 h-24 bg-red-100 rounded-full border-4 border-black flex items-center justify-center mx-auto mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                <ShieldAlert size={48} className="text-red-600" />
+              </div>
+              <h3 className="text-4xl font-black uppercase mb-4 tracking-tighter italic">System Error</h3>
+              <p className="font-bold text-gray-500 uppercase max-w-xs mx-auto">{error}</p>
             </div>
+
           ) : orders.length === 0 ? (
-            <div className="bg-white border-4 border-black rounded-3xl p-16 text-center shadow-hard">
-              <ShoppingBag size={64} className="mx-auto mb-6 text-gray-300" />
-              <h3 className="font-headline text-4xl uppercase mb-4">No Gear Found</h3>
-              <p className="font-bold mb-10 text-gray-600 uppercase">You haven't claimed any physical items yet.</p>
+            <div className="bg-white border-4 border-black rounded-[3rem] p-16 text-center shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+              <div className="w-24 h-24 bg-gray-100 rounded-full border-4 border-black flex items-center justify-center mx-auto mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                <ShoppingBag size={48} />
+              </div>
+              <h3 className="text-4xl font-black uppercase mb-4 tracking-tighter italic">No Gear Found</h3>
+              <p className="font-bold text-gray-500 uppercase max-w-xs mx-auto mb-10 leading-snug">
+                You haven't claimed any physical items yet.
+              </p>
               <a href="/summoning">
-                <Button className="bg-primary hover:bg-accent text-white border-4 border-black font-black px-12 py-8 rounded-2xl text-xl transition-brutal shadow-hard">
-                  GO TO SUMMONING
-                </Button>
+                <button className="bg-yellow-400 hover:bg-yellow-300 text-black border-4 border-black font-black px-12 py-5 rounded-2xl text-xl transition-all shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-1 active:shadow-none uppercase italic">
+                  Go to Summoning
+                </button>
               </a>
             </div>
+
           ) : (
-            <div className="grid gap-6">
-              {orders.map(order => {
-                const statusInfo = getStatusInfo(order.status);
-                return (
-                  <div 
-                    key={order.objectId} 
-                    onClick={() => setSelectedOrder(order)} 
-                    className="bg-white border-4 border-black rounded-2xl p-4 md:p-6 shadow-hard-sm hover:shadow-hard hover:-translate-y-1 transition-brutal cursor-pointer flex flex-col md:flex-row items-center gap-6 group"
-                  >
-                    <div className="w-24 h-24 bg-gray-50 rounded-xl border-4 border-black flex-shrink-0 overflow-hidden relative shadow-hard-xs group-hover:rotate-2 transition-transform">
-                      {order.character?.imageUrl && (
-                        <Image src={order.character.imageUrl} alt="NFT" fill className="object-cover" />
-                      )}
-                    </div>
+            /* ORDER LIST CONTAINER */
+            <div className="bg-white border-4 border-black rounded-[2.5rem] shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
 
-                    <div className="flex-grow text-center md:text-left">
-                      <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">
-                        <h3 className="font-headline text-2xl uppercase">{order.character?.name || 'Unknown Kapogian'}</h3>
-                        <span className="font-mono text-[10px] bg-gray-100 border border-black px-2 py-0.5 rounded uppercase">
-                          ID: {order.objectId.slice(0, 8)}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap justify-center md:justify-start gap-4 text-xs font-bold uppercase text-gray-500">
-                        <div className="flex items-center gap-1"><Calendar size={14}/> {new Date(order.createdAt).toLocaleDateString()}</div>
-                        <div className="flex items-center gap-1"><Hash size={14}/> {(order.paymentAmount / 1_000_000_000).toFixed(2)} SUI</div>
-                      </div>
-                    </div>
+              {/* List header bar */}
+              <div className="bg-black text-white px-8 py-4 flex justify-between items-center border-b-4 border-black">
+                <span className="font-black uppercase italic tracking-widest text-sm">
+                  Active Manifests ({orders.length})
+                </span>
+                <div className="flex gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500 border-2 border-white" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500 border-2 border-white" />
+                  <div className="w-3 h-3 rounded-full bg-green-500 border-2 border-white" />
+                </div>
+              </div>
 
-                    <div className={`flex items-center gap-3 px-6 py-3 border-4 border-black rounded-xl font-black uppercase tracking-tighter ${statusInfo.color} shadow-hard-xs`}>
-                      {statusInfo.icon}
-                      {statusInfo.text}
-                    </div>
-                  </div>
-                )
-              })}
+              {/* Scrollable list — shows 5 cards, scrolls if more */}
+              <div
+                className="p-6 md:p-8 space-y-6 bg-[#fafafa] overflow-y-auto"
+                style={{ maxHeight: 'calc(5 * 120px + 4 * 24px + 64px)' }}
+              >
+                {orders.map((order) => (
+                  <OrderCard
+                    key={order.objectId}
+                    order={order}
+                    statusInfo={getStatusInfo(order.status)}
+                    onClick={() => setSelectedOrder(order)}
+                  />
+                ))}
+              </div>
+
+              <div className="bg-gray-100 p-4 text-center border-t-4 border-black">
+                <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em]">
+                  End of encrypted log
+                </p>
+              </div>
             </div>
           )}
         </div>
       </main>
 
-      {/* Physical Receipt Dialog */}
-      <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
-      <DialogContent className="max-w-2xl w-[95vw] max-h-[95vh] overflow-y-auto bg-white border-4 border-black rounded-3xl shadow-hard p-0 antialiased selection:bg-black selection:text-white no-scrollbar">          {selectedOrder && (
-            <div className="flex flex-col h-full">
-              {/* Header - Fixed at top */}
-              <div className="bg-black text-white p-6 md:p-8 text-center sticky top-0 z-20">
-                <DialogTitle className="font-headline text-3xl md:text-4xl uppercase tracking-tight">
-                  Order Receipt
-                </DialogTitle>
-                <p className="font-mono text-[10px] md:text-xs opacity-70 mt-2 break-all uppercase">
-                  ID: {selectedOrder.objectId}
-                </p>
-              </div>
-
-              {/* Body Content */}
-              <div className="p-6 md:p-10 space-y-8">
-                {/* Item Section */}
-                <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
-                  <div className="w-32 h-32 md:w-44 md:h-44 bg-gray-50 border-4 border-black rounded-2xl overflow-hidden shadow-hard-xs shrink-0 transform -rotate-2">
-                    {selectedOrder.character?.imageUrl && (
-                      <Image 
-                        src={selectedOrder.character.imageUrl} 
-                        alt="NFT" 
-                        width={176} 
-                        height={176} 
-                        className="object-cover w-full h-full" 
-                      />
-                    )}
-                  </div>
-                  <div className="flex-grow text-center md:text-left space-y-4">
-                    <div>
-                      <h4 className="font-headline text-3xl md:text-4xl uppercase leading-none mb-2">
-                        {selectedOrder.character?.name}
-                      </h4>
-                      <p className="text-sm font-black text-primary uppercase tracking-widest">
-                        Verified Physical Gear
-                      </p>
-                    </div>
-                    
-                    <div className="flex flex-wrap justify-center md:justify-start gap-2">
-                      {selectedOrder.itemsSelected.split(',').map((item, idx) => (
-                        <span key={idx} className="text-xs md:text-sm font-black bg-yellow-400 border-2 border-black px-3 py-1 rounded-md shadow-hard-xs">
-                          {item.trim()}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Pricing/Date Row */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-100 border-2 border-black p-4 rounded-xl text-center md:text-left">
-                    <p className="text-[10px] font-black uppercase text-gray-500 mb-1">Payment</p>
-                    <p className="font-bold text-lg">{(selectedOrder.paymentAmount / 1_000_000_000).toFixed(2)} SUI</p>
-                  </div>
-                  <div className="bg-gray-100 border-2 border-black p-4 rounded-xl text-center md:text-left">
-                    <p className="text-[10px] font-black uppercase text-gray-500 mb-1">Mint Date</p>
-                    <p className="font-bold text-lg">{new Date(selectedOrder.createdAt).toLocaleDateString()}</p>
-                  </div>
-                </div>
-
-                {/* Shipping Section */}
-                <div className="border-t-4 border-black border-dashed pt-8">
-                  <div className="flex items-center gap-2 mb-6 justify-center md:justify-start">
-                    <Truck size={24} />
-                    <h5 className="font-headline text-2xl uppercase">Shipping Logistics</h5>
-                  </div>
-                  
-                  <div className="space-y-4">
-                      {selectedOrder.status >= ORDER_STATUS.SHIPPED ? (
-                        <div className="bg-white border-4 border-black rounded-2xl p-6 space-y-4 shadow-hard-sm">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                            <div className="space-y-1">
-                              <span className="font-black uppercase text-xs text-gray-400">Carrier Service : </span>
-                              <p className="font-bold border-b-2 border-black inline-block">{selectedOrder.carrier}</p>
-                            </div>
-                            <div className="space-y-1">
-                              <span className="font-black uppercase text-xs text-gray-400">Tracking Number : </span>
-                              <p className="font-mono font-bold break-all">{selectedOrder.trackingNumber}</p>
-                            </div>
-                            <div className="space-y-1">
-                              <span className="font-black uppercase text-xs text-gray-400">Estimated Delivery : </span>
-                              <p className="font-bold">{new Date(selectedOrder.estimatedDelivery).toLocaleDateString()}</p>
-                            </div>
-                            <div className="space-y-1">
-                              <span className="font-black uppercase text-xs text-gray-400">Status : </span>
-                              <span className={`px-2 py-0.5 border-2 border-black rounded-md font-black uppercase text-[10px] ${getStatusInfo(selectedOrder.status).color}`}>
-                                {getStatusInfo(selectedOrder.status).text}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          {getTrackingUrl(selectedOrder.carrier, selectedOrder.trackingNumber) && (
-                            <a href={getTrackingUrl(selectedOrder.carrier, selectedOrder.trackingNumber)} target="_blank" rel="noopener noreferrer" className="block pt-2">
-                              <Button className="w-full h-14 bg-accent hover:bg-blue-600 text-white border-4 border-black shadow-hard-sm font-black uppercase flex items-center justify-center gap-3 group transition-brutal">
-                                Track Shipment <ExternalLink size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                              </Button>
-                            </a>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="bg-yellow-400/20 border-4 border-black border-dashed rounded-2xl p-8 text-center">
-                          <Package size={40} className="mx-auto mb-3 text-black opacity-50" />
-                          <p className="text-sm md:text-md font-black uppercase text-black leading-snug">
-                            Your gear is in production! 🧵<br/> 
-                            <span className="text-xs opacity-60">We'll notify you when your tracking number is ready.</span>
-                          </p>
-                        </div>
-                      )}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Footer/Close - Fixed at bottom */}
-              <div className="bg-gray-100 p-6 border-t-4 border-black text-center sticky bottom-0 z-20">
-                <button 
-                  onClick={() => setSelectedOrder(null)} 
-                  className="font-black uppercase text-sm hover:text-primary transition-colors underline decoration-2 underline-offset-4"
-                >
-                  Return to Dashboard
-                </button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Order Detail Modal */}
+      {selectedOrder && (
+        <OrderModal
+          order={selectedOrder}
+          statusInfo={getStatusInfo(selectedOrder.status)}
+          trackingUrl={getTrackingUrl(selectedOrder.carrier, selectedOrder.trackingNumber)}
+          onClose={() => setSelectedOrder(null)}
+        />
+      )}
 
       <PageFooter />
+
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+    </div>
+  );
+}
+
+/* ─── Order Card ─────────────────────────────────────────────────────────── */
+function OrderCard({
+  order,
+  statusInfo,
+  onClick,
+}: {
+  order: Order;
+  statusInfo: StatusInfo;
+  onClick: () => void;
+}) {
+  return (
+    <div
+      onClick={onClick}
+      className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all cursor-pointer group flex flex-col md:flex-row items-center gap-6"
+    >
+      {/* Avatar + status badge */}
+      <div className="relative flex-shrink-0">
+        <div className="w-24 h-24 bg-gray-100 rounded-2xl border-4 border-black overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:rotate-3 transition-transform relative">
+          {order.character?.imageUrl && (
+            <Image
+              src={order.character.imageUrl}
+              alt="NFT"
+              fill
+              className="object-cover"
+            />
+          )}
+        </div>
+        <div
+          className={`absolute -bottom-2 -right-2 p-2 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${statusInfo.bg}`}
+        >
+          {statusInfo.icon}
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="flex-grow text-center md:text-left">
+        <div className="flex flex-col md:flex-row md:items-center gap-3 mb-3">
+          <h3 className="text-3xl font-black uppercase tracking-tight leading-none">
+            {order.character?.name || 'Unknown Kapogian'}
+          </h3>
+          <span className="font-mono text-[10px] bg-black text-white px-3 py-1 rounded-full uppercase self-center md:self-auto">
+            ID: {order.objectId.slice(0, 8)}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap justify-center md:justify-start gap-3 text-xs font-bold uppercase text-gray-500">
+          <div className="flex items-center gap-2 border-2 border-transparent group-hover:border-black group-hover:bg-white group-hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] px-3 py-1.5 rounded-xl cursor-default transition-all">
+            <Calendar size={12} className="text-black" />
+            {new Date(order.createdAt).toLocaleDateString()}
+          </div>
+          <div className="flex items-center gap-2 border-2 border-transparent group-hover:border-black group-hover:bg-white group-hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] px-3 py-1.5 rounded-xl cursor-default transition-all">
+            <Hash size={12} className="text-black" />
+            {(order.paymentAmount / 1_000_000_000).toFixed(2)} SUI
+          </div>
+        </div>
+      </div>
+
+      {/* Status button */}
+      <div className="w-full md:w-auto flex-shrink-0">
+        <button
+          className={`w-full flex items-center justify-between gap-4 px-6 py-4 border-4 border-black rounded-xl font-black uppercase transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-1 ${statusInfo.bg} ${statusInfo.textColor}`}
+        >
+          <span className="text-xs">{statusInfo.text}</span>
+          <ChevronRight size={18} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Order Modal ────────────────────────────────────────────────────────── */
+function OrderModal({
+  order,
+  statusInfo,
+  trackingUrl,
+  onClose,
+}: {
+  order: Order;
+  statusInfo: StatusInfo;
+  trackingUrl: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="relative w-full max-w-2xl bg-white border-4 border-black rounded-[2.5rem] shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
+
+        {/* Header */}
+        <div className="bg-black text-white p-8 flex justify-between items-start border-b-4 border-black">
+          <div>
+            <h2 className="text-4xl font-black uppercase italic tracking-tighter">Order Receipt</h2>
+            <p className="font-mono text-xs opacity-60 mt-2 uppercase break-all">
+              TX: {order.objectId}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="bg-white text-black p-2 rounded-xl border-2 border-white hover:bg-red-500 hover:text-white transition-colors"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto no-scrollbar">
+
+          {/* NFT + items */}
+          <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
+            <div className="w-40 h-40 bg-gray-100 rounded-3xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] shrink-0 overflow-hidden transform -rotate-2 relative">
+              {order.character?.imageUrl && (
+                <Image
+                  src={order.character.imageUrl}
+                  alt="NFT"
+                  fill
+                  className="object-cover"
+                />
+              )}
+            </div>
+            <div className="flex-grow space-y-4 text-center md:text-left">
+              <div>
+                <div
+                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border-2 border-black mb-2 text-xs font-black uppercase ${statusInfo.bg} ${statusInfo.textColor}`}
+                >
+                  {statusInfo.icon}
+                  {statusInfo.text}
+                </div>
+                <h3 className="text-5xl font-black uppercase italic tracking-tighter leading-none">
+                  {order.character?.name}
+                </h3>
+              </div>
+              <div className="flex flex-wrap justify-center md:justify-start gap-2">
+                {order.itemsSelected.split(',').map((item, i) => (
+                  <span
+                    key={i}
+                    className="px-3 py-1 bg-yellow-100 border-2 border-black rounded-lg text-[10px] font-black uppercase tracking-tight"
+                  >
+                    {item.trim()}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Payment / Date */}
+          <div className="grid grid-cols-2 gap-4">
+            <div
+              className="bg-gray-100 border-2 border-black p-4 rounded-xl transition-all hover:-translate-y-1 cursor-default"
+              style={{ boxShadow: '3px 3px 0px 0px rgba(0,0,0,1)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '6px 6px 0px 0px rgba(0,0,0,1)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '3px 3px 0px 0px rgba(0,0,0,1)'; }}
+            >
+              <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Payment</p>
+              <p className="font-bold text-lg">
+                {(order.paymentAmount / 1_000_000_000).toFixed(2)} SUI
+              </p>
+            </div>
+            <div
+              className="bg-gray-100 border-2 border-black p-4 rounded-xl transition-all hover:-translate-y-1 cursor-default"
+              style={{ boxShadow: '3px 3px 0px 0px rgba(0,0,0,1)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '6px 6px 0px 0px rgba(0,0,0,1)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '3px 3px 0px 0px rgba(0,0,0,1)'; }}
+            >
+              <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Mint Date</p>
+              <p className="font-bold text-lg">
+                {new Date(order.createdAt).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+
+          {/* Logistics cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <LogisticsCard
+              icon={<MapPin size={20} />}
+              label="Shipping To"
+              value="Verified Vault Address"
+            />
+            <LogisticsCard
+              icon={<Clock size={20} />}
+              label="Est. Arrival"
+              value={
+                order.estimatedDelivery
+                  ? new Date(order.estimatedDelivery).toLocaleDateString()
+                  : 'TBD'
+              }
+            />
+          </div>
+
+          {/* Tracking */}
+          <div className="bg-gray-50 border-4 border-black border-dashed rounded-3xl p-6">
+            <h4 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
+              <Truck size={20} /> Live Tracking
+            </h4>
+
+            {order.status >= ORDER_STATUS.SHIPPED ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-gray-400">Carrier</p>
+                    <p className="font-bold">{order.carrier}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-gray-400">Number</p>
+                    <p className="font-mono text-sm font-bold break-all">{order.trackingNumber}</p>
+                  </div>
+                </div>
+
+                {trackingUrl && (
+                  <a href={trackingUrl} target="_blank" rel="noopener noreferrer">
+                    <button className="w-full py-4 bg-blue-500 text-white border-4 border-black rounded-2xl font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:-translate-y-1 active:translate-x-0 active:translate-y-0 active:shadow-none transition-all flex items-center justify-center gap-2 text-sm mt-2">
+                      External Tracking <ExternalLink size={18} />
+                    </button>
+                  </a>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-6 italic text-gray-500 font-bold uppercase text-[10px]">
+                Crafting your gear... Tracking ID will appear once shipped. 🧵
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-6 bg-gray-100 border-t-4 border-black">
+          <button
+            onClick={onClose}
+            className="w-full py-4 bg-black text-white rounded-2xl font-black uppercase hover:bg-gray-800 transition-colors"
+          >
+            Close Receipt
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Logistics Card ─────────────────────────────────────────────────────── */
+function LogisticsCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div
+      className="bg-white border-2 border-black p-4 rounded-2xl flex items-center gap-4 transition-all hover:-translate-y-1 cursor-default"
+      style={{ boxShadow: '3px 3px 0px 0px rgba(0,0,0,1)' }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLElement).style.boxShadow = '6px 6px 0px 0px rgba(0,0,0,1)';
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLElement).style.boxShadow = '3px 3px 0px 0px rgba(0,0,0,1)';
+      }}
+    >
+      <div className="p-2 bg-gray-100 rounded-lg border-2 border-black">{icon}</div>
+      <div>
+        <p className="text-[10px] font-black uppercase text-gray-400">{label}</p>
+        <p className="font-bold uppercase tracking-tight text-xs">{value}</p>
+      </div>
     </div>
   );
 }
