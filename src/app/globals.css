@@ -83,6 +83,12 @@
 @layer base {
   * {
     @apply border-border;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  *::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
   }
 
   body {
@@ -481,9 +487,6 @@
     animation: aura-breathe 3s infinite ease-in-out;
   }
 
-  .hide-scrollbar::-webkit-scrollbar { display: none; }
-  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
   .animate-float { animation: float 6s ease-in-out infinite; }
   .animate-breathe { animation: breathe 4s ease-in-out infinite; }
   .animate-blink { animation: blink 4s infinite; }
@@ -654,3 +657,6 @@
     animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
+
+
+    
