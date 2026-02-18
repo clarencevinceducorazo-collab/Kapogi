@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
 import Script from "next/script";
 import { PageHeader } from "@/components/kapogian/page-header";
@@ -9,11 +9,8 @@ import { suiClient } from "@/lib/sui";
 import { CONTRACT_ADDRESSES } from "@/lib/constants";
 import { getIPFSGatewayUrl } from "@/lib/pinata";
 import { useCurrentAccount } from "@mysten/dapp-kit";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 // I have to define IconifyIcon for typescript since it's not a standard element
 declare global {
@@ -41,6 +38,24 @@ interface PodiumUser {
   mmrScore: number;
   nftName: string;
   lineage: string;
+  attributes: {
+    cuteness?: number;
+    confidence?: number;
+    tiliFactor?: number;
+    luzon?: number;
+    visayas?: number;
+    mindanao?: number;
+    clothingStyle?: string;
+    hairColor?: string;
+    hairAmount?: number;
+    facialHair?: number;
+    eyewear?: number;
+    skinTone?: string;
+    heldItem?: string;
+    posture?: string;
+    bodyFat?: number;
+    rank?: string;
+  };
 }
 
 interface MmrEntry extends PodiumUser {}
@@ -49,15 +64,13 @@ interface SummonEntry extends PodiumUser {
   totalNftSummon: number;
 }
 
-
 export default function PodiumPage() {
   const [mode, setMode] = useState<"mmr" | "summon">("mmr");
   const [data, setData] = useState<(MmrEntry | SummonEntry)[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const account = useCurrentAccount();
-  const [selectedUser, setSelectedUser] = useState<MmrEntry | SummonEntry | null>(null);
+  const [selectedUser, setSelectedUser] = useState<PodiumUser | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -70,14 +83,13 @@ export default function PodiumPage() {
         },
       });
 
-      // Step 1: Create a map of nft_id -> owner_address
       const nftOwnerMap = new Map<string, string>();
-      allMintEvents.data.forEach(event => {
-          const nftId = (event.parsedJson as any)?.nft_id;
-          const owner = (event.parsedJson as any)?.owner;
-          if (nftId && owner) {
-              nftOwnerMap.set(nftId, owner);
-          }
+      allMintEvents.data.forEach((event) => {
+        const nftId = (event.parsedJson as any)?.nft_id;
+        const owner = (event.parsedJson as any)?.owner;
+        if (nftId && owner) {
+          nftOwnerMap.set(nftId, owner);
+        }
       });
 
       const nftIds = Array.from(nftOwnerMap.keys());
@@ -103,25 +115,17 @@ export default function PodiumPage() {
         (obj) => obj.data?.content?.dataType === "moveObject",
       );
 
-      const ownerStats: Map<
-        string,
-        {
-          walletAddress: string;
-          totalNftSummon: number;
-          mmrScore: number;
-          avatarImage: string;
-          nftName: string;
-          lineage: string;
-        }
-      > = new Map();
+      const ownerStats: Map<string, Omit<PodiumUser, "rank"> & { totalNftSummon: number } > = new Map();
 
       validObjects.forEach((obj: any) => {
         const ownerAddress = nftOwnerMap.get(obj.data.objectId);
         if (!ownerAddress) return;
 
         const currentMmr = Number(obj.data.content.fields.mmr);
-        const attributes = JSON.parse(obj.data.content.fields.attributes || '{}');
-        const lineage = attributes.lineage || 'Unknown';
+        const attributes = JSON.parse(
+          obj.data.content.fields.attributes || "{}",
+        );
+        const lineage = attributes.lineage || "Unknown";
 
         if (!ownerStats.has(ownerAddress)) {
           ownerStats.set(ownerAddress, {
@@ -131,6 +135,7 @@ export default function PodiumPage() {
             avatarImage: "",
             nftName: "",
             lineage: "Unknown",
+            attributes: {},
           });
         }
 
@@ -144,6 +149,7 @@ export default function PodiumPage() {
           );
           stats.nftName = obj.data.content.fields.name;
           stats.lineage = lineage;
+          stats.attributes = attributes;
         }
       });
 
@@ -201,11 +207,7 @@ export default function PodiumPage() {
     });
   };
 
-  const Podium = ({
-    users,
-  }: {
-    users: (MmrEntry | SummonEntry | undefined)[];
-  }) => {
+  const Podium = ({ users }: { users: (PodiumUser | undefined)[] }) => {
     const podiumOrder = users.length >= 3 ? [users[1], users[0], users[2]] : users;
     if (users.length === 2) {
       podiumOrder.splice(2, 0, undefined);
@@ -214,117 +216,121 @@ export default function PodiumPage() {
     }
 
     return (
-    <div className="flex flex-row justify-center items-end gap-2 md:gap-6 mb-12 w-full max-w-2xl mx-auto pt-4">
-      {/* Rank 2 */}
-      <div className="w-1/3 flex flex-col items-center animate-float-2 group cursor-pointer" onClick={() => podiumOrder[0] && setSelectedUser(podiumOrder[0])}>
-        {podiumOrder[0] && (
-          <>
-            <div className="relative mb-3 transition-transform group-hover:scale-110 duration-300">
-              <Image
-                src={(podiumOrder[0] as any).avatarImage || ''}
-                width={80}
-                height={80}
-                alt="Rank 2"
-                className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-white bg-slate-200 object-cover shadow-md"
-              />
-              <div className="absolute -bottom-2 -right-2 bg-slate-200 border-2 border-white text-slate-600 text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full shadow-sm">
-                2
+      <div className="flex flex-row justify-center items-end gap-2 md:gap-6 mb-12 w-full max-w-2xl mx-auto pt-4">
+        {/* Rank 2 */}
+        <div
+          className="w-1/3 flex flex-col items-center animate-float-2 group cursor-pointer"
+          onClick={() => podiumOrder[0] && setSelectedUser(podiumOrder[0])}
+        >
+          {podiumOrder[0] && (
+            <>
+              <div className="relative mb-3 transition-transform group-hover:scale-110 duration-300">
+                <Image
+                  src={podiumOrder[0].avatarImage || ""}
+                  width={80}
+                  height={80}
+                  alt="Rank 2"
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-white bg-slate-200 object-cover shadow-md"
+                />
+                <div className="absolute -bottom-2 -right-2 bg-slate-200 border-2 border-white text-slate-600 text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full shadow-sm">
+                  2
+                </div>
               </div>
-            </div>
-            <div className="w-full h-32 md:h-40 rounded-t-2xl md:rounded-t-3xl podium-silver flex flex-col justify-end items-center p-3 text-center relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-2 bg-white/30"></div>
-              <span className="text-xs md:text-sm text-slate-500 font-bold mb-1 truncate w-full px-2">
-                {mode === 'mmr' 
-                  ? (podiumOrder[0] as MmrEntry).nftName 
-                  : `${(podiumOrder[0] as any).walletAddress.slice(0, 6)}...${(podiumOrder[0] as any).walletAddress.slice(-4)}`}
-              </span>
-              <span className="text-sm md:text-lg font-extrabold text-slate-700">
-                {mode === "mmr"
-                  ? (podiumOrder[0] as MmrEntry)?.mmrScore?.toLocaleString()
-                  : (podiumOrder[0] as SummonEntry)?.totalNftSummon?.toLocaleString()}
-              </span>
-            </div>
-          </>
-        )}
-      </div>
-      {/* Rank 1 */}
-      <div className="w-1/3 flex flex-col items-center z-10 animate-float-1 group cursor-pointer -mx-1" onClick={() => podiumOrder[1] && setSelectedUser(podiumOrder[1])}>
-        {podiumOrder[1] && (
-          <>
-            <div className="relative mb-4 transition-transform group-hover:scale-110 duration-300">
-              <iconify-icon
-                icon="solar:crown-bold"
-                class="absolute -top-8 left-1/2 -translate-x-1/2 text-yellow-400 drop-shadow-sm text-3xl md:text-4xl animate-bounce"
-              ></iconify-icon>
-              <Image
-                src={(podiumOrder[1] as any).avatarImage || ''}
-                width={112}
-                height={112}
-                alt="Rank 1"
-                className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-white bg-yellow-100 object-cover shadow-lg ring-4 ring-yellow-200/50"
-              />
-              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-yellow-400 border-2 border-white text-white text-sm font-bold px-3 py-0.5 rounded-full shadow-sm">
-                #1
+              <div className="w-full h-32 md:h-40 rounded-t-2xl md:rounded-t-3xl podium-silver flex flex-col justify-end items-center p-3 text-center relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-2 bg-white/30"></div>
+                <span className="text-xs md:text-sm text-slate-500 font-bold mb-1 truncate w-full px-2">
+                  {mode === "mmr"
+                    ? podiumOrder[0].nftName
+                    : `${podiumOrder[0].walletAddress.slice(0, 6)}...${podiumOrder[0].walletAddress.slice(-4)}`}
+                </span>
+                <span className="text-sm md:text-lg font-extrabold text-slate-700">
+                  {mode === "mmr"
+                    ? podiumOrder[0].mmrScore?.toLocaleString()
+                    : (podiumOrder[0] as SummonEntry)?.totalNftSummon?.toLocaleString()}
+                </span>
               </div>
-            </div>
-            <div className="w-full h-44 md:h-52 rounded-t-2xl md:rounded-t-3xl podium-gold flex flex-col justify-end items-center p-3 text-center relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-3 bg-white/30"></div>
-              <span className="text-xs md:text-sm text-yellow-800/70 font-bold mb-1 truncate w-full px-2">
-                 {mode === 'mmr' 
-                  ? (podiumOrder[1] as MmrEntry).nftName 
-                  : `${(podiumOrder[1] as any).walletAddress.slice(0, 6)}...${(podiumOrder[1] as any).walletAddress.slice(-4)}`}
-              </span>
-              <span className="text-lg md:text-2xl font-extrabold text-yellow-900">
-                {mode === "mmr"
-                  ? (podiumOrder[1] as MmrEntry)?.mmrScore?.toLocaleString()
-                  : (podiumOrder[1] as SummonEntry)?.totalNftSummon?.toLocaleString()}
-              </span>
-            </div>
-          </>
-        )}
-      </div>
-      {/* Rank 3 */}
-      <div className="w-1/3 flex flex-col items-center animate-float-3 group cursor-pointer" onClick={() => podiumOrder[2] && setSelectedUser(podiumOrder[2])}>
-        {podiumOrder[2] && (
-          <>
-            <div className="relative mb-3 transition-transform group-hover:scale-110 duration-300">
-              <Image
-                src={(podiumOrder[2] as any).avatarImage || ''}
-                width={80}
-                height={80}
-                alt="Rank 3"
-                className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-white bg-orange-100 object-cover shadow-md"
-              />
-              <div className="absolute -bottom-2 -right-2 bg-orange-200 border-2 border-white text-orange-700 text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full shadow-sm">
-                3
+            </>
+          )}
+        </div>
+        {/* Rank 1 */}
+        <div
+          className="w-1/3 flex flex-col items-center z-10 animate-float-1 group cursor-pointer -mx-1"
+          onClick={() => podiumOrder[1] && setSelectedUser(podiumOrder[1])}
+        >
+          {podiumOrder[1] && (
+            <>
+              <div className="relative mb-4 transition-transform group-hover:scale-110 duration-300">
+                <iconify-icon
+                  icon="solar:crown-bold"
+                  class="absolute -top-8 left-1/2 -translate-x-1/2 text-yellow-400 drop-shadow-sm text-3xl md:text-4xl animate-bounce"
+                ></iconify-icon>
+                <Image
+                  src={podiumOrder[1].avatarImage || ""}
+                  width={112}
+                  height={112}
+                  alt="Rank 1"
+                  className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-white bg-yellow-100 object-cover shadow-lg ring-4 ring-yellow-200/50"
+                />
+                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-yellow-400 border-2 border-white text-white text-sm font-bold px-3 py-0.5 rounded-full shadow-sm">
+                  #1
+                </div>
               </div>
-            </div>
-            <div className="w-full h-24 md:h-32 rounded-t-2xl md:rounded-t-3xl podium-bronze flex flex-col justify-end items-center p-3 text-center relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-2 bg-white/30"></div>
-              <span className="text-xs md:text-sm text-orange-800/60 font-bold mb-1 truncate w-full px-2">
-                {mode === 'mmr' 
-                  ? (podiumOrder[2] as MmrEntry).nftName 
-                  : `${(podiumOrder[2] as any).walletAddress.slice(0, 6)}...${(podiumOrder[2] as any).walletAddress.slice(-4)}`}
-              </span>
-              <span className="text-sm md:text-lg font-extrabold text-orange-900">
-                {mode === "mmr"
-                  ? (podiumOrder[2] as MmrEntry)?.mmrScore?.toLocaleString()
-                  : (podiumOrder[2] as SummonEntry)?.totalNftSummon?.toLocaleString()}
-              </span>
-            </div>
-          </>
-        )}
+              <div className="w-full h-44 md:h-52 rounded-t-2xl md:rounded-t-3xl podium-gold flex flex-col justify-end items-center p-3 text-center relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-3 bg-white/30"></div>
+                <span className="text-xs md:text-sm text-yellow-800/70 font-bold mb-1 truncate w-full px-2">
+                  {mode === "mmr"
+                    ? podiumOrder[1].nftName
+                    : `${podiumOrder[1].walletAddress.slice(0, 6)}...${podiumOrder[1].walletAddress.slice(-4)}`}
+                </span>
+                <span className="text-lg md:text-2xl font-extrabold text-yellow-900">
+                  {mode === "mmr"
+                    ? podiumOrder[1].mmrScore?.toLocaleString()
+                    : (podiumOrder[1] as SummonEntry)?.totalNftSummon?.toLocaleString()}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+        {/* Rank 3 */}
+        <div
+          className="w-1/3 flex flex-col items-center animate-float-3 group cursor-pointer"
+          onClick={() => podiumOrder[2] && setSelectedUser(podiumOrder[2])}
+        >
+          {podiumOrder[2] && (
+            <>
+              <div className="relative mb-3 transition-transform group-hover:scale-110 duration-300">
+                <Image
+                  src={podiumOrder[2].avatarImage || ""}
+                  width={80}
+                  height={80}
+                  alt="Rank 3"
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-white bg-orange-100 object-cover shadow-md"
+                />
+                <div className="absolute -bottom-2 -right-2 bg-orange-200 border-2 border-white text-orange-700 text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full shadow-sm">
+                  3
+                </div>
+              </div>
+              <div className="w-full h-24 md:h-32 rounded-t-2xl md:rounded-t-3xl podium-bronze flex flex-col justify-end items-center p-3 text-center relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-2 bg-white/30"></div>
+                <span className="text-xs md:text-sm text-orange-800/60 font-bold mb-1 truncate w-full px-2">
+                  {mode === "mmr"
+                    ? podiumOrder[2].nftName
+                    : `${podiumOrder[2].walletAddress.slice(0, 6)}...${podiumOrder[2].walletAddress.slice(-4)}`}
+                </span>
+                <span className="text-sm md:text-lg font-extrabold text-orange-900">
+                  {mode === "mmr"
+                    ? podiumOrder[2].mmrScore?.toLocaleString()
+                    : (podiumOrder[2] as SummonEntry)?.totalNftSummon?.toLocaleString()}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>
-  )};
+    );
+  };
 
-  const ListItem = ({
-    user,
-    delayIndex,
-  }: {
-    user: MmrEntry | SummonEntry;
-    delayIndex: number;
-  }) => {
+  const ListItem = ({ user, delayIndex }: { user: PodiumUser; delayIndex: number }) => {
     const rank = user.rank;
     return (
       <div
@@ -339,7 +345,7 @@ export default function PodiumPage() {
         </div>
         <div className="relative">
           <Image
-            src={user.avatarImage || ''}
+            src={user.avatarImage || ""}
             width={48}
             height={48}
             alt="Avatar"
@@ -348,17 +354,16 @@ export default function PodiumPage() {
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-sm md:text-base font-bold text-slate-700 truncate">
-            {mode === 'mmr' 
-              ? (user as MmrEntry).nftName 
-              : `${(user as SummonEntry).walletAddress.slice(0, 6)}...${(user as SummonEntry).walletAddress.slice(-4)}`}
+            {mode === "mmr"
+              ? user.nftName
+              : `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}`}
           </div>
-          <div className="text-xs font-semibold text-slate-400 flex items-center gap-2"></div>
         </div>
         <div className="text-right px-2">
           <div className="text-sm md:text-lg font-extrabold text-slate-800">
             {mode === "mmr"
-              ? (user as MmrEntry)?.mmrScore?.toLocaleString()
-              : (user as SummonEntry)?.totalNftSummon?.toLocaleString()}
+              ? user.mmrScore?.toLocaleString()
+              : (user as SummonEntry).totalNftSummon?.toLocaleString()}
           </div>
           <div className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wide bg-slate-100 px-2 py-0.5 rounded-full inline-block group-hover:bg-sky-100 group-hover:text-sky-500 transition-colors">
             {mode === "mmr" ? "MMR" : "NFTs"}
@@ -371,7 +376,10 @@ export default function PodiumPage() {
   return (
     <>
       <PageHeader />
-      <div className="bg-[#f0f9ff] text-slate-600 antialiased min-h-screen">
+      <div className="text-slate-600 antialiased min-h-screen">
+       <div className="fixed inset-0 -z-10">
+          <Image src="/images/podium/podium.png" alt="Podium background" fill className="object-cover" priority />
+        </div>
         <main className="flex-1 max-w-5xl mx-auto w-full px-4 pb-24 pt-32">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
             <div className="text-center md:text-left">
@@ -398,7 +406,6 @@ export default function PodiumPage() {
                 <iconify-icon
                   icon="solar:cup-star-linear"
                   width="18"
-                  class=""
                 ></iconify-icon>{" "}
                 MMR Rank
               </button>
@@ -409,7 +416,6 @@ export default function PodiumPage() {
                 <iconify-icon
                   icon="solar:box-linear"
                   width="18"
-                  class=""
                 ></iconify-icon>{" "}
                 Summons
               </button>
@@ -430,20 +436,20 @@ export default function PodiumPage() {
           ) : (
             <div id="content-area" className="w-full">
               {data.length > 0 && <Podium users={podiumData} />}
-              
+
               <div className="mt-8">
                 {pagedData.length > 0 ? (
                   pagedData.map((user, index) => (
                     <ListItem
-                      key={(user as any).walletAddress + index}
+                      key={user.walletAddress + index}
                       user={user}
                       delayIndex={index}
                     />
                   ))
                 ) : data.length > 3 ? (
-                   <div className="text-center py-10 text-slate-500 font-semibold">
-                     No more users to display.
-                   </div>
+                  <div className="text-center py-10 text-slate-500 font-semibold">
+                    No more users to display.
+                  </div>
                 ) : (
                   data.length === 0 && (
                     <div className="text-center py-10 text-slate-500 font-semibold">
@@ -455,44 +461,14 @@ export default function PodiumPage() {
             </div>
           )}
 
-        <Dialog open={!!selectedUser} onOpenChange={(isOpen) => !isOpen && setSelectedUser(null)}>
-            <DialogContent className="max-w-sm bg-white border-4 border-black rounded-3xl shadow-hard p-0">
-                {selectedUser && (
-                    <>
-                        <div className="p-6 border-b-4 border-black">
-                            <DialogTitle className="font-headline text-center text-3xl tracking-tight uppercase">{selectedUser.nftName}</DialogTitle>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <div className="aspect-square w-full relative bg-slate-100 rounded-2xl border-2 border-black">
-                                <Image 
-                                    src={selectedUser.avatarImage} 
-                                    alt={selectedUser.nftName} 
-                                    fill 
-                                    className="object-cover rounded-xl"
-                                />
-                           </div>
-                           <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-4 grid grid-cols-3 text-center divide-x-2 divide-dashed divide-slate-300">
-                                <div>
-                                    <p className="text-xs font-bold text-slate-500 uppercase">Rank</p>
-                                    <p className="font-headline text-2xl text-black">#{selectedUser.rank}</p>
-                                </div>
-                                <div className="px-2">
-                                    <p className="text-xs font-bold text-slate-500 uppercase">MMR</p>
-                                    <p className="font-headline text-2xl text-black">{selectedUser.mmrScore.toLocaleString()}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-slate-500 uppercase">Lineage</p>
-                                    <p className="font-headline text-2xl text-black">{selectedUser.lineage}</p>
-                                </div>
-                           </div>
-                           <div className="font-mono text-xs text-slate-400 text-center break-all pt-2">
-                                {selectedUser.walletAddress}
-                           </div>
-                        </div>
-                    </>
-                )}
-            </DialogContent>
-        </Dialog>
+          {selectedUser && (
+            <CharacterDetailModal 
+              user={selectedUser} 
+              isOpen={!!selectedUser} 
+              onClose={() => setSelectedUser(null)} 
+            />
+          )}
+
         </main>
       </div>
 
@@ -507,7 +483,6 @@ export default function PodiumPage() {
               <iconify-icon
                 icon="solar:arrow-left-linear"
                 width="20"
-                class=""
               ></iconify-icon>
             </button>
             <span className="text-sm font-bold text-slate-600 font-mono w-20 text-center">
@@ -521,7 +496,6 @@ export default function PodiumPage() {
               <iconify-icon
                 icon="solar:arrow-right-linear"
                 width="20"
-                class=""
               ></iconify-icon>
             </button>
           </div>
@@ -530,4 +504,233 @@ export default function PodiumPage() {
       <PageFooter />
     </>
   );
+}
+
+
+function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isOpen: boolean, onClose: () => void }) {
+  const [mmr, setMmr] = useState(0);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Reset animations
+      setMmr(0);
+      const bars = document.querySelectorAll('.progress-bar');
+      bars.forEach(bar => {
+        (bar as HTMLElement).style.width = '0%';
+        setTimeout(() => {
+          (bar as HTMLElement).style.width = (bar as HTMLElement).dataset.width || '0%';
+        }, 500);
+      });
+
+      // Count up animation
+      let start = 0;
+      const end = user.mmrScore;
+      if (start === end) return;
+      const duration = 1500;
+      const range = end - start;
+      let current = start;
+      const increment = end > start ? 1 : -1;
+      const stepTime = Math.abs(Math.floor(duration / range));
+      const timer = setInterval(() => {
+        current += increment;
+        const newMmr = Math.round(current * (Math.random() * (1.2 - 0.8) + 0.8)); // Add some randomness
+        if (newMmr < end) {
+          setMmr(newMmr);
+        } else {
+          setMmr(end);
+          clearInterval(timer);
+        }
+      }, stepTime > 0 ? stepTime : 1);
+      return () => clearInterval(timer);
+    }
+  }, [isOpen, user.mmrScore]);
+
+
+  if (!isOpen) return null;
+  
+  const rankInfo = useMemo(() => {
+    const rank = user.attributes?.rank || 'Spirit Seed';
+    const ranks: {[key: string]: { style: string, icon: string }} = {
+      "Kapogian Ascendant": { style: "text-purple-400", icon: "solar:crown-star-bold-duotone" },
+      "Master Rancher": { style: "text-purple-400", icon: "solar:crown-star-bold-duotone" },
+      "Generational Tycoon": { style: "text-yellow-500", icon: "solar:crown-star-linear" },
+      "Cultural Icon": { style: "text-red-500", icon: "solar:crown-star-linear" },
+      "Eternal Light Bearer": { style: "text-red-500", icon: "solar:crown-star-linear" },
+      "Ritual Architect": { style: "text-yellow-500", icon: "solar:crown-star-linear" },
+      "Hall of Fame Immortal": { style: "text-yellow-500", icon: "solar:star-bold" },
+      "Supreme Pogi": { style: "text-yellow-400", icon: "solar:star-bold" },
+      "Proof of Pogi Elite": { style: "text-emerald-400", icon: "solar:star-bold" },
+      "Aura God": { style: "text-emerald-500", icon: "solar:star-line-duotone" },
+      "Lord of Biringan": { style: "text-emerald-600", icon: "solar:star-line-duotone" },
+      "Fearless Descent": { style: "text-sky-400", icon: "solar:verified-check-linear" },
+      "Dalaketnon Slayer": { style: "text-sky-500", icon: "solar:verified-check-linear" },
+      "Ghost Walker": { style: "text-sky-600", icon: "solar:verified-check-linear" },
+      "Initiate of Pogi": { style: "text-amber-700", icon: "solar:verified-check-linear" },
+      "Aura Touched": { style: "text-amber-800", icon: "solar:verified-check-linear" },
+      "Pogi Spark": { style: "text-amber-900", icon: "solar:verified-check-linear" },
+      "Spirit Seed": { style: "text-slate-500", icon: "solar:verified-check-linear" },
+    };
+    return ranks[rank] || ranks['Spirit Seed'];
+  }, [user.attributes?.rank]);
+
+
+  const traits = [
+    { label: "Style", value: user.attributes?.clothingStyle, icon: "solar:t-shirt-linear" },
+    { label: "Hair", value: `${user.attributes?.hairAmount}% Fluff`, icon: "solar:user-hand-up-linear" },
+    { label: "Face", value: `${user.attributes?.facialHair}% Stubble`, icon: "solar:emoji-funny-circle-linear" },
+    { label: "Eyewear", value: user.attributes?.eyewear > 50 ? 'Yes' : 'None', icon: "solar:glasses-linear" },
+    { label: "Held", value: user.attributes?.heldItem, icon: "solar:cup-linear" },
+  ].filter(t => t.value);
+
+
+  return (
+     <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl w-full p-0 bg-transparent border-none shadow-none !rounded-[2rem] ">
+          <div className="w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row">
+           {/* Left Side */}
+            <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r border-slate-100">
+                <div className="absolute top-0 left-0 right-0 h-full flex items-center justify-center p-4">
+                  <Image src={user.avatarImage} alt={user.nftName} width={400} height={400} className="object-contain animate-float drop-shadow-2xl" />
+                </div>
+                <div className="absolute bottom-0 w-full h-12 bg-gradient-to-t from-emerald-100 to-transparent blur-sm"></div>
+            </div>
+
+            {/* Right Side */}
+            <div className="w-full md:w-[65%] bg-white/95 backdrop-blur-md flex flex-col h-full max-h-[90vh] md:max-h-[600px] overflow-hidden">
+              <div className="overflow-y-auto p-6 md:p-8 space-y-6 md:space-y-8 hide-scrollbar">
+                
+                {/* Header */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-100 pb-6 slide-up-delay-1">
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className={cn("inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider", rankInfo.style)}>
+                                <iconify-icon icon={rankInfo.icon}></iconify-icon>
+                                {user.attributes?.rank || 'Spirit Seed'}
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-100 text-slate-500 text-xs font-medium">
+                                #{user.rank}
+                            </span>
+                        </div>
+                        <h1 className="text-3xl md:text-4xl font-display font-semibold text-slate-900 tracking-tight leading-none mb-1">
+                            {user.nftName}
+                        </h1>
+                        <div className="flex items-center gap-2 text-slate-500 text-sm">
+                            <iconify-icon icon="solar:users-group-rounded-linear" class="text-lg"></iconify-icon>
+                            <span>Lineage: <strong className="text-orange-500 drop-shadow-sm font-semibold">{user.lineage}</strong></span>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-2xl border border-slate-100/50 shadow-sm">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                            <iconify-icon icon="solar:graph-up-linear" class="text-xl"></iconify-icon>
+                        </div>
+                        <div>
+                            <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">MMR Rating</p>
+                            <p className="text-xl font-bold text-slate-800 tracking-tight">{mmr.toLocaleString()}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Skills & Region Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 slide-up-delay-2">
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                            <iconify-icon icon="solar:magic-stick-3-linear" class="text-lg"></iconify-icon>
+                            Core Skills
+                        </h3>
+                        
+                        <div className="group">
+                            <div className="flex justify-between text-sm mb-1">
+                                <span className="font-medium text-slate-700">Cuteness</span>
+                                <span className="text-slate-500 font-display">{user.attributes?.cuteness || 0}/100</span>
+                            </div>
+                            <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-pink-400 rounded-full progress-bar" data-width={`${user.attributes?.cuteness || 0}%`}></div>
+                            </div>
+                        </div>
+
+                        <div className="group">
+                            <div className="flex justify-between text-sm mb-1">
+                                <span className="font-medium text-slate-700">Confidence</span>
+                                <span className="text-slate-500 font-display">{user.attributes?.confidence || 0}/100</span>
+                            </div>
+                            <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-indigo-400 rounded-full progress-bar" data-width={`${user.attributes?.confidence || 0}%`}></div>
+                            </div>
+                        </div>
+
+                        <div className="group">
+                            <div className="flex justify-between text-sm mb-1">
+                                <span className="font-medium text-slate-700">Tili Factor</span>
+                                <span className="text-slate-500 font-display">{user.attributes?.tiliFactor || 0}/100</span>
+                            </div>
+                            <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-amber-400 rounded-full progress-bar" data-width={`${user.attributes?.tiliFactor || 0}%`}></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                            <iconify-icon icon="solar:map-point-wave-linear" class="text-lg"></iconify-icon>
+                            Country Affinity
+                        </h3>
+                        <div className="flex items-end gap-3 h-[104px] pt-4">
+                            <div className="flex-1 flex flex-col justify-end group">
+                                <div className="w-full bg-emerald-100 rounded-t-lg relative progress-bar" data-height={`${user.attributes?.luzon || 0}%`}>
+                                    <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">{user.attributes?.luzon || 0}</span>
+                                </div>
+                                <span className="text-xs text-slate-500 text-center mt-2 font-medium">Luzon</span>
+                            </div>
+                            <div className="flex-1 flex flex-col justify-end group">
+                                <div className="w-full bg-emerald-100 rounded-t-lg relative progress-bar" data-height={`${user.attributes?.visayas || 0}%`}>
+                                     <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">{user.attributes?.visayas || 0}</span>
+                                </div>
+                                <span className="text-xs text-slate-500 text-center mt-2 font-medium">Visayas</span>
+                            </div>
+                            <div className="flex-1 flex flex-col justify-end group">
+                                <div className="w-full bg-emerald-100 rounded-t-lg relative progress-bar" data-height={`${user.attributes?.mindanao || 0}%`}>
+                                     <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">{user.attributes?.mindanao || 0}</span>
+                                </div>
+                                <span className="text-xs text-slate-800 text-center mt-2 font-bold">Mindanao</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Traits */}
+                <div className="slide-up-delay-3 pb-2">
+                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
+                        <iconify-icon icon="solar:t-shirt-linear" class="text-lg"></iconify-icon>
+                        Visual Traits
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {traits.map((trait) => (
+                        <div key={trait.label} className="inline-flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
+                            <iconify-icon icon={trait.icon} class="text-slate-400"></iconify-icon>
+                            <div className="flex flex-col leading-none">
+                                <span className="text-[10px] text-slate-400 uppercase font-semibold">{trait.label}</span>
+                                <span className="text-xs text-slate-700 font-medium">{trait.value}</span>
+                            </div>
+                        </div>
+                      ))}
+                    </div>
+                </div>
+
+              </div>
+
+              {/* Footer */}
+              <div className="p-6 border-t border-slate-100 flex justify-end items-center bg-slate-50/50 slide-up-delay-4">
+                <button 
+                  onClick={onClose}
+                  className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-2">
+                    <span>Close</span>
+                </button>
+            </div>
+
+            </div>
+          </div>
+        </DialogContent>
+     </Dialog>
+  )
 }
