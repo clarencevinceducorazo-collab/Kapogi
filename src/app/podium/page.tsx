@@ -236,7 +236,7 @@ export default function PodiumPage() {
                   width={80}
                   height={80}
                   alt="Rank 2"
-                  className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-white bg-slate-200 object-cover shadow-md"
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-white bg-slate-200 object-cover shadow-md mix-blend-darken"
                 />
                 <div className="absolute -bottom-2 -right-2 bg-slate-200 border-2 border-white text-slate-600 text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full shadow-sm">
                   2
@@ -275,7 +275,7 @@ export default function PodiumPage() {
                   width={112}
                   height={112}
                   alt="Rank 1"
-                  className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-white bg-yellow-100 object-cover shadow-lg ring-4 ring-yellow-200/50"
+                  className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-white bg-yellow-100 object-cover shadow-lg ring-4 ring-yellow-200/50 mix-blend-darken"
                 />
                 <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-yellow-400 border-2 border-white text-white text-sm font-bold px-3 py-0.5 rounded-full shadow-sm">
                   #1
@@ -310,7 +310,7 @@ export default function PodiumPage() {
                   width={80}
                   height={80}
                   alt="Rank 3"
-                  className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-white bg-orange-100 object-cover shadow-md"
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-white bg-orange-100 object-cover shadow-md mix-blend-darken"
                 />
                 <div className="absolute -bottom-2 -right-2 bg-orange-200 border-2 border-white text-orange-700 text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full shadow-sm">
                   3
@@ -355,7 +355,7 @@ export default function PodiumPage() {
             width={48}
             height={48}
             alt="Avatar"
-            className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-100 border-2 border-white shadow-sm object-cover"
+            className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-100 border-2 border-white shadow-sm object-cover mix-blend-darken"
           />
         </div>
         <div className="flex-1 min-w-0">
@@ -600,7 +600,7 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
            {/* Left Side */}
             <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r border-slate-100">
                 <div className="absolute top-0 left-0 right-0 h-full flex items-center justify-center p-4">
-                  <Image src={user.avatarImage} alt={user.nftName} width={400} height={400} className="object-contain animate-float drop-shadow-2xl" />
+                  <Image src={user.avatarImage} alt={user.nftName} width={400} height={400} className="object-contain animate-float drop-shadow-2xl mix-blend-darken" />
                 </div>
                 <div className="absolute bottom-0 w-full h-12 bg-gradient-to-t from-emerald-100 to-transparent blur-sm"></div>
             </div>
