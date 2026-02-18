@@ -898,7 +898,7 @@ export default function RoadmapV3Page() {
           <section
             className="slide-section w-screen h-screen flex-shrink-0 flex items-center justify-center"
             data-phase="FUTURE"
-            data-bg-image="/images/Roadmaps/static/future.png"
+            data-bg-image="/images/Roadmaps/static/future2.png"
           >
             <div className="slide-content text-center pt-20">
               <h2 className="text-6xl font-bold tracking-tight text-white drop-shadow-lg">

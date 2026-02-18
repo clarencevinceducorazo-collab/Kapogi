@@ -608,17 +608,17 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
                 {/* Main Stage Area */}
                 <div className="relative w-full flex-1 flex flex-col items-center justify-center">
                     {/* Character Image */}
-                    <div className="relative z-20 w-48 h-48 md:w-56 md:h-56 -mb-16">
-                        <Image
-                            src={user.avatarImage}
-                            alt={user.nftName}
-                            fill
-                            className="object-contain animate-float"
-                            style={{ filter: "drop-shadow(0 20px 15px rgba(0,0,0,0.2))" }}
-                        />
-                    </div>
+                    <div className="relative z-20 w-64 h-64 md:w-72 md:h-72 -mb-20 mix-blend-darken">
+  <Image
+    src={user.avatarImage}
+    alt={user.nftName}
+    fill
+    className="object-contain"
+  />
+</div>
+
                     {/* Podium Base */}
-                    <div className="relative w-72 h-32 z-10">
+                    <div className="relative w-72 h-32">
                         <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-64 h-8 bg-emerald-900/20 blur-xl rounded-[100%]"></div>
                         <div className="absolute top-1/2 left-[2%] w-[96%] h-full bg-gradient-to-b from-emerald-600 to-emerald-800 rounded-b-[100%] border-b border-emerald-900/30 shadow-2xl z-0"></div>
                         <div className="absolute top-0 w-full h-full bg-gradient-to-b from-emerald-400 to-emerald-500 rounded-[100%] border-[4px] border-emerald-300/50 shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] z-10 flex items-center justify-center overflow-hidden">
