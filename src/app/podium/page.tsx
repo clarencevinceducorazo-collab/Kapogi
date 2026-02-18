@@ -549,8 +549,6 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
   }, [isOpen, user.mmrScore]);
 
 
-  if (!isOpen) return null;
-  
   const rankInfo = useMemo(() => {
     const rank = user.attributes?.rank || 'Spirit Seed';
     const ranks: {[key: string]: { style: string, icon: string }} = {
@@ -588,7 +586,7 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
 
   return (
      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl w-full p-0 bg-transparent border-none shadow-none !rounded-[2rem] ">
+        <DialogContent className="max-w-4xl w-full p-0 bg-transparent border-none shadow-none !rounded-[2rem]">
           <DialogHeader className="sr-only">
             <DialogTitle>Character Details: {user.nftName}</DialogTitle>
             <DialogDescription>
@@ -598,11 +596,32 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
           </DialogHeader>
           <div className="w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row">
            {/* Left Side */}
-            <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r border-slate-100">
-                <div className="absolute top-0 left-0 right-0 h-full flex items-center justify-center p-4">
-                  <Image src={user.avatarImage} alt={user.nftName} width={400} height={400} className="object-contain animate-float drop-shadow-2xl mix-blend-darken" />
+            <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r border-slate-100 flex flex-col items-center justify-center p-4">
+              
+                {/* Rank (Top) */}
+                <div className="slide-up-delay-1 text-center">
+                    <span className={cn("inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider", rankInfo.style)}>
+                        <iconify-icon icon={rankInfo.icon}></iconify-icon>
+                        {user.attributes?.rank || 'Spirit Seed'}
+                    </span>
                 </div>
-                <div className="absolute bottom-0 w-full h-12 bg-gradient-to-t from-emerald-100 to-transparent blur-sm"></div>
+
+                {/* Image (Middle) */}
+                <div className="relative w-48 h-48 md:w-56 md:h-56 my-4">
+                    <Image src={user.avatarImage} alt={user.nftName} fill className="object-contain animate-float mix-blend-darken" />
+                </div>
+
+                {/* Name (Bottom) */}
+                <div className="slide-up-delay-2 text-center">
+                    <h1 className="text-2xl md:text-3xl font-display font-semibold text-slate-900 tracking-tight leading-none mb-1">
+                        {user.nftName}
+                    </h1>
+                    <div className="flex items-center justify-center gap-2 text-slate-500 text-sm">
+                        <iconify-icon icon="solar:users-group-rounded-linear" class="text-lg"></iconify-icon>
+                        <span>Lineage: <strong className="text-orange-500 drop-shadow-sm font-semibold">{user.lineage}</strong></span>
+                    </div>
+                </div>
+
             </div>
 
             {/* Right Side */}
@@ -610,24 +629,9 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
               <div className="overflow-y-auto p-6 md:p-8 space-y-6 md:space-y-8 hide-scrollbar">
                 
                 {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-100 pb-6 slide-up-delay-1">
-                    <div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className={cn("inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider", rankInfo.style)}>
-                                <iconify-icon icon={rankInfo.icon}></iconify-icon>
-                                {user.attributes?.rank || 'Spirit Seed'}
-                            </span>
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-100 text-slate-500 text-xs font-medium">
-                                #{user.rank}
-                            </span>
-                        </div>
-                        <h1 className="text-3xl md:text-4xl font-display font-semibold text-slate-900 tracking-tight leading-none mb-1">
-                            {user.nftName}
-                        </h1>
-                        <div className="flex items-center gap-2 text-slate-500 text-sm">
-                            <iconify-icon icon="solar:users-group-rounded-linear" class="text-lg"></iconify-icon>
-                            <span>Lineage: <strong className="text-orange-500 drop-shadow-sm font-semibold">{user.lineage}</strong></span>
-                        </div>
+                <div className="flex justify-between items-center gap-4 border-b border-slate-100 pb-6 slide-up-delay-1">
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-slate-100 text-slate-500 text-xs font-medium">
+                        Global Rank #{user.rank}
                     </div>
 
                     <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-2xl border border-slate-100/50 shadow-sm">
