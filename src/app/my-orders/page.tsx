@@ -325,11 +325,6 @@ export default function MyOrdersPage() {
       )}
 
       <PageFooter />
-
-      <style>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
     </div>
   );
 }
@@ -444,7 +439,7 @@ function OrderModal({
         </div>
 
         {/* Scrollable body */}
-        <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto no-scrollbar">
+        <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
 
           {/* NFT + items */}
           <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">

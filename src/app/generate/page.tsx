@@ -2090,7 +2090,7 @@ export default function GeneratorPage() {
 
                     <div
                       style={{ fontSize: "16px" }}
-                      className="font-medium text-stone-700 leading-relaxed max-h-64 overflow-y-auto pr-2 custom-scrollbar animate__animated animate__fadeInUp"
+                      className="font-medium text-stone-700 leading-relaxed max-h-64 overflow-y-auto pr-2 animate__animated animate__fadeInUp"
                     >
                       {loading || !generatedLore ? (
                         <div className="space-y-3">
