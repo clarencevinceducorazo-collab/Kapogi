@@ -150,22 +150,55 @@ export default {
           '0%': { transform: 'translateX(110vw) scaleX(-1)' },
           '100%': { transform: 'translateX(-100%) scaleX(-1)' },
         },
-        'blink': {
-          '50%': { opacity: '0' },
+        blink: {
+          "50%": { opacity: "0" },
         },
-        'mythic-flow': {
-          '0%, 100%': { filter: 'drop-shadow(0 0 8px #ef4444)' },
-          '25%': { filter: 'drop-shadow(0 0 8px #8b5cf6)' },
-          '50%': { filter: 'drop-shadow(0 0 8px #facc15)' },
-          '75%': { filter: 'drop-shadow(0 0 8px #34d399)' },
+        "mythic-flow": {
+          "0%, 100%": { filter: "drop-shadow(0 0 8px #ef4444)" },
+          "25%": { filter: "drop-shadow(0 0 12px #8b5cf6)" },
+          "50%": { filter: "drop-shadow(0 0 8px #facc15)" },
+          "75%": { filter: "drop-shadow(0 0 12px #34d399)" },
         },
-        'flame-pulse': {
-          '0%, 100%': { 'text-shadow': '0 -2px 4px #ef4444, 0 -4px 10px #f59e0b, 0 0 5px rgba(239, 68, 68, 0.5)' },
-          '50%': { 'text-shadow': '0 -6px 12px #ef4444, 0 -10px 20px #f59e0b, 0 0 15px rgba(239, 68, 68, 0.8)' },
+        "flame-pulse": {
+          "0%, 100%": {
+            "text-shadow":
+              "0 -2px 4px #ef4444, 0 -4px 10px #f59e0b, 0 0 5px rgba(239, 68, 68, 0.5)",
+          },
+          "50%": {
+            "text-shadow":
+              "0 -6px 12px #ef4444, 0 -10px 20px #f59e0b, 0 0 15px rgba(239, 68, 68, 0.8)",
+          },
         },
-        'aura-breathe': {
-          '0%, 100%': { 'text-shadow': '0 0 5px rgba(16, 185, 129, 0.4)', opacity: '0.9' },
-          '50%': { 'text-shadow': '0 0 20px rgba(16, 185, 129, 0.9), 0 0 30px rgba(16, 185, 129, 0.2)', opacity: '1' },
+        "aura-breathe": {
+          "0%, 100%": {
+            "text-shadow": "0 0 5px rgba(16, 185, 129, 0.4)",
+            opacity: "0.9",
+          },
+          "50%": {
+            "text-shadow":
+              "0 0 20px rgba(16, 185, 129, 0.9), 0 0 30px rgba(16, 185, 129, 0.2)",
+            opacity: "1",
+          },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
+        popIn: {
+          "0%": { opacity: "0", transform: "scale(0.9) translateY(10px)" },
+          "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
+        },
+        "slide-in-bottom": {
+          "0%": { transform: "translateY(20px)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        "pulse-aura": {
+          "0%, 100%": { "box-shadow": "0 0 20px 5px rgba(255, 215, 0, 0.3)" },
+          "50%": { "box-shadow": "0 0 35px 15px rgba(255, 165, 0, 0.5)" },
+        },
+        "cloud-move": {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50px)" },
         },
       },
       animation: {
@@ -189,6 +222,12 @@ export default {
         'mythic-flow': 'mythic-flow 4s ease-in-out infinite',
         'flame-pulse': 'flame-pulse 1.5s infinite alternate',
         'aura-breathe': 'aura-breathe 3s infinite ease-in-out',
+        'float': 'float 6s ease-in-out infinite',
+        'float-1': 'float 3s ease-in-out infinite',
+        'float-2': 'float 3.5s ease-in-out infinite 0.5s',
+        'float-3': 'float 4s ease-in-out infinite 1s',
+        'pop-in': 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+
       },
     },
   },
