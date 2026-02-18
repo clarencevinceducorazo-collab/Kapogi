@@ -597,7 +597,9 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
           <div className="w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row">
            {/* Left Side */}
             <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r border-slate-100 flex flex-col items-center justify-center p-4">
-              
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-slate-100 text-slate-500 text-xs font-medium">
+                        Global Rank #{user.rank}
+                    </div>
                 {/* Rank (Top) */}
                 <div className="slide-up-delay-1 text-center">
                     <span className={cn("inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider", rankInfo.style)}>
@@ -630,9 +632,7 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
                 
                 {/* Header */}
                 <div className="flex justify-between items-center gap-4 border-b border-slate-100 pb-6 slide-up-delay-1">
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-slate-100 text-slate-500 text-xs font-medium">
-                        Global Rank #{user.rank}
-                    </div>
+                    
 
                     <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-2xl border border-slate-100/50 shadow-sm">
                         <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
