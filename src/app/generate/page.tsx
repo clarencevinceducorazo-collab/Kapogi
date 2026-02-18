@@ -69,6 +69,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/kapogian/page-header";
 import { PageFooter } from "@/components/kapogian/page-footer";
+import {
+  getHairColorDescription,
+  getSkinToneDescription,
+} from "@/lib/color-mapping";
 
 // Reusable Enchantment Slider
 const EnchantmentControl = ({
@@ -194,23 +198,6 @@ const CustomSlider = ({
     />
   </div>
 );
-
-// Helper function for skin tone
-const getSkinToneDescription = (hex: string): string => {
-  const skinToneMap: { [key: string]: string } = {
-    "#FFF5E1": "very light, fair skin",
-    "#F7E2C4": "light, pale skin",
-    "#F1C27D": "fair skin",
-    "#E0AC69": "light tan skin",
-    "#D2B48C": "tan, classic kayumanggi skin",
-    "#BB8353": "medium brown skin",
-    "#8D5524": "deep brown skin",
-    "#634439": "dark brown skin",
-    "#4A2C2A": "very dark brown skin",
-    "#2E1D1A": "deep, dark brown skin",
-  };
-  return skinToneMap[hex] || "kayumanggi skin";
-};
 
 interface Province {
   code: string;
@@ -420,7 +407,8 @@ export default function GeneratorPage() {
     if (mmr >= 3951)
       return {
         name: "Kapogian Ascendant",
-        style: "effect-mythic-glow text-4xl font-black uppercase tracking-tighter",
+        style:
+          "effect-mythic-glow text-4xl font-black uppercase tracking-tighter",
         rarity: "Top 0.005%",
       };
     if (mmr >= 3851)
@@ -795,6 +783,7 @@ export default function GeneratorPage() {
     try {
       const identityContext = getIdentityContext(lineage);
       const skinToneDescriptor = getSkinToneDescription(attributes.skinTone);
+      const hairColorDescription = getHairColorDescription(attributes.hairColor);
       const promptText = `
         You are a lore generator for a fictional universe called "Kapogian Chibis".
         A Kapogian Chibi is a confident, good-looking Filipino character.
@@ -808,7 +797,7 @@ export default function GeneratorPage() {
             - Clothing: ${attributes.clothingStyle} outfit
             - Stance: ${attributes.posture}
             - Body Type: A body fat ratio of ${attributes.bodyFat}/100.
-            - Hair: ${attributes.hairAmount}/100 amount, with the color ${attributes.hairColor}.
+            - Hair: ${attributes.hairAmount}/100 amount, with a ${hairColorDescription} color.
             - Facial Hair: ${attributes.facialHair}/100 amount.
             - Eyewear: ${attributes.eyewear}/100 amount.
             - Skin Tone: ${skinToneDescriptor}.
@@ -833,6 +822,7 @@ export default function GeneratorPage() {
   const buildCharacterPrompt = (name: string, originDesc: string): string => {
     const identityContext = getIdentityContext(lineage);
     const skinToneDescriptor = getSkinToneDescription(attributes.skinTone);
+    const hairColorDescription = getHairColorDescription(attributes.hairColor);
 
     let pose = "standing confidently";
     switch (attributes.posture) {
@@ -922,7 +912,7 @@ export default function GeneratorPage() {
       holdingItemDescriptor = `holding ${attributes.heldItem}`;
     }
 
-    return `full body shot of a high quality, well-proportioned, anatomically correct cute ${bodyFatDescriptor} chibi pinoy character with two arms and two legs, of the ${lineage} lineage (${identityContext}), named ${name}, from ${originDesc}, with ${skinToneDescriptor}. The character has ${hairDescriptor} and the hair color must be exactly ${attributes.hairColor}. The character has ${facialHairDescriptor}, is wearing ${clothingDescriptor}, with ${eyewearDescriptor}, in a ${pose}, and is ${holdingItemDescriptor}, showing confident pose, smiling. Chibi character art, clean vector line art, cel-shaded, sticker style, simple white background.`;
+    return `full body shot of a high quality, well-proportioned, anatomically correct cute ${bodyFatDescriptor} chibi pinoy character with two arms and two legs, of the ${lineage} lineage (${identityContext}), named ${name}, from ${originDesc}, with ${skinToneDescriptor}. The character has ${hairDescriptor} with ${hairColorDescription} hair. The character has ${facialHairDescriptor}, is wearing ${clothingDescriptor}, with ${eyewearDescriptor}, in a ${pose}, and is ${holdingItemDescriptor}, showing confident pose, smiling. Chibi character art, clean vector line art, cel-shaded, sticker style, simple white background.`;
   };
 
   const handleShuffle = () => {
@@ -1139,7 +1129,7 @@ export default function GeneratorPage() {
         description: plainTextLore,
         imageUrl: finalImageUrl!,
         attributes: JSON.stringify({
-          lineage: lineage,
+          lineage: displayLineage,
           rank: displayRankInfo.name,
           ...stats,
           ...attributes,
