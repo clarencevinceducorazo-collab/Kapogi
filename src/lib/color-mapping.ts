@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * @fileOverview Provides functions to map color hex codes to human-readable descriptions.
  * This helps the AI model better understand color context for image generation.
