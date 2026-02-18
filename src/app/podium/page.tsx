@@ -376,10 +376,7 @@ export default function PodiumPage() {
   return (
     <>
       <PageHeader />
-      <div className="text-slate-600 antialiased min-h-screen">
-       <div className="fixed inset-0 -z-10">
-          <Image src="/images/podium/podium.png" alt="Podium background" fill className="object-cover" priority />
-        </div>
+      <div className="text-slate-600 antialiased min-h-screen bg-slate-50">
         <main className="flex-1 max-w-5xl mx-auto w-full px-4 pb-24 pt-32">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
             <div className="text-center md:text-left">
@@ -576,8 +573,8 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
 
   const traits = [
     { label: "Style", value: user.attributes?.clothingStyle, icon: "solar:t-shirt-linear" },
-    { label: "Hair", value: `${user.attributes?.hairAmount}% Fluff`, icon: "solar:user-hand-up-linear" },
-    { label: "Face", value: `${user.attributes?.facialHair}% Stubble`, icon: "solar:emoji-funny-circle-linear" },
+    { label: "Hair", value: `${'\'\'\''}{user.attributes?.hairAmount}% Fluff`, icon: "solar:user-hand-up-linear" },
+    { label: "Face", value: `${'\'\'\''}{user.attributes?.facialHair}% Stubble`, icon: "solar:emoji-funny-circle-linear" },
     { label: "Eyewear", value: user.attributes?.eyewear > 50 ? 'Yes' : 'None', icon: "solar:glasses-linear" },
     { label: "Held", value: user.attributes?.heldItem, icon: "solar:cup-linear" },
   ].filter(t => t.value);
@@ -645,7 +642,7 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
                                 <span className="text-slate-500 font-display">{user.attributes?.cuteness || 0}/100</span>
                             </div>
                             <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-pink-400 rounded-full progress-bar" data-width={`${user.attributes?.cuteness || 0}%`}></div>
+                                <div className="h-full bg-pink-400 rounded-full progress-bar" data-width={`${'\'\'\''}{user.attributes?.cuteness || 0}%`}></div>
                             </div>
                         </div>
 
@@ -655,7 +652,7 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
                                 <span className="text-slate-500 font-display">{user.attributes?.confidence || 0}/100</span>
                             </div>
                             <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-indigo-400 rounded-full progress-bar" data-width={`${user.attributes?.confidence || 0}%`}></div>
+                                <div className="h-full bg-indigo-400 rounded-full progress-bar" data-width={`${'\'\'\''}{user.attributes?.confidence || 0}%`}></div>
                             </div>
                         </div>
 
@@ -665,7 +662,7 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
                                 <span className="text-slate-500 font-display">{user.attributes?.tiliFactor || 0}/100</span>
                             </div>
                             <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-amber-400 rounded-full progress-bar" data-width={`${user.attributes?.tiliFactor || 0}%`}></div>
+                                <div className="h-full bg-amber-400 rounded-full progress-bar" data-width={`${'\'\'\''}{user.attributes?.tiliFactor || 0}%`}></div>
                             </div>
                         </div>
                     </div>
@@ -677,19 +674,19 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
                         </h3>
                         <div className="flex items-end gap-3 h-[104px] pt-4">
                             <div className="flex-1 flex flex-col justify-end group">
-                                <div className="w-full bg-emerald-100 rounded-t-lg relative progress-bar" data-height={`${user.attributes?.luzon || 0}%`}>
+                                <div className="w-full bg-emerald-100 rounded-t-lg relative progress-bar" data-height={`${'\'\'\''}{user.attributes?.luzon || 0}%`}>
                                     <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">{user.attributes?.luzon || 0}</span>
                                 </div>
                                 <span className="text-xs text-slate-500 text-center mt-2 font-medium">Luzon</span>
                             </div>
                             <div className="flex-1 flex flex-col justify-end group">
-                                <div className="w-full bg-emerald-100 rounded-t-lg relative progress-bar" data-height={`${user.attributes?.visayas || 0}%`}>
+                                <div className="w-full bg-emerald-100 rounded-t-lg relative progress-bar" data-height={`${'\'\'\''}{user.attributes?.visayas || 0}%`}>
                                      <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">{user.attributes?.visayas || 0}</span>
                                 </div>
                                 <span className="text-xs text-slate-500 text-center mt-2 font-medium">Visayas</span>
                             </div>
                             <div className="flex-1 flex flex-col justify-end group">
-                                <div className="w-full bg-emerald-100 rounded-t-lg relative progress-bar" data-height={`${user.attributes?.mindanao || 0}%`}>
+                                <div className="w-full bg-emerald-100 rounded-t-lg relative progress-bar" data-height={`${'\'\'\''}{user.attributes?.mindanao || 0}%`}>
                                      <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">{user.attributes?.mindanao || 0}</span>
                                 </div>
                                 <span className="text-xs text-slate-800 text-center mt-2 font-bold">Mindanao</span>
