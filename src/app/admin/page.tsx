@@ -1013,6 +1013,9 @@ export default function AdminPage() {
                   <option value="J&T Express">J&amp;T Express</option>
                   <option value="LBC">LBC</option>
                   <option value="DHL">DHL World</option>
+                  <option value="SPX">Shoppe Express</option>
+                  <option value="J&T">J&T (17Track)</option>
+                  <option value="NINJA">NINJA Van Philippines</option>
                 </select>
               </div>
 
