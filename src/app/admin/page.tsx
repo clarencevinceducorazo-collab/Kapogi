@@ -483,6 +483,7 @@ export default function AdminPage() {
         backgroundImage: 'radial-gradient(#000 1px, transparent 1px)',
         backgroundSize: '24px 24px',
         backgroundAttachment: 'fixed',
+        zoom: 0.9,
       }}
     >
 
