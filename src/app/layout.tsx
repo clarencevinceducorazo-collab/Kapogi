@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import Script from "next/script";
+import { StartingScreen } from "@/components/kapogian/StartingScreen";
 
 export const metadata: Metadata = {
   title: "Kapogian | Collectible Reality",
@@ -29,9 +30,12 @@ export default function RootLayout({
         />
         <Script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js" strategy="lazyOnload" />
       </head>
-      <body className="font-body">
+      <body className="font-body bg-slate-950">
         <Providers>
-          {children}
+          <StartingScreen />
+          <div className="opacity-0 transition-opacity duration-500" id="main-content">
+            {children}
+          </div>
           <Toaster />
         </Providers>
       </body>

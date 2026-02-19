@@ -92,7 +92,7 @@
   }
 
   body {
-    @apply text-slate-900 antialiased selection:bg-black selection:text-[hsl(var(--brand-yellow))] overflow-x-hidden;
+    @apply text-slate-900 antialiased selection:bg-black selection:text-[hsl(var(--brand-yellow))];
     --mouse-x: 50%;
     --mouse-y: 50%;
     background-color: hsl(var(--brand-yellow));
@@ -657,6 +657,36 @@
     animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
-
-
-    
+/* Starting Screen Keyframes */
+@keyframes spin-slow {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+@keyframes spin-reverse-slow {
+    0% { transform: rotate(360deg); }
+    100% { transform: rotate(0deg); }
+}
+@keyframes mist-flow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+.summon-circle {
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.center-abs {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.text-glow {
+    text-shadow: 0 0 20px rgba(167, 139, 250, 0.6);
+}
+.font-fantasy {
+  font-family: 'Cinzel', serif;
+}
