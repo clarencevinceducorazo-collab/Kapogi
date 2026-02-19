@@ -173,7 +173,7 @@ export function StartingScreen() {
                     KAPOGIAN
                 </h1>
                 <p className="font-headline text-xs md:text-sm tracking-[0.3em] text-violet-300/60 mt-4 uppercase">
-                    Awaken the Ancient
+                Be Pogi! Be Confident Everyday
                 </p>
             </div>
             <div className="absolute bottom-16 md:bottom-24 w-full max-w-md px-8 flex flex-col items-center gap-3 z-30">
