@@ -19,12 +19,12 @@ export function StartingScreen() {
     mainContentRef.current = document.getElementById('main-content');
     document.body.style.overflow = 'hidden';
 
-    const assets: (HTMLImageElement | HTMLVideoElement)[] = Array.from(document.querySelectorAll('img, video'));
-    const fontPromise = document.fonts.ready;
+    // Only select images, excluding videos and fonts
+    const assets: HTMLImageElement[] = Array.from(document.querySelectorAll('img'));
     let loadedCount = 0;
-    const totalAssets = assets.length + 1; // +1 for fonts
+    const totalAssets = assets.length;
 
-    if (totalAssets <= 1) {
+    if (totalAssets === 0) {
       setProgress(100);
       return;
     }
@@ -35,14 +35,11 @@ export function StartingScreen() {
       setProgress(newProgress);
     };
 
-    fontPromise.then(updateProgress);
-
     assets.forEach(asset => {
-      if ((asset as HTMLImageElement).complete || (asset as HTMLVideoElement).readyState >= 2) {
+      if (asset.complete) {
         updateProgress();
       } else {
         asset.addEventListener('load', updateProgress, { once: true });
-        asset.addEventListener('loadeddata', updateProgress, { once: true });
         asset.addEventListener('error', updateProgress, { once: true });
       }
     });
