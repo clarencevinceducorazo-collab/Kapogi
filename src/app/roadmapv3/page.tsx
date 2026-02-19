@@ -34,7 +34,7 @@ export default function RoadmapV3Page() {
     "/images/Roadmaps/static/phase3.png",
     "/images/Roadmaps/static/phase4.png",
     "/images/Roadmaps/static/expansionKapogian.png",
-    "/images/Roadmaps/static/future.png",
+    "/images/Roadmaps/static/future2.png",
   ];
 
   useEffect(() => {
@@ -254,6 +254,13 @@ export default function RoadmapV3Page() {
                 priority={activeBg === src}
               />
             ))}
+            <div
+              className={`absolute inset-0 bg-black transition-opacity duration-1000 ${
+                activeBg === "/images/Roadmaps/static/future2.png"
+                  ? "opacity-50"
+                  : "opacity-0"
+              }`}
+            ></div>
           </div>
           <div
             ref={ambientOrbRef}
