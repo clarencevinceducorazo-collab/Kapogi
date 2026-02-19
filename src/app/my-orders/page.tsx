@@ -196,10 +196,27 @@ export default function MyOrdersPage() {
 
   const getTrackingUrl = (carrier: string, trackingNumber: string) => {
     const c = carrier.toUpperCase();
-    if (c.includes('UPS')) return `https://www.ups.com/track?tracknum=${trackingNumber}`;
-    if (c.includes('FEDEX')) return `https://www.fedex.com/fedextrack/?trknbr=${trackingNumber}`;
-    if (c.includes('LBC')) return `https://www.lbcexpress.com/track/?tracking_no=${trackingNumber}`;
-    if (c.includes('J&T')) return `https://jtexpress.ph/tracking/${trackingNumber}`;
+  
+    if (c.includes('UPS'))
+      return `https://www.ups.com/track?tracknum=${trackingNumber}`;
+  
+    if (c.includes('FEDEX'))
+      return `https://www.fedex.com/fedextrack/?trknbr=${trackingNumber}`;
+  
+    if (c.includes('LBC'))
+      return `https://www.lbcexpress.com/track/?tracking_no=${trackingNumber}`;
+  
+    // Carriers that DON'T support URL autofill → use 17TRACK
+    if (
+      c.includes('J&T') ||
+      c.includes('JNT') ||
+      c.includes('SPX') ||
+      c.includes('SHOPEE') ||
+      c.includes('NINJA')
+    ) {
+      return `https://t.17track.net/en#nums=${trackingNumber}`;
+    }
+  
     return '';
   };
 
@@ -542,12 +559,26 @@ function OrderModal({
                 </div>
 
                 {trackingUrl && (
-                  <a href={trackingUrl} target="_blank" rel="noopener noreferrer">
-                    <button className="w-full py-4 bg-blue-500 text-white border-4 border-black rounded-2xl font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:-translate-y-1 active:translate-x-0 active:translate-y-0 active:shadow-none transition-all flex items-center justify-center gap-2 text-sm mt-2">
-                      External Tracking <ExternalLink size={18} />
-                    </button>
-                  </a>
-                )}
+  <button
+    onClick={async () => {
+      try {
+        // Copy tracking number
+        await navigator.clipboard.writeText(order.trackingNumber);
+
+        // Open tracking page in new tab
+        window.open(trackingUrl, '_blank', 'noopener,noreferrer');
+      } catch (err) {
+        console.error('Clipboard copy failed:', err);
+        // Still open link even if clipboard fails
+        window.open(trackingUrl, '_blank', 'noopener,noreferrer');
+      }
+    }}
+    className="w-full py-4 bg-blue-500 text-white border-4 border-black rounded-2xl font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:-translate-y-1 active:translate-x-0 active:translate-y-0 active:shadow-none transition-all flex items-center justify-center gap-2 text-sm mt-2"
+  >
+    External Tracking <ExternalLink size={18} />
+  </button>
+)}
+
               </div>
             ) : (
               <div className="text-center py-6 italic text-gray-500 font-bold uppercase text-[10px]">

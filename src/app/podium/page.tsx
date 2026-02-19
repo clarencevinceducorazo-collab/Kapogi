@@ -607,7 +607,7 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
                 {/* Main Stage Area */}
                 <div className="relative w-full flex-1 flex flex-col items-center justify-center">
                     {/* Character Image */}
-                    <div className="relative z-20 w-64 h-64 md:w-72 md:h-72 -mb-20 mix-blend-darken drop-shadow-xl">
+                    <div className="relative z-20 w-64 h-64 md:w-72 md:h-72 -mb-20 mix-blend-darken ">
                       <Image
                         src={user.avatarImage}
                         alt={user.nftName}
@@ -616,24 +616,28 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
                       />
                     </div>
 
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-72 h-32 z-0">
-                        {/* Drop Shadow */}
-                        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-64 h-8 bg-emerald-900/20 blur-xl rounded-[100%]"></div>
-                        
-                        {/* Base Structure (Cylinder Side) */}
-                        <div className="absolute top-1/2 left-[2%] w-[96%] h-full bg-gradient-to-b from-emerald-600 to-emerald-800 rounded-b-[100%] border-b border-emerald-900/30 shadow-2xl z-0"></div>
-                        
-                        {/* Top Platform (Surface) */}
-                        <div className="absolute top-0 w-full h-full bg-gradient-to-b from-emerald-400 to-emerald-500 rounded-[100%] border-[4px] border-emerald-300/50 shadow-[inset_0_10px_20px_rgba(0,0,0,0.1)] z-10 flex items-center justify-center overflow-hidden">
-                            {/* Reflection Highlight */}
-                            <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[90%] h-[40%] bg-emerald-300/40 rounded-[100%] blur-[2px]"></div>
-                            {/* Rank Number embedded */}
-                            <div className="mt-4 text-emerald-900 font-display font-bold text-7xl opacity-20 select-none mix-blend-overlay">{user.rank}</div>
-                        </div>
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-48 h-20 z-0">
+    {/* Drop Shadow */}
+    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-40 h-6 bg-emerald-900/20 blur-lg rounded-[100%]"></div>
+    
+    {/* Base Structure (Cylinder Side) */}
+    <div className="absolute top-1/2 left-[4%] w-[92%] h-full bg-gradient-to-b from-emerald-600 to-emerald-800 rounded-b-[100%] border-b border-emerald-900/30 shadow-xl z-0"></div>
+    
+    {/* Top Platform (Surface) */}
+    <div className="absolute top-0 w-full h-full bg-gradient-to-b from-emerald-400 to-emerald-500 rounded-[100%] border-[3px] border-emerald-300/50 shadow-[inset_0_6px_12px_rgba(0,0,0,0.1)] z-10 flex items-center justify-center overflow-hidden">
+        {/* Reflection Highlight */}
+        <div className="absolute top-1 left-1/2 -translate-x-1/2 w-[85%] h-[35%] bg-emerald-300/40 rounded-[100%] blur-[1px]"></div>
+        
+        {/* Rank Number embedded */}
+        <div className="mt-2 text-emerald-900 font-display font-bold text-4xl opacity-20 select-none mix-blend-overlay">
+            {user.rank}
+        </div>
+    </div>
 
-                        {/* Magical Glow Ring */}
-                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-[110%] h-[110%] border-2 border-emerald-300/30 rounded-[100%] animate-pulse z-20"></div>
-                    </div>
+    {/* Magical Glow Ring */}
+    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-[105%] h-[105%] border border-emerald-300/30 rounded-[100%] animate-pulse z-20"></div>
+</div>
+
                 </div>
 
                   {/* Name (Bottom) */}
