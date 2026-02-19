@@ -169,17 +169,17 @@ export function StartingScreen() {
                 <div className="center-abs w-[200px] h-[200px] bg-violet-600/10 blur-[60px] rounded-full animate-pulse"></div>
             </div>
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center z-30 mix-blend-screen">
-                <h1 className="font-fantasy font-extrabold text-6xl md:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-violet-100 to-violet-300 text-glow drop-shadow-2xl">
+                <h1 className="font-headline font-extrabold text-6xl md:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-violet-100 to-violet-300 text-glow drop-shadow-2xl">
                     KAPOGIAN
                 </h1>
-                <p className="font-fantasy text-xs md:text-sm tracking-[0.3em] text-violet-300/60 mt-4 uppercase">
+                <p className="font-headline text-xs md:text-sm tracking-[0.3em] text-violet-300/60 mt-4 uppercase">
                     Awaken the Ancient
                 </p>
             </div>
             <div className="absolute bottom-16 md:bottom-24 w-full max-w-md px-8 flex flex-col items-center gap-3 z-30">
                 <div className="w-full flex justify-between items-end mb-1">
                     <span className="text-xs font-medium text-slate-500 tracking-wider">LOADING ASSETS</span>
-                    <span ref={loadingTextRef} className="text-lg font-fantasy font-semibold text-violet-200 tabular-nums">0%</span>
+                    <span ref={loadingTextRef} className="text-lg font-headline font-semibold text-violet-200 tabular-nums">0%</span>
                 </div>
                 <div className="relative w-full h-1 bg-slate-800/50 rounded-full overflow-hidden backdrop-blur-sm border border-white/5">
                     <div ref={loadingBarRef} className="absolute top-0 left-0 h-full bg-gradient-to-r from-violet-600 via-blue-400 to-white rounded-full w-0 transition-all duration-100 ease-out"></div>
