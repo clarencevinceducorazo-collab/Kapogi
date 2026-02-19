@@ -19,33 +19,41 @@ export function StartingScreen() {
     mainContentRef.current = document.getElementById('main-content');
     document.body.style.overflow = 'hidden';
 
-    // Only select images, excluding videos and fonts
-    const assets: HTMLImageElement[] = Array.from(document.querySelectorAll('img'));
-    let loadedCount = 0;
-    const totalAssets = assets.length;
+    let fakeProgressInterval: NodeJS.Timeout;
 
-    if (totalAssets === 0) {
+    const handlePageLoaded = () => {
+      clearInterval(fakeProgressInterval);
       setProgress(100);
-      return;
-    }
-
-    const updateProgress = () => {
-      loadedCount++;
-      const newProgress = Math.min(Math.floor((loadedCount / totalAssets) * 100), 100);
-      setProgress(newProgress);
     };
 
-    assets.forEach(asset => {
-      if (asset.complete) {
-        updateProgress();
-      } else {
-        asset.addEventListener('load', updateProgress, { once: true });
-        asset.addEventListener('error', updateProgress, { once: true });
-      }
-    });
-
+    // If the window is already loaded (e.g., fast connection, cached assets), finish immediately.
+    if (document.readyState === 'complete') {
+      handlePageLoaded();
+    } else {
+      window.addEventListener('load', handlePageLoaded, { once: true });
+      
+      // This provides a better UX than a static number.
+      // It will animate up to 99% and wait for the 'load' event.
+      let currentFakeProgress = 0;
+      fakeProgressInterval = setInterval(() => {
+        setProgress(prev => {
+            if (prev >= 99) {
+                clearInterval(fakeProgressInterval);
+                return 99;
+            }
+            // Simulate a slower load in the middle
+            const increment = (prev < 60) ? Math.random() * 3 : Math.random() * 0.5;
+            return Math.min(prev + increment, 99);
+        });
+      }, 150);
+    }
+    
+    // Cleanup function to remove event listeners and intervals
     return () => {
-        document.body.style.overflow = '';
+      window.removeEventListener('load', handlePageLoaded);
+      clearInterval(fakeProgressInterval);
+      // Ensure body scroll is restored if component unmounts unexpectedly
+      document.body.style.overflow = '';
     };
   }, []);
 
@@ -150,10 +158,10 @@ export function StartingScreen() {
             <div ref={sealRef} className="relative w-[600px] h-[600px] md:w-[800px] md:h-[800px] opacity-80 scale-75 md:scale-100 transition-all duration-1000">
                 <div className="summon-circle w-full h-full border border-dashed border-slate-700/50" style={{animation: 'spin-slow 60s linear infinite'}}></div>
                 <div className="summon-circle w-[70%] h-[70%] border border-slate-600/30" style={{animation: 'spin-reverse-slow 40s linear infinite'}}>
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-950 p-2"><iconify-icon icon="solar:star-fall-linear" class="text-violet-400 text-xl"></iconify-icon></div>
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 bg-slate-950 p-2"><iconify-icon icon="solar:moon-linear" class="text-violet-400 text-xl"></iconify-icon></div>
-                    <div className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-950 p-2"><iconify-icon icon="solar:sun-2-linear" class="text-violet-400 text-xl"></iconify-icon></div>
-                    <div className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 bg-slate-950 p-2"><iconify-icon icon="solar:planet-linear" class="text-violet-400 text-xl"></iconify-icon></div>
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-950 p-2"><iconify-icon icon="solar:star-fall-linear" className="text-violet-400 text-xl"></iconify-icon></div>
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 bg-slate-950 p-2"><iconify-icon icon="solar:moon-linear" className="text-violet-400 text-xl"></iconify-icon></div>
+                    <div className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-950 p-2"><iconify-icon icon="solar:sun-2-linear" className="text-violet-400 text-xl"></iconify-icon></div>
+                    <div className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 bg-slate-950 p-2"><iconify-icon icon="solar:planet-linear" className="text-violet-400 text-xl"></iconify-icon></div>
                 </div>
                 <div className="summon-circle w-[45%] h-[45%] border border-violet-500/40 shadow-[0_0_30px_rgba(139,92,246,0.2)]" style={{animation: 'spin-slow 20s linear infinite'}}>
                     <div className="absolute inset-0 rotate-45 border border-transparent border-t-violet-400/60 border-b-violet-400/60"></div>
@@ -177,7 +185,7 @@ export function StartingScreen() {
                     <div ref={loadingBarRef} className="absolute top-0 left-0 h-full bg-gradient-to-r from-violet-600 via-blue-400 to-white rounded-full w-0 transition-all duration-100 ease-out"></div>
                 </div>
                 <div className="mt-4 flex gap-2 items-center opacity-40">
-                    <iconify-icon icon="solar:info-square-linear" class="text-slate-400"></iconify-icon>
+                    <iconify-icon icon="solar:info-square-linear" className="text-slate-400"></iconify-icon>
                     <span className="text-xs text-slate-400 font-light">Summoning spirits from the void...</span>
                 </div>
             </div>
