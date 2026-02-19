@@ -497,6 +497,38 @@
   .slide-up-delay-3 { animation: slide-in-bottom 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; animation-delay: 0.3s; }
   .slide-up-delay-4 { animation: slide-in-bottom 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; animation-delay: 0.4s; }
 
+  .squishy-btn:active {
+    transform: scale(0.95);
+  }
+
+  .shine-effect {
+      position: relative;
+      overflow: hidden;
+  }
+  .shine-effect::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,0.6), transparent);
+      transform: skewX(-20deg);
+      animation: shine-sweep 3s infinite;
+  }
+  
+  .animate-float-delayed { 
+    animation: float-delayed 7s ease-in-out infinite 1s; 
+  }
+  
+  .animate-spin-slow { 
+    animation: spin-slow 12s linear infinite; 
+  }
+  
+  .animate-blob { 
+    animation: blob-pulse 8s infinite; 
+  }
+
 }
 
 @keyframes fadeIn {
@@ -671,6 +703,22 @@
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
+
+@keyframes float-delayed {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes shine-sweep {
+    0% { left: -100%; }
+    100% { left: 200%; }
+}
+
+@keyframes blob-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+}
+
 .summon-circle {
     border-radius: 50%;
     position: absolute;

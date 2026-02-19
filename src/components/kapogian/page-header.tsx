@@ -37,6 +37,7 @@ export const PageHeader = () => {
   const navLinks = [
     { name: "HOME", href: "/" },
     { name: "SUMMON", href: "/summoning" },
+    { name: "EARN", href: "/earn" },
     {
       name: "ABOUT US",
       isDropdown: true,
