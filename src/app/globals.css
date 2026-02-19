@@ -157,11 +157,6 @@
     transform: translate(6px, 6px);
   }
 
-  .text-outline {
-    -webkit-text-stroke: 0px rgba(0, 0, 0, 0);
-    text-shadow: 0px 0px 0px #000;
-  }
-
   .sticker-cut {
     filter: drop-shadow(0px 4px 0px rgba(0, 0, 0, 0.2));
     @apply transition-transform;
@@ -259,10 +254,6 @@
     z-index: -1;
   }
 
-  .hover-fill-button:hover::before {
-    height: 100%;
-  }
-
   .hover-fill-button .button-text {
     background-image: linear-gradient(transparent 50%, hsl(var(--brand-yellow)) 50%);
     background-clip: text;
@@ -282,7 +273,7 @@
   }
 
   .whitepaper-content h2 {
-    @apply font-headline text-2xl mt-6 mb-2 text-[hsl(var(--brand-yellow))] text-outline;
+    @apply font-headline text-2xl mt-6 mb-2 text-[hsl(var(--brand-yellow))];
   }
 
   .whitepaper-content h3 {
