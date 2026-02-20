@@ -23,7 +23,7 @@ declare global {
 export default function EarnPage() {
     return (
         <>
-            <div className="bg-gradient-to-b from-sky-200 via-indigo-50 to-white text-slate-700 overflow-x-hidden selection:bg-pink-300 selection:text-white" style={{fontFamily: "'Nunito', sans-serif"}}>
+            <div className="bg-gradient-to-b from-sky-200 via-indigo-50 to-white text-slate-700 overflow-x-hidden selection:bg-pink-300 selection:text-white">
                 
                 <PageHeader />
 
