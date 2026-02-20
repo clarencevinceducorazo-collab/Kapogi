@@ -1,18 +1,31 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
+
+// I have to define IconifyIcon for typescript since it's not a standard element
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'iconify-icon': React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      > & {
+        icon: string;
+        width?: string;
+        class?: string;
+      };
+    }
+  }
+}
 
 export function StartingScreen() {
   const [isFinishing, setIsFinishing] = useState(false);
   const [progress, setProgress] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const loadingBarRef = useRef<HTMLDivElement>(null);
-  const loadingTextRef = useRef<HTMLSpanElement>(null);
-  const sealRef = useRef<HTMLDivElement>(null);
+  const loadingUiRef = useRef<HTMLDivElement>(null); 
   const whiteFlashRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const particleContainerRef = useRef<HTMLDivElement>(null);
   const mainContentRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -26,14 +39,11 @@ export function StartingScreen() {
       setProgress(100);
     };
 
-    // If the window is already loaded (e.g., fast connection, cached assets), finish immediately.
     if (document.readyState === 'complete') {
       handlePageLoaded();
     } else {
       window.addEventListener('load', handlePageLoaded, { once: true });
       
-      // This provides a better UX than a static number.
-      // It will animate up to 99% and wait for the 'load' event.
       let currentFakeProgress = 0;
       fakeProgressInterval = setInterval(() => {
         setProgress(prev => {
@@ -41,156 +51,122 @@ export function StartingScreen() {
                 clearInterval(fakeProgressInterval);
                 return 99;
             }
-            // Simulate a slower load in the middle
             const increment = (prev < 60) ? Math.random() * 3 : Math.random() * 0.5;
             return Math.min(prev + increment, 99);
         });
       }, 150);
     }
     
-    // Cleanup function to remove event listeners and intervals
     return () => {
       window.removeEventListener('load', handlePageLoaded);
       clearInterval(fakeProgressInterval);
-      // Ensure body scroll is restored if component unmounts unexpectedly
-      document.body.style.overflow = '';
-    };
-  }, []);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    let w = window.innerWidth;
-    let h = window.innerHeight;
-    const setCanvasSize = () => {
-      canvas.width = w = window.innerWidth;
-      canvas.height = h = window.innerHeight;
-    };
-    setCanvasSize();
-    window.addEventListener('resize', setCanvasSize);
-
-    const drawLightning = () => {
-      if (Math.random() > 0.95 || !ctx) return;
-      ctx.strokeStyle = `rgba(167, 139, 250, ${Math.random() * 0.4 + 0.1})`;
-      ctx.lineWidth = Math.random() * 2;
-      ctx.beginPath();
-      let x = Math.random() * w;
-      let y = 0;
-      ctx.moveTo(x, y);
-      while (y < h) {
-        x += (Math.random() - 0.5) * 50;
-        y += Math.random() * 20 + 10;
-        ctx.lineTo(x, y);
+      if (document.body) {
+        document.body.style.overflow = '';
       }
-      ctx.stroke();
-      setTimeout(() => ctx.clearRect(0, 0, w, h), 100);
-    };
-    const lightningInterval = setInterval(drawLightning, 50);
-
-    const particleContainer = particleContainerRef.current;
-    const particleColors = ['rgba(139, 92, 246, ', 'rgba(59, 130, 246, ', 'rgba(255, 255, 255, '];
-    const createParticle = () => {
-      if (!particleContainer) return;
-      const p = document.createElement('div');
-      p.className = 'particle';
-      const size = Math.random() * 4 + 1;
-      p.style.cssText = `
-        position: absolute; border-radius: 50%; pointer-events: none;
-        width: ${size}px; height: ${size}px; left: ${Math.random() * 100}%; bottom: -10px;
-        background: ${particleColors[Math.floor(Math.random() * particleColors.length)]}${Math.random() * 0.5 + 0.1});
-        box-shadow: 0 0 ${size * 2}px ${particleColors[0]}0.4);
-        animation: float-up ${Math.random() * 3 + 2}s linear forwards;
-      `;
-      particleContainer.appendChild(p);
-      setTimeout(() => p.remove(), (Math.random() * 3 + 2) * 1000);
-    };
-    const particleInterval = setInterval(createParticle, 50);
-
-    return () => {
-      window.removeEventListener('resize', setCanvasSize);
-      clearInterval(lightningInterval);
-      clearInterval(particleInterval);
     };
   }, []);
-  
-  useEffect(() => {
-    if (loadingBarRef.current) loadingBarRef.current.style.width = `${progress}%`;
-    if (loadingTextRef.current) loadingTextRef.current.innerText = `${Math.floor(progress)}%`;
 
+  useEffect(() => {
+    // This effect handles the final animation sequence
     if (progress >= 100 && !isFinishing) {
       setIsFinishing(true);
+
+      // Hide the loading bar UI first
+      if (loadingUiRef.current) {
+          loadingUiRef.current.style.transition = 'opacity 0.5s ease-out';
+          loadingUiRef.current.style.opacity = '0';
+      }
+
+      // Start the flash effect after a short delay
       setTimeout(() => {
-        if (sealRef.current) {
-          sealRef.current.style.transition = 'transform 0.5s ease-in, opacity 0.5s ease-in, filter 0.5s ease-in';
-          sealRef.current.style.transform = 'translate(-50%, -50%) scale(2.5)';
-          sealRef.current.style.opacity = '0';
-          sealRef.current.style.filter = 'brightness(500%) drop-shadow(0 0 100px white)';
+        if (whiteFlashRef.current) {
+            whiteFlashRef.current.style.opacity = '1';
         }
+        
+        // After the flash, reveal the main content and hide the loading screen
         setTimeout(() => {
-          if (whiteFlashRef.current) whiteFlashRef.current.style.opacity = '1';
-          setTimeout(() => {
-            if (mainContentRef.current) mainContentRef.current.style.opacity = '1';
+          if (mainContentRef.current) {
+            mainContentRef.current.style.opacity = '1';
+          }
+          if (document.body) {
             document.body.style.overflow = '';
-            if (containerRef.current) {
-              containerRef.current.style.opacity = '0';
-              containerRef.current.style.pointerEvents = 'none';
+          }
+          if (containerRef.current) {
+            containerRef.current.style.opacity = '0';
+            containerRef.current.style.pointerEvents = 'none';
+          }
+
+          // Fade the flash out
+          setTimeout(() => {
+            if (whiteFlashRef.current) {
+                whiteFlashRef.current.style.opacity = '0';
             }
-            setTimeout(() => {
-              if (whiteFlashRef.current) whiteFlashRef.current.style.opacity = '0';
-            }, 200);
-          }, 800);
-        }, 400);
-      }, 500);
+          }, 200);
+
+        }, 800); // Duration of the white flash
+      }, 500); // Delay before flashing
     }
   }, [progress, isFinishing]);
 
   return (
-      <div ref={containerRef} className="fixed inset-0 z-[1000] flex flex-col items-center justify-center overflow-hidden bg-slate-950 transition-opacity duration-500">
+    <div ref={containerRef} className="fixed inset-0 z-[1000] overflow-hidden bg-gradient-to-b from-sky-200 via-indigo-50 to-white text-slate-700 font-body">
         <div ref={whiteFlashRef} className="fixed inset-0 z-[100] bg-white pointer-events-none opacity-0 transition-opacity duration-[1500ms] ease-out"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-violet-950/40 via-slate-950/80 to-slate-950 z-0"></div>
-        <div className="absolute inset-0 opacity-30 mix-blend-screen bg-[url('https://grainy-gradients.vercel.app/noise.svg')] z-0"></div>
-        <div className="absolute inset-0 z-1 opacity-20 bg-gradient-to-r from-transparent via-violet-900/20 to-transparent" style={{animation: 'mist-flow 10s ease-in-out infinite'}}></div>
-        <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full pointer-events-none z-10 opacity-40"></canvas>
-        <div className="relative z-20 flex flex-col items-center justify-center w-full h-full">
-            <div ref={sealRef} className="relative w-[600px] h-[600px] md:w-[800px] md:h-[800px] opacity-80 scale-75 md:scale-100 transition-all duration-1000">
-                <div className="summon-circle w-full h-full border border-dashed border-slate-700/50" style={{animation: 'spin-slow 60s linear infinite'}}></div>
-                <div className="summon-circle w-[70%] h-[70%] border border-slate-600/30" style={{animation: 'spin-reverse-slow 40s linear infinite'}}>
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-950 p-2"><iconify-icon icon="solar:star-fall-linear" className="text-violet-400 text-xl"></iconify-icon></div>
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 bg-slate-950 p-2"><iconify-icon icon="solar:moon-linear" className="text-violet-400 text-xl"></iconify-icon></div>
-                    <div className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-950 p-2"><iconify-icon icon="solar:sun-2-linear" className="text-violet-400 text-xl"></iconify-icon></div>
-                    <div className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 bg-slate-950 p-2"><iconify-icon icon="solar:planet-linear" className="text-violet-400 text-xl"></iconify-icon></div>
+        
+        {/* Floating Background Elements */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+            <div className="absolute top-10 left-10 w-64 h-64 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+            <div className="absolute top-10 right-10 w-64 h-64 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" style={{animationDelay: '2s'}}></div>
+            <div className="absolute -bottom-32 left-20 w-80 h-80 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" style={{animationDelay: '4s'}}></div>
+            
+            <iconify-icon icon="solar:cloud-bold" className="absolute top-20 left-[10%] text-white opacity-40 text-9xl animate-float-delayed"></iconify-icon>
+            <iconify-icon icon="solar:cloud-bold" className="absolute top-40 right-[15%] text-white opacity-30 text-8xl animate-float"></iconify-icon>
+        </div>
+
+        <section id="hero" className="relative z-10 min-h-screen flex flex-col justify-center items-center text-center pt-24 pb-12 px-4">
+            <div className="flex gap-4 mb-6 animate-float">
+                <div className="bg-yellow-300 text-yellow-900 px-4 py-1.5 rounded-full font-extrabold text-xs tracking-wide transform -rotate-3 border-2 border-white shadow-md">
+                    ✨ GENERATE LIVE
                 </div>
-                <div className="summon-circle w-[45%] h-[45%] border border-violet-500/40 shadow-[0_0_30px_rgba(139,92,246,0.2)]" style={{animation: 'spin-slow 20s linear infinite'}}>
-                    <div className="absolute inset-0 rotate-45 border border-transparent border-t-violet-400/60 border-b-violet-400/60"></div>
+                <div className="bg-green-300 text-green-900 px-4 py-1.5 rounded-full font-extrabold text-xs tracking-wide transform rotate-2 border-2 border-white shadow-md">
+                    🎮 PLAY NOW
                 </div>
-                <div className="center-abs w-[200px] h-[200px] bg-violet-600/10 blur-[60px] rounded-full animate-pulse"></div>
             </div>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center z-30 mix-blend-screen">
-                <h1 className="font-headline font-extrabold text-6xl md:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-violet-100 to-violet-300 text-glow drop-shadow-2xl">
-                    KAPOGIAN
-                </h1>
-                <p className="font-headline text-xs md:text-sm tracking-[0.3em] text-violet-300/60 mt-4 uppercase">
-                Be Pogi! Be Confident Everyday
+
+            <h1 className="text-6xl md:text-8xl font-black text-white mb-6 tracking-tight leading-none drop-shadow-xl text-outline relative group cursor-default">
+                KAPOGIAN
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600 mt-2 pb-4">
+                    UNIVERSE
+                </span>
+            </h1>
+
+            <p className="text-lg md:text-xl font-bold text-slate-500 max-w-2xl mb-10 leading-relaxed">
+                The cutest Phygital experience on-chain. Collect vinyl-style NFTs,
+                battle in Biringan, and farm for real yield.
+            </p>
+
+            <div ref={loadingUiRef} className="w-full max-w-md mx-auto mt-4 transition-opacity duration-500">
+                <div className="glass-panel rounded-full p-1 shadow-lg">
+                    <div className="relative h-3 rounded-full bg-white/60 overflow-hidden">
+                        <div className="absolute inset-0 loading-bar rounded-full"></div>
+                    </div>
+                </div>
+                <p className="mt-3 text-xs font-extrabold tracking-widest uppercase text-slate-500">
+                    Loading Kapogian Universe…
                 </p>
             </div>
-            <div className="absolute bottom-16 md:bottom-24 w-full max-w-md px-8 flex flex-col items-center gap-3 z-30">
-                <div className="w-full flex justify-between items-end mb-1">
-                    <span className="text-xs font-medium text-slate-500 tracking-wider">LOADING ASSETS</span>
-                    <span ref={loadingTextRef} className="text-lg font-headline font-semibold text-violet-200 tabular-nums">0%</span>
-                </div>
-                <div className="relative w-full h-1 bg-slate-800/50 rounded-full overflow-hidden backdrop-blur-sm border border-white/5">
-                    <div ref={loadingBarRef} className="absolute top-0 left-0 h-full bg-gradient-to-r from-violet-600 via-blue-400 to-white rounded-full w-0 transition-all duration-100 ease-out"></div>
-                </div>
-                <div className="mt-4 flex gap-2 items-center opacity-40">
-                    <iconify-icon icon="solar:info-square-linear" className="text-slate-400"></iconify-icon>
-                    <span className="text-xs text-slate-400 font-light">Summoning spirits from the void...</span>
-                </div>
-            </div>
+        </section>
+        
+        <div className="w-full overflow-hidden leading-[0] absolute bottom-0">
+            <svg
+                className="relative block w-[calc(100%+1.3px)] h-[100px]"
+                data-name="Layer 1"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 1200 120"
+                preserveAspectRatio="none"
+            >
+                <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" className="fill-white"></path>
+            </svg>
         </div>
-        <div ref={particleContainerRef} className="absolute inset-0 overflow-hidden pointer-events-none z-10"></div>
-      </div>
+    </div>
   );
 }
