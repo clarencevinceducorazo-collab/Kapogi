@@ -46,7 +46,7 @@ import {
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { uploadCharacterToIPFS, unpinFromIPFS } from "@/lib/pinata";
-import { mintCharacterNFT } from "@/lib/sui";
+import { mintCharacterNFT, getAdminRegistryInfo } from "@/lib/sui";
 import { ENCRYPTION_CONFIG } from "@/lib/constants";
 import { CustomConnectButton } from "@/components/kapogian/CustomConnectButton";
 import {
@@ -215,6 +215,19 @@ export default function GeneratorPage() {
   const [showExitLoader, setShowExitLoader] = useState(false);
   const [minting, setMinting] = useState(false);
   const [error, setError] = useState("");
+  
+  const [mintPaused, setMintPaused] = useState(false);
+  const [pauseReason, setPauseReason] = useState('');
+
+  useEffect(() => {
+    getAdminRegistryInfo().then((info) => {
+      if (info) {
+        setMintPaused(info.mintPaused);
+        setPauseReason(info.pauseReason);
+      }
+    });
+  }, []);
+
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
 
   // New design state
@@ -1671,344 +1684,368 @@ export default function GeneratorPage() {
                     />
                   </div>
                 </header>
-                <div className="min-h-screen text-slate-900 font-sans p-4 md:p-8">
-                  <header className="max-w-6xl mx-auto text-center mb-10">
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <div className="bg-yellow-400 p-1.5 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                        <Sparkles size={24} strokeWidth={2.5} />
+                {mintPaused ? (
+                  <div className="min-h-screen flex items-center justify-center p-8">
+                    <div className="flex flex-col items-center justify-center text-center max-w-md">
+                      <div className="bg-yellow-400 border-4 border-black rounded-full p-6 mb-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+                        </svg>
                       </div>
-                      <h1 className="text-3xl font-black uppercase tracking-tighter text-black">
-                        Kapogian Spirit Summoner
-                      </h1>
+                      <h2 className="text-4xl font-black uppercase tracking-tighter mb-3">
+                        Under Maintenance
+                      </h2>
+                      <div className="bg-black text-yellow-400 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-6 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                        Summoning Paused
+                      </div>
+                      <p className="font-bold text-slate-600 text-lg leading-relaxed mb-4">
+                        {pauseReason || 'The summoning ritual is temporarily on hold. Our spirit engineers are working on it.'}
+                      </p>
+                      <p className="text-sm font-medium text-slate-400">
+                        Please check back soon. Your spirits await! 🌀
+                      </p>
                     </div>
-                    <p className="text-slate-500 font-medium tracking-tight">
-                      Fine-tune the essence of your summoned guardian.
-                    </p>
-                  </header>
-
-                  <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                    <section className="lg:col-span-4 space-y-6 flex flex-col h-fit">
-                      <div className="bg-white border-4 border-black p-6 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-[150px]">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Dna size={20} className="text-blue-600" />
-                          <h2 className="font-bold text-lg uppercase tracking-tight">
-                            Spirit Lineage
-                          </h2>
+                  </div>
+                ) : (
+                  <div className="min-h-screen text-slate-900 font-sans p-4 md:p-8">
+                    <header className="max-w-6xl mx-auto text-center mb-10">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <div className="bg-yellow-400 p-1.5 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                          <Sparkles size={24} strokeWidth={2.5} />
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          {lineages.map((l) => (
-                            <button
-                              key={l.name}
-                              onClick={() => setLineage(l.name)}
-                              className={`py-1 px-1 rounded-xl border-2 font-black text-xs uppercase transition-all ${
-                                lineage === l.name
-                                  ? `${l.color} text-white border-black shadow-[0_4px_0_0_rgba(0,0,0,1)] -translate-y-0.5`
-                                  : "bg-slate-50 text-slate-400 border-slate-200 hover:border-slate-300 active:translate-y-0"
-                              }`}
-                            >
-                              {l.name}
-                            </button>
-                          ))}
-                        </div>
+                        <h1 className="text-3xl font-black uppercase tracking-tighter text-black">
+                          Kapogian Spirit Summoner
+                        </h1>
                       </div>
+                      <p className="text-slate-500 font-medium tracking-tight">
+                        Fine-tune the essence of your summoned guardian.
+                      </p>
+                    </header>
 
-                      <div className="bg-white border-4 border-black p-6 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                        <div className="flex items-center gap-2 mb-4 h-[0px]">
-                          <User size={20} className="text-purple-600" />
-                          <h2 className="font-bold text-lg uppercase tracking-tight">
-                            Identity
-                          </h2>
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="Leave blank for random..."
-                          value={characterName}
-                          onChange={(e) => setCharacterName(e.target.value)}
-                          className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-4 font-bold outline-none focus:border-purple-400 focus:bg-white transition-all shadow-inner"
-                        />
-                      </div>
-
-                      <div className="bg-white border-4 border-black p-4 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-[250px] flex flex-col justify-between">
-                        {/* Header: Reduced margin-bottom */}
-                        <div className="flex items-center gap-2 mb-2">
-                          <Crown size={20} className="text-yellow-600" />
-                          <h2 className="font-bold text-lg uppercase tracking-tight">
-                            Enchantments
-                          </h2>
-                        </div>
-
-                        {/* Controls Container: Reduced space-y and padding */}
-                        <div className="-space-y-6  flex-1 flex flex-col justify-center">
-                          <EnchantmentControl
-                            label="Cuteness"
-                            value={stats.cuteness}
-                            color="bg-pink-400"
-                            onChange={(v) =>
-                              setStats({ ...stats, cuteness: v })
-                            }
-                          />
-                          <EnchantmentControl
-                            label="Confidence"
-                            value={stats.confidence}
-                            color="bg-blue-400"
-                            onChange={(v) =>
-                              setStats({ ...stats, confidence: v })
-                            }
-                          />
-                          <EnchantmentControl
-                            label="Tili Factor"
-                            value={stats.tiliFactor}
-                            color="bg-orange-400"
-                            onChange={(v) =>
-                              setStats({ ...stats, tiliFactor: v })
-                            }
-                          />
-                        </div>
-                      </div>
-
-                      <div className="bg-white border-4 border-black p-4 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-[250px] flex flex-col justify-between">
-                        {/* Header: Reduced margin-bottom */}
-                        <div className="flex items-center gap-2 mb-2">
-                          <Crown size={20} className="text-red-600" />
-                          <h2 className="font-bold text-lg uppercase tracking-tight">
-                            Regions
-                          </h2>
-                        </div>
-
-                        {/* Controls Container: Reduced space-y and padding */}
-                        <div className="-space-y-6  flex-1 flex flex-col justify-center">
-                          <EnchantmentControl
-                            label="Luzon"
-                            value={stats.luzon}
-                            color="bg-red-400"
-                            onChange={(v) => setStats({ ...stats, luzon: v })}
-                          />
-                          <EnchantmentControl
-                            label="Visayas"
-                            value={stats.visayas}
-                            color="bg-blue-400"
-                            onChange={(v) => setStats({ ...stats, visayas: v })}
-                          />
-                          <EnchantmentControl
-                            label="Mindanao"
-                            value={stats.mindanao}
-                            color="bg-yellow-400"
-                            onChange={(v) =>
-                              setStats({ ...stats, mindanao: v })
-                            }
-                          />
-                        </div>
-                      </div>
-                    </section>
-
-                    <section className="lg:col-span-8 flex flex-col">
-                      <div className="bg-[#E6F4F1] border-4 border-black p-8 rounded-[2.5rem] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-1 flex flex-col">
-                        <div className="flex items-center justify-between mb-8">
-                          <div className="flex items-center gap-2">
-                            <Palette size={24} className="text-emerald-600" />
-                            <h2 className="font-black text-2xl uppercase tracking-tighter italic">
-                              Porma Designer
+                    <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                      <section className="lg:col-span-4 space-y-6 flex flex-col h-fit">
+                        <div className="bg-white border-4 border-black p-6 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-[150px]">
+                          <div className="flex items-center gap-2 mb-4">
+                            <Dna size={20} className="text-blue-600" />
+                            <h2 className="font-bold text-lg uppercase tracking-tight">
+                              Spirit Lineage
                             </h2>
                           </div>
-                          <div className="bg-white px-3 py-1 border-2 border-black rounded-full text-[10px] font-black uppercase shadow-[2px_2px_0_0_#000]">
-                            V5.0 Dynamic
+                          <div className="grid grid-cols-2 gap-2">
+                            {lineages.map((l) => (
+                              <button
+                                key={l.name}
+                                onClick={() => setLineage(l.name)}
+                                className={`py-1 px-1 rounded-xl border-2 font-black text-xs uppercase transition-all ${
+                                  lineage === l.name
+                                    ? `${l.color} text-white border-black shadow-[0_4px_0_0_rgba(0,0,0,1)] -translate-y-0.5`
+                                    : "bg-slate-50 text-slate-400 border-slate-200 hover:border-slate-300 active:translate-y-0"
+                                }`}
+                              >
+                                {l.name}
+                              </button>
+                            ))}
                           </div>
                         </div>
 
-                        <div className="flex-1 flex flex-col justify-between">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                            <CarouselSelector
-                              label="Outfit Style"
-                              options={clothingOptions}
-                              currentIndex={outfitIndex}
-                              onPrev={handlePrevOutfit}
-                              onNext={handleNextOutfit}
-                            />
-                            <CarouselSelector
-                              label="Posture & Stance"
-                              options={postureOptions}
-                              currentIndex={postureIndex}
-                              onPrev={handlePrevPosture}
-                              onNext={handleNextPosture}
-                            />
+                        <div className="bg-white border-4 border-black p-6 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                          <div className="flex items-center gap-2 mb-4 h-[0px]">
+                            <User size={20} className="text-purple-600" />
+                            <h2 className="font-bold text-lg uppercase tracking-tight">
+                              Identity
+                            </h2>
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Leave blank for random..."
+                            value={characterName}
+                            onChange={(e) => setCharacterName(e.target.value)}
+                            className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-4 font-bold outline-none focus:border-purple-400 focus:bg-white transition-all shadow-inner"
+                          />
+                        </div>
+
+                        <div className="bg-white border-4 border-black p-4 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-[250px] flex flex-col justify-between">
+                          {/* Header: Reduced margin-bottom */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <Crown size={20} className="text-yellow-600" />
+                            <h2 className="font-bold text-lg uppercase tracking-tight">
+                              Enchantments
+                            </h2>
                           </div>
 
-                          <div className="bg-white border-2 border-black rounded-3xl p-6 mb-8 grid grid-cols-1 md:grid-cols-2 gap-10">
-                            <div className="space-y-6">
-                              <div className="space-y-2">
-                                <label className="text-xs font-black uppercase text-slate-500 flex items-center gap-2">
-                                  <Palette size={14} /> Hair Color
-                                </label>
-                                <div className="flex gap-4 items-center">
-                                  <input
-                                    type="color"
-                                    value={attributes.hairColor}
-                                    onChange={(e) =>
+                          {/* Controls Container: Reduced space-y and padding */}
+                          <div className="-space-y-6  flex-1 flex flex-col justify-center">
+                            <EnchantmentControl
+                              label="Cuteness"
+                              value={stats.cuteness}
+                              color="bg-pink-400"
+                              onChange={(v) =>
+                                setStats({ ...stats, cuteness: v })
+                              }
+                            />
+                            <EnchantmentControl
+                              label="Confidence"
+                              value={stats.confidence}
+                              color="bg-blue-400"
+                              onChange={(v) =>
+                                setStats({ ...stats, confidence: v })
+                              }
+                            />
+                            <EnchantmentControl
+                              label="Tili Factor"
+                              value={stats.tiliFactor}
+                              color="bg-orange-400"
+                              onChange={(v) =>
+                                setStats({ ...stats, tiliFactor: v })
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div className="bg-white border-4 border-black p-4 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-[250px] flex flex-col justify-between">
+                          {/* Header: Reduced margin-bottom */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <Crown size={20} className="text-red-600" />
+                            <h2 className="font-bold text-lg uppercase tracking-tight">
+                              Regions
+                            </h2>
+                          </div>
+
+                          {/* Controls Container: Reduced space-y and padding */}
+                          <div className="-space-y-6  flex-1 flex flex-col justify-center">
+                            <EnchantmentControl
+                              label="Luzon"
+                              value={stats.luzon}
+                              color="bg-red-400"
+                              onChange={(v) => setStats({ ...stats, luzon: v })}
+                            />
+                            <EnchantmentControl
+                              label="Visayas"
+                              value={stats.visayas}
+                              color="bg-blue-400"
+                              onChange={(v) => setStats({ ...stats, visayas: v })}
+                            />
+                            <EnchantmentControl
+                              label="Mindanao"
+                              value={stats.mindanao}
+                              color="bg-yellow-400"
+                              onChange={(v) =>
+                                setStats({ ...stats, mindanao: v })
+                              }
+                            />
+                          </div>
+                        </div>
+                      </section>
+
+                      <section className="lg:col-span-8 flex flex-col">
+                        <div className="bg-[#E6F4F1] border-4 border-black p-8 rounded-[2.5rem] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-1 flex flex-col">
+                          <div className="flex items-center justify-between mb-8">
+                            <div className="flex items-center gap-2">
+                              <Palette size={24} className="text-emerald-600" />
+                              <h2 className="font-black text-2xl uppercase tracking-tighter italic">
+                                Porma Designer
+                              </h2>
+                            </div>
+                            <div className="bg-white px-3 py-1 border-2 border-black rounded-full text-[10px] font-black uppercase shadow-[2px_2px_0_0_#000]">
+                              V5.0 Dynamic
+                            </div>
+                          </div>
+
+                          <div className="flex-1 flex flex-col justify-between">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                              <CarouselSelector
+                                label="Outfit Style"
+                                options={clothingOptions}
+                                currentIndex={outfitIndex}
+                                onPrev={handlePrevOutfit}
+                                onNext={handleNextOutfit}
+                              />
+                              <CarouselSelector
+                                label="Posture & Stance"
+                                options={postureOptions}
+                                currentIndex={postureIndex}
+                                onPrev={handlePrevPosture}
+                                onNext={handleNextPosture}
+                              />
+                            </div>
+
+                            <div className="bg-white border-2 border-black rounded-3xl p-6 mb-8 grid grid-cols-1 md:grid-cols-2 gap-10">
+                              <div className="space-y-6">
+                                <div className="space-y-2">
+                                  <label className="text-xs font-black uppercase text-slate-500 flex items-center gap-2">
+                                    <Palette size={14} /> Hair Color
+                                  </label>
+                                  <div className="flex gap-4 items-center">
+                                    <input
+                                      type="color"
+                                      value={attributes.hairColor}
+                                      onChange={(e) =>
+                                        setAttributes({
+                                          ...attributes,
+                                          hairColor: e.target.value,
+                                        })
+                                      }
+                                      className="w-16 h-10 cursor-pointer appearance-none bg-transparent border-2 border-black rounded-full overflow-hidden shadow-[4px_4px_0_0_#000] transition-transform hover:scale-105 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none
+                                      [&::-webkit-color-swatch-wrapper]:p-0 
+                                      [&::-webkit-color-swatch]:border-none 
+                                      [&::-moz-color-swatch]:border-none"
+                                    />
+                                    <div className="flex-1 bg-slate-50 border-2 border-black/10 rounded-xl px-3 py-2 font-mono text-xs font-bold uppercase text-center">
+                                      {attributes.hairColor}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <label className="text-xs font-black uppercase text-slate-500 flex items-center gap-2">
+                                    <Scissors size={14} /> Hair Style Amount
+                                  </label>
+                                  <CustomSlider
+                                    value={attributes.hairAmount}
+                                    customStyle={{
+                                      backgroundColor: attributes.hairColor,
+                                    }}
+                                    onChange={(v) =>
                                       setAttributes({
                                         ...attributes,
-                                        hairColor: e.target.value,
+                                        hairAmount: v,
                                       })
                                     }
-                                    className="w-16 h-10 cursor-pointer appearance-none bg-transparent border-2 border-black rounded-full overflow-hidden shadow-[4px_4px_0_0_#000] transition-transform hover:scale-105 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none
-                                    [&::-webkit-color-swatch-wrapper]:p-0 
-                                    [&::-webkit-color-swatch]:border-none 
-                                    [&::-moz-color-swatch]:border-none"
                                   />
-                                  <div className="flex-1 bg-slate-50 border-2 border-black/10 rounded-xl px-3 py-2 font-mono text-xs font-bold uppercase text-center">
-                                    {attributes.hairColor}
-                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs font-black uppercase text-slate-500 flex items-center gap-2">
+                                    Facial Hair
+                                  </label>
+                                  <CustomSlider
+                                    value={attributes.facialHair}
+                                    color="bg-slate-400"
+                                    onChange={(v) =>
+                                      setAttributes({
+                                        ...attributes,
+                                        facialHair: v,
+                                      })
+                                    }
+                                  />
                                 </div>
                               </div>
 
-                              <div className="space-y-2">
-                                <label className="text-xs font-black uppercase text-slate-500 flex items-center gap-2">
-                                  <Scissors size={14} /> Hair Style Amount
+                              <div className="space-y-4">
+                                <label className="text-xs font-black uppercase text-slate-500">
+                                  Skin Tone (Light → Dark)
                                 </label>
-                                <CustomSlider
-                                  value={attributes.hairAmount}
-                                  customStyle={{
-                                    backgroundColor: attributes.hairColor,
-                                  }}
-                                  onChange={(v) =>
-                                    setAttributes({
-                                      ...attributes,
-                                      hairAmount: v,
-                                    })
-                                  }
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <label className="text-xs font-black uppercase text-slate-500 flex items-center gap-2">
-                                  Facial Hair
-                                </label>
-                                <CustomSlider
-                                  value={attributes.facialHair}
-                                  color="bg-slate-400"
-                                  onChange={(v) =>
-                                    setAttributes({
-                                      ...attributes,
-                                      facialHair: v,
-                                    })
-                                  }
-                                />
+                                <div className="grid grid-cols-5 gap-2 p-2 bg-slate-50 border-2 border-black/10 rounded-2xl">
+                                  {skinTones.map((tone) => (
+                                    <button
+                                      key={tone}
+                                      onClick={() =>
+                                        setAttributes({
+                                          ...attributes,
+                                          skinTone: tone,
+                                        })
+                                      }
+                                      className={`h-10 rounded-lg border-2 transition-all ${attributes.skinTone === tone ? "border-black scale-[1.15] shadow-[2px_2px_0_0_#000] z-10" : "border-transparent opacity-60 hover:opacity-100"}`}
+                                      style={{ backgroundColor: tone }}
+                                    />
+                                  ))}
+                                </div>
+                                <div className="space-y-2 pt-2">
+                                  <label className="text-xs font-black uppercase text-slate-500 flex items-center gap-2">
+                                    <Eye size={14} /> Eyewear
+                                  </label>
+                                  <CustomSlider
+                                    value={attributes.eyewear}
+                                    color="bg-sky-400"
+                                    onChange={(v) =>
+                                      setAttributes({ ...attributes, eyewear: v })
+                                    }
+                                  />
+                                </div>
                               </div>
                             </div>
 
-                            <div className="space-y-4">
-                              <label className="text-xs font-black uppercase text-slate-500">
-                                Skin Tone (Light → Dark)
-                              </label>
-                              <div className="grid grid-cols-5 gap-2 p-2 bg-slate-50 border-2 border-black/10 rounded-2xl">
-                                {skinTones.map((tone) => (
-                                  <button
-                                    key={tone}
-                                    onClick={() =>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                              <div className="space-y-4">
+                                <label className="text-xs font-black uppercase text-slate-500">
+                                  Body Mass Ratio
+                                </label>
+                                <CustomSlider
+                                  value={attributes.bodyFat}
+                                  color="bg-emerald-400"
+                                  onChange={(v) =>
+                                    setAttributes({ ...attributes, bodyFat: v })
+                                  }
+                                />
+                              </div>
+                              <div className="space-y-3">
+                                <label className="text-xs font-black uppercase text-slate-500">
+                                  Ritual Item
+                                </label>
+                                <div className="relative">
+                                  <select
+                                    value={attributes.heldItem}
+                                    onChange={(e) =>
                                       setAttributes({
                                         ...attributes,
-                                        skinTone: tone,
+                                        heldItem: e.target.value,
                                       })
                                     }
-                                    className={`h-10 rounded-lg border-2 transition-all ${attributes.skinTone === tone ? "border-black scale-[1.15] shadow-[2px_2px_0_0_#000] z-10" : "border-transparent opacity-60 hover:opacity-100"}`}
-                                    style={{ backgroundColor: tone }}
+                                    className="w-full bg-white border-2 border-black rounded-xl p-3 font-black text-sm appearance-none outline-none shadow-[3px_3px_0_0_#000] focus:translate-y-[-2px] focus:shadow-[5px_5px_0_0_#000] transition-all"
+                                  >
+                                    {items.map((item) => (
+                                      <option key={item} value={item}>
+                                        {item}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <ChevronDown
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
+                                    size={16}
                                   />
-                                ))}
-                              </div>
-                              <div className="space-y-2 pt-2">
-                                <label className="text-xs font-black uppercase text-slate-500 flex items-center gap-2">
-                                  <Eye size={14} /> Eyewear
-                                </label>
-                                <CustomSlider
-                                  value={attributes.eyewear}
-                                  color="bg-sky-400"
-                                  onChange={(v) =>
-                                    setAttributes({ ...attributes, eyewear: v })
-                                  }
-                                />
+                                </div>
                               </div>
                             </div>
                           </div>
+                        </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-4">
-                              <label className="text-xs font-black uppercase text-slate-500">
-                                Body Mass Ratio
-                              </label>
-                              <CustomSlider
-                                value={attributes.bodyFat}
-                                color="bg-emerald-400"
-                                onChange={(v) =>
-                                  setAttributes({ ...attributes, bodyFat: v })
+                        <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                          <button
+                            onClick={handleShuffle}
+                            className="flex-1 flex items-center justify-center gap-3 bg-white hover:bg-slate-50 border-4 border-black p-6 rounded-[2rem] font-black text-xl uppercase shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                          >
+                            <Shuffle size={24} strokeWidth={3} />
+                            Randomize
+                          </button>
+                          <button
+                            onClick={handleGenerate}
+                            disabled={loading}
+                            className={`flex-[1.5] flex items-center justify-center gap-3 ${loading ? "bg-emerald-200" : "bg-yellow-400 hover:bg-yellow-300"} border-4 border-black p-6 rounded-[2rem] font-black text-2xl uppercase shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all group`}
+                          >
+                            {loading ? (
+                              <LoaderCircle className="w-8 h-8 animate-spin" />
+                            ) : (
+                              <Sparkles
+                                size={28}
+                                strokeWidth={3}
+                                className={
+                                  loading
+                                    ? ""
+                                    : "group-hover:rotate-12 transition-transform"
                                 }
                               />
-                            </div>
-                            <div className="space-y-3">
-                              <label className="text-xs font-black uppercase text-slate-500">
-                                Ritual Item
-                              </label>
-                              <div className="relative">
-                                <select
-                                  value={attributes.heldItem}
-                                  onChange={(e) =>
-                                    setAttributes({
-                                      ...attributes,
-                                      heldItem: e.target.value,
-                                    })
-                                  }
-                                  className="w-full bg-white border-2 border-black rounded-xl p-3 font-black text-sm appearance-none outline-none shadow-[3px_3px_0_0_#000] focus:translate-y-[-2px] focus:shadow-[5px_5px_0_0_#000] transition-all"
-                                >
-                                  {items.map((item) => (
-                                    <option key={item} value={item}>
-                                      {item}
-                                    </option>
-                                  ))}
-                                </select>
-                                <ChevronDown
-                                  className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
-                                  size={16}
-                                />
-                              </div>
-                            </div>
+                            )}
+                            {loading ? "Summoning..." : "Summon Spirit"}
+                          </button>
+                        </div>
+                        {error && (
+                          <div className="mt-4 text-sm text-center bg-red-100 p-3 rounded-lg border border-red-300 text-red-700">
+                            {error}
                           </div>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                        <button
-                          onClick={handleShuffle}
-                          className="flex-1 flex items-center justify-center gap-3 bg-white hover:bg-slate-50 border-4 border-black p-6 rounded-[2rem] font-black text-xl uppercase shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
-                        >
-                          <Shuffle size={24} strokeWidth={3} />
-                          Randomize
-                        </button>
-                        <button
-                          onClick={handleGenerate}
-                          disabled={loading}
-                          className={`flex-[1.5] flex items-center justify-center gap-3 ${loading ? "bg-emerald-200" : "bg-yellow-400 hover:bg-yellow-300"} border-4 border-black p-6 rounded-[2rem] font-black text-2xl uppercase shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all group`}
-                        >
-                          {loading ? (
-                            <LoaderCircle className="w-8 h-8 animate-spin" />
-                          ) : (
-                            <Sparkles
-                              size={28}
-                              strokeWidth={3}
-                              className={
-                                loading
-                                  ? ""
-                                  : "group-hover:rotate-12 transition-transform"
-                              }
-                            />
-                          )}
-                          {loading ? "Summoning..." : "Summon Spirit"}
-                        </button>
-                      </div>
-                      {error && (
-                        <div className="mt-4 text-sm text-center bg-red-100 p-3 rounded-lg border border-red-300 text-red-700">
-                          {error}
-                        </div>
-                      )}
-                    </section>
-                  </main>
-                </div>
+                        )}
+                      </section>
+                    </main>
+                  </div>
+                )}
               </div>
             </section>
             <section
