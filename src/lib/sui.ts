@@ -1,3 +1,4 @@
+
 /**
  * SUI Blockchain Utilities
  */
@@ -248,6 +249,7 @@ export async function mintCharacterNFT(params: {
   encryptionPubkey: string;
   walletAddress: string;
   signAndExecute: any;
+  totalPrice: number;
 }) {
   try {
     const tx = new Transaction();
@@ -262,7 +264,7 @@ export async function mintCharacterNFT(params: {
 
     const kioskCapObject = ownedObjects.data.find((obj) => obj.data);
 
-    const [coin] = tx.splitCoins(tx.gas, [tx.pure.u64(PRICING.BASE_MINT)]);
+    const [coin] = tx.splitCoins(tx.gas, [tx.pure.u64(params.totalPrice)]);
     const clock = tx.object('0x6');
     const mintCounter = tx.object(CONTRACT_ADDRESSES.MINT_COUNTER_ID);
     const transferPolicy = tx.object(CONTRACT_ADDRESSES.TRANSFER_POLICY_ID);

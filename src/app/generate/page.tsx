@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -47,7 +48,7 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { uploadCharacterToIPFS, unpinFromIPFS } from "@/lib/pinata";
 import { mintCharacterNFT, getAdminRegistryInfo } from "@/lib/sui";
-import { ENCRYPTION_CONFIG } from "@/lib/constants";
+import { ENCRYPTION_CONFIG, PRICING, mistToSui } from "@/lib/constants";
 import { CustomConnectButton } from "@/components/kapogian/CustomConnectButton";
 import {
   encryptShippingInfo,
@@ -394,6 +395,10 @@ export default function GeneratorPage() {
   const [generatedNamesHistory, setGeneratedNamesHistory] = useState<string[]>(
     [],
   );
+
+  const totalPrice = useMemo(() => {
+    return selection === "Bundle" ? PRICING.TOTAL_BUNDLE : PRICING.BASE_MINT;
+  }, [selection]);
 
   const displayedLore = useTypewriter(generatedLore || "", 20);
 
@@ -1152,6 +1157,7 @@ export default function GeneratorPage() {
         encryptedShippingInfo: encryptedString,
         encryptionPubkey: ENCRYPTION_CONFIG.adminPublicKey,
         walletAddress: account.address,
+        totalPrice,
         signAndExecute,
       });
       console.log("✅ Mint successful!", result);
@@ -1576,7 +1582,7 @@ export default function GeneratorPage() {
               <h2 className="text-2xl font-bold uppercase tracking-tight">
                 {product.name}
               </h2>
-              <span className="text-lg font-bold">10 SUI</span>
+              <span className="text-lg font-bold">{mistToSui(PRICING.BASE_MINT)} SUI</span>
             </div>
             <div className="space-y-4">
               {product.colors.length > 0 && (
@@ -2349,7 +2355,7 @@ export default function GeneratorPage() {
                     </div>
                   </div>
                   <div className="bg-black text-white px-6 py-2 rounded-full text-sm font-bold uppercase tracking-tight whitespace-nowrap">
-                    Upgrade Bundle
+                    UPGRADE BUNDLE (+{mistToSui(PRICING.BUNDLE_UPGRADE)} SUI)
                   </div>
                 </div>
               </div>
@@ -2526,7 +2532,7 @@ export default function GeneratorPage() {
                   ) : (
                     <Truck className="w-6 h-6" />
                   )}
-                  {minting ? "Minting & Shipping..." : "Ship It"}
+                  {minting ? "Minting & Shipping..." : `Ship It for ${mistToSui(totalPrice)} SUI`}
                 </button>
                 {error && (
                   <div className="mt-4 text-sm text-center bg-red-100 p-3 rounded-lg border border-red-300 text-red-700">
@@ -2586,7 +2592,7 @@ export default function GeneratorPage() {
                   </div>
                   <div className="flex justify-between text-xl font-bold mt-2 pt-2 border-t-2 border-black">
                     <span>Total</span>
-                    <span>10 SUI</span>
+                    <span>{mistToSui(totalPrice)} SUI</span>
                   </div>
                 </div>
 
