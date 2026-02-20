@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/sheet";
 import { Menu, ChevronDown } from "lucide-react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
-import { ADMIN_ADDRESS } from "@/lib/constants";
+import { checkIsAdmin, checkIsSuperAdmin  } from "@/lib/sui";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,10 +30,23 @@ import {
 
 export const PageHeader = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const account = useCurrentAccount();
-  const isAdmin = account?.address === ADMIN_ADDRESS;
 
-  // PROFILE removed from here to prevent duplication
+  useEffect(() => {
+    if (!account?.address) {
+      setIsAdmin(false);
+      return;
+    }
+    // Show ADMIN link if whitelisted admin OR super admin cap holder
+    Promise.all([
+      checkIsAdmin(account.address),
+      checkIsSuperAdmin(account.address),
+    ]).then(([admin, superAdmin]) => {
+      setIsAdmin(admin || superAdmin);
+    }).catch(() => setIsAdmin(false));
+  }, [account?.address]);
+
   const navLinks = [
     { name: "HOME", href: "/" },
     { name: "SUMMON", href: "/summoning" },
@@ -77,7 +90,7 @@ export const PageHeader = () => {
                 <DropdownMenu key={link.name}>
                   <DropdownMenuTrigger
                     className="flex items-center gap-1 transition-colors hover:text-accent/80 focus:outline-none"
-                    style={{ fontSize: "16px" }} // Paragraph font size
+                    style={{ fontSize: "16px" }}
                   >
                     {link.name}
                     <ChevronDown className="h-4 w-4" />
@@ -152,7 +165,6 @@ export const PageHeader = () => {
                               key={link.name}
                               className="border-b-primary-foreground/20"
                             >
-                              {/* H3 for Section Headers in Mobile Menu */}
                               <AccordionTrigger
                                 className="font-bold transition-colors hover:text-accent py-4 justify-center"
                                 style={{ fontSize: "24px" }}
@@ -186,6 +198,17 @@ export const PageHeader = () => {
                               </Link>
                             </SheetClose>
                           ),
+                        )}
+                        {isAdmin && (
+                          <SheetClose asChild>
+                            <Link
+                              href="/admin"
+                              className="py-4 font-bold transition-colors hover:text-accent flex justify-center w-full"
+                              style={{ fontSize: "24px" }}
+                            >
+                              ADMIN
+                            </Link>
+                          </SheetClose>
                         )}
                       </Accordion>
                     </nav>

@@ -7,18 +7,18 @@ export const CONTRACT_ADDRESSES = {
   PACKAGE_ID: process.env.NEXT_PUBLIC_PACKAGE_ID!,
   MINT_COUNTER_ID: process.env.NEXT_PUBLIC_MINT_COUNTER_ID!,
   RECEIPT_REGISTRY_ID: process.env.NEXT_PUBLIC_RECEIPT_REGISTRY_ID!,
-  ADMIN_CAP_ID: process.env.NEXT_PUBLIC_ADMIN_CAP_ID!,
-  TREASURY_WALLET: process.env.NEXT_PUBLIC_TREASURY_WALLET!,
   TRANSFER_POLICY_ID: process.env.NEXT_PUBLIC_TRANSFER_POLICY_ID!,
   COLLECTION_METADATA_ID: process.env.NEXT_PUBLIC_COLLECTION_METADATA_ID!,
+  // NEW: replaces ADMIN_CAP_ID
+  ADMIN_REGISTRY_ID: process.env.NEXT_PUBLIC_ADMIN_REGISTRY_ID!,
+  TREASURY_CONFIG_ID: process.env.NEXT_PUBLIC_TREASURY_CONFIG_ID!,
 };
-export const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_TREASURY_WALLET!;
 
 // Pricing (in MIST: 1 SUI = 1,000,000,000 MIST)
 export const PRICING = {
-  BASE_MINT: 20_000_000, // 20 SUI
-  BUNDLE_UPGRADE: 10_000_000, // 10 SUI
-  TOTAL_BUNDLE: 30_000_000, // 30 SUI
+  BASE_MINT: 20_000_000_000,   // 20 SUI
+  BUNDLE_UPGRADE: 10_000_000_000, // 10 SUI
+  TOTAL_BUNDLE: 30_000_000_000,   // 30 SUI
 };
 
 // Module names
@@ -57,19 +57,14 @@ export const NETWORK_CONFIG = {
   rpcUrl: process.env.NEXT_PUBLIC_SUI_RPC_URL || 'https://fullnode.testnet.sui.io:443',
 };
 
-// IPFS Configuration - FIXED to use all Pinata environment variables properly
+// IPFS Configuration
 export const IPFS_CONFIG = {
-  // API credentials (for uploading)
   apiKey: process.env.NEXT_PUBLIC_PINATA_API_KEY || '',
   apiSecret: process.env.NEXT_PUBLIC_PINATA_API_SECRET || '',
   jwt: process.env.NEXT_PUBLIC_PINATA_JWT || '',
-  
-  // Gateway configuration (for accessing files)
   gateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY || 'https://nft.kapogian.xyz/ipfs/',
   gatewayUrl: process.env.NEXT_PUBLIC_PINATA_GATEWAY_URL || 'https://nft.kapogian.xyz',
   gatewayKey: process.env.NEXT_PUBLIC_PINATA_GATEWAY_KEY || '',
-  
-  // Group/folder organization (FIXED: added NEXT_PUBLIC prefix)
   groupId: process.env.NEXT_PUBLIC_PINATA_GROUP_KAPOGIAN || '',
 };
 
@@ -84,17 +79,14 @@ export const GEMINI_CONFIG = {
   textApiUrl: process.env.NEXT_PUBLIC_GEMINI_TEXT_API!,
 };
 
-// Helper function to convert SUI to MIST
 export function suiToMist(sui: number): number {
   return sui * 1_000_000_000;
 }
 
-// Helper function to convert MIST to SUI
 export function mistToSui(mist: number): number {
   return mist / 1_000_000_000;
 }
 
-// Helper to format SUI amount for display
 export function formatSui(mist: number): string {
   return `${mistToSui(mist).toFixed(2)} SUI`;
 }
