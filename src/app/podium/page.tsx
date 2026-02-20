@@ -511,46 +511,45 @@ export default function PodiumPage() {
 
 function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isOpen: boolean, onClose: () => void }) {
   const [mmr, setMmr] = useState(0);
+  const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      // Reset animations
       setMmr(0);
-      const bars = document.querySelectorAll('.progress-bar');
-      bars.forEach(bar => {
-        (bar as HTMLElement).style.width = '0%';
-        setTimeout(() => {
-          (bar as HTMLElement).style.width = (bar as HTMLElement).dataset.width || '0%';
-        }, 500);
-      });
+      setAnimate(false);
+      
+      // Small timeout to trigger CSS transitions after mount
+      const timeout = setTimeout(() => setAnimate(true), 100);
 
       // Count up animation
       let start = 0;
       const end = user.mmrScore;
       if (start === end) return;
+      
       const duration = 1500;
       const range = end - start;
-      let current = start;
-      const increment = end > start ? 1 : -1;
-      const stepTime = Math.abs(Math.floor(duration / range));
+      const stepTime = Math.max(Math.abs(Math.floor(duration / range)), 1);
+      
       const timer = setInterval(() => {
-        current += increment;
-        const newMmr = Math.round(current * (Math.random() * (1.2 - 0.8) + 0.8)); // Add some randomness
-        if (newMmr < end) {
-          setMmr(newMmr);
-        } else {
+        start += Math.ceil(range / 60); // Smoother increments
+        if (start >= end) {
           setMmr(end);
           clearInterval(timer);
+        } else {
+          setMmr(start);
         }
-      }, stepTime > 0 ? stepTime : 1);
-      return () => clearInterval(timer);
+      }, 16); // ~60fps
+
+      return () => {
+        clearInterval(timer);
+        clearTimeout(timeout);
+      };
     }
   }, [isOpen, user.mmrScore]);
 
-
   const rankInfo = useMemo(() => {
     const rank = user.attributes?.rank || 'Spirit Seed';
-    const ranks: {[key: string]: { style: string, icon: string }} = {
+    const ranks: { [key: string]: { style: string, icon: string } } = {
       "Kapogian Ascendant": { style: "text-purple-400", icon: "solar:crown-star-bold-duotone" },
       "Master Rancher": { style: "text-purple-400", icon: "solar:crown-star-bold-duotone" },
       "Generational Tycoon": { style: "text-yellow-500", icon: "solar:crown-star-linear" },
@@ -573,11 +572,10 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
     return ranks[rank] || ranks['Spirit Seed'];
   }, [user.attributes?.rank]);
 
-
   const traits = [
     { label: "Style", value: user.attributes?.clothingStyle, icon: "solar:t-shirt-linear" },
-    { label: "Hair", value: `${'\'\'\''}{user.attributes?.hairAmount}% Fluff`, icon: "solar:user-hand-up-linear" },
-    { label: "Face", value: `${'\'\'\''}{user.attributes?.facialHair}% Stubble`, icon: "solar:emoji-funny-circle-linear" },
+    { label: "Hair", value: user.attributes?.hairAmount ? `${user.attributes.hairAmount}% Fluff` : null, icon: "solar:user-hand-up-linear" },
+    { label: "Face", value: user.attributes?.facialHair ? `${user.attributes.facialHair}% Stubble` : null, icon: "solar:emoji-funny-circle-linear" },
     { label: "Eyewear", value: user.attributes?.eyewear > 50 ? 'Yes' : 'None', icon: "solar:glasses-linear" },
     { label: "Held", value: user.attributes?.heldItem, icon: "solar:cup-linear" },
   ].filter(t => t.value);
@@ -616,156 +614,167 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
                       />
                     </div>
 
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-48 h-20 z-0">
-    {/* Drop Shadow */}
-    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-40 h-6 bg-emerald-900/20 blur-lg rounded-[100%]"></div>
-    
-    {/* Base Structure (Cylinder Side) */}
-    <div className="absolute top-1/2 left-[4%] w-[92%] h-full bg-gradient-to-b from-emerald-600 to-emerald-800 rounded-b-[100%] border-b border-emerald-900/30 shadow-xl z-0"></div>
-    
-    {/* Top Platform (Surface) */}
-    <div className="absolute top-0 w-full h-full bg-gradient-to-b from-emerald-400 to-emerald-500 rounded-[100%] border-[3px] border-emerald-300/50 shadow-[inset_0_6px_12px_rgba(0,0,0,0.1)] z-10 flex items-center justify-center overflow-hidden">
-        {/* Reflection Highlight */}
-        <div className="absolute top-1 left-1/2 -translate-x-1/2 w-[85%] h-[35%] bg-emerald-300/40 rounded-[100%] blur-[1px]"></div>
-        
-        {/* Rank Number embedded */}
-        <div className="mt-2 text-emerald-900 font-display font-bold text-4xl opacity-20 select-none mix-blend-overlay">
-            {user.rank}
-        </div>
-    </div>
+                    <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-48 h-20 z-0">
+                    {/* Drop Shadow */}
+                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-40 h-6 bg-emerald-900/20 blur-lg rounded-[100%]"></div>
+                    
+                    {/* Base Structure (Cylinder Side) */}
+                    <div className="absolute top-1/2 left-[4%] w-[92%] h-full bg-gradient-to-b from-emerald-600 to-emerald-800 rounded-b-[100%] border-b border-emerald-900/30 shadow-xl z-0"></div>
+                    
+                    {/* Top Platform (Surface) */}
+                    <div className="absolute top-0 w-full h-full bg-gradient-to-b from-emerald-400 to-emerald-500 rounded-[100%] border-[3px] border-emerald-300/50 shadow-[inset_0_6px_12px_rgba(0,0,0,0.1)] z-10 flex items-center justify-center overflow-hidden">
+                        {/* Reflection Highlight */}
+                        <div className="absolute top-1 left-1/2 -translate-x-1/2 w-[85%] h-[35%] bg-emerald-300/40 rounded-[100%] blur-[1px]"></div>
+                        
+                        {/* Rank Number embedded */}
+                        <div className="mt-2 text-emerald-900 font-display font-bold text-4xl opacity-20 select-none mix-blend-overlay">
+                            {user.rank}
+                        </div>
+                    </div>
 
-    {/* Magical Glow Ring */}
-    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-[105%] h-[105%] border border-emerald-300/30 rounded-[100%] animate-pulse z-20"></div>
-</div>
+                    {/* Magical Glow Ring */}
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-[105%] h-[105%] border border-emerald-300/30 rounded-[100%] animate-pulse z-20"></div>
+                </div>
 
                 </div>
 
                   {/* Name (Bottom) */}
-                  <div className="slide-up-delay-2 text-center z-20">
-                      <h1 className="text-2xl md:text-3xl font-display font-semibold text-slate-900 tracking-tight leading-none mb-1">
-                          {user.nftName}
-                      </h1>
-                      <div className="flex items-center justify-center gap-2 text-slate-500 text-sm">
-                          <iconify-icon icon="solar:users-group-rounded-linear" class="text-lg"></iconify-icon>
-                          <span>Lineage: <strong className="text-orange-500 drop-shadow-sm font-semibold">{user.lineage}</strong></span>
-                      </div>
-                  </div>
+              <div className="text-center z-20">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight mb-2">
+                {user.nftName}
+              </h1>
+              <div className="flex items-center justify-center gap-2 text-slate-500 text-sm bg-white/50 py-1 px-4 rounded-full backdrop-blur-sm border border-white/50">
+                <iconify-icon icon="solar:users-group-rounded-linear" />
+                <span>Lineage: <strong className="text-orange-600">{user.lineage}</strong></span>
+              </div>
             </div>
+          </div>
 
             {/* Right Side */}
-            <div className="w-full md:w-[65%] bg-white/95 backdrop-blur-md flex flex-col h-full max-h-[90vh] md:max-h-[600px] overflow-hidden">
-              <div className="overflow-y-auto p-6 md:p-8 space-y-6 md:space-y-8 hide-scrollbar">
-                
-                {/* Header */}
-                <div className="flex justify-between items-center gap-4 border-b border-slate-100 pb-6 slide-up-delay-1">
-                    
+            <div className="w-full md:w-[60%] flex flex-col h-full bg-white">
+            <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 custom-scrollbar">
+              
+              {/* MMR Header */}
+              <div className="flex justify-between items-center border-b border-slate-50 pb-6">
+                <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl w-full border border-slate-100 shadow-sm">
+                  <div className="w-12 h-12 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-blue-200 shadow-lg">
+                    <iconify-icon icon="solar:graph-up-linear" class="text-2xl" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Global MMR Rating</p>
+                    <p className="text-2xl font-black text-slate-800">{mmr.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
 
-                    <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-2xl border border-slate-100/50 shadow-sm">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-                            <iconify-icon icon="solar:graph-up-linear" class="text-xl"></iconify-icon>
-                        </div>
-                        <div>
-                            <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">MMR Rating</p>
-                            <p className="text-xl font-bold text-slate-800 tracking-tight">{mmr.toLocaleString()}</p>
-                        </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-5">
+                  <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <iconify-icon icon="solar:magic-stick-3-linear" class="text-lg text-blue-500" />
+                    Core Skills
+                  </h3>
+                  
+                  {[
+                    { label: "Cuteness", val: user.attributes?.cuteness, color: "bg-pink-400" },
+                    { label: "Confidence", val: user.attributes?.confidence, color: "bg-indigo-400" },
+                    { label: "Tili Factor", val: user.attributes?.tiliFactor, color: "bg-amber-400" }
+                  ].map(skill => (
+                    <div key={skill.label}>
+                      <div className="flex justify-between text-xs font-bold mb-1.5 text-slate-600">
+                        <span>{skill.label}</span>
+                        <span className="text-slate-400">{skill.val || 0}%</span>
+                      </div>
+                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div 
+                          className={cn("h-full rounded-full transition-all duration-1000 ease-out", skill.color)}
+                          style={{ width: animate ? `${skill.val || 0}%` : '0%' }}
+                        />
+                      </div>
                     </div>
+                  ))}
                 </div>
 
-                {/* Skills & Region Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 slide-up-delay-2">
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                            <iconify-icon icon="solar:magic-stick-3-linear" class="text-lg"></iconify-icon>
-                            Core Skills
-                        </h3>
-                        
-                        <div className="group">
-                            <div className="flex justify-between text-sm mb-1">
-                                <span className="font-medium text-slate-700">Cuteness</span>
-                                <span className="text-slate-500 font-display">{user.attributes?.cuteness || 0}/100</span>
-                            </div>
-                            <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-pink-400 rounded-full progress-bar" data-width={`${'\'\'\''}{user.attributes?.cuteness || 0}%`}></div>
-                            </div>
-                        </div>
-
-                        <div className="group">
-                            <div className="flex justify-between text-sm mb-1">
-                                <span className="font-medium text-slate-700">Confidence</span>
-                                <span className="text-slate-500 font-display">{user.attributes?.confidence || 0}/100</span>
-                            </div>
-                            <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-indigo-400 rounded-full progress-bar" data-width={`${'\'\'\''}{user.attributes?.confidence || 0}%`}></div>
-                            </div>
-                        </div>
-
-                        <div className="group">
-                            <div className="flex justify-between text-sm mb-1">
-                                <span className="font-medium text-slate-700">Tili Factor</span>
-                                <span className="text-slate-500 font-display">{user.attributes?.tiliFactor || 0}/100</span>
-                            </div>
-                            <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-amber-400 rounded-full progress-bar" data-width={`${'\'\'\''}{user.attributes?.tiliFactor || 0}%`}></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                            <iconify-icon icon="solar:map-point-wave-linear" class="text-lg"></iconify-icon>
-                            Country Affinity
-                        </h3>
-                        <div className="flex items-end gap-3 h-[104px] pt-4">
-                            <div className="flex-1 flex flex-col justify-end group">
-                                <div className="w-full bg-emerald-100 rounded-t-lg relative progress-bar" data-height={`${'\'\'\''}{user.attributes?.luzon || 0}%`}>
-                                    <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">{user.attributes?.luzon || 0}</span>
-                                </div>
-                                <span className="text-xs text-slate-500 text-center mt-2 font-medium">Luzon</span>
-                            </div>
-                            <div className="flex-1 flex flex-col justify-end group">
-                                <div className="w-full bg-emerald-100 rounded-t-lg relative progress-bar" data-height={`${'\'\'\''}{user.attributes?.visayas || 0}%`}>
-                                     <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">{user.attributes?.visayas || 0}</span>
-                                </div>
-                                <span className="text-xs text-slate-500 text-center mt-2 font-medium">Visayas</span>
-                            </div>
-                            <div className="flex-1 flex flex-col justify-end group">
-                                <div className="w-full bg-emerald-100 rounded-t-lg relative progress-bar" data-height={`${'\'\'\''}{user.attributes?.mindanao || 0}%`}>
-                                     <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">{user.attributes?.mindanao || 0}</span>
-                                </div>
-                                <span className="text-xs text-slate-800 text-center mt-2 font-bold">Mindanao</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Traits */}
-                <div className="slide-up-delay-3 pb-2">
-                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
-                        <iconify-icon icon="solar:t-shirt-linear" class="text-lg"></iconify-icon>
-                        Visual Traits
+                {/* Country Affinity - FIXED BAR RENDERING */}
+                <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                        <iconify-icon icon="solar:map-point-wave-linear" class="text-lg"></iconify-icon>
+                        Country Affinity
                     </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {traits.map((trait) => (
-                        <div key={trait.label} className="inline-flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
-                            <iconify-icon icon={trait.icon} class="text-slate-400"></iconify-icon>
-                            <div className="flex flex-col leading-none">
-                                <span className="text-[10px] text-slate-400 uppercase font-semibold">{trait.label}</span>
-                                <span className="text-xs text-slate-700 font-medium">{trait.value}</span>
+                    <div className="flex items-end gap-3 h-[120px] pt-8"> 
+                        {[
+                            { label: "Luzon", val: user.attributes?.luzon, color: "bg-emerald-400" },
+                            { label: "Visayas", val: user.attributes?.visayas, color: "bg-emerald-400" },
+                            { label: "Mindanao", val: user.attributes?.mindanao, color: "bg-emerald-400" }
+                        ].map((region) => (
+                            <div key={region.label} className="flex-1 flex flex-col justify-end group h-full">
+                                <div className="w-full bg-slate-50 rounded-t-xl relative flex flex-col justify-end h-full overflow-visible">
+                                    
+                                    {/* THE SCORE LABEL: 
+                                        We use 'animate' to move the label from bottom to top 
+                                        simultaneously with the bar growth. 
+                                    */}
+                                    <span 
+                                        className={cn(
+                                            "absolute left-1/2 -translate-x-1/2 text-xs font-bold transition-all duration-1000 ease-out",
+                                            region.val > 0 ? "text-emerald-600 opacity-100" : "text-slate-300 opacity-50"
+                                        )}
+                                        style={{ 
+                                            // This moves the number 8px above whatever the current height is
+                                            bottom: `calc(${animate ? (region.val || 0) : 0}% + 8px)`,
+                                            zIndex: 10 
+                                        }}
+                                    >
+                                        {region.val || 0}
+                                    </span>
+
+                                    {/* THE ANIMATED BAR:
+                                        Changed style from fixed '0%' to use the 'animate' state.
+                                    */}
+                                    <div 
+                                        className={cn(
+                                            "w-full rounded-t-xl transition-all duration-1000 ease-out", 
+                                            region.color
+                                        )}
+                                        style={{ height: animate ? `${region.val || 0}%` : '0%' }} 
+                                    />
+                                </div>
+                                
+                                <span className="text-[10px] text-slate-500 text-center mt-3 font-bold uppercase tracking-tighter">
+                                    {region.label}
+                                </span>
                             </div>
-                        </div>
-                      ))}
+                        ))}
                     </div>
+                </div></div>
+
+              {/* Visual Traits */}
+              <div className="pt-4">
+                <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-4">
+                  <iconify-icon icon="solar:t-shirt-linear" class="text-lg text-orange-500" />
+                  Visual Traits
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {traits.map((trait) => (
+                    <div key={trait.label} className="flex items-center gap-3 px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-2xl hover:bg-slate-100 transition-colors">
+                      <iconify-icon icon={trait.icon} class="text-xl text-slate-400" />
+                      <div className="flex flex-col">
+                        <span className="text-[9px] text-slate-400 uppercase font-black leading-tight">{trait.label}</span>
+                        <span className="text-xs text-slate-700 font-bold">{trait.value}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              </div>
 
               </div>
 
               {/* Footer */}
-              <div className="p-6 border-t border-slate-100 flex justify-end items-center bg-slate-50/50 slide-up-delay-4">
-                <button 
-                  onClick={onClose}
-                  className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-2">
-                    <span>Close</span>
-                </button>
+            <div className="p-6 border-t border-slate-100 flex justify-end bg-slate-50/50">
+              <button 
+                onClick={onClose}
+                className="bg-slate-900 hover:bg-black text-white px-8 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg hover:shadow-xl active:scale-95">
+                Close Profile
+              </button>
             </div>
 
             </div>
@@ -774,5 +783,3 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
      </Dialog>
   )
 }
-
-    
