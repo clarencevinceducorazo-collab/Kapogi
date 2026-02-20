@@ -47,8 +47,8 @@ import {
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { uploadCharacterToIPFS, unpinFromIPFS } from "@/lib/pinata";
-import { mintCharacterNFT, getAdminRegistryInfo } from "@/lib/sui";
-import { ENCRYPTION_CONFIG, PRICING, mistToSui } from "@/lib/constants";
+import { mintCharacterNFT, getAdminRegistryInfo, getTreasuryConfigInfo } from "@/lib/sui";
+import { ENCRYPTION_CONFIG, mistToSui } from "@/lib/constants";
 import { CustomConnectButton } from "@/components/kapogian/CustomConnectButton";
 import {
   encryptShippingInfo,
@@ -220,12 +220,27 @@ export default function GeneratorPage() {
   const [mintPaused, setMintPaused] = useState(false);
   const [pauseReason, setPauseReason] = useState('');
 
+  const [pricing, setPricing] = useState<{ base: number; bundle: number; totalBundle: number } | null>(null);
+  const [pricingLoading, setPricingLoading] = useState(true);
+
   useEffect(() => {
-    getAdminRegistryInfo().then((info) => {
-      if (info) {
-        setMintPaused(info.mintPaused);
-        setPauseReason(info.pauseReason);
+    Promise.all([
+      getAdminRegistryInfo(),
+      getTreasuryConfigInfo(),
+    ]).then(([adminInfo, pricingInfo]) => {
+      if (adminInfo) {
+        setMintPaused(adminInfo.mintPaused);
+        setPauseReason(adminInfo.pauseReason);
       }
+      if (pricingInfo) {
+        setPricing({
+          base: pricingInfo.baseMintPrice,
+          bundle: pricingInfo.bundleUpgradePrice,
+          totalBundle: pricingInfo.baseMintPrice + pricingInfo.bundleUpgradePrice,
+        });
+      }
+    }).finally(() => {
+      setPricingLoading(false);
     });
   }, []);
 
@@ -397,8 +412,9 @@ export default function GeneratorPage() {
   );
 
   const totalPrice = useMemo(() => {
-    return selection === "Bundle" ? PRICING.TOTAL_BUNDLE : PRICING.BASE_MINT;
-  }, [selection]);
+    if (!pricing) return 0;
+    return selection === "Bundle" ? pricing.totalBundle : pricing.base;
+  }, [selection, pricing]);
 
   const displayedLore = useTypewriter(generatedLore || "", 20);
 
@@ -1059,6 +1075,11 @@ export default function GeneratorPage() {
       setError("Wallet not connected or address is missing.");
       return;
     }
+    if (!pricing) {
+      setError("Prices are still loading. Please wait a moment.");
+      setMinting(false);
+      return;
+    }
 
     if (!generatedImageBlob && !eggRank) {
       setError("Character data is missing.");
@@ -1582,7 +1603,9 @@ export default function GeneratorPage() {
               <h2 className="text-2xl font-bold uppercase tracking-tight">
                 {product.name}
               </h2>
-              <span className="text-lg font-bold">{mistToSui(PRICING.BASE_MINT)} SUI</span>
+              <span className="text-lg font-bold">
+                {pricingLoading ? '...' : mistToSui(pricing?.base ?? 0)} SUI
+              </span>
             </div>
             <div className="space-y-4">
               {product.colors.length > 0 && (
@@ -2355,7 +2378,7 @@ export default function GeneratorPage() {
                     </div>
                   </div>
                   <div className="bg-black text-white px-6 py-2 rounded-full text-sm font-bold uppercase tracking-tight whitespace-nowrap">
-                    UPGRADE BUNDLE (+{mistToSui(PRICING.BUNDLE_UPGRADE)} SUI)
+                    UPGRADE BUNDLE (+{pricingLoading ? '...' : mistToSui(pricing?.bundle ?? 0)} SUI)
                   </div>
                 </div>
               </div>
@@ -2524,7 +2547,7 @@ export default function GeneratorPage() {
 
                 <button
                   onClick={handleMint}
-                  disabled={minting}
+                  disabled={minting || pricingLoading}
                   className="mt-8 w-full bg-blue-500 text-white border-4 border-black rounded-xl py-3 text-xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hard-shadow-hover transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {minting ? (
@@ -2532,7 +2555,7 @@ export default function GeneratorPage() {
                   ) : (
                     <Truck className="w-6 h-6" />
                   )}
-                  {minting ? "Minting & Shipping..." : `Ship It for ${mistToSui(totalPrice)} SUI`}
+                  {minting ? "Minting & Shipping..." : `Ship It for ${pricingLoading ? '...' : mistToSui(totalPrice)} SUI`}
                 </button>
                 {error && (
                   <div className="mt-4 text-sm text-center bg-red-100 p-3 rounded-lg border border-red-300 text-red-700">
@@ -2592,7 +2615,7 @@ export default function GeneratorPage() {
                   </div>
                   <div className="flex justify-between text-xl font-bold mt-2 pt-2 border-t-2 border-black">
                     <span>Total</span>
-                    <span>{mistToSui(totalPrice)} SUI</span>
+                    <span>{pricingLoading ? '...' : mistToSui(totalPrice)} SUI</span>
                   </div>
                 </div>
 
@@ -2624,3 +2647,5 @@ export default function GeneratorPage() {
     </>
   );
 }
+
+    
