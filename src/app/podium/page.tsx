@@ -380,6 +380,7 @@ export default function PodiumPage() {
 
   return (
     <>
+      <Script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js" />
       <PageHeader />
       <div className="text-slate-600 antialiased min-h-screen bg-slate-50">
         <main className="flex-1 max-w-5xl mx-auto w-full px-4 pb-24 pt-32">
@@ -602,41 +603,52 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
                       </h2>
                   </div>
 
-                {/* Main Stage Area */}
-                <div className="relative w-full flex-1 flex flex-col items-center justify-center">
-                    {/* Character Image */}
-                    <div className="relative z-20 w-64 h-64 md:w-72 md:h-72 -mb-20 mix-blend-darken ">
-                      <Image
-                        src={user.avatarImage}
-                        alt={user.nftName}
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
+                  {/* Main Stage Area */}
+                  <div className="relative w-full flex-1 flex flex-col items-center justify-center">
+                      
+                      {/* Character Image - Boosted Z-Index and removed mix-blend */}
+                      <div 
+                          className={cn(
+                              "relative z-30 w-64 h-64 md:w-72 md:h-72 -mb-20 transition-all duration-700 ease-out",
+                              // 'multiply' is the industry standard for hiding white backgrounds
+                              "mix-blend-multiply" 
+                          )}
+                          style={{ 
+                              transform: animate 
+                                  ? (user.mmrScore > 1200 ? 'translateY(-5px)' : 'translateY(-10px)') 
+                                  : 'translateY(0px)' 
+                          }}
+                      >
+                          <Image
+                              src={user.avatarImage}
+                              alt={user.nftName}
+                              fill
+                              className="object-contain"
+                          />
+                      </div>
 
-                    <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-48 h-20 z-0">
-                    {/* Drop Shadow */}
-                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-40 h-6 bg-emerald-900/20 blur-lg rounded-[100%]"></div>
-                    
-                    {/* Base Structure (Cylinder Side) */}
-                    <div className="absolute top-1/2 left-[4%] w-[92%] h-full bg-gradient-to-b from-emerald-600 to-emerald-800 rounded-b-[100%] border-b border-emerald-900/30 shadow-xl z-0"></div>
-                    
-                    {/* Top Platform (Surface) */}
-                    <div className="absolute top-0 w-full h-full bg-gradient-to-b from-emerald-400 to-emerald-500 rounded-[100%] border-[3px] border-emerald-300/50 shadow-[inset_0_6px_12px_rgba(0,0,0,0.1)] z-10 flex items-center justify-center overflow-hidden">
-                        {/* Reflection Highlight */}
-                        <div className="absolute top-1 left-1/2 -translate-x-1/2 w-[85%] h-[35%] bg-emerald-300/40 rounded-[100%] blur-[1px]"></div>
-                        
-                        {/* Rank Number embedded */}
-                        <div className="mt-2 text-emerald-900 font-display font-bold text-4xl opacity-20 select-none mix-blend-overlay">
-                            {user.rank}
-                        </div>
-                    </div>
+                      {/* Podium Container - Kept at z-0 */}
+                      <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-48 h-20 z-0">
+                          
+                          {/* Drop Shadow */}
+                          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-40 h-6 bg-emerald-900/20 blur-lg rounded-[100%]"></div>
+                          
+                          {/* Base Structure */}
+                          <div className="absolute top-1/2 left-[4%] w-[92%] h-full bg-gradient-to-b from-emerald-600 to-emerald-800 rounded-b-[100%] border-b border-emerald-900/30 shadow-xl z-0"></div>
+                          
+                          {/* Top Platform (Surface) */}
+                          <div className="absolute top-0 w-full h-full bg-gradient-to-b from-emerald-400 to-emerald-500 rounded-[100%] border-[3px] border-emerald-300/50 shadow-[inset_0_6px_12px_rgba(0,0,0,0.1)] z-10 flex items-center justify-center overflow-hidden">
+                              <div className="absolute top-1 left-1/2 -translate-x-1/2 w-[85%] h-[35%] bg-emerald-300/40 rounded-[100%] blur-[1px]"></div>
+                              
+                              <div className="mt-2 text-emerald-900 font-display font-bold text-4xl opacity-20 select-none mix-blend-overlay">
+                                  {user.rank}
+                              </div>
+                          </div>
 
-                    {/* Magical Glow Ring */}
-                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-[105%] h-[105%] border border-emerald-300/30 rounded-[100%] animate-pulse z-20"></div>
-                </div>
-
-                </div>
+                          {/* Magical Glow Ring - Set to z-20 so it is above podium but BELOW character */}
+                          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-[105%] h-[105%] border border-emerald-300/30 rounded-[100%] animate-pulse z-20"></div>
+                      </div>
+                  </div>
 
                   {/* Name (Bottom) */}
               <div className="text-center z-20">
@@ -747,24 +759,36 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser, isO
                     </div>
                 </div></div>
 
-              {/* Visual Traits */}
-              <div className="pt-4">
-                <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-4">
-                  <iconify-icon icon="solar:t-shirt-linear" class="text-lg text-orange-500" />
-                  Visual Traits
-                </h3>
-                <div className="flex flex-wrap gap-3">
-                  {traits.map((trait) => (
-                    <div key={trait.label} className="flex items-center gap-3 px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-2xl hover:bg-slate-100 transition-colors">
-                      <iconify-icon icon={trait.icon} class="text-xl text-slate-400" />
-                      <div className="flex flex-col">
-                        <span className="text-[9px] text-slate-400 uppercase font-black leading-tight">{trait.label}</span>
-                        <span className="text-xs text-slate-700 font-bold">{trait.value}</span>
+                {/* Visual Traits */}
+                <div className="pt-4">
+                  <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-4">
+                    <iconify-icon icon="solar:t-shirt-linear" class="text-lg text-orange-500" />
+                    Visual Traits
+                  </h3>
+                  
+                  {/* grid-flow-col: fills columns first
+                      grid-rows-2: forces exactly two rows
+                      overflow-x-auto: safety for very small screens
+                  */}
+                  <div className="grid grid-flow-col grid-rows-2 gap-3 overflow-x-auto pb-2 custom-scrollbar">
+                    {traits.map((trait) => (
+                      <div 
+                        key={trait.label} 
+                        className="flex items-center gap-3 px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-2xl hover:bg-slate-100 transition-colors min-w-[140px] h-[54px]"
+                      >
+                        <iconify-icon icon={trait.icon} class="text-xl text-slate-400" />
+                        <div className="flex flex-col">
+                          <span className="text-[9px] text-slate-400 uppercase font-black leading-tight">
+                            {trait.label}
+                          </span>
+                          <span className="text-xs text-slate-700 font-bold truncate max-w-[100px]">
+                            {trait.value}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
 
               </div>
 
