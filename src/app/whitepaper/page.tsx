@@ -3,14 +3,6 @@
 import { PageHeader } from "@/components/kapogian/page-header";
 import { PageFooter } from "@/components/kapogian/page-footer";
 import Image from "next/image";
-import { motion } from "framer-motion";
-
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true },
-  transition: { duration: 0.6 },
-};
 
 export default function WhitepaperPage() {
   return (
@@ -43,8 +35,7 @@ export default function WhitepaperPage() {
       <main className="relative pt-32 pb-24 px-4 min-h-screen antialiased">
         <div className="max-w-4xl mx-auto space-y-10">
           {/* HEADER CARD */}
-          <motion.div
-            {...fadeInUp}
+          <div
             className="bg-yellow-300 comic-border-thick p-8 rounded-3xl toy-shadow-lg"
           >
             <h1 className="font-headline text-4xl md:text-5xl tracking-wide text-black">
@@ -56,13 +47,12 @@ export default function WhitepaperPage() {
             <p className="font-headline text-xl mt-2 text-black/80 italic">
               "Everyone is Good Looking"
             </p>
-          </motion.div>
+          </div>
 
           {/* CONTENT SECTIONS */}
           <div className="space-y-8">
             {/* 1. EXECUTIVE SUMMARY */}
-            <motion.section
-              {...fadeInUp}
+            <section
               className="bg-white/90 backdrop-blur-md p-8 md:p-12 rounded-3xl comic-border-thick toy-shadow-sm"
             >
               <h2 className="font-headline text-3xl mb-6 text-blue-600">
@@ -86,11 +76,10 @@ export default function WhitepaperPage() {
                   technological and cultural framework.
                 </p>
               </div>
-            </motion.section>
+            </section>
 
             {/* 2. CORE IDENTITY */}
-            <motion.section
-              {...fadeInUp}
+            <section
               className="bg-white/90 backdrop-blur-md p-8 md:p-12 rounded-3xl comic-border-thick"
             >
               <h2 className="font-headline text-3xl mb-6 text-blue-600">
@@ -141,26 +130,25 @@ export default function WhitepaperPage() {
                     identity has a tangible real-world presence.
                   </p>
                   <div className="grid sm:grid-cols-4 gap-3">
-                    <div className="bg-white p-3 rounded-lg text-center border-2 border-black">
+                    <div className="bg-white p-4 rounded-xl border-2 border-black">
                       <p className="font-bold text-xs">T-Shirts</p>
                     </div>
-                    <div className="bg-white p-3 rounded-lg text-center border-2 border-black">
+                    <div className="bg-white p-4 rounded-xl border-2 border-black">
                       <p className="font-bold text-xs">Hoodies</p>
                     </div>
-                    <div className="bg-white p-3 rounded-lg text-center border-2 border-black">
+                    <div className="bg-white p-4 rounded-xl border-2 border-black">
                       <p className="font-bold text-xs">Mugs</p>
                     </div>
-                    <div className="bg-white p-3 rounded-lg text-center border-2 border-black">
+                    <div className="bg-white p-4 rounded-xl border-2 border-black">
                       <p className="font-bold text-xs">Aluminum Plates</p>
                     </div>
                   </div>
                 </div>
               </div>
-            </motion.section>
+            </section>
 
             {/* 3. GAMING DIMENSION */}
-            <motion.section
-              {...fadeInUp}
+            <section
               className="bg-slate-900 text-white p-8 md:p-12 rounded-3xl comic-border-thick"
             >
               <h2 className="font-headline text-3xl mb-6 text-yellow-400">
@@ -210,11 +198,10 @@ export default function WhitepaperPage() {
                   </p>
                 </div>
               </div>
-            </motion.section>
+            </section>
 
             {/* 4. PHYGITAL DIMENSION: FARM */}
-            <motion.section
-              {...fadeInUp}
+            <section
               className="bg-white/90 backdrop-blur-md p-8 md:p-12 rounded-3xl comic-border-thick"
             >
               <h2 className="font-headline text-3xl mb-6 text-green-600">
@@ -326,11 +313,10 @@ export default function WhitepaperPage() {
                   </div>
                 </div>
               </div>
-            </motion.section>
+            </section>
 
             {/* 5. $POGI TOKEN */}
-            <motion.section
-              {...fadeInUp}
+            <section
               className="bg-yellow-400 p-8 md:p-12 rounded-3xl comic-border-thick"
             >
               <h2 className="font-headline text-3xl mb-6 text-black">
@@ -375,11 +361,10 @@ export default function WhitepaperPage() {
                   </p>
                 </div>
               </div>
-            </motion.section>
+            </section>
 
             {/* 6. ROADMAP */}
-            <motion.section
-              {...fadeInUp}
+            <section
               className="bg-white/90 backdrop-blur-md p-8 md:p-12 rounded-3xl comic-border-thick"
             >
               <h2 className="font-headline text-3xl mb-8 text-center text-blue-600">
@@ -471,11 +456,10 @@ export default function WhitepaperPage() {
                   </p>
                 </div>
               </div>
-            </motion.section>
+            </section>
 
             {/* 7. TECHNICAL EXCELLENCE */}
-            <motion.section
-              {...fadeInUp}
+            <section
               className="bg-black text-white p-8 md:p-12 rounded-3xl comic-border-thick"
             >
               <h2 className="font-headline text-3xl mb-6 text-yellow-400">
@@ -522,11 +506,10 @@ export default function WhitepaperPage() {
                   on-chain impact.
                 </p>
               </div>
-            </motion.section>
+            </section>
 
             {/* FINAL WORD */}
-            <motion.section
-              {...fadeInUp}
+            <section
               className="bg-gradient-to-br from-yellow-400 via-orange-400 to-red-400 p-8 md:p-12 rounded-3xl comic-border-thick text-center"
             >
               <p className="font-headline text-5xl md:text-6xl mb-4 text-white drop-shadow-lg">
@@ -545,7 +528,7 @@ export default function WhitepaperPage() {
                   participating.
                 </p>
               </div>
-            </motion.section>
+            </section>
           </div>
         </div>
       </main>
