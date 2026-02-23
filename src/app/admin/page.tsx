@@ -567,8 +567,6 @@ function TrackingModal({
   );
 }
 
-const shortAddr = (addr: string) => addr.length > 10 ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : addr;
-
 // ─────────────────────────────────────────────
 // Main Page
 // ─────────────────────────────────────────────
@@ -1178,4 +1176,3 @@ export default function AdminPage() {
   );
 }
 
-    
