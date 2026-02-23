@@ -500,9 +500,7 @@
   }
 
   .text-outline {
-    text-shadow:
-      2px 2px 0px #3b82f6,
-      -1px -1px 0 #fff;
+    text-shadow: 2px 2px 0px hsl(var(--primary)), -1px -1px 0 #fff;
   }
 
   .squishy-btn:active {
