@@ -1543,56 +1543,69 @@ export default function AdminPage() {
                   </Badge>
                 </div>
                 <div className="flex items-center border-2 border-black rounded-xl overflow-hidden shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                  {(["ongoing", "shipped", "delivered"] as const).map(
-                    (tab, i) => {
-                      const count = receipts.filter((r) =>
-                        tab === "ongoing"
-                          ? r.status === 0
-                          : tab === "shipped"
-                            ? r.status === 1
-                            : r.status === 2,
-                      ).length;
-                      const Icon =
-                        tab === "ongoing"
-                          ? Clock
-                          : tab === "shipped"
-                            ? Truck
-                            : CheckCircle;
-                      const activeColor =
-                        tab === "ongoing"
-                          ? "bg-yellow-400 text-black"
-                          : tab === "shipped"
-                            ? "bg-blue-500 text-white"
-                            : "bg-green-500 text-white";
-                      const badgeActive =
-                        tab === "ongoing"
-                          ? "bg-black text-white border-black"
-                          : "bg-white border-white";
-                      const badgeInactive =
-                        tab === "ongoing"
-                          ? "bg-yellow-100 border-yellow-400 text-yellow-700"
-                          : tab === "shipped"
-                            ? "bg-blue-100 border-blue-400 text-blue-700"
-                            : "bg-green-100 border-green-400 text-green-700";
-                      return (
-                        <React.Fragment key={tab}>
-                          {i > 0 && <div className="w-0.5 h-6 bg-black" />}
-                          <button
-                            onClick={() => setActiveTab(tab)}
-                            className={`h-10 px-4 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 ${activeTab === tab ? activeColor : "bg-white text-slate-500 hover:bg-slate-50"}`}
+                  {["pending", "shipped", "delivered"].map((tab, i) => {
+                    const count = receipts.filter((r) =>
+                      tab === "pending"
+                        ? r.status === 0
+                        : tab === "shipped"
+                          ? r.status === 1
+                          : r.status === 2,
+                    ).length;
+                    const Icon =
+                      tab === "pending"
+                        ? Clock
+                        : tab === "shipped"
+                          ? Truck
+                          : CheckCircle;
+                    const activeColor =
+                      tab === "pending"
+                        ? "bg-yellow-400 text-black"
+                        : tab === "shipped"
+                          ? "bg-blue-500 text-white"
+                          : "bg-green-500 text-white";
+                    const badgeActive =
+                      tab === "pending"
+                        ? "bg-black text-white border-black"
+                        : "bg-black text-white border-black";
+                    const badgeInactive =
+                      tab === "pending"
+                        ? "bg-yellow-100 border-yellow-400 text-yellow-700"
+                        : tab === "shipped"
+                          ? "bg-blue-100 border-blue-400 text-blue-700"
+                          : "bg-green-100 border-green-400 text-green-700";
+                    const isActive = activeTab === tab;
+                    return (
+                      <React.Fragment key={tab}>
+                        {i > 0 && <div className="w-0.5 h-6 bg-black" />}
+                        <button
+                          onClick={() =>
+                            setActiveTab(
+                              tab as "pending" | "shipped" | "delivered",
+                            )
+                          }
+                          className={`h-10 px-4 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 relative
+                            ${isActive ? `${activeColor} shadow-lg scale-105 ring-4 ring-black ring-opacity-30 animate-pulse z-10` : "bg-white text-slate-500 hover:bg-slate-50"}
+                          `}
+                          style={
+                            isActive
+                              ? {
+                                  boxShadow:
+                                    "0 0 0 4px #000, 0 6px 16px 0 rgba(0,0,0,0.10)",
+                                }
+                              : {}
+                          }
+                        >
+                          <Icon size={12} />{" "}
+                          {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                          <span
+                            className={`ml-1 px-1.5 py-0.5 rounded text-[9px] font-black border ${isActive ? badgeActive : badgeInactive}`}
                           >
-                            <Icon size={12} />{" "}
-                            {tab === "ongoing" ? "Pending" : tab}
-                            <span
-                              className={`ml-1 px-1.5 py-0.5 rounded text-[9px] font-black border ${activeTab === tab ? badgeActive : badgeInactive}`}
-                            >
-                              {count}
-                            </span>
-                          </button>
-                        </React.Fragment>
-                      );
-                    },
-                  )}
+                            {count}
+                          </span>
+                        </button>
+                      </React.Fragment>
+                    );
+                  })}
                 </div>
               </div>
 
