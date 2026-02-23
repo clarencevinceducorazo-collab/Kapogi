@@ -803,7 +803,13 @@ export default function AdminPage() {
             <div className="max-w-[1600px] mx-auto px-6 h-20 flex items-center justify-between relative z-10">
                 <Link href="/admin" className="flex items-center gap-4 group cursor-pointer">
                     <div className="w-12 h-12 bg-gradient-to-br from-sky-400 to-blue-500 text-white rounded-2xl flex items-center justify-center shadow-[0_8px_20px_-6px_rgba(56,189,248,0.5)] border-2 border-white/50 bouncy-hover group-hover:rotate-6">
-                        <iconify-icon icon="solar:box-linear" class="text-3xl"></iconify-icon>
+                      <Image
+                                       src="/images/KapogianLogo.webp"
+                                       alt="logo"
+                                       width={64}
+                                       height={64}
+                                       className="rounded-full border-2 border-primary-foreground/50"
+                                     />
                     </div>
                     <div className="flex flex-col">
                         <h1 className="text-2xl font-bold tracking-tight leading-none text-slate-800">Management</h1>
@@ -1059,9 +1065,7 @@ export default function AdminPage() {
 
             </div>
         </main>
-      <button className="fixed bottom-6 left-6 w-14 h-14 bg-gradient-to-br from-amber-300 to-orange-400 text-white rounded-full flex items-center justify-center shadow-[0_12px_30px_-8px_rgba(245,158,11,0.6)] border-4 border-white bouncy-hover font-bold text-xl z-50 float-slow">
-          N
-      </button>
+
 
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 
