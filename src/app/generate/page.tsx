@@ -691,12 +691,16 @@ export default function GeneratorPage() {
         setProvinces(data);
       } catch (error) {
         console.error("Failed to fetch provinces", error);
-        setError("Could not load province data. Please try refreshing.");
+        setError(
+          "Could not load province data. Please check your internet connection or try again later.",
+        );
+        setProvinces([]);
       } finally {
         setProvincesLoading(false);
       }
     };
     fetchProvinces();
+    // Optionally, add a retry button or logic here if needed
   }, []);
 
   useEffect(() => {
@@ -713,7 +717,10 @@ export default function GeneratorPage() {
           setCities(data);
         } catch (error) {
           console.error("Failed to fetch cities", error);
-          setError("Could not load city data.");
+          setError(
+            "Could not load city data. Please check your internet connection or try again later.",
+          );
+          setCities([]);
         } finally {
           setCitiesLoading(false);
         }
@@ -748,7 +755,10 @@ export default function GeneratorPage() {
           setBarangays(data);
         } catch (error) {
           console.error("Failed to fetch barangays", error);
-          setError("Could not load barangay data.");
+          setError(
+            "Could not load barangay data. Please check your internet connection or try again later.",
+          );
+          setBarangays([]);
         } finally {
           setBarangaysLoading(false);
         }
@@ -1066,6 +1076,7 @@ export default function GeneratorPage() {
 
     const data = {
       name: shippingName,
+      email: shippingEmail,
       contact: shippingContact,
       province: selectedProvince,
       city: selectedCity,
@@ -1103,7 +1114,11 @@ export default function GeneratorPage() {
 
     try {
       const { valid, errors, fullAddress } = validateShippingInfo(
-        { full_name: shippingName, contact_number: shippingContact },
+        {
+          full_name: shippingName,
+          email: shippingEmail,
+          contact_number: shippingContact,
+        },
         {
           province: selectedProvince,
           city: selectedCity,
@@ -1120,6 +1135,7 @@ export default function GeneratorPage() {
 
       const encryptedString = await encryptShippingInfo({
         full_name: shippingName,
+        email: shippingEmail,
         contact_number: shippingContact,
         address: fullAddress,
       });
