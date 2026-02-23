@@ -795,7 +795,7 @@ export default function AdminPage() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
         <BrutalCard className="max-w-md w-full text-center">
           <ShieldAlert size={48} className="mx-auto mb-4 text-red-500" />
-          <h2 className="font-black text-2xl uppercase mb-3">Access Denied</h2>
+          <h2 className="font-black text-2xl uppercase mb-3">Access Denied...</h2>
           <p className="mb-2 font-bold text-slate-600">This wallet is not in the admin whitelist.</p>
           <p className="text-xs font-mono text-slate-400">{account.address}</p>
         </BrutalCard>
