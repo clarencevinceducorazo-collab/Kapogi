@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -441,20 +442,19 @@ export default function GeneratorPage() {
     if (mmr >= 3951)
       return {
         name: "Kapogian Ascendant",
-        style:
-          "effect-mythic-glow text-4xl font-black uppercase tracking-tighter",
+        style: "text-mythic-aurora text-4xl font-black uppercase tracking-tighter",
         rarity: "Top 0.005%",
       };
     if (mmr >= 3851)
       return {
         name: "Master Rancher",
-        style: "text-purple-400 effect-aura text-2xl font-bold",
+        style: "text-purple-300 text-2xl font-bold [text-shadow:0_0_10px_theme(colors.purple.300)]",
         rarity: "Top 0.02%",
       };
     if (mmr >= 3701)
       return {
         name: "Generational Tycoon",
-        style: "effect-gold text-2xl uppercase",
+        style: "text-yellow-400 text-2xl font-bold [text-shadow:0_0_10px_theme(colors.yellow.400)]",
         rarity: "Top 0.04%",
       };
     if (mmr >= 3501)
@@ -469,28 +469,22 @@ export default function GeneratorPage() {
         style: "effect-flame text-xl",
         rarity: "Top 0.18%",
       };
-    if (mmr >= 3101)
-      return {
-        name: "Ritual Architect",
-        style: "effect-gold text-xl",
-        rarity: "Top 0.35%",
-      };
     if (mmr >= 2801)
       return {
         name: "Hall of Fame Immortal",
-        style: "text-yellow-500 font-bold text-xl drop-shadow-lg",
+        style: "effect-gold text-xl",
         rarity: "Top 0.6%",
       };
     if (mmr >= 2501)
       return {
         name: "Supreme Pogi",
-        style: "text-yellow-400 font-bold",
+        style: "text-yellow-400 font-bold text-lg",
         rarity: "Top 1.2%",
       };
     if (mmr >= 2201)
       return {
         name: "Proof of Pogi Elite",
-        style: "text-emerald-400 font-bold",
+        style: "text-emerald-400 font-bold text-lg",
         rarity: "Top 2.5%",
       };
     if (mmr >= 1901)
@@ -535,8 +529,7 @@ export default function GeneratorPage() {
         style: "text-amber-800",
         rarity: "Top 65%",
       };
-    if (mmr >= 101)
-      return { name: "Pogi Spark", style: "text-amber-900", rarity: "Top 85%" };
+    if (mmr >= 101) return { name: "Pogi Spark", style: "text-amber-900", rarity: "Top 85%" };
     return {
       name: "Spirit Seed",
       style: "text-slate-500 italic",
@@ -2204,7 +2197,6 @@ export default function GeneratorPage() {
                       </p>
                       {loading ? (
                         <h3
-                          style={{ fontSize: "16px" }}
                           className={cn(
                             "font-display font-bold uppercase leading-none w-32 text-center truncate",
                             shufflingRank.style,
@@ -2215,7 +2207,6 @@ export default function GeneratorPage() {
                       ) : (
                         <>
                           <h3
-                            style={{ fontSize: "16px" }}
                             className={cn(
                               "font-display font-bold uppercase leading-none drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp",
                               displayRankInfo.style,
@@ -2649,3 +2640,9 @@ export default function GeneratorPage() {
 }
 
     
+</body></html>
+please create a dedicated admin class (or namespace) specifically for this feature using Tailwind CSS and custom CSS if needed.
+
+Make sure the styles are properly scoped so they do not affect or override styles on other pages or components.
+
+The goal is to isolate all admin-related styling to prevent global conflicts and ensure the rest of the application remains unaffected.

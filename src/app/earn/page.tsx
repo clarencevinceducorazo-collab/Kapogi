@@ -55,7 +55,7 @@ export default function EarnPage() {
                     <h1 className="text-6xl md:text-8xl font-black text-white mb-6 tracking-tight leading-none drop-shadow-xl text-outline relative group cursor-default">
                         KAPOGIAN
                         <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600 mt-2 pb-4">
-                            UNIVERSE
+                           EARNIVERSE
                         </span>
                     </h1>
 
