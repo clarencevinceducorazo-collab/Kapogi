@@ -359,7 +359,7 @@ function SuperAdminPanel({
                             >
                                 {togglingPause ? <LoaderCircle size={15} className="animate-spin" /> : registry?.mintPaused ? <><PlayCircle size={15} /> Resume Minting</> : <><PauseCircle size={15} /> Pause Minting</>}
                             </button>
-                        </div>
+                        </section>
 
             {/* ── Admin Whitelist ── */}
             <section className="border-4 border-black rounded-2xl p-5">
@@ -401,7 +401,7 @@ function SuperAdminPanel({
                                     {addingAdmin ? <LoaderCircle size={14} className="animate-spin" /> : <UserPlus size={14} />}
                                 </button>
                             </div>
-                        </div>
+                        </section>
 
                         {/* ── Treasury Address ── */}
                         <div className="border-2 border-slate-200 rounded-2xl p-5 bg-white">
@@ -1177,3 +1177,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
