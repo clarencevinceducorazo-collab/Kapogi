@@ -169,6 +169,22 @@
     transform: translate(6px, 6px);
   }
 
+  /* Bento box shadow: combines comic hard shadow with a subtle soft shadow for depth */
+  .bento-shadow {
+    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1), 0 8px 20px rgba(0, 0, 0, 0.06);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .bento-shadow:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1), 0 12px 36px rgba(0, 0, 0, 0.08);
+  }
+
+  .bento-shadow:active {
+    transform: translate(6px, 6px);
+    box-shadow: none;
+  }
+
   .sticker-cut {
     filter: drop-shadow(0px 4px 0px rgba(0, 0, 0, 0.2));
     @apply transition-transform;

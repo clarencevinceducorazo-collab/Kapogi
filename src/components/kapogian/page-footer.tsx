@@ -12,7 +12,7 @@ export const PageFooter = () => {
   ];
 
   return (
-    <footer className="bg-primary/90 text-primary-foreground py-8">
+    <footer className="bg-primary/90 text-primary-foreground py-8 w-full">
       <div className="container mx-auto text-center">
         <div className="flex flex-col items-center gap-4">
           {avatar && (

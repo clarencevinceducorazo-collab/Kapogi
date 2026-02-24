@@ -76,6 +76,18 @@ export function CustomConnectButton({
               My Orders
             </Link>
           </DropdownMenuItem>
+          <DropdownMenuItem
+            asChild
+            className="cursor-pointer hover:bg-black/5 rounded-lg"
+          >
+            <Link
+              href="/profile"
+              className="flex w-full items-center p-2"
+              style={{ fontSize: "16px", fontWeight: "700" }}
+            >
+              Main Profile
+            </Link>
+          </DropdownMenuItem>
 
           <div className="h-[1px] bg-black/10 my-2" />
 
