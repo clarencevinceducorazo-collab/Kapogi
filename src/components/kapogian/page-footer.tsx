@@ -1,14 +1,14 @@
-import Image from 'next/image';
-import Link from 'next/link';
-import { Twitter, Instagram, Youtube } from 'lucide-react';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import Image from "next/image";
+import Link from "next/link";
+import { Twitter, Instagram, Youtube } from "lucide-react";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export const PageFooter = () => {
-  const avatar = PlaceHolderImages.find((img) => img.id === 'header-avatar');
+  const avatar = PlaceHolderImages.find((img) => img.id === "header-avatar");
   const socialLinks = [
-    { icon: <Twitter className="h-5 w-5" />, href: '#' },
-    { icon: <Instagram className="h-5 w-5" />, href: '#' },
-    { icon: <Youtube className="h-5 w-5" />, href: '#' },
+    { icon: <Twitter className="h-5 w-5" />, href: "#" },
+    { icon: <Instagram className="h-5 w-5" />, href: "#" },
+    { icon: <Youtube className="h-5 w-5" />, href: "#" },
   ];
 
   return (
