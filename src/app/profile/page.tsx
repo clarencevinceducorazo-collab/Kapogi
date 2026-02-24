@@ -21,12 +21,222 @@ import {
   Hash,
   ShoppingBag,
   ChevronRight,
+  ChevronLeft,
   MapPin,
   Clock,
   X,
+  Star,
+  Zap,
+  BarChart2,
 } from "lucide-react";
 import { CustomConnectButton } from "@/components/kapogian/CustomConnectButton";
 
+/* ─────────────────────────────────────────
+   Design tokens  (single source of truth)
+───────────────────────────────────────── */
+const C = {
+  black: "#0A0A0A",
+  white: "#FFFFFF",
+  yellow: "#FFD600",
+  pink: "#FF4D8D",
+  blue: "#3B82F6",
+  green: "#10B981",
+  orange: "#F97316",
+  gray50: "#F9FAFB",
+  gray100: "#F3F4F6",
+  gray200: "#E5E7EB",
+  gray400: "#9CA3AF",
+  gray600: "#4B5563",
+};
+
+/* Small reusable primitives */
+/**
+ * Small badge primitive used throughout the page for status and labels.
+ * - `color` controls background
+ * - `textColor` controls foreground
+ */
+const Badge = ({
+  children,
+  color = C.yellow,
+  textColor = C.black,
+}: {
+  children: React.ReactNode;
+  color?: string;
+  textColor?: string;
+}) => (
+  <span
+    style={{
+      background: color,
+      color: textColor,
+      border: `2px solid ${C.black}`,
+      borderRadius: 8,
+      padding: "2px 10px",
+      fontWeight: 700,
+      fontSize: 11,
+      letterSpacing: "0.05em",
+      textTransform: "uppercase",
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 4,
+    }}
+  >
+    {children}
+  </span>
+);
+
+/**
+ * Card primitive that applies consistent border, shadow and padding.
+ * Use to wrap sections and provide visual grouping.
+ */
+const Card = ({
+  children,
+  style,
+  className,
+}: {
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+  className?: string;
+}) => (
+  <div
+    className={className}
+    style={{
+      background: C.white,
+      border: `2px solid ${C.black}`,
+      borderRadius: 16,
+      boxShadow: `4px 4px 0 ${C.black}`,
+      padding: 20,
+      ...style,
+    }}
+  >
+    {children}
+  </div>
+);
+
+/**
+ * SectionLabel presents a small uppercase label with an optional icon.
+ * Used to label grouped UI blocks like "Skills", "Traits" etc.
+ */
+const SectionLabel = ({
+  icon,
+  children,
+}: {
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+}) => (
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      fontSize: 11,
+      fontWeight: 800,
+      letterSpacing: "0.1em",
+      textTransform: "uppercase",
+      color: C.gray600,
+      marginBottom: 12,
+    }}
+  >
+    {icon && <span style={{ color: C.black }}>{icon}</span>}
+    {children}
+  </div>
+);
+
+/**
+ * SkillBar renders a labeled progress bar for simple numeric attributes.
+ * - `value` is clamped 0..100 and shown as a percent
+ * - `accent` controls the filled color
+ */
+const SkillBar = ({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: number;
+  accent: string;
+}) => {
+  const pct = Math.max(0, Math.min(100, Number(value ?? 0)));
+  return (
+    <div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+          marginBottom: 5,
+        }}
+      >
+        <span>{label}</span>
+        <span style={{ color: accent }}>{pct}%</span>
+      </div>
+      <div
+        style={{
+          height: 10,
+          background: C.gray100,
+          border: `2px solid ${C.black}`,
+          borderRadius: 999,
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            height: "100%",
+            width: `${pct}%`,
+            background: accent,
+            borderRadius: 999,
+            transition: "width 0.5s ease",
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
+/**
+ * StatBox shows a compact stat with icon, label and large value.
+ * Used in the Player Stats row at the bottom of the page.
+ */
+const StatBox = ({
+  icon,
+  label,
+  value,
+  accent = C.black,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  accent?: string;
+}) => (
+  <Card style={{ padding: 16, textAlign: "center" }}>
+    <div style={{ color: accent, marginBottom: 4 }}>{icon}</div>
+    <div
+      style={{
+        fontSize: 10,
+        fontWeight: 800,
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+        color: C.gray400,
+        marginBottom: 2,
+      }}
+    >
+      {label}
+    </div>
+    <div style={{ fontSize: 22, fontWeight: 900, color: C.black }}>{value}</div>
+  </Card>
+);
+
+/* ─────────────────────────────────────────
+   Main Page
+───────────────────────────────────────── */
+/**
+ * Profile Page
+ * - Loads owned characters and a "podium" summary for the connected account
+ * - Renders tabs: Stats, Collections, Orders
+ * - Uses local primitives (Card, Badge, SkillBar) for layout
+ */
 export default function Page() {
   const account = useCurrentAccount();
   const [characters, setCharacters] = useState<any[]>([]);
@@ -36,6 +246,11 @@ export default function Page() {
     "Collections" | "Orders" | "Stats"
   >("Stats");
 
+  /* -----------------------------
+   * Load characters
+   * - Queries on-chain owned character objects for the connected account
+   * - Normalizes display/content fields into a `characters` array
+   */
   useEffect(() => {
     if (!account?.address) return;
     let mounted = true;
@@ -52,12 +267,12 @@ export default function Page() {
                 attributes = JSON.parse(contentData.attributes);
             } catch (e) {}
 
-            // normalize attribute names and traits into a consistent shape
-            // traits can come as an array of objects or as a properties map; convert to lowercased key map
+            // Helper: extractTraits
+            // Normalizes a variety of trait shapes (array of {trait_type,value},
+            // or object maps) into a flat lowercase-key object.
             const extractTraits = (src: any) => {
               const out: Record<string, any> = {};
               if (!src) return out;
-              // if it's an array of { trait_type, value } or similar
               if (Array.isArray(src)) {
                 src.forEach((it: any) => {
                   const k =
@@ -76,22 +291,18 @@ export default function Page() {
                 });
                 return out;
               }
-
-              // if it's an object mapping
               if (typeof src === "object") {
                 Object.keys(src).forEach((k) => {
                   out[k.toLowerCase()] = src[k];
                 });
                 return out;
               }
-
               return out;
             };
 
             const traitsFromAttrs = extractTraits(
               attributes.traits ?? attributes.properties ?? null,
             );
-
             const normalized = {
               cuteness:
                 attributes.cuteness ??
@@ -138,14 +349,101 @@ export default function Page() {
         console.error("Failed to load characters:", err);
       }
     };
-
     load();
     return () => {
       mounted = false;
     };
   }, [account?.address]);
 
-  // Aggregate stats for the user's collection
+  /* -----------------------------
+   * Load podium
+   * - Scans mint events to find NFTs owned by this account
+   * - Fetches those objects in chunks and selects the highest MMR entry
+   */
+  useEffect(() => {
+    if (!account?.address) return;
+    let mounted = true;
+    const loadPodiumForAccount = async () => {
+      try {
+        const allMintEvents = await suiClient.queryEvents({
+          query: {
+            MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::CharacterMinted`,
+          },
+        });
+        const nftOwnerMap = new Map<string, string>();
+        allMintEvents.data.forEach((event: any) => {
+          const nftId = event.parsedJson?.nft_id;
+          const owner = event.parsedJson?.owner;
+          if (nftId && owner) nftOwnerMap.set(nftId, owner);
+        });
+        const myNftIds = Array.from(nftOwnerMap.keys()).filter(
+          (id) => nftOwnerMap.get(id) === account.address,
+        );
+        if (myNftIds.length === 0) {
+          if (mounted) setPodiumEntry(null);
+          return;
+        }
+        const characterObjects: any[] = [];
+        for (let i = 0; i < myNftIds.length; i += 50) {
+          const chunk = myNftIds.slice(i, i + 50);
+          const objs = await suiClient.multiGetObjects({
+            ids: chunk,
+            options: { showContent: true, showDisplay: true },
+          });
+          characterObjects.push(...objs);
+        }
+        let bestMmr = -1;
+        let bestAttributes: any = {};
+        let bestImage = "";
+        const allNfts: any[] = [];
+        characterObjects.forEach((obj: any) => {
+          if (!obj?.data) return;
+          const mmr = Number(obj.data.content?.fields?.mmr) || 0;
+          let attributes = {};
+          try {
+            attributes = JSON.parse(
+              obj.data.content?.fields?.attributes || "{}",
+            );
+          } catch (e) {}
+          const name = obj.data.content?.fields?.name || "";
+          const imageUrl = getIPFSGatewayUrl(
+            (obj.data.display?.data as any)?.image_url || "",
+          );
+          allNfts.push({
+            objectId: obj.data.objectId,
+            name,
+            imageUrl,
+            mmr,
+            attributes,
+          });
+          if (mmr > bestMmr) {
+            bestMmr = mmr;
+            bestAttributes = attributes;
+            bestImage = imageUrl;
+          }
+        });
+        const entry = {
+          walletAddress: account.address,
+          totalNftSummon: allNfts.length,
+          mmrScore: bestMmr === -1 ? null : bestMmr,
+          avatarImage: bestImage,
+          nftName: allNfts[0]?.name || "",
+          lineage: bestAttributes?.lineage || "Unknown",
+          attributes: bestAttributes || {},
+          allNfts,
+        };
+        if (mounted) setPodiumEntry(entry);
+      } catch (err) {
+        console.error("Failed to load podium data for account:", err);
+      }
+    };
+    loadPodiumForAccount();
+    return () => {
+      mounted = false;
+    };
+  }, [account?.address]);
+
+  /* derived stats */
   const summonsCount = characters.length || 0;
   const bestMmrNum = characters.reduce((max, c) => {
     const val = Number(c?.mmr ?? c?.attributes?.mmr ?? 0);
@@ -160,7 +458,6 @@ export default function Page() {
       )
     : 0;
 
-  // compute top lineages
   const lineageMap: Record<string, number> = {};
   characters.forEach((c) => {
     const lin =
@@ -175,6 +472,7 @@ export default function Page() {
     .slice(0, 4)
     .map(([name]) => name);
 
+  // Carousel helpers: previous / next character index
   const prev = () =>
     setIndex((i) =>
       characters.length ? (i - 1 + characters.length) % characters.length : 0,
@@ -182,6 +480,7 @@ export default function Page() {
   const next = () =>
     setIndex((i) => (characters.length ? (i + 1) % characters.length : 0));
 
+  // Derived attributes for the currently selected character (or podium fallback)
   const attrs = characters[index]?.attributes ?? podiumEntry?.attributes ?? {};
   const mmr =
     characters[index]?.mmr ??
@@ -189,669 +488,785 @@ export default function Page() {
     podiumEntry?.mmrScore ??
     "200,000";
 
-  useEffect(() => {
-    if (!account?.address) return;
-    let mounted = true;
-
-    const loadPodiumForAccount = async () => {
-      try {
-        const allMintEvents = await suiClient.queryEvents({
-          query: {
-            MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::CharacterMinted`,
-          },
-        });
-
-        const nftOwnerMap = new Map<string, string>();
-        allMintEvents.data.forEach((event: any) => {
-          const nftId = event.parsedJson?.nft_id;
-          const owner = event.parsedJson?.owner;
-          if (nftId && owner) nftOwnerMap.set(nftId, owner);
-        });
-
-        const myNftIds = Array.from(nftOwnerMap.keys()).filter(
-          (id) => nftOwnerMap.get(id) === account.address,
-        );
-        if (myNftIds.length === 0) {
-          if (mounted) setPodiumEntry(null);
-          return;
-        }
-
-        const characterObjects: any[] = [];
-        for (let i = 0; i < myNftIds.length; i += 50) {
-          const chunk = myNftIds.slice(i, i + 50);
-          const objs = await suiClient.multiGetObjects({
-            ids: chunk,
-            options: { showContent: true, showDisplay: true },
-          });
-          characterObjects.push(...objs);
-        }
-
-        let bestMmr = -1;
-        let bestAttributes: any = {};
-        let bestImage = "";
-        const allNfts: any[] = [];
-
-        characterObjects.forEach((obj: any) => {
-          if (!obj?.data) return;
-          const mmr = Number(obj.data.content?.fields?.mmr) || 0;
-          let attributes = {};
-          try {
-            attributes = JSON.parse(
-              obj.data.content?.fields?.attributes || "{}",
-            );
-          } catch (e) {}
-
-          const name = obj.data.content?.fields?.name || "";
-          const imageUrl = getIPFSGatewayUrl(
-            (obj.data.display?.data as any)?.image_url || "",
-          );
-
-          allNfts.push({
-            objectId: obj.data.objectId,
-            name,
-            imageUrl,
-            mmr,
-            attributes,
-          });
-
-          if (mmr > bestMmr) {
-            bestMmr = mmr;
-            bestAttributes = attributes;
-            bestImage = imageUrl;
-          }
-        });
-
-        const entry = {
-          walletAddress: account.address,
-          totalNftSummon: allNfts.length,
-          mmrScore: bestMmr === -1 ? null : bestMmr,
-          avatarImage: bestImage,
-          nftName: allNfts[0]?.name || "",
-          lineage: bestAttributes?.lineage || "Unknown",
-          attributes: bestAttributes || {},
-          allNfts,
-        };
-
-        if (mounted) setPodiumEntry(entry);
-      } catch (err) {
-        console.error("Failed to load podium data for account:", err);
-      }
-    };
-
-    loadPodiumForAccount();
-    return () => {
-      mounted = false;
-    };
-  }, [account?.address]);
+  const tabs = ["Stats", "Collections", "Orders"] as const;
 
   return (
-    <div className="min-h-screen bg-gray-100 font-body flex flex-col overflow-hidden">
-      <div className="p-4 sm:p-8 flex-1">
+    <div
+      style={{
+        minHeight: "100vh",
+        background: C.gray50,
+        fontFamily: "inherit",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div style={{ padding: "1rem 1.5rem", flex: 1 }}>
         <PageHeader />
 
-        <div className="max-w-7xl mx-auto mt-28 lg:mt-32 mb-20">
-          <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <h1
-              className="font-headline text-6xl md:text-8xl font-bold text-black uppercase"
+        <div
+          style={{
+            maxWidth: 1200,
+            margin: "0 auto",
+            marginTop: 120,
+            marginBottom: 80,
+          }}
+        >
+          {/* ── Page Title ── */}
+          <h1
+            className="font-headline text-6xl md:text-8xl font-bold text-black uppercase mb-10"
+            style={{
+              textShadow:
+                "-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff, 6px 6px 0px #000",
+            }}
+          >
+            My Collection
+          </h1>
+
+          {/* ── Main Grid ── */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "360px 1fr",
+              gap: 20,
+              alignItems: "start",
+            }}
+          >
+            {/* ── Left: Avatar Card ── */}
+            <Card
               style={{
-                textShadow:
-                  "-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff, 6px 6px 0px #000",
+                padding: 16,
+                display: "flex",
+                flexDirection: "column",
+                gap: 16,
+                minHeight: 590,
               }}
             >
-              My Profile
-            </h1>
-          </header>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left column: Tall card with avatar and name */}
-            <aside className="lg:col-span-4">
-              <div className="bg-white rounded-2xl border-2 border-black p-4 flex flex-col max-h-[640px] overflow-y-auto bento-shadow">
-                <div className="flex justify-between items-start">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-yellow-400 text-black text-sm font-bold border-2 border-black">
-                    <span>★</span>
-                    <span className="font-headline">BALARTNONSLAYER</span>
-                    <span>★</span>
-                  </div>
-                  <div className="w-8 h-8 bg-white rounded-md border-2 border-black flex items-center justify-center">
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+              {/* Avatar image */}
+              <div
+                style={{
+                  width: "100%",
+                  aspectRatio: "1",
+                  minHeight: 360,
+                  background: C.gray100,
+                  border: `2px solid ${C.black}`,
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <img
+                  src={
+                    characters.length > 0
+                      ? characters[index].imageUrl
+                      : "https://i.imgur.com/8b20GzT.png"
+                  }
+                  alt={characters.length > 0 ? characters[index].name : "Makoa"}
+                  style={{ width: "80%", height: "80%", objectFit: "contain" }}
+                />
+              </div>
+
+              {/* Name + handle */}
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 900,
+                    textTransform: "uppercase",
+                    letterSpacing: "-0.01em",
+                    color: C.black,
+                  }}
+                >
+                  {characters.length > 0 ? characters[index].name : "MAKOA"}
+                </div>
+                <div style={{ marginTop: 4 }}>
+                  <span
+                    style={{
+                      fontFamily: "monospace",
+                      fontSize: 11,
+                      background: C.black,
+                      color: C.white,
+                      padding: "2px 8px",
+                      borderRadius: 4,
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    @selab.sui
+                  </span>
+                </div>
+              </div>
+
+              {/* Prev / Next nav */}
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={prev}
+                  aria-label="previous character"
+                  style={{
+                    flex: 1,
+                    padding: "10px 0",
+                    border: `2px solid ${C.black}`,
+                    borderRadius: 10,
+                    background: C.white,
+                    fontWeight: 800,
+                    fontSize: 16,
+                    cursor: "pointer",
+                    boxShadow: `2px 2px 0 ${C.black}`,
+                    transition: "all 0.1s",
+                  }}
+                  onMouseDown={(e) => {
+                    e.currentTarget.style.boxShadow = "none";
+                    e.currentTarget.style.transform = "translate(2px,2px)";
+                  }}
+                  onMouseUp={(e) => {
+                    e.currentTarget.style.boxShadow = `2px 2px 0 ${C.black}`;
+                    e.currentTarget.style.transform = "none";
+                  }}
+                >
+                  <ChevronLeft size={18} style={{ margin: "0 auto" }} />
+                </button>
+                <button
+                  onClick={next}
+                  aria-label="next character"
+                  style={{
+                    flex: 1,
+                    padding: "10px 0",
+                    border: `2px solid ${C.black}`,
+                    borderRadius: 10,
+                    background: C.yellow,
+                    fontWeight: 800,
+                    fontSize: 16,
+                    cursor: "pointer",
+                    boxShadow: `2px 2px 0 ${C.black}`,
+                    transition: "all 0.1s",
+                  }}
+                  onMouseDown={(e) => {
+                    e.currentTarget.style.boxShadow = "none";
+                    e.currentTarget.style.transform = "translate(2px,2px)";
+                  }}
+                  onMouseUp={(e) => {
+                    e.currentTarget.style.boxShadow = `2px 2px 0 ${C.black}`;
+                    e.currentTarget.style.transform = "none";
+                  }}
+                >
+                  <ChevronRight size={18} style={{ margin: "0 auto" }} />
+                </button>
+              </div>
+
+              {/* Char counter */}
+              {characters.length > 0 && (
+                <div
+                  style={{
+                    textAlign: "center",
+                    fontSize: 11,
+                    color: C.gray400,
+                    fontWeight: 600,
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  {index + 1} / {characters.length}
+                </div>
+              )}
+            </Card>
+
+            {/* ── Right: Tabs + Content ── */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 16,
+                minWidth: 0,
+              }}
+            >
+              {/* Tab Bar */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 6,
+                  background: C.white,
+                  border: `2px solid ${C.black}`,
+                  borderRadius: 12,
+                  padding: 4,
+                  width: "fit-content",
+                }}
+              >
+                {tabs.map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    style={{
+                      padding: "7px 18px",
+                      border:
+                        activeTab === tab
+                          ? `2px solid ${C.black}`
+                          : "2px solid transparent",
+                      borderRadius: 8,
+                      background: activeTab === tab ? C.black : "transparent",
+                      color: activeTab === tab ? C.white : C.gray600,
+                      fontWeight: 800,
+                      fontSize: 12,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+
+              {/* ── Stats Tab ── */}
+              {activeTab === "Stats" && (
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 16 }}
+                >
+                  {/* MMR Hero */}
+                  <Card
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 16,
+                      padding: "16px 20px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 52,
+                        height: 52,
+                        borderRadius: 12,
+                        background: C.black,
+                        border: `2px solid ${C.black}`,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 5h14v14H5z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex-grow flex items-center justify-center">
-                  <div className="w-full h-[350px] bg-white rounded-lg border-2 border-black flex items-center justify-center">
-                    {characters.length > 0 ? (
-                      <img
-                        src={characters[index].imageUrl}
-                        alt={characters[index].name}
-                        className="w-48 h-48 object-cover"
-                      />
-                    ) : (
-                      <img
-                        src="https://i.imgur.com/8b20GzT.png"
-                        alt="Makoa"
-                        className="w-48 h-48 object-cover"
-                      />
-                    )}
-                  </div>
-                </div>
-
-                <div className="mt-4 text-center">
-                  <h2 className="text-4xl font-headline text-black">
-                    {characters.length > 0 ? characters[index].name : "MAKOA"}
-                  </h2>
-                  <p className="text-sm text-gray-600 mt-1 font-bold">
-                    <span className="font-mono bg-black text-white px-2 py-1 rounded">
-                      @selab.sui
-                    </span>
-                  </p>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  <button
-                    onClick={prev}
-                    aria-label="previous character"
-                    className="flex-1 py-2 rounded-lg border-2 border-black bg-white text-black font-bold text-2xl shadow-[2px_2px_0px_0px_#000] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
-                  >
-                    &lt;
-                  </button>
-                  <button
-                    onClick={next}
-                    aria-label="next character"
-                    className="flex-1 py-2 rounded-lg border-2 border-black bg-yellow-400 text-black font-bold text-2xl shadow-[2px_2px_0px_0px_#000] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
-                  >
-                    &gt;
-                  </button>
-                </div>
-              </div>
-            </aside>
-
-            {/* Right column: Stats and details */}
-            <main className="lg:col-span-8 max-h-[580px] overflow-y-auto pr-2">
-              <div className="sticky top-0 z-20  py-4 mb-4">
-                <nav className="flex items-center gap-2">
-                  <button
-                    onClick={() => setActiveTab("Collections")}
-                    className={`px-4 py-2 rounded-full border-2 font-bold ${
-                      activeTab === "Collections"
-                        ? "bg-black text-white"
-                        : "bg-white text-black"
-                    }`}
-                  >
-                    Collections
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("Orders")}
-                    className={`px-4 py-2 rounded-full border-2 font-bold ${
-                      activeTab === "Orders"
-                        ? "bg-black text-white"
-                        : "bg-white text-black"
-                    }`}
-                  >
-                    Orders
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("Stats")}
-                    className={`px-4 py-2 rounded-full border-2 font-bold ${
-                      activeTab === "Stats"
-                        ? "bg-black text-white"
-                        : "bg-white text-black"
-                    }`}
-                  >
-                    Stats
-                  </button>
-                </nav>
-              </div>
-              <div>
-                {activeTab === "Stats" ? (
-                  <div className="space-y-6">
-                    <div className="bg-white rounded-2xl border-2 border-black p-4 bento-shadow">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-16 h-16 rounded-lg border-2 border-black bg-blue-500 flex items-center justify-center">
-                            <div className="w-10 h-10 rounded-full bg-white" />
-                          </div>
-                          <div>
-                            <div className="text-sm text-gray-600 font-bold">
-                              GLOBAL MMR RATING
-                            </div>
-                            <div className="text-4xl font-headline text-black">
-                              {mmr ?? "200,000"}
-                            </div>
-                          </div>
-                        </div>
-                        <div />
+                      <BarChart2 size={24} color={C.yellow} />
+                    </div>
+                    <div>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 800,
+                          letterSpacing: "0.12em",
+                          textTransform: "uppercase",
+                          color: C.gray400,
+                          marginBottom: 2,
+                        }}
+                      >
+                        Global MMR Rating
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 32,
+                          fontWeight: 900,
+                          color: C.black,
+                          letterSpacing: "-0.02em",
+                        }}
+                      >
+                        {typeof mmr === "number" ? mmr.toLocaleString() : mmr}
                       </div>
                     </div>
+                  </Card>
 
-                    <div className="bg-white rounded-2xl border-2 border-black p-6 bento-shadow">
-                      <h3 className="text-lg font-headline text-black flex items-center gap-2">
-                        <span className="text-pink-500">✚</span> SKILLS
-                      </h3>
-                      <div className="space-y-3 mt-4">
-                        {[
+                  {/* Skills */}
+                  <Card>
+                    <SectionLabel icon={<Zap size={12} />}>Skills</SectionLabel>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
+                      }}
+                    >
+                      <SkillBar
+                        label="Cuteness"
+                        value={Number(attrs.cuteness ?? 0)}
+                        accent={C.pink}
+                      />
+                      <SkillBar
+                        label="Confidence"
+                        value={Number(attrs.confidence ?? 0)}
+                        accent={C.blue}
+                      />
+                      <SkillBar
+                        label="Telli Factor"
+                        value={Number(attrs.tiliFactor ?? 0)}
+                        accent={C.yellow}
+                      />
+                    </div>
+                  </Card>
+
+                  {/* Territory + Traits side by side */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 16,
+                    }}
+                  >
+                    {/* Territory */}
+                    <Card>
+                      <SectionLabel icon={<MapPin size={12} />}>
+                        Territory
+                      </SectionLabel>
+                      {(() => {
+                        const current = characters[index] ?? podiumEntry ?? {};
+                        const rawTerr =
+                          current?.attributes?.territory ??
+                          current?.attributes?.country_affinity ??
+                          current?.attributes?.countryAffinity ??
+                          current?.attributes ??
+                          {};
+                        // normalizeMap: converts various territory shapes into a
+                        // consistent map keyed by lowercase names.
+                        const normalizeMap = (src: any) => {
+                          const out: Record<string, any> = {};
+                          if (!src) return out;
+                          if (Array.isArray(src)) {
+                            src.forEach((it: any) => {
+                              const k =
+                                (it.trait_type ??
+                                  it.traitType ??
+                                  it.name ??
+                                  it.label ??
+                                  it.key ??
+                                  "") + "";
+                              const v = it.value ?? it.val ?? it.count ?? 0;
+                              if (k) out[String(k).toLowerCase()] = v;
+                            });
+                            return out;
+                          }
+                          if (typeof src === "object") {
+                            Object.keys(src).forEach((k) => {
+                              out[k.toLowerCase()] = src[k];
+                            });
+                            return out;
+                          }
+                          return out;
+                        };
+                        const terr = normalizeMap(rawTerr);
+                        const items = [
                           {
-                            label: "CUTENESS",
-                            key: "cuteness",
-                            color: "bg-pink-500",
+                            name: "Luzon",
+                            value:
+                              terr.luzon ??
+                              terr.luzon_score ??
+                              terr["luzon%"] ??
+                              0,
                           },
                           {
-                            label: "CONFIDENCE",
-                            key: "confidence",
-                            color: "bg-blue-500",
+                            name: "Visayas",
+                            value: terr.visayas ?? terr.visayas_score ?? 0,
                           },
                           {
-                            label: "TELLI FACTOR",
-                            key: "tiliFactor",
-                            color: "bg-yellow-400",
+                            name: "Mindanao",
+                            value: terr.mindanao ?? terr.mindanao_score ?? 0,
                           },
-                        ].map((s) => {
-                          const val = Math.max(
-                            0,
-                            Math.min(100, Number(attrs[s.key] ?? 0)),
-                          );
-                          return (
-                            <div key={s.label}>
-                              <div className="flex justify-between text-xs text-black font-bold mb-1">
-                                <span>{s.label}</span>
-                                <span>{val}%</span>
-                              </div>
-                              <div className="w-full bg-gray-200 rounded-full h-4 border-2 border-black p-0.5">
+                        ];
+                        return (
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-around",
+                              alignItems: "flex-end",
+                              height: 100,
+                              gap: 8,
+                            }}
+                          >
+                            {items.map((t) => {
+                              const val = Math.max(
+                                0,
+                                Math.min(100, Number(t.value || 0)),
+                              );
+                              return (
                                 <div
-                                  className={`${s.color} h-full rounded-full border-2 border-black`}
-                                  style={{ width: `${val}%` }}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="bg-white rounded-2xl border-2 border-black p-6 bento-shadow">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="md:col-span-1">
-                          <h4 className="text-lg font-headline text-black flex items-center gap-2 mb-4">
-                            <span className="text-green-500">⌖</span> TERRITORY
-                          </h4>
-                          <div className="flex justify-around items-center gap-2 h-40">
-                            {(() => {
-                              // Prefer territory / country affinity from the selected character or podium entry
-                              const current =
-                                characters[index] ?? podiumEntry ?? {};
-                              const rawTerr =
-                                current?.attributes?.territory ??
-                                current?.attributes?.country_affinity ??
-                                current?.attributes?.countryAffinity ??
-                                current?.attributes ??
-                                {};
-
-                              const normalizeMap = (src: any) => {
-                                const out: Record<string, any> = {};
-                                if (!src) return out;
-                                if (Array.isArray(src)) {
-                                  src.forEach((it: any) => {
-                                    const k =
-                                      (it.trait_type ??
-                                        it.traitType ??
-                                        it.name ??
-                                        it.label ??
-                                        it.key ??
-                                        "") + "";
-                                    const v =
-                                      it.value ?? it.val ?? it.count ?? 0;
-                                    if (k) out[String(k).toLowerCase()] = v;
-                                  });
-                                  return out;
-                                }
-
-                                if (typeof src === "object") {
-                                  Object.keys(src).forEach((k) => {
-                                    out[k.toLowerCase()] = src[k];
-                                  });
-                                  return out;
-                                }
-
-                                return out;
-                              };
-
-                              const terr = normalizeMap(rawTerr);
-                              const items = [
-                                {
-                                  name: "Luzon",
-                                  value:
-                                    terr.luzon ??
-                                    terr.luzon_score ??
-                                    terr["luzon%"] ??
-                                    0,
-                                },
-                                {
-                                  name: "Visayas",
-                                  value:
-                                    terr.visayas ?? terr.visayas_score ?? 0,
-                                },
-                                {
-                                  name: "Mindanao",
-                                  value:
-                                    terr.mindanao ?? terr.mindanao_score ?? 0,
-                                },
-                              ];
-                              return items.map((t) => {
-                                const val = Math.max(
-                                  0,
-                                  Math.min(100, Number(t.value || 0)),
-                                );
-                                const h = val + "%";
-                                return (
+                                  key={t.name}
+                                  style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    flex: 1,
+                                    gap: 4,
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      fontWeight: 800,
+                                      fontSize: 12,
+                                      color: C.green,
+                                    }}
+                                  >
+                                    {val}
+                                  </span>
                                   <div
-                                    key={t.name}
-                                    className="flex flex-col items-center text-center"
+                                    style={{
+                                      width: "100%",
+                                      maxWidth: 36,
+                                      height: 60,
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      justifyContent: "flex-end",
+                                    }}
                                   >
                                     <div
-                                      className="font-bold text-lg mb-1"
-                                      style={{ color: "#00D58B" }}
-                                    >
-                                      {val}
-                                    </div>
-                                    <div className="w-16 h-24 flex flex-col justify-end">
-                                      <div
-                                        className="bg-[#00D58B] rounded-t-2xl w-full"
-                                        style={{ height: h }}
-                                      />
-                                    </div>
-                                    <div className="text-xs text-slate-500 font-bold mt-2 uppercase">
-                                      {t.name}
-                                    </div>
+                                      style={{
+                                        width: "100%",
+                                        height: `${val}%`,
+                                        minHeight: 4,
+                                        background: C.green,
+                                        borderRadius: "4px 4px 0 0",
+                                        border: `2px solid ${C.black}`,
+                                        transition: "height 0.4s ease",
+                                      }}
+                                    />
                                   </div>
-                                );
-                              });
-                            })()}
-                          </div>
-                        </div>
-
-                        <div className="md:col-span-2">
-                          <h4 className="text-lg font-headline text-black flex items-center gap-2 mb-4">
-                            <span className="text-orange-500">#</span> TRAITS
-                          </h4>
-                          <div className="grid grid-cols-2 gap-3">
-                            {(() => {
-                              // Prefer the currently selected character's real visual traits (or podium entry)
-                              const current =
-                                characters[index] ?? podiumEntry ?? {};
-                              const rawTraits =
-                                current?.attributes?.traits ??
-                                current?.attributes?.visual_traits ??
-                                current?.attributes?.properties ??
-                                current?.attributes ??
-                                {};
-
-                              const normalizeTraits = (src: any) => {
-                                const out: Record<string, any> = {};
-                                if (!src) return out;
-                                // array of trait objects
-                                if (Array.isArray(src)) {
-                                  src.forEach((it: any) => {
-                                    const k =
-                                      (it.trait_type ??
-                                        it.traitType ??
-                                        it.trait ??
-                                        it.name ??
-                                        it.label ??
-                                        "") + "";
-                                    const v =
-                                      it.value ??
-                                      it.trait_value ??
-                                      it.val ??
-                                      undefined;
-                                    if (k)
-                                      out[String(k).toLowerCase()] = v ?? "";
-                                  });
-                                  return out;
-                                }
-
-                                // object mapping
-                                if (typeof src === "object") {
-                                  Object.keys(src).forEach((k) => {
-                                    out[k.toLowerCase()] = src[k];
-                                  });
-                                  return out;
-                                }
-
-                                return out;
-                              };
-
-                              const t = normalizeTraits(rawTraits);
-
-                              const pick = (keys: string[]) => {
-                                for (const k of keys) {
-                                  const v = t[k.toLowerCase()];
-                                  if (v != null && v !== "") return v;
-                                }
-                                return null;
-                              };
-
-                              const preferred = [
-                                [
-                                  "STYLE",
-                                  pick([
-                                    "style",
-                                    "type",
-                                    "visualstyle",
-                                    "visual_style",
-                                  ]),
-                                ],
-                                [
-                                  "HAIR",
-                                  pick(["hair", "hairstyle", "hair_style"]),
-                                ],
-                                [
-                                  "FACE",
-                                  pick(["face", "facial", "expression"]),
-                                ],
-                                [
-                                  "EYEWEAR",
-                                  pick(["eyewear", "glasses", "eyes"]),
-                                ],
-                                [
-                                  "HELD",
-                                  pick([
-                                    "held",
-                                    "held_item",
-                                    "holding",
-                                    "held_item_name",
-                                    "weapon",
-                                  ]),
-                                ],
-                                ["WEAR", pick(["wear", "equipment", "weapon"])],
-                                ["HEAD", pick(["head", "headpiece", "hat"])],
-                              ];
-
-                              let entries = preferred.filter(
-                                ([, v]) => v != null && v !== "",
+                                  <span
+                                    style={{
+                                      fontSize: 9,
+                                      fontWeight: 700,
+                                      textTransform: "uppercase",
+                                      letterSpacing: "0.06em",
+                                      color: C.gray400,
+                                    }}
+                                  >
+                                    {t.name}
+                                  </span>
+                                </div>
                               );
+                            })}
+                          </div>
+                        );
+                      })()}
+                    </Card>
 
-                              // Append other collection-specific trait keys that exist but weren't in preferred list
-                              const other = Object.entries(t)
-                                .filter(([, v]) => v != null && v !== "")
-                                .filter(
-                                  ([k]) =>
-                                    !entries.some(
-                                      ([ek]) =>
-                                        ek.toLowerCase() === k.toLowerCase(),
-                                    ),
-                                )
-                                .slice(0, Math.max(0, 6 - entries.length))
-                                .map(([k, v]) => [k.toUpperCase(), v]);
-
-                              if (other.length)
-                                entries = entries.concat(other as any[]);
-
-                              // If we couldn't find the common keys, but there are traits available,
-                              // show the first few available trait entries from the normalized map.
-                              if (entries.length === 0) {
-                                const allEntries = Object.entries(t).filter(
-                                  ([, v]) => v != null && v !== "",
-                                );
-                                if (allEntries.length > 0) {
-                                  return allEntries
-                                    .slice(0, 6)
-                                    .map(([k, v]) => (
-                                      <div
-                                        key={String(k)}
-                                        className="border-2 border-black rounded-lg p-2 font-bold text-sm bg-white"
-                                      >
-                                        {k.toUpperCase()}: {String(v)}
-                                      </div>
-                                    ));
-                                }
-
-                                // fall back to the previous static placeholders if nothing is available
-                                return (
-                                  <>
-                                    <div className="border-2 border-black rounded-lg p-2 font-bold text-sm bg-white">
-                                      STYLE: Nature
-                                    </div>
-                                    <div className="border-2 border-black rounded-lg p-2 font-bold text-sm bg-white">
-                                      FACE: 28% Stubbi
-                                    </div>
-                                    <div className="border-2 border-black rounded-lg p-2 font-bold text-sm bg-white">
-                                      WEAR: Sniper Rifle
-                                    </div>
-                                    <div className="border-2 border-black rounded-lg p-2 font-bold text-sm bg-white">
-                                      HEAD: 34% Fluff
-                                    </div>
-                                    <div className="border-2 border-black rounded-lg p-2 font-bold text-sm bg-white">
-                                      EYEWEAR: Yea
-                                    </div>
-                                  </>
-                                );
-                              }
-
-                              return entries.map(([k, v]) => (
-                                <div
-                                  key={String(k)}
-                                  className="border-2 border-black rounded-lg p-2 font-bold text-sm bg-white"
+                    {/* Traits */}
+                    <Card>
+                      <SectionLabel icon={<Hash size={12} />}>
+                        Traits
+                      </SectionLabel>
+                      {(() => {
+                        const current = characters[index] ?? podiumEntry ?? {};
+                        const rawTraits =
+                          current?.attributes?.traits ??
+                          current?.attributes?.visual_traits ??
+                          current?.attributes?.properties ??
+                          current?.attributes ??
+                          {};
+                        // normalizeTraits: same idea as normalizeMap but for trait
+                        // arrays / objects. Results use lowercase keys.
+                        const normalizeTraits = (src: any) => {
+                          const out: Record<string, any> = {};
+                          if (!src) return out;
+                          if (Array.isArray(src)) {
+                            src.forEach((it: any) => {
+                              const k =
+                                (it.trait_type ??
+                                  it.traitType ??
+                                  it.trait ??
+                                  it.name ??
+                                  it.label ??
+                                  "") + "";
+                              const v =
+                                it.value ??
+                                it.trait_value ??
+                                it.val ??
+                                undefined;
+                              if (k) out[String(k).toLowerCase()] = v ?? "";
+                            });
+                            return out;
+                          }
+                          if (typeof src === "object") {
+                            Object.keys(src).forEach((k) => {
+                              out[k.toLowerCase()] = src[k];
+                            });
+                            return out;
+                          }
+                          return out;
+                        };
+                        const t = normalizeTraits(rawTraits);
+                        // pick: helper to look through alternative keys and return
+                        // the first non-empty value (useful for inconsistent metadata)
+                        const pick = (keys: string[]) => {
+                          for (const k of keys) {
+                            const v = t[k.toLowerCase()];
+                            if (v != null && v !== "") return v;
+                          }
+                          return null;
+                        };
+                        const preferred: [string, any][] = [
+                          [
+                            "STYLE",
+                            pick([
+                              "style",
+                              "type",
+                              "visualstyle",
+                              "visual_style",
+                            ]),
+                          ],
+                          ["HAIR", pick(["hair", "hairstyle", "hair_style"])],
+                          ["FACE", pick(["face", "facial", "expression"])],
+                          ["EYEWEAR", pick(["eyewear", "glasses", "eyes"])],
+                          [
+                            "HELD",
+                            pick([
+                              "held",
+                              "held_item",
+                              "holding",
+                              "held_item_name",
+                              "weapon",
+                            ]),
+                          ],
+                          ["WEAR", pick(["wear", "equipment", "weapon"])],
+                          ["HEAD", pick(["head", "headpiece", "hat"])],
+                        ];
+                        let entries = preferred.filter(
+                          ([, v]) => v != null && v !== "",
+                        );
+                        const other = Object.entries(t)
+                          .filter(([, v]) => v != null && v !== "")
+                          .filter(
+                            ([k]) =>
+                              !entries.some(
+                                ([ek]) => ek.toLowerCase() === k.toLowerCase(),
+                              ),
+                          )
+                          .slice(0, Math.max(0, 6 - entries.length))
+                          .map(([k, v]) => [k.toUpperCase(), v]);
+                        if (other.length)
+                          entries = entries.concat(other as any[]);
+                        if (entries.length === 0) {
+                          const allEntries = Object.entries(t).filter(
+                            ([, v]) => v != null && v !== "",
+                          );
+                          if (allEntries.length > 0)
+                            entries = allEntries
+                              .slice(0, 6)
+                              .map(([k, v]) => [k.toUpperCase(), v]);
+                          else
+                            entries = [
+                              ["STYLE", "Nature"],
+                              ["FACE", "Stubbi"],
+                              ["WEAR", "Sniper Rifle"],
+                              ["HEAD", "Fluff"],
+                              ["EYEWEAR", "Yea"],
+                            ];
+                        }
+                        return (
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 6,
+                            }}
+                          >
+                            {entries.slice(0, 5).map(([k, v]) => (
+                              <div
+                                key={String(k)}
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  padding: "5px 8px",
+                                  background: C.gray50,
+                                  border: `1.5px solid ${C.gray200}`,
+                                  borderRadius: 6,
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    fontSize: 9,
+                                    fontWeight: 800,
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.08em",
+                                    color: C.gray400,
+                                  }}
                                 >
-                                  {k}: {String(v)}
-                                </div>
-                              ));
-                            })()}
+                                  {k}
+                                </span>
+                                <span
+                                  style={{
+                                    fontSize: 11,
+                                    fontWeight: 700,
+                                    color: C.black,
+                                  }}
+                                >
+                                  {String(v)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </Card>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Collections Tab ── */}
+              {activeTab === "Collections" && (
+                <Card>
+                  <SectionLabel>Collections ({characters.length})</SectionLabel>
+                  {characters.length === 0 ? (
+                    <div
+                      style={{
+                        textAlign: "center",
+                        padding: "40px 0",
+                        color: C.gray400,
+                      }}
+                    >
+                      <ShoppingBag size={32} style={{ margin: "0 auto 8px" }} />
+                      <p style={{ fontWeight: 700, fontSize: 13 }}>
+                        No characters owned yet.
+                      </p>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fill, minmax(140px, 1fr))",
+                        gap: 12,
+                        maxHeight: 500,
+                        overflowY: "auto",
+                      }}
+                    >
+                      {characters.map((c, i) => (
+                        <div
+                          key={c.objectId || i}
+                          onClick={() => setIndex(i)}
+                          style={{
+                            border: `2px solid ${i === index ? C.yellow : C.black}`,
+                            borderRadius: 12,
+                            overflow: "hidden",
+                            cursor: "pointer",
+                            background: C.white,
+                            boxShadow: `3px 3px 0 ${i === index ? C.yellow : C.black}`,
+                            transition: "all 0.15s",
+                          }}
+                        >
+                          <div
+                            style={{
+                              background: C.gray100,
+                              aspectRatio: "1",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <img
+                              src={c.imageUrl}
+                              alt={c.name}
+                              style={{
+                                width: "80%",
+                                height: "80%",
+                                objectFit: "contain",
+                              }}
+                            />
+                          </div>
+                          <div style={{ padding: "6px 8px" }}>
+                            <div
+                              style={{
+                                fontWeight: 800,
+                                fontSize: 11,
+                                textTransform: "uppercase",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {c.name}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 10,
+                                color: C.gray400,
+                                fontWeight: 600,
+                              }}
+                            >
+                              MMR {c.mmr ?? 0}
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
-                  </div>
-                ) : activeTab === "Collections" ? (
-                  <div className="space-y-6">
-                    <div className="bg-white rounded-2xl border-2 border-black p-6 bento-shadow">
-                      <h3 className="text-lg font-headline text-black">
-                        Collections
-                      </h3>
-                      <div className="mt-4 pr-2 space-y-4">
-                        {characters.length === 0 ? (
-                          <div className="text-sm text-gray-600">
-                            You don't own any collections yet.
-                          </div>
-                        ) : (
-                          <>
-                            <div className="grid grid-cols-3 gap-4 mt-4">
-                              {characters.slice(0, 8).map((c, i) => (
-                                <div
-                                  key={c.objectId || i}
-                                  className="w-full h-72 border-2 border-black rounded-lg p-2 bg-white flex flex-col justify-between"
-                                >
-                                  <img
-                                    src={c.imageUrl}
-                                    alt={c.name}
-                                    className="w-60 h-60 rounded flex-shrink-0 mx-auto"
-                                  />
-                                  <div className="">
-                                    <div className="font-bold text-sm truncate">
-                                      {c.name}
-                                    </div>
-                                    <div className="text-xs text-gray-600">
-                                      MMR: {c.mmr ?? c.attributes?.mmr ?? 0}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <OrdersPanel account={account} />
-                )}
-              </div>
-            </main>
+                  )}
+                </Card>
+              )}
+
+              {/* ── Orders Tab ── */}
+              {activeTab === "Orders" && <OrdersPanel account={account} />}
+            </div>
           </div>
 
-          <h3 className="text-lg font-headline text-black mt-6 -mb-5">
-            Player Stats
-          </h3>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
-            <div className="bg-white rounded-2xl border-2 border-black p-4 text-center bento-shadow">
-              <div className="text-blue-500 text-3xl">Ω</div>
-              <div className="text-xs text-gray-600 font-bold mt-1">
-                BEST MMR
-              </div>
-              <div className="text-2xl font-headline text-black">
-                {bestMmrNum?.toLocaleString?.() ?? bestMmrNum}
-              </div>
+          {/* ── Bottom Player Stats Row ── */}
+          <div style={{ marginTop: 24 }}>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 800,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: C.gray600,
+                marginBottom: 12,
+              }}
+            >
+              Player Stats
             </div>
-
-            <div className="bg-white rounded-2xl border-2 border-black p-4 text-center bento-shadow">
-              <div className="text-pink-500 text-3xl">♡</div>
-              <div className="text-xs text-gray-600 font-bold mt-1">
-                AVG MMR
-              </div>
-              <div className="text-2xl font-headline text-black">
-                {avgMmrNum?.toLocaleString?.() ?? avgMmrNum}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border-2 border-black p-4 text-center bento-shadow">
-              <div className="text-green-500 text-3xl">⚄</div>
-              <div className="text-xs text-gray-600 font-bold mt-1">
-                SUMMONS
-              </div>
-              <div className="text-2xl font-headline text-black">
-                {summonsCount}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border-2 border-black p-4 bento-shadow">
-              <div className="text-xs text-gray-600 font-bold mb-2">
-                LINEAGE
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {topLineages.length === 0 ? (
-                  <div className="bg-slate-200 text-slate-800 text-xs font-bold px-2 py-1 rounded-md border-2 border-black">
-                    Unknown
-                  </div>
-                ) : (
-                  topLineages.map((l) => (
-                    <div
-                      key={l}
-                      className="bg-blue-200 text-blue-800 text-xs font-bold px-2 py-1 rounded-md border-2 border-black"
-                    >
-                      {l}
-                    </div>
-                  ))
-                )}
-              </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, 1fr)",
+                gap: 12,
+              }}
+            >
+              <StatBox
+                icon={<BarChart2 size={20} />}
+                label="Best MMR"
+                value={bestMmrNum.toLocaleString()}
+                accent={C.blue}
+              />
+              <StatBox
+                icon={<BarChart2 size={20} />}
+                label="Avg MMR"
+                value={avgMmrNum.toLocaleString()}
+                accent={C.pink}
+              />
+              <StatBox
+                icon={<Zap size={20} />}
+                label="Summons"
+                value={summonsCount}
+                accent={C.green}
+              />
+              <Card style={{ padding: 16 }}>
+                <div
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: C.gray400,
+                    marginBottom: 8,
+                  }}
+                >
+                  Lineage
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {topLineages.length === 0 ? (
+                    <Badge color={C.gray200} textColor={C.gray600}>
+                      Unknown
+                    </Badge>
+                  ) : (
+                    topLineages.map((l) => (
+                      <Badge key={l} color={C.blue} textColor={C.white}>
+                        {l}
+                      </Badge>
+                    ))
+                  )}
+                </div>
+              </Card>
             </div>
           </div>
         </div>
@@ -861,7 +1276,11 @@ export default function Page() {
   );
 }
 
-// --- OrdersPanel (embedded copy of MyOrders logic for the profile Orders tab) ----------------
+/* ─────────────────────────────────────────
+  Orders Panel
+  - Responsible for loading, normalizing and displaying purchase receipts
+  - Includes helpers: loadOrders, getStatusInfo, getTrackingUrl
+───────────────────────────────────────── */
 interface Order {
   objectId: string;
   nftId: string;
@@ -872,10 +1291,7 @@ interface Order {
   trackingNumber: string;
   carrier: string;
   estimatedDelivery: number;
-  character?: {
-    name: string;
-    imageUrl: string;
-  };
+  character?: { name: string; imageUrl: string };
 }
 
 interface StatusInfo {
@@ -894,7 +1310,6 @@ function OrdersPanel({ account }: { account: any }) {
   useEffect(() => {
     if (account?.address) loadOrders();
     else setLoading(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account?.address]);
 
   const loadOrders = async () => {
@@ -906,51 +1321,39 @@ function OrdersPanel({ account }: { account: any }) {
       let allBuyerAddresses: string[] = [];
       let hasNextPage = true;
       let cursor: string | null = null;
-
       while (hasNextPage) {
         const page: any = await suiClient.queryEvents({
           query: {
             MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ORDER_RECEIPT}::ReceiptCreated`,
           },
-          cursor: cursor,
+          cursor,
           order: "ascending",
         });
-
         page.data.forEach((event: any) => {
           allReceiptIds.push(event.parsedJson?.receipt_id);
           allBuyerAddresses.push(event.parsedJson?.buyer);
         });
-
-        if (page.hasNextPage && page.nextCursor) {
-          cursor = page.nextCursor;
-        } else {
-          hasNextPage = false;
-        }
+        if (page.hasNextPage && page.nextCursor) cursor = page.nextCursor;
+        else hasNextPage = false;
       }
-
       const userReceiptIds = allReceiptIds.filter(
         (_, idx) => allBuyerAddresses[idx] === account.address,
       );
-
       if (userReceiptIds.length === 0) {
         setOrders([]);
         setLoading(false);
         return;
       }
-
       const receipts: any[] = [];
-      const chunkSize = 50;
-      for (let i = 0; i < userReceiptIds.length; i += chunkSize) {
-        const chunk = userReceiptIds.slice(i, i + chunkSize);
+      for (let i = 0; i < userReceiptIds.length; i += 50) {
+        const chunk = userReceiptIds.slice(i, i + 50);
         const chunkReceipts = await suiClient.multiGetObjects({
           ids: chunk,
           options: { showContent: true },
         });
         receipts.push(...chunkReceipts);
       }
-
       const validReceipts = receipts.filter((r) => r.data);
-
       const parsedReceipts: Omit<Order, "character">[] = validReceipts
         .map((obj: any) => ({
           objectId: obj.data.objectId,
@@ -966,13 +1369,11 @@ function OrdersPanel({ account }: { account: any }) {
           ),
         }))
         .sort((a, b) => b.createdAt - a.createdAt);
-
       const nftIds = parsedReceipts.map((r) => r.nftId);
       const nftObjects = await suiClient.multiGetObjects({
         ids: nftIds,
         options: { showDisplay: true },
       });
-
       const nftsMap = new Map(
         nftObjects
           .filter((obj) => obj.data)
@@ -986,13 +1387,12 @@ function OrdersPanel({ account }: { account: any }) {
             },
           ]),
       );
-
-      const combinedOrders = parsedReceipts.map((receipt) => ({
-        ...receipt,
-        character: nftsMap.get(receipt.nftId),
-      }));
-
-      setOrders(combinedOrders as Order[]);
+      setOrders(
+        parsedReceipts.map((receipt) => ({
+          ...receipt,
+          character: nftsMap.get(receipt.nftId),
+        })) as Order[],
+      );
     } catch (err) {
       console.error("Failed to load orders:", err);
       setError("Failed to load orders. Please try again later.");
@@ -1006,23 +1406,23 @@ function OrdersPanel({ account }: { account: any }) {
       case ORDER_STATUS.SHIPPED:
         return {
           text: "In Transit",
-          icon: <Truck className="w-4 h-4" />,
-          bg: "bg-blue-400",
-          textColor: "text-white",
+          icon: <Truck size={12} />,
+          bg: C.blue,
+          textColor: C.white,
         };
       case ORDER_STATUS.DELIVERED:
         return {
           text: "Delivered",
-          icon: <CheckCircle className="w-4 h-4" />,
-          bg: "bg-green-500",
-          textColor: "text-white",
+          icon: <CheckCircle size={12} />,
+          bg: C.green,
+          textColor: C.white,
         };
       default:
         return {
           text: "Processing",
-          icon: <Package className="w-4 h-4" />,
-          bg: "bg-yellow-400",
-          textColor: "text-black",
+          icon: <Package size={12} />,
+          bg: C.yellow,
+          textColor: C.black,
         };
     }
   };
@@ -1046,63 +1446,215 @@ function OrdersPanel({ account }: { account: any }) {
     return "";
   };
 
-  return (
-    <div className="space-y-6">
-      {!account ? (
-        <div className="bg-white border-4 border-black rounded-[3rem] p-16 text-center shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-          <div className="w-24 h-24 bg-gray-100 rounded-full border-4 border-black flex items-center justify-center mx-auto mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <Wallet size={48} />
-          </div>
-          <h3 className="text-4xl font-black uppercase mb-4 tracking-tighter italic">
-            Sync Required
-          </h3>
-          <p className="font-bold text-gray-500 uppercase max-w-xs mx-auto mb-10 leading-snug">
-            Connect your wallet to view orders.
-          </p>
-          <CustomConnectButton className="!bg-yellow-400 !hover:bg-yellow-300 !text-black !border-4 !border-black !font-black !px-8 !py-3 !rounded-2xl !text-base" />
+  if (!account)
+    return (
+      <Card style={{ textAlign: "center", padding: 48 }}>
+        <div
+          style={{
+            width: 56,
+            height: 56,
+            background: C.gray100,
+            border: `2px solid ${C.black}`,
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "0 auto 16px",
+          }}
+        >
+          <Wallet size={24} />
         </div>
-      ) : loading ? (
-        <div className="h-48 flex items-center justify-center bg-white border-4 border-black rounded-2xl">
-          <LoaderCircle size={32} className="animate-spin text-black" />
-        </div>
-      ) : error ? (
-        <div className="bg-white border-4 border-black rounded-2xl p-6 text-center">
-          <ShieldAlert size={36} className="text-red-600 mx-auto" />
-          <p className="font-bold mt-4">{error}</p>
-        </div>
-      ) : orders.length === 0 ? (
-        <div className="bg-white border-4 border-black rounded-2xl p-6 text-center">
-          <ShoppingBag size={36} className="mx-auto" />
-          <h3 className="text-xl font-black uppercase mt-4">No Orders</h3>
-          <p className="text-gray-500 mt-2">
-            You haven't claimed any physical items yet.
-          </p>
-        </div>
-      ) : (
-        <div className="bg-white border-4 border-black rounded-2xl p-4 bento-shadow">
-          <div className="bg-black text-white px-4 py-2 rounded-md flex items-center justify-between mb-4">
-            <span className="font-black uppercase text-sm">
-              Active Orders ({orders.length})
-            </span>
-            <div className="flex gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500 border-2 border-white" />
-              <div className="w-3 h-3 rounded-full bg-yellow-500 border-2 border-white" />
-              <div className="w-3 h-3 rounded-full bg-green-500 border-2 border-white" />
-            </div>
-          </div>
+        <h3
+          style={{
+            fontWeight: 900,
+            fontSize: 18,
+            textTransform: "uppercase",
+            margin: "0 0 8px",
+          }}
+        >
+          Connect Wallet
+        </h3>
+        <p
+          style={{
+            color: C.gray400,
+            fontWeight: 600,
+            fontSize: 13,
+            margin: "0 0 20px",
+          }}
+        >
+          Connect your wallet to view orders.
+        </p>
+        <CustomConnectButton />
+      </Card>
+    );
 
-          <div className="space-y-4 max-h-[360px] overflow-y-auto">
-            {orders.map((order) => (
-              <OrderCard
-                key={order.objectId}
-                order={order}
-                statusInfo={getStatusInfo(order.status)}
-                onClick={() => setSelectedOrder(order)}
-              />
-            ))}
-          </div>
+  if (loading)
+    return (
+      <Card
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: 160,
+        }}
+      >
+        <LoaderCircle
+          size={28}
+          style={{ animation: "spin 1s linear infinite", color: C.black }}
+        />
+      </Card>
+    );
+
+  if (error)
+    return (
+      <Card style={{ textAlign: "center", padding: 40 }}>
+        <ShieldAlert size={32} color="red" style={{ margin: "0 auto 8px" }} />
+        <p style={{ fontWeight: 700 }}>{error}</p>
+      </Card>
+    );
+
+  if (orders.length === 0)
+    return (
+      <Card style={{ textAlign: "center", padding: 48 }}>
+        <ShoppingBag
+          size={32}
+          style={{ margin: "0 auto 12px", color: C.gray400 }}
+        />
+        <h3
+          style={{
+            fontWeight: 900,
+            fontSize: 16,
+            textTransform: "uppercase",
+            margin: "0 0 4px",
+          }}
+        >
+          No Orders Yet
+        </h3>
+        <p style={{ color: C.gray400, fontSize: 13 }}>
+          You haven't claimed any physical items.
+        </p>
+      </Card>
+    );
+
+  return (
+    <>
+      <Card>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 14,
+          }}
+        >
+          <SectionLabel icon={<Package size={12} />}>
+            Orders ({orders.length})
+          </SectionLabel>
         </div>
-      )}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+            maxHeight: 440,
+            overflowY: "auto",
+          }}
+        >
+          {orders.map((order) => {
+            const si = getStatusInfo(order.status);
+            return (
+              <div
+                key={order.objectId}
+                onClick={() => setSelectedOrder(order)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: 12,
+                  border: `2px solid ${C.gray200}`,
+                  borderRadius: 12,
+                  cursor: "pointer",
+                  background: C.white,
+                  transition: "border-color 0.15s",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.borderColor = C.black)
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.borderColor = C.gray200)
+                }
+              >
+                {/* Thumbnail */}
+                <div
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: 10,
+                    border: `2px solid ${C.black}`,
+                    overflow: "hidden",
+                    background: C.gray100,
+                    flexShrink: 0,
+                    position: "relative",
+                  }}
+                >
+                  {order.character?.imageUrl && (
+                    <Image
+                      src={order.character.imageUrl}
+                      alt="nft"
+                      fill
+                      style={{ objectFit: "cover" }}
+                    />
+                  )}
+                </div>
+
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontWeight: 800,
+                      fontSize: 13,
+                      textTransform: "uppercase",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {order.character?.name || "Unknown"}
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 10,
+                      marginTop: 3,
+                      fontSize: 11,
+                      color: C.gray400,
+                      fontWeight: 600,
+                    }}
+                  >
+                    <span
+                      style={{ display: "flex", alignItems: "center", gap: 3 }}
+                    >
+                      <Calendar size={10} />
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </span>
+                    <span
+                      style={{ display: "flex", alignItems: "center", gap: 3 }}
+                    >
+                      <Hash size={10} />
+                      {(order.paymentAmount / 1_000_000_000).toFixed(2)} SUI
+                    </span>
+                  </div>
+                </div>
+
+                {/* Status pill */}
+                <Badge color={si.bg} textColor={si.textColor}>
+                  {si.icon} {si.text}
+                </Badge>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
 
       {selectedOrder && (
         <OrderModal
@@ -1115,70 +1667,7 @@ function OrdersPanel({ account }: { account: any }) {
           onClose={() => setSelectedOrder(null)}
         />
       )}
-    </div>
-  );
-}
-
-function OrderCard({
-  order,
-  statusInfo,
-  onClick,
-}: {
-  order: Order;
-  statusInfo: StatusInfo;
-  onClick: () => void;
-}) {
-  return (
-    <div
-      onClick={onClick}
-      className="bg-white border-4 border-black rounded-3xl p-4 flex items-center gap-4 cursor-pointer"
-    >
-      <div className="w-20 h-20 bg-gray-100 rounded-2xl border-4 border-black overflow-hidden relative">
-        {order.character?.imageUrl && (
-          <Image
-            src={order.character.imageUrl}
-            alt="nft"
-            fill
-            className="object-cover"
-          />
-        )}
-        <div
-          className={`absolute -bottom-2 -right-2 p-2 rounded-lg border-2 border-black ${statusInfo.bg}`}
-        >
-          {statusInfo.icon}
-        </div>
-      </div>
-
-      <div className="flex-grow">
-        <div className="flex items-center justify-between gap-4">
-          <h3 className="text-lg font-black uppercase">
-            {order.character?.name || "Unknown"}
-          </h3>
-          <span className="font-mono text-xs bg-black text-white px-2 py-1 rounded">
-            ID: {order.objectId.slice(0, 8)}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500 mt-2">
-          <div className="flex items-center gap-1">
-            <Calendar size={12} />
-            {new Date(order.createdAt).toLocaleDateString()}
-          </div>
-          <div className="flex items-center gap-1">
-            <Hash size={12} />
-            {(order.paymentAmount / 1_000_000_000).toFixed(2)} SUI
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <button
-          className={`px-4 py-2 rounded-xl font-black uppercase ${statusInfo.bg} ${statusInfo.textColor}`}
-        >
-          <span className="text-xs">{statusInfo.text}</span>
-          <ChevronRight size={16} />
-        </button>
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -1194,129 +1683,285 @@ function OrderModal({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative w-full max-w-2xl bg-white border-4 border-black rounded-2xl p-6">
-        <div className="flex justify-between items-start mb-4">
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 50,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "rgba(0,0,0,0.55)",
+        }}
+        onClick={onClose}
+      />
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          maxWidth: 520,
+          background: C.white,
+          border: `2px solid ${C.black}`,
+          borderRadius: 16,
+          boxShadow: `6px 6px 0 ${C.black}`,
+          padding: 24,
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            marginBottom: 20,
+          }}
+        >
           <div>
-            <h2 className="text-2xl font-black">Order Receipt</h2>
-            <p className="font-mono text-xs mt-1">TX: {order.objectId}</p>
+            <h2
+              style={{
+                fontWeight: 900,
+                fontSize: 20,
+                margin: 0,
+                textTransform: "uppercase",
+              }}
+            >
+              Order Receipt
+            </h2>
+            <p
+              style={{
+                fontFamily: "monospace",
+                fontSize: 10,
+                color: C.gray400,
+                margin: "4px 0 0",
+              }}
+            >
+              {order.objectId.slice(0, 20)}...
+            </p>
           </div>
-          <button onClick={onClose} className="bg-black text-white p-2 rounded">
-            <X size={18} />
+          <button
+            onClick={onClose}
+            style={{
+              background: C.black,
+              color: C.white,
+              border: "none",
+              borderRadius: 8,
+              width: 32,
+              height: 32,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <X size={16} />
           </button>
         </div>
 
-        <div className="flex gap-4 mb-4">
-          <div className="w-28 h-28 bg-gray-100 rounded-2xl border-4 border-black overflow-hidden relative">
+        {/* Character + status */}
+        <div style={{ display: "flex", gap: 16, marginBottom: 20 }}>
+          <div
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: 12,
+              border: `2px solid ${C.black}`,
+              overflow: "hidden",
+              background: C.gray100,
+              flexShrink: 0,
+              position: "relative",
+            }}
+          >
             {order.character?.imageUrl && (
               <Image
                 src={order.character.imageUrl}
                 alt="nft"
                 fill
-                className="object-cover"
+                style={{ objectFit: "cover" }}
               />
             )}
           </div>
-          <div className="flex-grow">
+          <div style={{ flex: 1 }}>
+            <Badge color={statusInfo.bg} textColor={statusInfo.textColor}>
+              {statusInfo.icon} {statusInfo.text}
+            </Badge>
             <div
-              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${statusInfo.bg} ${statusInfo.textColor}`}
+              style={{
+                fontWeight: 900,
+                fontSize: 18,
+                textTransform: "uppercase",
+                margin: "6px 0 8px",
+              }}
             >
-              {statusInfo.icon}
-              {statusInfo.text}
-            </div>
-            <h3 className="text-2xl font-black mt-2">
               {order.character?.name}
-            </h3>
-            <div className="flex flex-wrap gap-2 mt-2">
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
               {order.itemsSelected.split(",").map((it, i) => (
-                <span
-                  key={i}
-                  className="px-2 py-1 bg-yellow-100 border-2 border-black rounded text-xs font-black uppercase"
-                >
+                <Badge key={i} color={C.yellow}>
                   {it.trim()}
-                </span>
+                </Badge>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          <div className="bg-gray-100 border-2 border-black p-3 rounded">
-            Payment
-            <div className="font-bold">
-              {(order.paymentAmount / 1_000_000_000).toFixed(2)} SUI
+        {/* Info grid */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 10,
+            marginBottom: 16,
+          }}
+        >
+          {[
+            {
+              label: "Payment",
+              value: `${(order.paymentAmount / 1_000_000_000).toFixed(2)} SUI`,
+            },
+            {
+              label: "Order Date",
+              value: new Date(order.createdAt).toLocaleDateString(),
+            },
+          ].map(({ label, value }) => (
+            <div
+              key={label}
+              style={{
+                background: C.gray50,
+                border: `1.5px solid ${C.gray200}`,
+                borderRadius: 10,
+                padding: "10px 14px",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  color: C.gray400,
+                  marginBottom: 2,
+                }}
+              >
+                {label}
+              </div>
+              <div style={{ fontWeight: 800, fontSize: 14 }}>{value}</div>
             </div>
-          </div>
-          <div className="bg-gray-100 border-2 border-black p-3 rounded">
-            Mint Date
-            <div className="font-bold">
-              {new Date(order.createdAt).toLocaleDateString()}
-            </div>
-          </div>
+          ))}
         </div>
 
-        <div className="bg-gray-50 border-2 border-dashed border-black p-4 rounded">
-          <h4 className="font-black mb-2">Live Tracking</h4>
+        {/* Tracking */}
+        <div
+          style={{
+            background: C.gray50,
+            border: `1.5px dashed ${C.gray200}`,
+            borderRadius: 10,
+            padding: "14px 16px",
+            marginBottom: 16,
+          }}
+        >
+          <div
+            style={{
+              fontWeight: 800,
+              fontSize: 12,
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              marginBottom: 10,
+            }}
+          >
+            Live Tracking
+          </div>
           {order.status >= ORDER_STATUS.SHIPPED ? (
-            <div>
-              <div className="flex justify-between">
-                <div>Carrier</div>
-                <div className="font-bold">{order.carrier}</div>
-              </div>
-              <div className="flex justify-between mt-2">
-                <div>Number</div>
-                <div className="font-mono break-all">
-                  {order.trackingNumber}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {[
+                ["Carrier", order.carrier],
+                ["Tracking #", order.trackingNumber],
+              ].map(([l, v]) => (
+                <div
+                  key={l}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 12,
+                  }}
+                >
+                  <span style={{ color: C.gray400, fontWeight: 600 }}>{l}</span>
+                  <span
+                    style={{
+                      fontWeight: 700,
+                      fontFamily: l === "Tracking #" ? "monospace" : "inherit",
+                    }}
+                  >
+                    {v}
+                  </span>
                 </div>
-              </div>
+              ))}
               {trackingUrl && (
                 <button
                   onClick={() => {
                     navigator.clipboard?.writeText(order.trackingNumber);
                     window.open(trackingUrl, "_blank");
                   }}
-                  className="mt-3 w-full bg-blue-500 text-white py-2 rounded"
+                  style={{
+                    marginTop: 8,
+                    width: "100%",
+                    padding: "8px 0",
+                    background: C.blue,
+                    color: C.white,
+                    border: `2px solid ${C.black}`,
+                    borderRadius: 8,
+                    fontWeight: 800,
+                    fontSize: 12,
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                  }}
                 >
-                  External Tracking <ExternalLink size={14} />
+                  Track Package <ExternalLink size={12} />
                 </button>
               )}
             </div>
           ) : (
-            <div className="text-sm text-gray-500 italic">
-              Crafting your gear... Tracking ID will appear once shipped.
-            </div>
+            <p
+              style={{
+                fontSize: 12,
+                color: C.gray400,
+                fontStyle: "italic",
+                margin: 0,
+              }}
+            >
+              Crafting your gear… Tracking info will appear once shipped.
+            </p>
           )}
         </div>
 
-        <div className="mt-4">
-          <button
-            onClick={onClose}
-            className="w-full py-2 bg-black text-white rounded"
-          >
-            Close Receipt
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function LogisticsCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="bg-white border-2 border-black p-3 rounded flex items-center gap-3">
-      <div className="p-2 bg-gray-100 rounded">{icon}</div>
-      <div>
-        <p className="text-xs text-gray-400">{label}</p>
-        <p className="font-bold text-sm">{value}</p>
+        <button
+          onClick={onClose}
+          style={{
+            width: "100%",
+            padding: "10px 0",
+            background: C.black,
+            color: C.white,
+            border: "none",
+            borderRadius: 10,
+            fontWeight: 800,
+            fontSize: 13,
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            cursor: "pointer",
+          }}
+        >
+          Close Receipt
+        </button>
       </div>
     </div>
   );

@@ -49,6 +49,13 @@ interface StatusInfo {
   textColor: string;
 }
 
+/**
+ * MyOrdersPage
+ * - Shows a full-page view of the user's order receipts and logistics
+ * - Loads on-chain `ReceiptCreated` events, resolves receipt objects,
+ *   and fetches related NFT display data for each receipt
+ * - Renders a list of `OrderCard` items and an `OrderModal` for details
+ */
 export default function MyOrdersPage() {
   const account = useCurrentAccount();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -70,6 +77,8 @@ export default function MyOrdersPage() {
     setError("");
     try {
       // Fetch ALL ReceiptCreated events with pagination
+      // We build two parallel arrays (ids and buyer addresses) to later
+      // filter receipts that belong to the connected account.
       let allReceiptIds: string[] = [];
       let allBuyerAddresses: string[] = [];
       let hasNextPage = true;
@@ -96,7 +105,7 @@ export default function MyOrdersPage() {
         }
       }
 
-      // Filter to current user's receipts only
+      // Filter to current user's receipts only (by matching buyer address)
       const userReceiptIds = allReceiptIds.filter(
         (_, idx) => allBuyerAddresses[idx] === account.address,
       );
@@ -107,7 +116,7 @@ export default function MyOrdersPage() {
         return;
       }
 
-      // Fetch receipt objects in chunks of 50
+      // Fetch receipt objects in chunks of 50 to avoid hitting API limits
       const receipts = [];
       const chunkSize = 50;
       for (let i = 0; i < userReceiptIds.length; i += chunkSize) {
@@ -119,8 +128,10 @@ export default function MyOrdersPage() {
         receipts.push(...chunkReceipts);
       }
 
+      // Keep only valid objects returned by the node
       const validReceipts = receipts.filter((r) => r.data);
 
+      // Map node objects into a normalized Order-like shape (without character)
       const parsedReceipts: Omit<Order, "character">[] = validReceipts
         .map((obj: any) => ({
           objectId: obj.data.objectId,
@@ -137,7 +148,7 @@ export default function MyOrdersPage() {
         }))
         .sort((a, b) => b.createdAt - a.createdAt);
 
-      // Fetch NFT display data
+      // Fetch NFT display data for the NFTs referenced by the receipts
       const nftIds = parsedReceipts.map((r) => r.nftId);
       const nftObjects = await suiClient.multiGetObjects({
         ids: nftIds,
@@ -158,6 +169,7 @@ export default function MyOrdersPage() {
           ]),
       );
 
+      // Combine parsed receipt metadata with resolved NFT display info
       const combinedOrders = parsedReceipts.map((receipt) => ({
         ...receipt,
         character: nftsMap.get(receipt.nftId),
@@ -172,6 +184,7 @@ export default function MyOrdersPage() {
     }
   };
 
+  // Translate numeric ORDER_STATUS into UI-friendly badge info
   const getStatusInfo = (status: number): StatusInfo => {
     switch (status) {
       case ORDER_STATUS.SHIPPED:
@@ -198,6 +211,11 @@ export default function MyOrdersPage() {
     }
   };
 
+  /**
+   * getTrackingUrl
+   * - Builds a carrier-specific tracking URL when possible
+   * - Falls back to 17TRACK for a set of common carriers
+   */
   const getTrackingUrl = (carrier: string, trackingNumber: string) => {
     const c = carrier.toUpperCase();
 
@@ -371,6 +389,11 @@ export default function MyOrdersPage() {
 }
 
 /* ─── Order Card ─────────────────────────────────────────────────────────── */
+/**
+ * OrderCard
+ * - Compact row used in the order list. Shows NFT thumbnail, basic meta and status.
+ * - Clicking the card opens the `OrderModal` with full details.
+ */
 function OrderCard({
   order,
   statusInfo,
@@ -441,6 +464,11 @@ function OrderCard({
 }
 
 /* ─── Order Modal ────────────────────────────────────────────────────────── */
+/**
+ * OrderModal
+ * - Shows detailed receipt information including items, payment, dates and tracking
+ * - Provides a button to copy the tracking number and open the carrier URL
+ */
 function OrderModal({
   order,
   statusInfo,
@@ -658,6 +686,10 @@ function OrderModal({
 }
 
 /* ─── Logistics Card ─────────────────────────────────────────────────────── */
+/**
+ * LogisticsCard
+ * - Small reusable display used inside the modal to show shipping related values
+ */
 function LogisticsCard({
   icon,
   label,
