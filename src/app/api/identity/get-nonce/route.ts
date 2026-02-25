@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 
@@ -35,7 +36,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message });
 
     } catch (error: any) {
-        console.error('[API /get-nonce] Error:', error);
-        return NextResponse.json({ error: 'Failed to generate nonce.' }, { status: 500 });
+        console.error('[API /get-nonce] Error:', error.message);
+        // Return the specific error message to the frontend for better debugging.
+        return NextResponse.json({ error: error.message || 'Failed to generate nonce.' }, { status: 500 });
     }
 }
