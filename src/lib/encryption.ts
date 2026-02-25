@@ -11,6 +11,7 @@ import { ENCRYPTION_CONFIG } from './constants';
  */
 export interface ShippingInfo {
   full_name: string;
+  email: string;
   contact_number: string;
   address: string;
 }
@@ -97,6 +98,7 @@ export async function decryptShippingInfo(
 
         const convertedInfo: ShippingInfo = {
           full_name: oldData.full_name,
+          email: oldData.email || '',
           contact_number: oldData.contact_number,
           address: fullAddress,
         }
@@ -135,6 +137,12 @@ export function validateShippingInfo(
       if(!isProperlyCapitalized){
           errors.push('Please properly capitalize all parts of the name.');
       }
+  }
+  
+  // Validate Email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!info.email || !emailRegex.test(info.email.trim())) {
+    errors.push('Please provide a valid email address.');
   }
   
   // Validate Contact Number

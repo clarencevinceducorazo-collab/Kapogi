@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -74,7 +75,13 @@ const nextConfig: NextConfig = {
         hostname: 'media.discordapp.net',
         port: '',
         pathname: '/**',
-      }
+      },
+       {
+        protocol: 'https',
+        hostname: 'api.dicebear.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   
@@ -98,3 +105,5 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+    

@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -48,7 +47,11 @@ import {
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { uploadCharacterToIPFS, unpinFromIPFS } from "@/lib/pinata";
-import { mintCharacterNFT, getAdminRegistryInfo, getTreasuryConfigInfo } from "@/lib/sui";
+import {
+  mintCharacterNFT,
+  getAdminRegistryInfo,
+  getTreasuryConfigInfo,
+} from "@/lib/sui";
 import { ENCRYPTION_CONFIG, mistToSui } from "@/lib/constants";
 import { CustomConnectButton } from "@/components/kapogian/CustomConnectButton";
 import {
@@ -217,32 +220,36 @@ export default function GeneratorPage() {
   const [showExitLoader, setShowExitLoader] = useState(false);
   const [minting, setMinting] = useState(false);
   const [error, setError] = useState("");
-  
-  const [mintPaused, setMintPaused] = useState(false);
-  const [pauseReason, setPauseReason] = useState('');
 
-  const [pricing, setPricing] = useState<{ base: number; bundle: number; totalBundle: number } | null>(null);
+  const [mintPaused, setMintPaused] = useState(false);
+  const [pauseReason, setPauseReason] = useState("");
+
+  const [pricing, setPricing] = useState<{
+    base: number;
+    bundle: number;
+    totalBundle: number;
+  } | null>(null);
   const [pricingLoading, setPricingLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      getAdminRegistryInfo(),
-      getTreasuryConfigInfo(),
-    ]).then(([adminInfo, pricingInfo]) => {
-      if (adminInfo) {
-        setMintPaused(adminInfo.mintPaused);
-        setPauseReason(adminInfo.pauseReason);
-      }
-      if (pricingInfo) {
-        setPricing({
-          base: pricingInfo.baseMintPrice,
-          bundle: pricingInfo.bundleUpgradePrice,
-          totalBundle: pricingInfo.baseMintPrice + pricingInfo.bundleUpgradePrice,
-        });
-      }
-    }).finally(() => {
-      setPricingLoading(false);
-    });
+    Promise.all([getAdminRegistryInfo(), getTreasuryConfigInfo()])
+      .then(([adminInfo, pricingInfo]) => {
+        if (adminInfo) {
+          setMintPaused(adminInfo.mintPaused);
+          setPauseReason(adminInfo.pauseReason);
+        }
+        if (pricingInfo) {
+          setPricing({
+            base: pricingInfo.baseMintPrice,
+            bundle: pricingInfo.bundleUpgradePrice,
+            totalBundle:
+              pricingInfo.baseMintPrice + pricingInfo.bundleUpgradePrice,
+          });
+        }
+      })
+      .finally(() => {
+        setPricingLoading(false);
+      });
   }, []);
 
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
@@ -363,6 +370,7 @@ export default function GeneratorPage() {
 
   // Shipping State
   const [shippingName, setShippingName] = useState("");
+  const [shippingEmail, setShippingEmail] = useState("");
   const [shippingContact, setShippingContact] = useState("");
 
   const [provinces, setProvinces] = useState<Province[]>([]);
@@ -676,12 +684,16 @@ export default function GeneratorPage() {
         setProvinces(data);
       } catch (error) {
         console.error("Failed to fetch provinces", error);
-        setError("Could not load province data. Please try refreshing.");
+        setError(
+          "Could not load province data. Please check your internet connection or try again later.",
+        );
+        setProvinces([]);
       } finally {
         setProvincesLoading(false);
       }
     };
     fetchProvinces();
+    // Optionally, add a retry button or logic here if needed
   }, []);
 
   useEffect(() => {
@@ -698,7 +710,10 @@ export default function GeneratorPage() {
           setCities(data);
         } catch (error) {
           console.error("Failed to fetch cities", error);
-          setError("Could not load city data.");
+          setError(
+            "Could not load city data. Please check your internet connection or try again later.",
+          );
+          setCities([]);
         } finally {
           setCitiesLoading(false);
         }
@@ -733,7 +748,10 @@ export default function GeneratorPage() {
           setBarangays(data);
         } catch (error) {
           console.error("Failed to fetch barangays", error);
-          setError("Could not load barangay data.");
+          setError(
+            "Could not load barangay data. Please check your internet connection or try again later.",
+          );
+          setBarangays([]);
         } finally {
           setBarangaysLoading(false);
         }
@@ -810,7 +828,9 @@ export default function GeneratorPage() {
     try {
       const identityContext = getIdentityContext(lineage);
       const skinToneDescriptor = getSkinToneDescription(attributes.skinTone);
-      const hairColorDescription = getHairColorDescription(attributes.hairColor);
+      const hairColorDescription = getHairColorDescription(
+        attributes.hairColor,
+      );
       const promptText = `
         You are a lore generator for a fictional universe called "Kapogian Chibis".
         A Kapogian Chibi is a confident, good-looking Filipino character.
@@ -992,7 +1012,7 @@ export default function GeneratorPage() {
 
       setEggRank(null);
       setEggLineage(null);
-      
+
       shuffleInterval = setInterval(() => {
         const randomMmr = Math.floor(Math.random() * 4001);
         setShufflingMmr(randomMmr);
@@ -1049,6 +1069,7 @@ export default function GeneratorPage() {
 
     const data = {
       name: shippingName,
+      email: shippingEmail,
       contact: shippingContact,
       province: selectedProvince,
       city: selectedCity,
@@ -1086,7 +1107,11 @@ export default function GeneratorPage() {
 
     try {
       const { valid, errors, fullAddress } = validateShippingInfo(
-        { full_name: shippingName, contact_number: shippingContact },
+        {
+          full_name: shippingName,
+          email: shippingEmail,
+          contact_number: shippingContact,
+        },
         {
           province: selectedProvince,
           city: selectedCity,
@@ -1103,6 +1128,7 @@ export default function GeneratorPage() {
 
       const encryptedString = await encryptShippingInfo({
         full_name: shippingName,
+        email: shippingEmail,
         contact_number: shippingContact,
         address: fullAddress,
       });
@@ -1233,7 +1259,8 @@ export default function GeneratorPage() {
     if (eggRank) {
       return {
         name: eggRank,
-        style: "effect-mythic-glow text-4xl font-black uppercase tracking-tighter",
+        style:
+          "effect-mythic-glow text-4xl font-black uppercase tracking-tighter",
         rarity: "Legendary Find",
       };
     }
@@ -1597,7 +1624,7 @@ export default function GeneratorPage() {
                 {product.name}
               </h2>
               <span className="text-lg font-bold">
-                {pricingLoading ? '...' : mistToSui(pricing?.base ?? 0)} SUI
+                {pricingLoading ? "..." : mistToSui(pricing?.base ?? 0)} SUI
               </span>
             </div>
             <div className="space-y-4">
@@ -1710,8 +1737,19 @@ export default function GeneratorPage() {
                   <div className="min-h-screen flex items-center justify-center p-8">
                     <div className="flex flex-col items-center justify-center text-center max-w-md">
                       <div className="bg-yellow-400 border-4 border-black rounded-full p-6 mb-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="56"
+                          height="56"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <rect x="6" y="4" width="4" height="16" />
+                          <rect x="14" y="4" width="4" height="16" />
                         </svg>
                       </div>
                       <h2 className="text-4xl font-black uppercase tracking-tighter mb-3">
@@ -1721,7 +1759,8 @@ export default function GeneratorPage() {
                         Summoning Paused
                       </div>
                       <p className="font-bold text-slate-600 text-lg leading-relaxed mb-4">
-                        {pauseReason || 'The summoning ritual is temporarily on hold. Our spirit engineers are working on it.'}
+                        {pauseReason ||
+                          "The summoning ritual is temporarily on hold. Our spirit engineers are working on it."}
                       </p>
                       <p className="text-sm font-medium text-slate-400">
                         Please check back soon. Your spirits await! 🌀
@@ -1845,7 +1884,9 @@ export default function GeneratorPage() {
                               label="Visayas"
                               value={stats.visayas}
                               color="bg-blue-400"
-                              onChange={(v) => setStats({ ...stats, visayas: v })}
+                              onChange={(v) =>
+                                setStats({ ...stats, visayas: v })
+                              }
                             />
                             <EnchantmentControl
                               label="Mindanao"
@@ -1979,7 +2020,10 @@ export default function GeneratorPage() {
                                     value={attributes.eyewear}
                                     color="bg-sky-400"
                                     onChange={(v) =>
-                                      setAttributes({ ...attributes, eyewear: v })
+                                      setAttributes({
+                                        ...attributes,
+                                        eyewear: v,
+                                      })
                                     }
                                   />
                                 </div>
@@ -2369,7 +2413,11 @@ export default function GeneratorPage() {
                     </div>
                   </div>
                   <div className="bg-black text-white px-6 py-2 rounded-full text-sm font-bold uppercase tracking-tight whitespace-nowrap">
-                    UPGRADE BUNDLE (+{pricingLoading ? '...' : mistToSui(pricing?.bundle ?? 0)} SUI)
+                    UPGRADE BUNDLE (+
+                    {pricingLoading
+                      ? "..."
+                      : mistToSui(pricing?.bundle ?? 0)}{" "}
+                    SUI)
                   </div>
                 </div>
               </div>
@@ -2398,11 +2446,11 @@ export default function GeneratorPage() {
             <section
               id="page-shipping"
               className={cn(
-                "page-section p-8 flex flex-col items-center justify-center h-full min-h-[600px] bg-sky-100",
+                "page-section p-8 flex flex-col items-center justify-center h-full min-h-[400px] bg-sky-100",
                 { hidden: page !== "page-shipping" },
               )}
             >
-              <div className="w-full max-w-md bg-white border-4 border-black rounded-2xl p-8 hard-shadow-sm relative">
+              <div className="w-full max-w-xl bg-white border-4 border-black rounded-2xl p-4 md:p-6 hard-shadow-sm relative min-h-0">
                 <div className="absolute -top-6 -left-6 bg-red-500 text-white font-display font-semibold px-4 py-2 rotate-[-6deg] border-4 border-black rounded-lg shadow-md uppercase">
                   Fragile!
                 </div>
@@ -2410,128 +2458,168 @@ export default function GeneratorPage() {
                   Shipping Details
                 </h2>
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="font-semibold uppercase text-sm tracking-wide">
-                      Full Name
-                    </label>
-                    <Input
-                      type="text"
-                      value={shippingName}
-                      onChange={(e) => setShippingName(e.target.value)}
-                      className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="font-semibold uppercase text-sm tracking-wide">
-                      Contact Number
-                    </label>
-                    <Input
-                      type="text"
-                      value={shippingContact}
-                      onChange={(e) => setShippingContact(e.target.value)}
-                      className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto"
-                      placeholder="09123456789"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="font-semibold uppercase text-sm tracking-wide">
-                      Province
-                    </label>
-                    <Select
-                      onValueChange={handleProvinceChange}
-                      value={selectedProvince?.code}
-                      disabled={provincesLoading}
-                    >
-                      <SelectTrigger className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto">
-                        <SelectValue
-                          placeholder={
-                            provincesLoading
-                              ? "Loading provinces..."
-                              : "Select Province"
-                          }
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    {/* Left: Identity fields */}
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-yellow-300 border-2 border-black font-bold text-lg">
+                          1
+                        </span>
+                        <span className="font-black uppercase tracking-wide text-md">
+                          Identity
+                        </span>
+                      </div>
+                      <div>
+                        <label className="font-semibold uppercase text-xs tracking-wide flex items-center gap-2">
+                          <span className="material-icons text-base align-middle">
+                            Full Name
+                          </span>
+                        </label>
+                        <Input
+                          type="text"
+                          value={shippingName}
+                          onChange={(e) => setShippingName(e.target.value)}
+                          className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-base font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto placeholder:font-normal placeholder:text-gray-400"
+                          placeholder="e.g. Satoshi Nakamoto"
                         />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {provinces.map((p) => (
-                          <SelectItem key={p.code} value={p.code}>
-                            {" "}
-                            {p.name}{" "}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="font-semibold uppercase text-sm tracking-wide">
-                      City / Municipality
-                    </label>
-                    <Select
-                      onValueChange={handleCityChange}
-                      value={selectedCity?.code}
-                      disabled={!selectedProvince || citiesLoading}
-                    >
-                      <SelectTrigger
-                        className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto"
-                        disabled={!selectedProvince || citiesLoading}
-                      >
-                        <SelectValue
-                          placeholder={
-                            citiesLoading
-                              ? "Loading cities..."
-                              : "Select City/Municipality"
-                          }
+                      </div>
+                      <div>
+                        <label className="font-semibold uppercase text-xs tracking-wide flex items-center gap-2">
+                          <span className="material-icons text-base align-middle">
+                            Email
+                          </span>
+                        </label>
+                        <Input
+                          type="email"
+                          value={shippingEmail}
+                          onChange={(e) => setShippingEmail(e.target.value)}
+                          className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-base font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto placeholder:font-normal placeholder:text-gray-400"
+                          placeholder="e.g. satoshi@email.com"
                         />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {cities.map((c) => (
-                          <SelectItem key={c.code} value={c.code}>
-                            {" "}
-                            {c.name}{" "}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="font-semibold uppercase text-sm tracking-wide">
-                      Barangay
-                    </label>
-                    <Select
-                      onValueChange={handleBarangayChange}
-                      value={selectedBarangay?.code}
-                      disabled={!selectedCity || barangaysLoading}
-                    >
-                      <SelectTrigger
-                        className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto"
-                        disabled={!selectedCity || barangaysLoading}
-                      >
-                        <SelectValue
-                          placeholder={
-                            barangaysLoading
-                              ? "Loading barangays..."
-                              : "Select Barangay"
-                          }
+                      </div>
+                      <div>
+                        <label className="font-semibold uppercase text-xs tracking-wide flex items-center gap-2">
+                          <span className="material-icons text-base align-middle">
+                            Contact Number
+                          </span>
+                        </label>
+                        <Input
+                          type="text"
+                          value={shippingContact}
+                          onChange={(e) => setShippingContact(e.target.value)}
+                          className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-base font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto placeholder:font-normal placeholder:text-gray-400"
+                          placeholder="0912 345 6789"
                         />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {barangays.map((b) => (
-                          <SelectItem key={b.code} value={b.code}>
-                            {" "}
-                            {b.name}{" "}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      </div>
+                    </div>
+                    {/* Right: Destination fields */}
+                    <div className="flex flex-col gap-6">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-300 border-2 border-black font-bold text-lg">
+                          2
+                        </span>
+                        <span className="font-black uppercase tracking-wide text-md">
+                          Destination
+                        </span>
+                      </div>
+                      <div>
+                        <label className="font-semibold uppercase text-xs tracking-wide flex items-center gap-2">
+                          Province
+                        </label>
+                        <Select
+                          onValueChange={handleProvinceChange}
+                          value={selectedProvince?.code}
+                          disabled={provincesLoading}
+                        >
+                          <SelectTrigger className="w-full max-w-2xl border-4 border-black rounded-xl p-3 bg-stone-50 text-base font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto">
+                            <SelectValue
+                              placeholder={
+                                provincesLoading
+                                  ? "Loading provinces..."
+                                  : "Select"
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {provinces.map((p) => (
+                              <SelectItem key={p.code} value={p.code}>
+                                {p.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="font-semibold uppercase text-xs tracking-wide flex items-center gap-2">
+                          City
+                        </label>
+                        <Select
+                          onValueChange={handleCityChange}
+                          value={selectedCity?.code}
+                          disabled={!selectedProvince || citiesLoading}
+                        >
+                          <SelectTrigger
+                            className="w-full max-w-2xl border-4 border-black rounded-xl p-3 bg-stone-50 text-base font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto"
+                            disabled={!selectedProvince || citiesLoading}
+                          >
+                            <SelectValue
+                              placeholder={
+                                citiesLoading ? "Loading cities..." : "Select"
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {cities.map((c) => (
+                              <SelectItem key={c.code} value={c.code}>
+                                {c.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="font-semibold uppercase text-xs tracking-wide flex items-center gap-2">
+                          Barangay
+                        </label>
+                        <Select
+                          onValueChange={handleBarangayChange}
+                          value={selectedBarangay?.code}
+                          disabled={!selectedCity || barangaysLoading}
+                        >
+                          <SelectTrigger
+                            className="w-full max-w-2xl border-4 border-black rounded-xl p-3 bg-stone-50 text-base font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto"
+                            disabled={!selectedCity || barangaysLoading}
+                          >
+                            <SelectValue
+                              placeholder={
+                                barangaysLoading
+                                  ? "Loading barangays..."
+                                  : "Choose Neighborhood"
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {barangays.map((b) => (
+                              <SelectItem key={b.code} value={b.code}>
+                                {b.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="font-semibold uppercase text-sm tracking-wide">
-                      Street Address, House/Bldg No.
+                  {/* Street Address Full Width */}
+                  <div className="mt-6">
+                    <label className="font-semibold uppercase text-xs tracking-wide">
+                      Street Address / House No.
                     </label>
                     <Input
                       type="text"
                       value={streetAddress}
                       onChange={(e) => setStreetAddress(e.target.value)}
-                      className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-xl font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto"
+                      className="w-full border-4 border-black rounded-xl p-3 bg-stone-50 text-base font-medium focus:bg-white focus:ring-4 ring-sky-200 outline-none transition-all !h-auto placeholder:font-normal placeholder:text-gray-400"
+                      placeholder="Apt #, Building, Street Name..."
                     />
                   </div>
                 </div>
@@ -2546,7 +2634,9 @@ export default function GeneratorPage() {
                   ) : (
                     <Truck className="w-6 h-6" />
                   )}
-                  {minting ? "Minting & Shipping..." : `Ship It for ${pricingLoading ? '...' : mistToSui(totalPrice)} SUI`}
+                  {minting
+                    ? "Minting & Shipping..."
+                    : `Ship It for ${pricingLoading ? "..." : mistToSui(totalPrice)} SUI`}
                 </button>
                 {error && (
                   <div className="mt-4 text-sm text-center bg-red-100 p-3 rounded-lg border border-red-300 text-red-700">
@@ -2606,7 +2696,9 @@ export default function GeneratorPage() {
                   </div>
                   <div className="flex justify-between text-xl font-bold mt-2 pt-2 border-t-2 border-black">
                     <span>Total</span>
-                    <span>{pricingLoading ? '...' : mistToSui(totalPrice)} SUI</span>
+                    <span>
+                      {pricingLoading ? "..." : mistToSui(totalPrice)} SUI
+                    </span>
                   </div>
                 </div>
 
@@ -2640,9 +2732,3 @@ export default function GeneratorPage() {
 }
 
     
-</body></html>
-please create a dedicated admin class (or namespace) specifically for this feature using Tailwind CSS and custom CSS if needed.
-
-Make sure the styles are properly scoped so they do not affect or override styles on other pages or components.
-
-The goal is to isolate all admin-related styling to prevent global conflicts and ensure the rest of the application remains unaffected.
