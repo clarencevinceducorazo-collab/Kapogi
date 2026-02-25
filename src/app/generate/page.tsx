@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -450,19 +449,22 @@ export default function GeneratorPage() {
     if (mmr >= 3951)
       return {
         name: "Kapogian Ascendant",
-        style: "text-mythic-aurora text-4xl font-black uppercase tracking-tighter",
+        style:
+          "text-mythic-aurora text-4xl font-black uppercase tracking-tighter",
         rarity: "Top 0.005%",
       };
     if (mmr >= 3851)
       return {
         name: "Master Rancher",
-        style: "text-purple-300 text-2xl font-bold [text-shadow:0_0_10px_theme(colors.purple.300)]",
+        style:
+          "text-purple-300 text-2xl font-bold [text-shadow:0_0_10px_theme(colors.purple.300)]",
         rarity: "Top 0.02%",
       };
     if (mmr >= 3701)
       return {
         name: "Generational Tycoon",
-        style: "text-yellow-400 text-2xl font-bold [text-shadow:0_0_10px_theme(colors.yellow.400)]",
+        style:
+          "text-yellow-400 text-2xl font-bold [text-shadow:0_0_10px_theme(colors.yellow.400)]",
         rarity: "Top 0.04%",
       };
     if (mmr >= 3501)
@@ -537,7 +539,8 @@ export default function GeneratorPage() {
         style: "text-amber-800",
         rarity: "Top 65%",
       };
-    if (mmr >= 101) return { name: "Pogi Spark", style: "text-amber-900", rarity: "Top 85%" };
+    if (mmr >= 101)
+      return { name: "Pogi Spark", style: "text-amber-900", rarity: "Top 85%" };
     return {
       name: "Spirit Seed",
       style: "text-slate-500 italic",
@@ -662,6 +665,7 @@ export default function GeneratorPage() {
       try {
         const data = JSON.parse(savedDataRaw);
         setShippingName(data.name ?? "");
+        setShippingEmail(data.email ?? "");
         setShippingContact(data.contact ?? "");
         setStreetAddress(data.street ?? "");
         if (data.province) setSelectedProvince(data.province);
@@ -866,6 +870,16 @@ export default function GeneratorPage() {
     }
   };
 
+  /**
+   * buildCharacterPrompt
+   * Build a descriptive image prompt for the character image generator.
+   * - name: the chosen character name (may be generated)
+   * - originDesc: short origin/location description used in the prompt
+   *
+   * Returns a single-line prompt string describing visual details (pose,
+   * clothing, hair, facial hair, accessories, skin tone, etc.) suitable for
+   * the image generation backend.
+   */
   const buildCharacterPrompt = (name: string, originDesc: string): string => {
     const identityContext = getIdentityContext(lineage);
     const skinToneDescriptor = getSkinToneDescription(attributes.skinTone);
@@ -962,6 +976,12 @@ export default function GeneratorPage() {
     return `full body shot of a high quality, well-proportioned, anatomically correct cute ${bodyFatDescriptor} chibi pinoy character with two arms and two legs, of the ${lineage} lineage (${identityContext}), named ${name}, from ${originDesc}, with ${skinToneDescriptor}. The character has ${hairDescriptor} with ${hairColorDescription} hair. The character has ${facialHairDescriptor}, is wearing ${clothingDescriptor}, with ${eyewearDescriptor}, in a ${pose}, and is ${holdingItemDescriptor}, showing confident pose, smiling. Chibi character art, clean vector line art, cel-shaded, sticker style, simple transparent background, PNG format.`;
   };
 
+  /**
+   * handleShuffle
+   * Randomize visual options and stats for a new candidate character.
+   * Updates outfit/posture indices, `attributes`, `stats`, and `lineage`.
+   * This is purely local UI state (does not persist or call external APIs).
+   */
   const handleShuffle = () => {
     const rOutfit = Math.floor(Math.random() * clothingOptions.length);
     const rPosture = Math.floor(Math.random() * postureOptions.length);
@@ -992,6 +1012,17 @@ export default function GeneratorPage() {
     setLineage(lineages[Math.floor(Math.random() * lineages.length)].name);
   };
 
+  /**
+   * handleGenerate
+   * Orchestrates the character generation flow:
+   * - sets loading UI state and starts a brief shuffling animation
+   * - constructs a final prompt via `buildCharacterPrompt`
+   * - calls `generateImage` and `generateText` in parallel
+   * - sets generated image, lore, name, and derived MMR/rank outputs
+   * - navigates to the preview page and clears loading state on completion
+   *
+   * Handles and logs failures, and ensures UI state is restored on error.
+   */
   const handleGenerate = async () => {
     let shuffleInterval: NodeJS.Timeout | undefined;
 
@@ -1064,6 +1095,12 @@ export default function GeneratorPage() {
     }
   };
 
+  /**
+   * saveShippingToLocal
+   * Persist the current shipping form values into `localStorage` scoped
+   * to the connected account. This is invoked when the user proceeds to
+   * mint and is also used by the autosave effect.
+   */
   const saveShippingToLocal = () => {
     if (!account?.address) return;
 
@@ -1084,6 +1121,49 @@ export default function GeneratorPage() {
     console.log("📦 Shipping info saved to local storage.");
   };
 
+  // Auto-save shipping fields whenever they change
+  useEffect(() => {
+    if (!account?.address) return;
+    const data = {
+      name: shippingName,
+      email: shippingEmail,
+      contact: shippingContact,
+      province: selectedProvince,
+      city: selectedCity,
+      barangay: selectedBarangay,
+      street: streetAddress,
+    };
+    try {
+      localStorage.setItem(
+        `kapogian_shipping_${account.address}`,
+        JSON.stringify(data),
+      );
+    } catch (e) {
+      console.error("Failed to autosave shipping data", e);
+    }
+  }, [
+    account?.address,
+    shippingName,
+    shippingEmail,
+    shippingContact,
+    selectedProvince,
+    selectedCity,
+    selectedBarangay,
+    streetAddress,
+  ]);
+
+  /**
+   * handleMint
+   * Perform the full mint flow:
+   * - validate presence of connected wallet, pricing and generated character
+   * - upload image blob to IPFS (if present)
+   * - encrypt shipping info for on-chain storage
+   * - call `mintCharacterNFT` with prepared metadata and payment
+   * - on success, navigate to receipt and persist shipping info
+   *
+   * Errors are surfaced to the `error` state and any uploaded IPFS pins
+   * are cleaned up on failure.
+   */
   const handleMint = async () => {
     if (!account || !account.address) {
       setError("Wallet not connected or address is missing.");
@@ -1220,6 +1300,12 @@ export default function GeneratorPage() {
     }
   };
 
+  /**
+   * handleContinueToShipping
+   * Validate merch selection (sizes/colors) before advancing to the
+   * shipping form. Sets `error` for any validation failures and navigates
+   * to `page-shipping` when validation passes.
+   */
   const handleContinueToShipping = () => {
     if (!selection) {
       setError("Please select at least one merchandise item or the bundle.");
@@ -1240,16 +1326,31 @@ export default function GeneratorPage() {
     navigate("page-shipping");
   };
 
+  /**
+   * handleProvinceChange
+   * Lookup and set the selected province by code. Used by the province
+   * `Select` control. Keeps `selectedProvince` nullable when not found.
+   */
   const handleProvinceChange = (provinceCode: string) => {
     const province = provinces.find((p) => p.code === provinceCode) || null;
     setSelectedProvince(province);
   };
 
+  /**
+   * handleCityChange
+   * Lookup and set the selected city by code. Used by the city `Select`
+   * control. Clears to `null` when not found.
+   */
   const handleCityChange = (cityCode: string) => {
     const city = cities.find((c) => c.code === cityCode) || null;
     setSelectedCity(city);
   };
 
+  /**
+   * handleBarangayChange
+   * Lookup and set the selected barangay by code. Used by the barangay
+   * `Select` control. Keeps `selectedBarangay` nullable when not found.
+   */
   const handleBarangayChange = (barangayCode: string) => {
     const barangay = barangays.find((b) => b.code === barangayCode) || null;
     setSelectedBarangay(barangay);
@@ -2730,5 +2831,3 @@ export default function GeneratorPage() {
     </>
   );
 }
-
-    
