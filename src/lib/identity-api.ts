@@ -22,7 +22,7 @@ export async function loginWithX(): Promise<void> {
   sessionStorage.setItem('pkce_state', state);
 
   const xClientId = process.env.NEXT_PUBLIC_X_CLIENT_ID;
-  if (!xClientId || xClientId === "YOUR_X_APP_CLIENT_ID") {
+  if (!xClientId || xClientId === "YOUR_X_APP_CLIENT_ID_HERE") {
     throw new Error('X Client ID is not configured. Please set NEXT_PUBLIC_X_CLIENT_ID in your .env file.');
   }
 
@@ -40,6 +40,13 @@ export async function loginWithX(): Promise<void> {
 
   const authUrl = `https://twitter.com/i/oauth2/authorize?${params.toString()}`;
   
+  // Add console logs for debugging
+  console.log('--- X OAuth 2.0 Debug Info ---');
+  console.log('Client ID:', xClientId);
+  console.log('Redirect URI:', redirectUri);
+  console.log('Full Auth URL:', authUrl);
+  console.log('---------------------------------');
+
   // Open popup
   const popupWidth = 600;
   const popupHeight = 700;
