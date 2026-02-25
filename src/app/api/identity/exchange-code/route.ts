@@ -60,12 +60,27 @@ export async function POST(request: NextRequest) {
     });
 
     if (!userResponse.ok) {
-      const errorBody = await userResponse.json();
-      console.error('X User Fetch Error:', errorBody);
+      const errorText = await userResponse.text();
+      console.error(`X User Fetch Error: Status ${userResponse.status} - ${userResponse.statusText}`);
+      console.error('Response Body:', errorText);
+      // Try to parse as JSON for more detailed error info, but don't fail if it's not JSON
+      try {
+          const errorJson = JSON.parse(errorText);
+          console.error('Parsed Error JSON:', errorJson);
+      } catch (e) {
+          console.error('Could not parse error response as JSON.');
+      }
       throw new Error('Failed to fetch user profile from X.');
     }
 
-    const { data: user } = await userResponse.json();
+    const userJson = await userResponse.json();
+    console.log('X User Fetch Success Response:', userJson);
+    const { data: user } = userJson;
+    
+    if (!user) {
+        console.error('User data object not found in X API response:', userJson);
+        throw new Error('User data not found in X API response.');
+    }
     
     // Return only the necessary user data to the frontend
     return NextResponse.json({
