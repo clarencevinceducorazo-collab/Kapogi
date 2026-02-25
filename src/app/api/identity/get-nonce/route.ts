@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 /**
  * API Route: /api/identity/get-nonce
@@ -14,6 +14,8 @@ import { adminDb } from '@/lib/firebase-admin';
  */
 export async function POST(request: NextRequest) {
     try {
+        const adminDb = getAdminDb(); // Initialize DB connection here
+        
         const { walletAddress, xUsername } = await request.json();
 
         if (!walletAddress || !xUsername) {

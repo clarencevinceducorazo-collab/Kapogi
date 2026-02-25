@@ -1,5 +1,6 @@
+
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
+import { getAdminDb } from '@/lib/firebase-admin';
 import { verifyPersonalMessage } from '@mysten/sui.js/verify';
 import { Ed25519PublicKey } from '@mysten/sui.js/keypairs/ed25519';
 
@@ -18,6 +19,8 @@ import { Ed25519PublicKey } from '@mysten/sui.js/keypairs/ed25519';
  */
 export async function POST(request: NextRequest) {
     try {
+        const adminDb = getAdminDb(); // Initialize DB connection here
+        
         const { message, signature, walletAddress, x_uid, x_username } = await request.json();
 
         // --- 1. Nonce Verification ---
@@ -62,7 +65,7 @@ export async function POST(request: NextRequest) {
         const result = await adminDb.runTransaction(async (transaction) => {
             const existingByX = await transaction.get(bindingsRef.where('x_uid', '==', x_uid));
             if (!existingByX.empty) {
-                throw new Error(`X account @${x_username} is already bound to another wallet.`);
+                throw new Error(`X account @${xUsername} is already bound to another wallet.`);
             }
 
             const existingBySui = await transaction.get(bindingsRef.where('sui_address', '==', walletAddress));
