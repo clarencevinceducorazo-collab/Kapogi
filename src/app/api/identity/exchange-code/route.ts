@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('[API /exchange-code] FINAL CATCH BLOCK - Error:', error);
-    return NextResponse.json({ error: error.message || 'An internal server error occurred.' }, { status: 500 });
+    console.error('[API /exchange-code] FINAL CATCH BLOCK - An unexpected error occurred:', error);
+    return NextResponse.json({ error: error.message || 'An unexpected internal server error occurred.' }, { status: 500 });
   }
 }
