@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * MOCK API for Identity Binding Flow
  *
