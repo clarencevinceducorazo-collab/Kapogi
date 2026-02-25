@@ -76,9 +76,9 @@ export async function exchangeCodeForXUser(code: string, codeVerifier: string): 
 
   // The shape of the actual response from /2/users/me is { data: { id, name, username } }
   return {
-    id: '123456789', // Mocked user ID from X
-    name: 'Kapogian Master', // Mocked name from X
-    username: 'KapogianMaster', // Mocked username from X
+    id: 'SIMULATED_ID', // Mocked user ID from X
+    name: 'Your Name', // Mocked name from X
+    username: 'YourXUsername', // Mocked username from X
   };
 }
 
