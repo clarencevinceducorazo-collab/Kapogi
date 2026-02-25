@@ -60,32 +60,7 @@ export function CustomConnectButton({
           align="end"
           className="bg-[#FFC83D] border-2 border-black rounded-xl min-w-[200px] z-[60] shadow-xl p-2"
         >
-          {/* Navigation Links: quick access to collection, orders, and profile */}
-          <DropdownMenuItem
-            asChild
-            className="cursor-pointer hover:bg-black/5 rounded-lg"
-          >
-            <Link
-              href="/collection"
-              className="flex w-full items-center p-2"
-              style={{ fontSize: "16px", fontWeight: "700" }}
-            >
-              My Collection
-            </Link>
-          </DropdownMenuItem>
-
-          <DropdownMenuItem
-            asChild
-            className="cursor-pointer hover:bg-black/5 rounded-lg"
-          >
-            <Link
-              href="/my-orders"
-              className="flex w-full items-center p-2"
-              style={{ fontSize: "16px", fontWeight: "700" }}
-            >
-              My Orders
-            </Link>
-          </DropdownMenuItem>
+          {/* Navigation Links: quick access to profile */}
           <DropdownMenuItem
             asChild
             className="cursor-pointer hover:bg-black/5 rounded-lg"
