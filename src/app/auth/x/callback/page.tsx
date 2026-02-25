@@ -48,7 +48,10 @@ export default function XCallbackPage() {
         // Send the user data back to the main window that opened the popup
         if (window.opener) {
           window.opener.postMessage({ type: 'x-auth-success', user }, window.location.origin);
-          window.close();
+          // Add a small delay to ensure the message is sent before the window closes.
+          setTimeout(() => {
+            window.close();
+          }, 100);
         } else {
             setError('Could not find the main application window.');
             setStatus('Finalization failed.');
