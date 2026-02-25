@@ -49,8 +49,10 @@ export default function XCallbackPage() {
         // This is more reliable than window.opener.postMessage
         localStorage.setItem('x-auth-user', JSON.stringify(user));
         
-        // Close the popup window
-        window.close();
+        // Add a small delay before closing to ensure localStorage has time to fire its event
+        setTimeout(() => {
+          window.close();
+        }, 100);
 
       } catch (err: any) {
         setError(err.message || 'Failed to exchange authorization code for user details.');
@@ -58,7 +60,10 @@ export default function XCallbackPage() {
       }
     };
 
-    handleAuth();
+    // Ensure this runs only once on the client
+    if (typeof window !== "undefined") {
+      handleAuth();
+    }
   }, [searchParams]);
 
   return (
