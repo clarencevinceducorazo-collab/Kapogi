@@ -25,8 +25,6 @@ export async function POST(request: NextRequest) {
     // --- Step 1: Exchange authorization code for an access token ---
     const tokenUrl = 'https://api.twitter.com/2/oauth2/token';
     
-    // Some OAuth providers require client_id in the body even with Basic Auth.
-    // We are adding it here to be more robust.
     const tokenParams = new URLSearchParams({
       code: code,
       grant_type: 'authorization_code',
@@ -50,7 +48,17 @@ export async function POST(request: NextRequest) {
       body: tokenParams,
     });
 
-    const tokenResponseData = await tokenResponse.json();
+    const tokenResponseText = await tokenResponse.text();
+    console.log('[API /exchange-code] Token exchange response text:', tokenResponseText);
+    
+    let tokenResponseData;
+    try {
+        tokenResponseData = JSON.parse(tokenResponseText);
+    } catch (e) {
+        console.error('[API /exchange-code] ERROR: Failed to parse token response as JSON.');
+        throw new Error(`Invalid response from X token endpoint: ${tokenResponseText}`);
+    }
+
 
     if (!tokenResponse.ok) {
         console.error('[API /exchange-code] ERROR during token exchange:');
@@ -93,6 +101,7 @@ export async function POST(request: NextRequest) {
         throw new Error('User data not found in X API response.');
     }
     
+    console.log('[API /exchange-code] --- Entire flow successful ---');
     // Return only the necessary user data to the frontend
     return NextResponse.json({
         id: user.id,
