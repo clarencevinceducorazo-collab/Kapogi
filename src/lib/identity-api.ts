@@ -96,7 +96,14 @@ export async function getNonceToSign(
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to get signing message.');
+    let detailedError = data.error || 'Failed to get signing message.';
+    if (data.details) {
+        detailedError += ` (Details: ${data.details})`;
+    }
+    if (data.code) {
+        detailedError += ` (Code: ${data.code})`;
+    }
+    throw new Error(detailedError);
   }
 
   return data.message;
@@ -123,7 +130,14 @@ export async function verifyBinding(payload: VerificationPayload): Promise<{ suc
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Binding verification failed.');
+    let detailedError = data.error || 'Binding verification failed.';
+    if (data.details) {
+        detailedError += ` (Details: ${data.details})`;
+    }
+    if (data.code) {
+        detailedError += ` (Code: ${data.code})`;
+    }
+    throw new Error(detailedError);
   }
 
   return data;

@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
         const result = await adminDb.runTransaction(async (transaction) => {
             const existingByX = await transaction.get(bindingsRef.where('x_uid', '==', x_uid));
             if (!existingByX.empty) {
-                throw new Error(`X account @${xUsername} is already bound to another wallet.`);
+                throw new Error(`X account @${x_username} is already bound to another wallet.`);
             }
 
             const existingBySui = await transaction.get(bindingsRef.where('sui_address', '==', walletAddress));
@@ -89,7 +89,14 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: result.success, message: 'Identity verified and bound successfully!' });
 
     } catch (error: any) {
-        console.error('[API /verify-binding] Error:', error);
-        return NextResponse.json({ success: false, error: error.message || 'An internal server error occurred.' }, { status: 500 });
+        // More detailed error logging for debugging
+        console.error('[API /verify-binding] Full error:', error);
+        
+        return NextResponse.json({ 
+            success: false, 
+            error: error.message || 'An internal server error occurred.',
+            code: error.code,
+            details: error.details,
+        }, { status: 500 });
     }
 }
