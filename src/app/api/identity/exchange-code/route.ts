@@ -42,10 +42,6 @@ export async function POST(request: NextRequest) {
     
     const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
     
-    console.log("\n[API /exchange-code] STEP 1: Attempting to exchange code for access token...");
-    console.log("[API /exchange-code] Request URL:", tokenUrl);
-    console.log("[API /exchange-code] Request Body:", tokenParams.toString());
-
     const tokenResponse = await fetch(tokenUrl, {
       method: 'POST',
       headers: {
@@ -56,30 +52,33 @@ export async function POST(request: NextRequest) {
     });
 
     const tokenResponseText = await tokenResponse.text();
-    console.log('[API /exchange-code] Raw Token Response Text:', tokenResponseText);
 
     if (!tokenResponse.ok) {
         console.error('[API /exchange-code] ERROR: Token exchange request failed with status:', tokenResponse.status);
-        throw new Error(`X API Error during token exchange: ${tokenResponseText}`);
+        try {
+            const errorDetails = JSON.parse(tokenResponseText);
+             return NextResponse.json({ 
+                error: 'Token exchange with X failed.',
+                details: errorDetails
+            }, { status: 500 });
+        } catch (e) {
+             return NextResponse.json({ 
+                error: 'Token exchange with X failed. Raw response attached.',
+                details: tokenResponseText
+            }, { status: 500 });
+        }
     }
     
     const tokenResponseData = JSON.parse(tokenResponseText);
     const accessToken = tokenResponseData.access_token;
     
     if (!accessToken) {
-        console.error('[API /exchange-code] ERROR: Access token not found in successful response from X.');
         throw new Error(`X API Error: Access Token was not provided. Response: ${tokenResponseText}`);
     }
-    
-    console.log("[API /exchange-code] SUCCESS: Received access token.");
-
 
     // --- Step 2: Use the access token to fetch the user's profile ---
-    const userUrl = 'https://api.twitter.com/2/users/me?user.fields=id,name,username';
+    const userUrl = 'https://api.twitter.com/2/users/me?user.fields=id,name,username,profile_image_url';
     
-    console.log("\n[API /exchange-code] STEP 2: Attempting to fetch user profile...");
-    console.log("[API /exchange-code] Request URL:", userUrl);
-
     const userResponse = await fetch(userUrl, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -87,24 +86,30 @@ export async function POST(request: NextRequest) {
     });
 
     const userResponseText = await userResponse.text();
-    console.log('[API /exchange-code] Raw User Profile Response Text:', userResponseText);
-
 
     if (!userResponse.ok) {
-      console.error('[API /exchange-code] ERROR during user fetch:');
-      throw new Error(`X API Error during user profile fetch: ${userResponseText}`);
+      console.error('[API /exchange-code] ERROR during user fetch:', userResponseText);
+      try {
+            const errorDetails = JSON.parse(userResponseText);
+             return NextResponse.json({ 
+                error: 'Failed to fetch user profile from X.',
+                details: errorDetails
+            }, { status: 500 });
+        } catch (e) {
+             return NextResponse.json({ 
+                error: 'Failed to fetch user profile from X. Raw response attached.',
+                details: userResponseText
+            }, { status: 500 });
+        }
     }
 
     const userJson = JSON.parse(userResponseText);
     const { data: user } = userJson;
     
     if (!user) {
-        console.error('[API /exchange-code] ERROR: User data object not found in X API response.');
         throw new Error('User data object was not found in the response from X.');
     }
     
-    console.log('[API /exchange-code] --- Entire flow successful ---');
-    // Return only the necessary user data to the frontend
     return NextResponse.json({
         id: user.id,
         name: user.name,
@@ -112,11 +117,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    // This is the most important part. It catches ANY error from the above block.
     const errorMessage = (error instanceof Error) ? error.message : "An unknown server error occurred.";
     console.error('[API /exchange-code] FINAL CATCH BLOCK - An unexpected error occurred:', errorMessage);
     
-    // This ensures the detailed error is ALWAYS sent back to the client.
     return NextResponse.json({ error: `Server error: ${errorMessage}` }, { status: 500 });
   }
 }

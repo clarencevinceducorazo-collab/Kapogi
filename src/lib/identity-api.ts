@@ -32,7 +32,7 @@ export async function loginWithX(): Promise<void> {
     response_type: 'code',
     client_id: xClientId,
     redirect_uri: redirectUri,
-    scope: 'users.read',
+    scope: 'users.read tweet.read', // Added tweet.read scope
     state: state,
     code_challenge: codeChallenge,
     code_challenge_method: 'S256',
@@ -40,14 +40,6 @@ export async function loginWithX(): Promise<void> {
 
   const authUrl = `https://twitter.com/i/oauth2/authorize?${params.toString()}`;
   
-  // Add console logs for debugging
-  console.log('--- X OAuth 2.0 Debug Info ---');
-  console.log('Client ID:', xClientId);
-  console.log('Redirect URI:', redirectUri);
-  console.log('Full Auth URL:', authUrl);
-  console.log('---------------------------------');
-
-  // Open popup
   const popupWidth = 600;
   const popupHeight = 700;
   const left = window.screen.width / 2 - popupWidth / 2;
@@ -76,7 +68,12 @@ export async function exchangeCodeForXUser(code: string, codeVerifier: string): 
   const data = await response.json();
 
   if (!response.ok) {
-      throw new Error(data.error || 'Failed to exchange authorization code.');
+      let errorMessage = data.error || 'Failed to exchange authorization code.';
+      if (data.details) {
+        // Pretty print the details object for better readability in the error popup
+        errorMessage = `${errorMessage}\n\nServer Response:\n${JSON.stringify(data.details, null, 2)}`;
+      }
+      throw new Error(errorMessage);
   }
 
   return data;

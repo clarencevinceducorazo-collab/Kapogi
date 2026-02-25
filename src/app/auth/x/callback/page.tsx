@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { exchangeCodeForXUser } from '@/lib/identity-api';
 import { LoaderCircle } from 'lucide-react';
@@ -9,8 +9,13 @@ export default function XCallbackPage() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState('Authenticating with X...');
   const [error, setError] = useState<string | null>(null);
+  const hasRun = useRef(false);
 
   useEffect(() => {
+    // This guard prevents the effect from running twice in React 18's Strict Mode.
+    if (hasRun.current) return;
+    hasRun.current = true;
+      
     const handleAuth = async () => {
       const code = searchParams.get('code');
       const state = searchParams.get('state');
@@ -45,11 +50,8 @@ export default function XCallbackPage() {
         setStatus('Verifying credentials...');
         const user = await exchangeCodeForXUser(code, codeVerifier);
         
-        // Send the user data back to the main window via localStorage
-        // This is more reliable than window.opener.postMessage
         localStorage.setItem('x-auth-user', JSON.stringify(user));
         
-        // Add a small delay before closing to ensure localStorage has time to fire its event
         setTimeout(() => {
           window.close();
         }, 100);
@@ -60,7 +62,6 @@ export default function XCallbackPage() {
       }
     };
 
-    // Ensure this runs only once on the client
     if (typeof window !== "undefined") {
       handleAuth();
     }
@@ -68,7 +69,7 @@ export default function XCallbackPage() {
 
   return (
     <div className="flex h-screen w-full flex-col items-center justify-center bg-gray-50 p-8 text-center">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-md">
         <div className="flex justify-center mb-6">
             {error ? (
                 <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center border-4 border-red-200">
@@ -82,9 +83,9 @@ export default function XCallbackPage() {
         </div>
         <h1 className="text-2xl font-bold text-gray-800">{status}</h1>
         {error ? (
-            <div className="mt-4 text-sm bg-red-50 text-red-700 p-4 rounded-lg border border-red-200">
+            <div className="mt-4 text-sm bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 text-left">
                 <p className="font-semibold">Error Details:</p>
-                <p>{error}</p>
+                <pre className="whitespace-pre-wrap font-mono text-xs mt-2">{error}</pre>
             </div>
         ) : (
             <p className="mt-2 text-gray-500">
