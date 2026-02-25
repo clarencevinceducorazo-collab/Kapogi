@@ -19,8 +19,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required parameters: code, codeVerifier, or redirectUri' }, { status: 400 });
     }
 
-    const clientId = process.env.NEXT_PUBLIC_X_CLIENT_ID!;
-    const clientSecret = process.env.X_CLIENT_SECRET!;
+    const clientId = process.env.NEXT_PUBLIC_X_CLIENT_ID;
+    const clientSecret = process.env.X_CLIENT_SECRET;
+
+    if (!clientId) {
+      throw new Error("Server configuration error: NEXT_PUBLIC_X_CLIENT_ID is not set in .env file.");
+    }
+    if (!clientSecret) {
+        throw new Error("Server configuration error: X_CLIENT_SECRET is not set in .env file.");
+    }
     
     // --- Step 1: Exchange authorization code for an access token ---
     const tokenUrl = 'https://api.twitter.com/2/oauth2/token';
@@ -49,25 +56,21 @@ export async function POST(request: NextRequest) {
     });
 
     const tokenResponseText = await tokenResponse.text();
-    console.log('[API /exchange-code] Token exchange response text:', tokenResponseText);
-    
-    let tokenResponseData;
-    try {
-        tokenResponseData = JSON.parse(tokenResponseText);
-    } catch (e) {
-        console.error('[API /exchange-code] ERROR: Failed to parse token response as JSON.');
-        throw new Error(`Invalid response from X token endpoint: ${tokenResponseText}`);
-    }
-
+    console.log('[API /exchange-code] Raw Token Response Text:', tokenResponseText);
 
     if (!tokenResponse.ok) {
-        console.error('[API /exchange-code] ERROR during token exchange:');
-        console.error('Status:', tokenResponse.status);
-        console.error('Response Body:', JSON.stringify(tokenResponseData, null, 2));
-        throw new Error(tokenResponseData.error_description || 'Failed to exchange authorization code.');
+        console.error('[API /exchange-code] ERROR: Token exchange request failed with status:', tokenResponse.status);
+        throw new Error(`X API Error during token exchange: ${tokenResponseText}`);
     }
     
+    const tokenResponseData = JSON.parse(tokenResponseText);
     const accessToken = tokenResponseData.access_token;
+    
+    if (!accessToken) {
+        console.error('[API /exchange-code] ERROR: Access token not found in successful response from X.');
+        throw new Error(`X API Error: Access Token was not provided. Response: ${tokenResponseText}`);
+    }
+    
     console.log("[API /exchange-code] SUCCESS: Received access token.");
 
 
@@ -84,21 +87,20 @@ export async function POST(request: NextRequest) {
     });
 
     const userResponseText = await userResponse.text();
+    console.log('[API /exchange-code] Raw User Profile Response Text:', userResponseText);
+
 
     if (!userResponse.ok) {
       console.error('[API /exchange-code] ERROR during user fetch:');
-      console.error(`Status: ${userResponse.status} - ${userResponse.statusText}`);
-      console.error('Response Body:', userResponseText);
-      throw new Error('Failed to fetch user profile from X.');
+      throw new Error(`X API Error during user profile fetch: ${userResponseText}`);
     }
 
     const userJson = JSON.parse(userResponseText);
-    console.log('[API /exchange-code] SUCCESS: Received user data:', JSON.stringify(userJson, null, 2));
     const { data: user } = userJson;
     
     if (!user) {
         console.error('[API /exchange-code] ERROR: User data object not found in X API response.');
-        throw new Error('User data not found in X API response.');
+        throw new Error('User data object was not found in the response from X.');
     }
     
     console.log('[API /exchange-code] --- Entire flow successful ---');
@@ -110,9 +112,11 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    const errorMessage = (error instanceof Error) ? error.message : JSON.stringify(error);
+    // This is the most important part. It catches ANY error from the above block.
+    const errorMessage = (error instanceof Error) ? error.message : "An unknown server error occurred.";
     console.error('[API /exchange-code] FINAL CATCH BLOCK - An unexpected error occurred:', errorMessage);
-    // Return the detailed error message in the response
+    
+    // This ensures the detailed error is ALWAYS sent back to the client.
     return NextResponse.json({ error: `Server error: ${errorMessage}` }, { status: 500 });
   }
 }
