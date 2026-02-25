@@ -79,19 +79,41 @@ export function IdentityBinder() {
     }
   }, [account?.address, step]);
 
+  // Listen for message from OAuth popup
+  useEffect(() => {
+    const handleAuthMessage = (event: MessageEvent) => {
+      // Security: Check origin and message type
+      if (event.origin !== window.location.origin) {
+        console.warn('Received message from untrusted origin:', event.origin);
+        return;
+      }
+      if (event.data?.type === 'x-auth-success' && event.data.user) {
+        console.log('Received user data from popup:', event.data.user);
+        setIsLoading(false);
+        setXUser(event.data.user);
+        setStep('wallet_connect');
+      }
+    };
+
+    window.addEventListener('message', handleAuthMessage);
+
+    return () => {
+      window.removeEventListener('message', handleAuthMessage);
+    };
+  }, []);
+
   const handleLoginX = async () => {
     setIsLoading(true);
     setErrorMessage('');
     try {
-      const user = await loginWithX();
-      setXUser(user);
-      setStep('wallet_connect');
+      // This now opens the popup. The result is handled by the `message` event listener.
+      await loginWithX();
     } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to connect with X.');
+      setErrorMessage(err.message || 'Failed to connect with X. Check your browser pop-up blocker.');
       setStep('error');
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Stop loading on error
     }
+    // Don't set loading to false here, wait for the popup to message back or close.
   };
 
   const handleSign = async () => {
