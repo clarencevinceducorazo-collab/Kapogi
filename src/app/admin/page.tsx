@@ -64,6 +64,10 @@ import { decryptShippingInfo, type ShippingInfo } from "@/lib/encryption";
 import { ORDER_STATUS, CONTRACT_ADDRESSES } from "@/lib/constants";
 import { getIPFSGatewayUrl } from "@/lib/pinata";
 import { mistToSui, suiToMist } from "@/lib/constants";
+import { BrutalCard } from "@/components/ui/brutal-card";
+import { BrutalButton } from "@/components/ui/brutal-button";
+import { BrutalBadge } from "@/components/ui/badge-brutal";
+import { formatAddress } from "@/lib/utils";
 
 // I have to define IconifyIcon for typescript since it's not a standard element
 declare global {
@@ -116,90 +120,6 @@ interface TreasuryInfo {
   baseMintPrice: number;
   bundleUpgradePrice: number;
 }
-
-// ─────────────────────────────────────────────
-// Toast System
-// ─────────────────────────────────────────────
-
-const BrutalCard = ({
-  children,
-  className = "",
-  noPadding = false,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  noPadding?: boolean;
-}) => (
-  <div
-    className={`bg-white border-4 border-black rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden ${className}`}
-  >
-    <div className={noPadding ? "" : "p-6"}>{children}</div>
-  </div>
-);
-
-const BrutalButton = ({
-  children,
-  onClick,
-  className = "",
-  variant = "default",
-  disabled = false,
-  title,
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  className?: string;
-  variant?:
-    | "default"
-    | "primary"
-    | "success"
-    | "danger"
-    | "black"
-    | "purple"
-    | "teal"
-    | "orange"
-    | "yellow";
-  disabled?: boolean;
-  title?: string;
-}) => {
-  const variants: Record<string, string> = {
-    default: "bg-white text-black hover:bg-gray-50",
-    primary: "bg-blue-500 text-white hover:bg-blue-600",
-    success: "bg-green-500 text-white hover:bg-green-600",
-    danger: "bg-red-500 text-white hover:bg-red-600",
-    black: "bg-black text-white hover:bg-gray-800",
-    purple: "bg-purple-500 text-white hover:bg-purple-600",
-    teal: "bg-teal-500 text-white hover:bg-teal-600",
-    orange: "bg-orange-500 text-white hover:bg-orange-600",
-    yellow: "bg-yellow-400 text-black hover:bg-yellow-500",
-  };
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      className={`h-10 px-4 border-2 border-black rounded-xl font-black text-xs uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:active:translate-y-0 ${variants[variant]} ${className}`}
-    >
-      {children}
-    </button>
-  );
-};
-
-const shortAddr = (addr: string) =>
-  addr.length > 10 ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : addr;
-
-const Badge = ({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => (
-  <span
-    className={`px-2 py-0.5 border-2 border-black rounded font-black text-[9px] uppercase tracking-wider ${className}`}
-  >
-    {children}
-  </span>
-);
 
 // ─────────────────────────────────────────────
 // Toast System
@@ -505,7 +425,7 @@ function SuperAdminPanel({
               Cap:
             </span>
             <span className="text-[10px] font-mono text-yellow-600">
-              {shortAddr(superCapId)}
+              {formatAddress(superCapId)}
             </span>
           </div>
         )}
@@ -530,7 +450,7 @@ function SuperAdminPanel({
                 <h3 className="font-black uppercase tracking-tight text-sm">
                   Minting Status
                 </h3>
-                <Badge
+                <BrutalBadge
                   className={
                     registry?.mintPaused
                       ? "bg-red-500 text-white ml-auto"
@@ -538,7 +458,7 @@ function SuperAdminPanel({
                   }
                 >
                   {registry?.mintPaused ? "PAUSED" : "ACTIVE"}
-                </Badge>
+                </BrutalBadge>
               </div>
 
               {registry?.mintPaused && (
@@ -586,9 +506,9 @@ function SuperAdminPanel({
                 <h3 className="font-black uppercase tracking-tight text-sm">
                   Admin Whitelist
                 </h3>
-                <Badge className="bg-slate-100 ml-auto">
+                <BrutalBadge className="bg-slate-100 ml-auto">
                   {registry?.admins.length ?? 0} admins
-                </Badge>
+                </BrutalBadge>
               </div>
 
               <div className="space-y-2 mb-4 max-h-[160px] overflow-y-auto">
@@ -1288,7 +1208,7 @@ export default function AdminPage() {
 
             <div className="bg-white border-4 border-black px-6 py-2 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-black text-sm flex items-center gap-2">
               {isSuperAdmin && <Crown size={14} className="text-yellow-500" />}
-              {shortAddr(account.address)}
+              {formatAddress(account.address)}
             </div>
             <CustomConnectButton className="!bg-blue-500 !border-4 !border-black !text-white !font-black !px-5 !py-2 !rounded-xl !shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:!bg-blue-600 !text-sm" />
           </div>
@@ -1444,7 +1364,7 @@ export default function AdminPage() {
                             className="text-xs font-mono font-bold text-slate-400 mt-1 uppercase truncate w-40"
                             title={card.id}
                           >
-                            {shortAddr(card.id)}
+                            {formatAddress(card.id)}
                           </p>
                         </div>
                       </div>
@@ -1496,12 +1416,12 @@ export default function AdminPage() {
                           </label>
                           <div className="flex flex-wrap gap-1.5 p-3 bg-slate-50 border-2 border-black rounded-xl">
                             {card.itemsSelected.split(",").map((item) => (
-                              <Badge
+                              <BrutalBadge
                                 key={item}
                                 className="bg-white !text-[10px]"
                               >
                                 {item.trim()}
-                              </Badge>
+                              </BrutalBadge>
                             ))}
                           </div>
                         </div>
@@ -1538,9 +1458,9 @@ export default function AdminPage() {
                   <h3 className="text-xl font-black uppercase tracking-tighter">
                     Order Registry
                   </h3>
-                  <Badge className="bg-yellow-400 border-2 border-black !text-xs !px-2.5 !py-0.5">
+                  <BrutalBadge className="bg-yellow-400 border-2 border-black !text-xs !px-2.5 !py-0.5">
                     {receipts.length}
-                  </Badge>
+                  </BrutalBadge>
                 </div>
                 <div className="flex items-center border-2 border-black rounded-xl overflow-hidden shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                   {["pending", "shipped", "delivered"].map((tab, i) => {
@@ -1722,13 +1642,13 @@ export default function AdminPage() {
                                 <div>
                                   <p className="font-black text-slate-900 text-sm leading-none">
                                     {receipt.character?.name ||
-                                      shortAddr(receipt.nftId)}
+                                      formatAddress(receipt.nftId)}
                                   </p>
                                   <p
                                     className="text-xs font-mono font-bold text-slate-400 mt-1.5 uppercase tracking-tighter"
                                     title={receipt.objectId}
                                   >
-                                    {shortAddr(receipt.objectId)}
+                                    {formatAddress(receipt.objectId)}
                                   </p>
                                 </div>
                               </div>
@@ -1738,28 +1658,28 @@ export default function AdminPage() {
                                 {receipt.itemsSelected
                                   .split(",")
                                   .map((item) => (
-                                    <Badge
+                                    <BrutalBadge
                                       key={item}
                                       className={`!text-[10px] tracking-tighter ${item.trim() === "ALL_BUNDLE" ? "bg-blue-500 text-white" : "bg-white"}`}
                                     >
                                       {item.trim()}
-                                    </Badge>
+                                    </BrutalBadge>
                                   ))}
                               </div>
                             </td>
                             <td className="p-4 text-center">
                               {receipt.status === ORDER_STATUS.PENDING ? (
-                                <Badge className="bg-yellow-300 border-yellow-500 !text-[11px] !px-2.5 !py-1">
+                                <BrutalBadge className="bg-yellow-300 border-yellow-500 !text-[11px] !px-2.5 !py-1">
                                   Pending
-                                </Badge>
+                                </BrutalBadge>
                               ) : receipt.status === ORDER_STATUS.SHIPPED ? (
-                                <Badge className="bg-blue-400 text-white !text-[11px] !px-2.5 !py-1">
+                                <BrutalBadge className="bg-blue-400 text-white !text-[11px] !px-2.5 !py-1">
                                   Shipped
-                                </Badge>
+                                </BrutalBadge>
                               ) : (
-                                <Badge className="bg-green-500 text-white !text-[11px] !px-2.5 !py-1">
+                                <BrutalBadge className="bg-green-500 text-white !text-[11px] !px-2.5 !py-1">
                                   Delivered
-                                </Badge>
+                                </BrutalBadge>
                               )}
                             </td>
                             <td className="p-4 pr-6">
@@ -1859,7 +1779,7 @@ export default function AdminPage() {
                   <option value="J&T Express">J&T Express</option>
                   <option value="LBC">LBC</option>
                   <option value="DHL">DHL World</option>
-                  <option value="SPX">Shoppe Express</option>
+                  <option value="SPX">Shopee Express</option>
                   <option value="J&T">J&T (17Track)</option>
                   <option value="NINJA">NINJA Van Philippines</option>
                 </select>

@@ -5,11 +5,7 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export const PageFooter = () => {
   const avatar = PlaceHolderImages.find((img) => img.id === "header-avatar");
-  const socialLinks = [
-    { icon: <Twitter className="h-5 w-5" />, href: "#" },
-    { icon: <Instagram className="h-5 w-5" />, href: "#" },
-    { icon: <Youtube className="h-5 w-5" />, href: "#" },
-  ];
+
 
   return (
     <footer className="bg-primary/90 text-primary-foreground py-8 w-full">
@@ -30,17 +26,7 @@ export const PageFooter = () => {
           <p className="text-base font-bold">
             Collect Digital Magic, Get Real Rewards
           </p>
-          <div className="flex items-center gap-5">
-            {socialLinks.map((link, index) => (
-              <Link
-                key={index}
-                href={link.href}
-                className="transition-colors hover:text-accent"
-              >
-                {link.icon}
-              </Link>
-            ))}
-          </div>
+   
           <p className="text-white/60 text-xs">
             &copy; {new Date().getFullYear()} Kapogian. All Rights Reserved.
           </p>
