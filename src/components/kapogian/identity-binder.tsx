@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -146,8 +147,14 @@ export function IdentityBinder() {
                     title: "Identity Verified!",
                     description: `@${xUser.username} is now linked to your wallet.`,
                 });
+              } else if (verification.error === 'already_bound') {
+                setStep('verified');
+                toast({
+                    title: "Already Bound!",
+                    description: verification.message,
+                });
               } else {
-                throw new Error(verification.message);
+                throw new Error(verification.message || 'Verification failed with an unknown error.');
               }
             } catch (err: any) {
                 setErrorMessage(err.message || 'Verification failed on the backend.');

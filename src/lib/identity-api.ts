@@ -118,7 +118,7 @@ interface VerificationPayload {
 }
 
 // Sends the signature and original message to the backend for verification.
-export async function verifyBinding(payload: VerificationPayload): Promise<{ success: boolean; message: string }> {
+export async function verifyBinding(payload: VerificationPayload): Promise<{ success: boolean; message: string; error?: string }> {
   console.log('API Client: Sending signature to backend for verification...');
 
   const response = await fetch('/api/identity/verify-binding', {
@@ -129,10 +129,17 @@ export async function verifyBinding(payload: VerificationPayload): Promise<{ suc
 
   const data = await response.json();
 
+  // If the request was not successful (e.g., 500, 400)
   if (!response.ok) {
+    // But if it's the specific 409 Conflict for an existing binding, we pass it on.
+    if (response.status === 409 && data.error === 'already_bound') {
+        return data; // Let the UI component handle this special case
+    }
+    
+    // For all other errors, we throw.
     let detailedError = data.error || 'Binding verification failed.';
     if (data.details) {
-        detailedError += ` (Details: ${data.details})`;
+        detailedError += ` (Details: ${JSON.stringify(data.details, null, 2)})`;
     }
     if (data.code) {
         detailedError += ` (Code: ${data.code})`;
@@ -140,5 +147,6 @@ export async function verifyBinding(payload: VerificationPayload): Promise<{ suc
     throw new Error(detailedError);
   }
 
+  // If response.ok is true, it's a successful new binding.
   return data;
 }

@@ -89,9 +89,19 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: result.success, message: 'Identity verified and bound successfully!' });
 
     } catch (error: any) {
-        // More detailed error logging for debugging
+        // Log the full error for server-side debugging
         console.error('[API /verify-binding] Full error:', error);
         
+        // Check for our specific "already bound" errors from the transaction
+        if (error.message?.includes('is already bound')) {
+            return NextResponse.json({ 
+                success: false, 
+                error: 'already_bound', // Use a simple key
+                message: error.message  // Pass the original message
+            }, { status: 409 }); // Use 409 Conflict status
+        }
+        
+        // Return a generic error for everything else
         return NextResponse.json({ 
             success: false, 
             error: error.message || 'An internal server error occurred.',
