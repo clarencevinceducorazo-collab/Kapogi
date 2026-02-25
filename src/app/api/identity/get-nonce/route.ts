@@ -36,8 +36,14 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message });
 
     } catch (error: any) {
-        console.error('[API /get-nonce] Error:', error.message);
-        // Return the specific error message to the frontend for better debugging.
-        return NextResponse.json({ error: error.message || 'Failed to generate nonce.' }, { status: 500 });
+        // Log the full error for server-side debugging
+        console.error('[API /get-nonce] Full error:', error);
+
+        // Return a detailed error response to the client
+        return NextResponse.json({ 
+            error: error.message || 'Failed to generate nonce.',
+            code: error.code,
+            details: error.details,
+        }, { status: 500 });
     }
 }
