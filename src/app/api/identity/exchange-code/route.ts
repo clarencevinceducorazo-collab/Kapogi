@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Authorization': `Basic ${basicAuth}`,
       },
-      body: tokenParams,
+      body: tokenParams.toString(),
     });
 
     const tokenResponseText = await tokenResponse.text();
@@ -110,7 +110,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('[API /exchange-code] FINAL CATCH BLOCK - An unexpected error occurred:', error);
-    return NextResponse.json({ error: error.message || 'An unexpected internal server error occurred.' }, { status: 500 });
+    const errorMessage = (error instanceof Error) ? error.message : JSON.stringify(error);
+    console.error('[API /exchange-code] FINAL CATCH BLOCK - An unexpected error occurred:', errorMessage);
+    // Return the detailed error message in the response
+    return NextResponse.json({ error: `Server error: ${errorMessage}` }, { status: 500 });
   }
 }
