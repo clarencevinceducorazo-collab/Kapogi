@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
     const tokenParams = new URLSearchParams({
       code: code,
       grant_type: 'authorization_code',
-      client_id: clientId,
+      // client_id is provided in the Basic Auth header, so it is removed from the body
       redirect_uri: redirectUri,
       code_verifier: codeVerifier,
     });
