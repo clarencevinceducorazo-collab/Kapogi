@@ -113,6 +113,12 @@ export default function CollectionPage() {
         })
         .filter((char) => char.objectId);
 
+      // Show highest-MMR characters first in collection
+      parsedCharacters.sort((a: Character, b: Character) => {
+        const am = Number(a.attributes?.mmr ?? a.attributes?.MMR ?? 0);
+        const bm = Number(b.attributes?.mmr ?? b.attributes?.MMR ?? 0);
+        return bm - am;
+      });
       setCharacters(parsedCharacters);
       if (parsedCharacters.length > 0) setSelectedChar(parsedCharacters[0]);
     } catch (err) {

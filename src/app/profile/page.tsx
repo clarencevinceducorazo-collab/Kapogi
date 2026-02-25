@@ -342,6 +342,12 @@ export default function Page() {
           .filter((c: any) => c.objectId);
 
         if (mounted) {
+          // Ensure collection displays highest MMR first
+          parsed.sort((a: any, b: any) => {
+            const am = Number(a.mmr ?? a.attributes?.mmr ?? 0);
+            const bm = Number(b.mmr ?? b.attributes?.mmr ?? 0);
+            return bm - am;
+          });
           setCharacters(parsed);
           setIndex(0);
         }
@@ -592,7 +598,9 @@ export default function Page() {
                       letterSpacing: "0.04em",
                     }}
                   >
-                    @selab.sui
+                    {account?.address
+                      ? `${account.address.slice(0, 6)}...${account.address.slice(-4)}`
+                      : "@selab.sui"}
                   </span>
                 </div>
               </div>
