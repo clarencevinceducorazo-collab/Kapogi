@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     const accessToken = tokenData.access_token;
 
     // --- Step 2: Use the access token to fetch the user's profile ---
-    const userUrl = 'https://api.twitter.com/2/users/me';
+    const userUrl = 'https://api.twitter.com/2/users/me?user.fields=id,name,username';
     const userResponse = await fetch(userUrl, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
