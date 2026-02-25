@@ -416,9 +416,7 @@
   }
 
   .text-outline {
-    text-shadow:
-      2px 2px 0px hsl(var(--primary)),
-      -1px -1px 0 #fff;
+    text-shadow: 2px 2px 0 hsl(var(--primary)), -1px -1px 0 #fff;
   }
 
   .squishy-btn:active {
@@ -1043,3 +1041,210 @@
     12px 12px 24px #cbd5e1,
     -12px -12px 24px #ffffff;
 }
+
+/* Rank Card Styles */
+.rank-base {
+  font-family: 'Cinzel', serif;
+  display: block;
+  line-height: 1.2;
+}
+
+.rank-ascendant {
+  @apply rank-base;
+  font-size: clamp(20px, 3vw, 30px);
+  font-weight: 900;
+  background: linear-gradient(120deg, #22d3ee, #a855f7, #ec4899, #f59e0b, #22d3ee);
+  background-size: 400%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: auroraFlow 5s linear infinite;
+  filter: drop-shadow(0 0 12px rgba(168,85,247,0.8));
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
+.rank-rancher {
+  @apply rank-base;
+  font-size: 26px;
+  font-weight: 700;
+  color: #e9d5ff;
+  text-shadow: 0 0 20px #c084fc, 0 0 40px rgba(192,132,252,0.5);
+  animation: violetPulse 3s ease-in-out infinite alternate;
+  letter-spacing: 1px;
+}
+
+.rank-tycoon {
+  @apply rank-base;
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #854d0e, #facc15, #fef08a, #ca8a04, #fde68a);
+  background-size: 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: goldShimmer 3s linear infinite;
+  filter: drop-shadow(0 0 8px rgba(234,179,8,0.6));
+  letter-spacing: 1px;
+}
+
+.rank-icon {
+  @apply rank-base;
+  font-size: 24px;
+  font-weight: 900;
+  color: #fca5a5;
+  text-shadow: 0 0 10px #f87171, 0 0 30px #dc2626, 0 0 60px rgba(239,68,68,0.5);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  animation: flameRoar 1.6s ease-in-out infinite alternate;
+}
+
+.rank-eternal {
+  @apply rank-base;
+  font-size: 21px;
+  font-weight: 700;
+  color: #fdba74;
+  text-shadow: 0 0 12px #f97316, 0 0 30px rgba(249,115,22,0.5);
+  animation: embersGlow 2s ease-in-out infinite alternate;
+  letter-spacing: 1px;
+}
+
+.rank-hof {
+  @apply rank-base;
+  font-size: 20px;
+  font-weight: 700;
+  color: #facc15;
+  text-shadow: 0 0 14px rgba(250,204,21,0.7), 0 0 28px rgba(250,204,21,0.3);
+  letter-spacing: 1px;
+}
+
+.rank-supreme {
+  @apply rank-base;
+  font-size: 19px;
+  font-weight: 700;
+  color: #fbbf24;
+  text-shadow: 0 0 10px rgba(245,158,11,0.6);
+  letter-spacing: 1px;
+}
+
+.rank-elite {
+  @apply rank-base;
+  font-size: 19px;
+  font-weight: 700;
+  color: #6ee7b7;
+  text-shadow: 0 0 12px rgba(52,211,153,0.7), 0 0 30px rgba(52,211,153,0.3);
+  animation: emeraldPulse 3s ease-in-out infinite alternate;
+}
+
+.rank-auragod {
+  @apply rank-base;
+  font-size: 18px;
+  font-weight: 600;
+  color: #5eead4;
+  text-shadow: 0 0 10px rgba(20,184,166,0.7);
+  animation: auraPulse 2.5s ease-in-out infinite alternate;
+}
+
+.rank-biringan {
+  @apply rank-base;
+  font-size: 18px;
+  font-weight: 500;
+  color: #34d399;
+  text-shadow: 0 0 8px rgba(16,185,129,0.6);
+  animation: auraPulse 3s ease-in-out infinite alternate;
+}
+
+.rank-fearless {
+  @apply rank-base;
+  font-size: 18px;
+  font-weight: 600;
+  color: #7dd3fc;
+  text-shadow: 0 0 10px rgba(56,189,248,0.5);
+  letter-spacing: 1px;
+}
+
+.rank-slayer {
+  @apply rank-base;
+  font-size: 17px;
+  font-weight: 500;
+  color: #38bdf8;
+  text-shadow: 0 0 6px rgba(14,165,233,0.4);
+}
+
+.rank-ghost {
+  @apply rank-base;
+  font-size: 17px;
+  font-weight: 400;
+  color: #94a3b8;
+  font-style: italic;
+  letter-spacing: 1px;
+}
+
+.rank-initiate {
+  @apply rank-base;
+  font-size: 17px;
+  font-weight: 500;
+  color: #fbbf24;
+  opacity: 0.8;
+}
+
+.rank-touched {
+  @apply rank-base;
+  font-size: 16px;
+  font-weight: 400;
+  color: #d97706;
+  opacity: 0.75;
+}
+
+.rank-spark {
+  @apply rank-base;
+  font-size: 16px;
+  font-weight: 400;
+  color: #92400e;
+  opacity: 0.7;
+}
+
+.rank-seed {
+  @apply rank-base;
+  font-size: 15px;
+  font-weight: 300;
+  color: #475569;
+  font-style: italic;
+  letter-spacing: 1px;
+}
+
+@keyframes goldShimmer {
+  0% { background-position: 0%; }
+  100% { background-position: 300%; }
+}
+@keyframes auroraFlow {
+  0% { background-position: 0%; }
+  100% { background-position: 400%; }
+}
+@keyframes floatGlow {
+  from { opacity: 0.5; transform: translateX(-50%) scale(1); }
+  to { opacity: 1; transform: translateX(-50%) scale(1.2); }
+}
+@keyframes twinkle {
+  from { opacity: 0.2; }
+  to { opacity: 0.7; }
+}
+@keyframes violetPulse {
+  from { text-shadow: 0 0 10px #c084fc; }
+  to { text-shadow: 0 0 30px #c084fc, 0 0 60px rgba(192,132,252,0.4); }
+}
+@keyframes flameRoar {
+  from { text-shadow: 0 0 6px #f87171, 0 0 20px #dc2626; filter: brightness(0.9); }
+  to { text-shadow: 0 0 20px #fca5a5, 0 0 45px #dc2626, 0 0 80px rgba(239,68,68,0.4); filter: brightness(1.1); }
+}
+@keyframes embersGlow {
+  from { text-shadow: 0 0 8px #f97316; }
+  to { text-shadow: 0 0 22px #f97316, 0 0 45px rgba(249,115,22,0.4); }
+}
+@keyframes emeraldPulse {
+  from { text-shadow: 0 0 8px rgba(52,211,153,0.5); }
+  to { text-shadow: 0 0 20px rgba(52,211,153,0.9), 0 0 40px rgba(52,211,153,0.3); }
+}
+@keyframes auraPulse {
+    from { text-shadow: 0 0 6px rgba(20,184,166,0.4); filter: brightness(0.9); }
+    to { text-shadow: 0 0 18px rgba(20,184,166,1), 0 0 35px rgba(20,184,166,0.3); filter: brightness(1.1); }
+}
+
