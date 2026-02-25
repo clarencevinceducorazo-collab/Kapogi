@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * MOCK API for Identity Binding Flow
  *
@@ -30,7 +32,7 @@ export async function loginWithX(): Promise<void> {
     response_type: 'code',
     client_id: xClientId,
     redirect_uri: redirectUri,
-    scope: 'users.read tweet.read offline.access',
+    scope: 'users.read',
     state: state,
     code_challenge: codeChallenge,
     code_challenge_method: 'S256',
