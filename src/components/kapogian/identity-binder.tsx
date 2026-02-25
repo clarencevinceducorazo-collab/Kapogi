@@ -79,26 +79,30 @@ export function IdentityBinder() {
     }
   }, [account?.address, step]);
 
-  // Listen for message from OAuth popup
+  // Listen for successful auth from popup via localStorage
   useEffect(() => {
-    const handleAuthMessage = (event: MessageEvent) => {
-      // Security: Check origin and message type
-      if (event.origin !== window.location.origin) {
-        console.warn('Received message from untrusted origin:', event.origin);
-        return;
-      }
-      if (event.data?.type === 'x-auth-success' && event.data.user) {
-        console.log('Received user data from popup:', event.data.user);
-        setIsLoading(false);
-        setXUser(event.data.user);
-        setStep('wallet_connect');
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'x-auth-user' && event.newValue) {
+        try {
+          const user = JSON.parse(event.newValue);
+          console.log('Received user data from storage:', user);
+          setIsLoading(false);
+          setXUser(user);
+          setStep('wallet_connect');
+          // Clean up the item from localStorage
+          localStorage.removeItem('x-auth-user');
+        } catch (e) {
+          console.error('Failed to parse user data from storage', e);
+          setErrorMessage('Failed to receive user data from X.');
+          setStep('error');
+        }
       }
     };
 
-    window.addEventListener('message', handleAuthMessage);
+    window.addEventListener('storage', handleStorageChange);
 
     return () => {
-      window.removeEventListener('message', handleAuthMessage);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
@@ -106,14 +110,13 @@ export function IdentityBinder() {
     setIsLoading(true);
     setErrorMessage('');
     try {
-      // This now opens the popup. The result is handled by the `message` event listener.
+      // This now opens the popup. The result is handled by the `storage` event listener.
       await loginWithX();
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to connect with X. Check your browser pop-up blocker.');
       setStep('error');
-      setIsLoading(false); // Stop loading on error
+      setIsLoading(false);
     }
-    // Don't set loading to false here, wait for the popup to message back or close.
   };
 
   const handleSign = async () => {

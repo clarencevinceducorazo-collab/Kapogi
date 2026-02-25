@@ -45,17 +45,12 @@ export default function XCallbackPage() {
         setStatus('Verifying credentials...');
         const user = await exchangeCodeForXUser(code, codeVerifier);
         
-        // Send the user data back to the main window that opened the popup
-        if (window.opener) {
-          window.opener.postMessage({ type: 'x-auth-success', user }, window.location.origin);
-          // Add a small delay to ensure the message is sent before the window closes.
-          setTimeout(() => {
-            window.close();
-          }, 100);
-        } else {
-            setError('Could not find the main application window.');
-            setStatus('Finalization failed.');
-        }
+        // Send the user data back to the main window via localStorage
+        // This is more reliable than window.opener.postMessage
+        localStorage.setItem('x-auth-user', JSON.stringify(user));
+        
+        // Close the popup window
+        window.close();
 
       } catch (err: any) {
         setError(err.message || 'Failed to exchange authorization code for user details.');
