@@ -65,10 +65,12 @@ export async function exchangeCodeForXUser(code: string, codeVerifier: string): 
 }> {
   console.log('API Client: Calling backend to exchange code...');
   
+  const redirectUri = `${window.location.origin}/auth/x/callback`;
+
   const response = await fetch('/api/identity/exchange-code', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, codeVerifier }),
+      body: JSON.stringify({ code, codeVerifier, redirectUri }),
   });
 
   const data = await response.json();

@@ -12,15 +12,14 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function POST(request: NextRequest) {
   try {
-    const { code, codeVerifier } = await request.json();
+    const { code, codeVerifier, redirectUri } = await request.json();
 
-    if (!code || !codeVerifier) {
-      return NextResponse.json({ error: 'Missing required parameters: code and codeVerifier' }, { status: 400 });
+    if (!code || !codeVerifier || !redirectUri) {
+      return NextResponse.json({ error: 'Missing required parameters: code, codeVerifier, or redirectUri' }, { status: 400 });
     }
 
     const clientId = process.env.NEXT_PUBLIC_X_CLIENT_ID!;
     const clientSecret = process.env.X_CLIENT_SECRET!;
-    const redirectUri = `${new URL(request.url).origin}/auth/x/callback`;
     
     // --- Step 1: Exchange authorization code for an access token ---
     const tokenUrl = 'https://api.twitter.com/2/oauth2/token';
