@@ -7,7 +7,8 @@ import {
   LayoutDashboard, 
   Grid3X3, 
   Package, 
-  ChevronRight
+  ChevronRight,
+  BookOpen
 } from 'lucide-react';
 import { cn, formatAddress } from '@/lib/utils';
 import { OrdersPanel } from './orders-panel';
@@ -43,14 +44,14 @@ export function MainProfileV2({
   
   const shortAddr = account?.address ? formatAddress(account.address) : '0x...';
 
-  // Navigation Items
+  // Navigation Items - Identity removed
   const navItems = [
     { id: 'Stats', label: 'Dashboard', icon: LayoutDashboard, color: 'bg-sky-50 text-sky-600 border-sky-200 shadow-[0_4px_0_0_rgba(186,230,253,1)]' },
     { id: 'Collections', label: 'Collections', icon: Grid3X3, color: 'bg-pink-50 text-pink-600 border-pink-200 shadow-[0_4px_0_0_rgba(251,207,232,1)]' },
     { id: 'Orders', label: 'Orders', icon: Package, color: 'bg-amber-50 text-amber-600 border-amber-200 shadow-[0_4px_0_0_rgba(253,230,138,1)]' },
   ];
 
-  // Traits for Visual Traits section
+  // Visual Traits display logic
   const traits = [
     {
       label: "Style",
@@ -210,6 +211,19 @@ export function MainProfileV2({
                       </p>
                     </div>
                   </div>
+                </div>
+
+                {/* Lore Section */}
+                <div className="bg-slate-50 border-4 border-slate-100 p-6 rounded-[2rem] relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-10">
+                    <BookOpen size={64} className="text-slate-400" />
+                  </div>
+                  <h4 className="text-sm font-semibold text-slate-500 mb-3 flex items-center gap-2 uppercase tracking-wider relative z-10">
+                    <iconify-icon icon="solar:notes-linear" class="text-indigo-500" /> Spirit Lore
+                  </h4>
+                  <p className="text-slate-600 font-medium leading-relaxed italic relative z-10">
+                    {currentCharacter?.description || "This spirit's origin is shrouded in mystery..."}
+                  </p>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

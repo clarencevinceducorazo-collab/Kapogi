@@ -35,6 +35,7 @@ export default function Page() {
             return {
               objectId: obj.data?.objectId || "",
               name: displayData.name || "Unnamed",
+              description: displayData.description || "No lore recorded for this spirit.",
               imageUrl: getIPFSGatewayUrl(displayData.image_url || ""),
               attributes: attributes || {},
               mmr: Number(contentData.mmr || 0),
