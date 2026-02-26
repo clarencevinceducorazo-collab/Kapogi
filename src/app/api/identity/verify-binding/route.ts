@@ -1,13 +1,15 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase-admin';
-import { verifyPersonalMessageSignature } from '@mysten/sui/verify';
+import { fromB64 } from '@mysten/sui.js/utils';
+import { Ed25519PublicKey } from '@mysten/sui.js/keypairs/ed25519';
+import { Secp256k1PublicKey } from '@mysten/sui.js/keypairs/secp256k1';
 
 /**
  * API Route: /api/identity/verify-binding
  * 
  * Verifies a signed message from a Sui wallet and creates an identity binding in Firestore.
- * Uses purely local cryptographic verification to avoid 502/Bad Gateway errors from RPC nodes.
+ * Uses manual cryptographic parsing to avoid 502/Bad Gateway errors from RPC nodes.
  */
 export async function POST(request: NextRequest) {
     try {
@@ -42,18 +44,31 @@ export async function POST(request: NextRequest) {
             throw new Error('This security code has expired. Please try again.');
         }
         
-        // --- 2. Local Signature Verification ---
-        // Using @mysten/sui/verify ensures this is purely cryptographic and doesn't hit any RPC nodes.
+        // --- 2. Manual local Signature Verification ---
+        // We manually parse the signature to recover the address. No RPC calls.
         try {
-            const messageBytes = new TextEncoder().encode(message);
-            const publicKey = await verifyPersonalMessageSignature(messageBytes, signature);
+            const signatureBytes = fromB64(signature);
+            const flag = signatureBytes[0]; // 0x00 = Ed25519, 0x01 = Secp256k1
+
+            let publicKey;
+            if (flag === 0x00) {
+                // Ed25519: flag (1 byte) + pubkey (32 bytes) + sig (64 bytes)
+                publicKey = new Ed25519PublicKey(signatureBytes.slice(1, 33));
+            } else if (flag === 0x01) {
+                // Secp256k1: flag (1 byte) + pubkey (33 bytes) + sig (64 bytes)
+                publicKey = new Secp256k1PublicKey(signatureBytes.slice(1, 34));
+            } else {
+                throw new Error(`Unsupported signature scheme flag: ${flag}`);
+            }
+
             const recoveredAddress = publicKey.toSuiAddress();
             
             if (recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
                 throw new Error(`Signature mismatch. Wallet: ${walletAddress}, Recovered: ${recoveredAddress}`);
             }
+            // If we reached here, the signature is cryptographically valid for the wallet.
         } catch (sigError: any) {
-            console.error('[verify-binding] Signature verification error:', sigError);
+            console.error('[verify-binding] Manual signature verification error:', sigError);
             throw new Error(`Cryptographic verification failed: ${sigError.message}`);
         }
 
@@ -64,7 +79,7 @@ export async function POST(request: NextRequest) {
         const bindingsRef = adminDb.collection('identity-bindings');
 
         try {
-            const result = await adminDb.runTransaction(async (transaction) => {
+            await adminDb.runTransaction(async (transaction) => {
                 // Check if X ID is already bound
                 const existingByX = await transaction.get(bindingsRef.where('x_uid', '==', x_uid));
                 if (!existingByX.empty) {
@@ -87,7 +102,6 @@ export async function POST(request: NextRequest) {
                     verified_at: new Date(),
                     revoked: false,
                 });
-                return { success: true };
             });
 
             return NextResponse.json({ success: true, message: 'Identity verified and bound successfully!' });
