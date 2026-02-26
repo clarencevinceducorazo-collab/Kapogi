@@ -211,20 +211,56 @@ const StatBox = ({
   accent?: string;
 }) => (
   <Card style={{ padding: 16, textAlign: "center" }}>
-    <div style={{ color: accent, marginBottom: 4 }}>{icon}</div>
     <div
       style={{
-        fontSize: 10,
-        fontWeight: 800,
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        color: C.gray400,
-        marginBottom: 2,
+        display: "grid",
+        gridTemplateColumns: "48px 1fr",
+        alignItems: "center",
+        gap: 8,
+        marginBottom: 8,
       }}
     >
-      {label}
+      <div
+        style={{
+          color: accent,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-start",
+        }}
+      >
+        {icon}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          style={{
+            fontSize: 10,
+            fontWeight: 900,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: C.gray400,
+          }}
+        >
+          {label}
+        </div>
+        <div
+          style={{
+            fontSize: 22,
+            fontWeight: 900,
+            color: C.black,
+            marginTop: 6,
+          }}
+        >
+          {value}
+        </div>
+      </div>
     </div>
-    <div style={{ fontSize: 22, fontWeight: 900, color: C.black }}>{value}</div>
   </Card>
 );
 
@@ -569,7 +605,11 @@ export default function Page() {
                       : "https://i.imgur.com/8b20GzT.png"
                   }
                   alt={characters.length > 0 ? characters[index].name : "Makoa"}
-                  style={{ width: "80%", height: "80%", objectFit: "contain" }}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                  }}
                 />
               </div>
 
@@ -880,8 +920,9 @@ export default function Page() {
                               display: "flex",
                               justifyContent: "space-around",
                               alignItems: "flex-end",
-                              height: 100,
+                              height: 170,
                               gap: 8,
+                              paddingTop: 20,
                             }}
                           >
                             {items.map((t) => {
@@ -900,36 +941,47 @@ export default function Page() {
                                     gap: 4,
                                   }}
                                 >
-                                  <span
-                                    style={{
-                                      fontWeight: 800,
-                                      fontSize: 12,
-                                      color: C.green,
-                                    }}
-                                  >
-                                    {val}
-                                  </span>
                                   <div
                                     style={{
                                       width: "100%",
                                       maxWidth: 36,
-                                      height: 60,
+                                      height: 150,
                                       display: "flex",
                                       flexDirection: "column",
                                       justifyContent: "flex-end",
+                                      position: "relative",
                                     }}
                                   >
                                     <div
                                       style={{
                                         width: "100%",
                                         height: `${val}%`,
-                                        minHeight: 4,
+                                        minHeight: 8,
                                         background: C.green,
                                         borderRadius: "4px 4px 0 0",
                                         border: `2px solid ${C.black}`,
                                         transition: "height 0.4s ease",
                                       }}
                                     />
+                                    <div
+                                      style={{
+                                        position: "absolute",
+                                        bottom: `calc(${val}% + 8px)`,
+                                        left: "50%",
+                                        transform: "translateX(-50%)",
+                                        fontWeight: 800,
+                                        fontSize: 12,
+                                        color: C.green,
+                                        background: C.white,
+                                        padding: "2px 6px",
+                                        borderRadius: 6,
+                                        border: `1px solid ${C.black}`,
+                                        boxShadow: `1px 1px 0 ${C.black}`,
+                                        whiteSpace: "nowrap",
+                                      }}
+                                    >
+                                      {val}%
+                                    </div>
                                   </div>
                                   <span
                                     style={{
@@ -1231,24 +1283,39 @@ export default function Page() {
               }}
             >
               <StatBox
-                icon={<BarChart2 size={20} />}
+                icon={
+                  <div className="w-12 h-12 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-blue-200 shadow-lg">
+                    <iconify-icon icon="solar:cup-star-bold" class="text-2xl" />
+                  </div>
+                }
                 label="Best MMR"
                 value={bestMmrNum.toLocaleString()}
                 accent={C.blue}
               />
               <StatBox
-                icon={<BarChart2 size={20} />}
+                icon={
+                  <div className="w-12 h-12 rounded-xl bg-indigo-500 text-white flex items-center justify-center shadow-indigo-200 shadow-lg">
+                    <iconify-icon
+                      icon="solar:graph-up-linear"
+                      class="text-2xl"
+                    />
+                  </div>
+                }
                 label="Avg MMR"
                 value={avgMmrNum.toLocaleString()}
                 accent={C.pink}
               />
               <StatBox
-                icon={<Zap size={20} />}
+                icon={
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-emerald-200 shadow-lg">
+                    <iconify-icon icon="solar:box-bold" class="text-2xl" />
+                  </div>
+                }
                 label="Summons"
                 value={summonsCount}
                 accent={C.green}
               />
-              <Card style={{ padding: 16 }}>
+              <Card style={{ padding: 12 }}>
                 <div
                   style={{
                     fontSize: 10,
@@ -1256,12 +1323,20 @@ export default function Page() {
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
                     color: C.gray400,
-                    marginBottom: 8,
+                    marginBottom: 4,
+                    textAlign: "center",
                   }}
                 >
                   Lineage
                 </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                    gap: 10,
+                    placeItems: "center",
+                  }}
+                >
                   {topLineages.length === 0 ? (
                     <Badge color={C.gray200} textColor={C.gray600}>
                       Unknown

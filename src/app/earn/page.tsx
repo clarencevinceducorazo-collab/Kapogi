@@ -64,13 +64,13 @@ export default function EarnPage() {
             </div>
           </div>
 
-                    {/* Main Headline */}
-                    <h1 className="text-6xl md:text-8xl font-black text-white mb-6 tracking-tight leading-none drop-shadow-xl text-outline relative group cursor-default">
-                        KAPOGIAN
-                        <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600 mt-2 pb-4">
-                            UNIVERSE
-                        </span>
-                    </h1>
+          {/* Main Headline */}
+          <h1 className="text-6xl md:text-8xl font-black text-white mb-6 tracking-tight leading-none drop-shadow-xl text-outline relative group cursor-default">
+            KAPOGIAN
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600 mt-2 pb-4">
+              UNIVERSE
+            </span>
+          </h1>
 
           <p className="text-lg md:text-xl font-bold text-slate-500 max-w-2xl mb-10 leading-relaxed">
             The cutest Phygital experience on-chain. Collect vinyl-style NFTs,
@@ -151,12 +151,34 @@ export default function EarnPage() {
                   {/* Visual Representation */}
                   <div className="bg-gradient-to-b from-indigo-500 to-purple-600 rounded-3xl p-6 mb-8 shadow-inner relative overflow-hidden h-64 flex items-center justify-center">
                     <Image
-                      src="https://media.discordapp.net/attachments/1473960076665553039/1473962239324065893/image.png?ex=69981dce&is=6996cc4e&hm=aadca3017195cd62bb4779ddf09291121fb9bb43b356ad5e22392476ac119e49&=&format=webp&quality=lossless"
+                      src="/images/earn/biringan.png"
                       alt="Biringan Conquest"
-                      width={300}
+                      width={500}
                       height={200}
-                      className="object-contain"
+                      className="object-contain transform-gpu hover:scale-105 transition-transform duration-300 tiny-blur"
                     />
+
+                    {/* Coming Soon Ribbon (cartoonish) */}
+                    <div className="absolute top-4 right-[-18px] transform rotate-12 pointer-events-none">
+                      <div className="bg-pink-500 text-white font-extrabold uppercase tracking-wide px-5 py-2 rounded-full shadow-2xl text-sm">
+                        Coming Soon
+                      </div>
+                    </div>
+
+                    {/* Cartoon Sticker */}
+                    <div className="absolute left-4 bottom-4 bg-yellow-300 text-yellow-900 rounded-full px-3 py-2 font-black flex items-center gap-2 shadow-lg animate-bounce">
+                      <iconify-icon
+                        icon="solar:star-bold"
+                        className="text-white"
+                      ></iconify-icon>
+                      New
+                    </div>
+
+                    {/* Tiny Confetti */}
+                    <iconify-icon
+                      icon="solar:circle-bold"
+                      className="absolute top-6 left-6 text-white text-xs opacity-80 animate-pulse"
+                    ></iconify-icon>
 
                     {/* Sparkles */}
                     <iconify-icon
@@ -217,17 +239,33 @@ export default function EarnPage() {
                     Kapogian Farm
                   </h3>
                   <p className="text-slate-500 font-semibold mb-8">
-                    Grow crops, raise pets, and earn tokens.
+                    Raise pets, and earn tokens.
                   </p>
 
                   <div className="bg-gradient-to-b from-green-400 to-emerald-600 rounded-3xl p-6 mb-8 shadow-inner relative overflow-hidden h-64 flex items-center justify-center">
                     <Image
-                      src="https://media.discordapp.net/attachments/1473960076665553039/1473962239324065893/image.png?ex=69981dce&is=6996cc4e&hm=aadca3017195cd62bb4779ddf09291121fb9bb43b356ad5e22392476ac119e49&=&format=webp&quality=lossless"
+                      src="/images/earn/kapogianFarm.png"
                       alt="Kapogian Farm"
-                      width={300}
+                      width={500}
                       height={200}
-                      className="object-contain"
+                      className="object-contain transform-gpu hover:scale-105 transition-transform duration-300 tiny-blur"
                     />
+
+                    {/* Coming Soon Ribbon (green cartoon) */}
+                    <div className="absolute top-4 right-[-18px] transform rotate-12 pointer-events-none">
+                      <div className="bg-emerald-600 text-white font-extrabold uppercase tracking-wide px-5 py-2 rounded-full shadow-2xl text-sm">
+                        Coming Soon
+                      </div>
+                    </div>
+
+                    {/* Cartoon Leaf Sticker */}
+                    <div className="absolute right-4 bottom-4 bg-white text-emerald-700 rounded-full px-3 py-2 font-black flex items-center gap-2 shadow-lg animate-bounce">
+                      <iconify-icon
+                        icon="solar:leaf-bold"
+                        className="text-emerald-600"
+                      ></iconify-icon>
+                      Soon
+                    </div>
                   </div>
 
                   {/* Pill Info */}

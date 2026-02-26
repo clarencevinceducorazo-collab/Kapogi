@@ -35,9 +35,7 @@ export default function WhitepaperPage() {
       <main className="relative pt-32 pb-24 px-4 min-h-screen antialiased">
         <div className="max-w-4xl mx-auto space-y-10">
           {/* HEADER CARD */}
-          <div
-            className="bg-yellow-300 comic-border-thick p-8 rounded-3xl toy-shadow-lg"
-          >
+          <div className="bg-yellow-300 comic-border-thick p-8 rounded-3xl toy-shadow-lg">
             <h1 className="font-headline text-4xl md:text-5xl tracking-wide text-black">
               The Kapogian Ecosystem
             </h1>
@@ -52,9 +50,7 @@ export default function WhitepaperPage() {
           {/* CONTENT SECTIONS */}
           <div className="space-y-8">
             {/* 1. EXECUTIVE SUMMARY */}
-            <section
-              className="bg-white/90 backdrop-blur-md p-8 md:p-12 rounded-3xl comic-border-thick toy-shadow-sm"
-            >
+            <section className="bg-white/90 backdrop-blur-md p-8 md:p-12 rounded-3xl comic-border-thick toy-shadow-sm">
               <h2 className="font-headline text-3xl mb-6 text-blue-600">
                 1. Executive Summary
               </h2>
@@ -79,9 +75,7 @@ export default function WhitepaperPage() {
             </section>
 
             {/* 2. CORE IDENTITY */}
-            <section
-              className="bg-white/90 backdrop-blur-md p-8 md:p-12 rounded-3xl comic-border-thick"
-            >
+            <section className="bg-white/90 backdrop-blur-md p-8 md:p-12 rounded-3xl comic-border-thick">
               <h2 className="font-headline text-3xl mb-6 text-blue-600">
                 2. Core Identity: The Kapogian NFT
               </h2>
@@ -148,9 +142,7 @@ export default function WhitepaperPage() {
             </section>
 
             {/* 3. GAMING DIMENSION */}
-            <section
-              className="bg-slate-900 text-white p-8 md:p-12 rounded-3xl comic-border-thick"
-            >
+            <section className="bg-slate-900 text-white p-8 md:p-12 rounded-3xl comic-border-thick">
               <h2 className="font-headline text-3xl mb-6 text-yellow-400">
                 3. The Gaming Dimension: Conquest of Biringan City
               </h2>
@@ -201,9 +193,7 @@ export default function WhitepaperPage() {
             </section>
 
             {/* 4. PHYGITAL DIMENSION: FARM */}
-            <section
-              className="bg-white/90 backdrop-blur-md p-8 md:p-12 rounded-3xl comic-border-thick"
-            >
+            <section className="bg-white/90 backdrop-blur-md p-8 md:p-12 rounded-3xl comic-border-thick">
               <h2 className="font-headline text-3xl mb-6 text-green-600">
                 4. The Phygital Dimension: Kapogian Farm
               </h2>
@@ -254,7 +244,7 @@ export default function WhitepaperPage() {
                         className="w-16 h-16  pixelated"
                       />
                     </center>
-                    <p className="font-bold text-xs">Cow</p>
+                    <p className="font-bold text-xs">Chicken</p>
                   </div>
                   <div className="bg-white p-4 rounded-xl border-2 border-green-300 text-center">
                     <center>
@@ -264,7 +254,7 @@ export default function WhitepaperPage() {
                         className="w-16 h-16  pixelated"
                       />
                     </center>
-                    <p className="font-bold text-xs">Carabao</p>
+                    <p className="font-bold text-xs">Cow</p>
                   </div>
                 </div>
 
@@ -316,9 +306,7 @@ export default function WhitepaperPage() {
             </section>
 
             {/* 5. $POGI TOKEN */}
-            <section
-              className="bg-yellow-400 p-8 md:p-12 rounded-3xl comic-border-thick"
-            >
+            <section className="bg-yellow-400 p-8 md:p-12 rounded-3xl comic-border-thick">
               <h2 className="font-headline text-3xl mb-6 text-black">
                 5. The Internal Economy: $POGI Utility
               </h2>
@@ -364,9 +352,7 @@ export default function WhitepaperPage() {
             </section>
 
             {/* 6. ROADMAP */}
-            <section
-              className="bg-white/90 backdrop-blur-md p-8 md:p-12 rounded-3xl comic-border-thick"
-            >
+            <section className="bg-white/90 backdrop-blur-md p-8 md:p-12 rounded-3xl comic-border-thick">
               <h2 className="font-headline text-3xl mb-8 text-center text-blue-600">
                 6. The 2026 Master Roadmap
               </h2>
@@ -459,9 +445,7 @@ export default function WhitepaperPage() {
             </section>
 
             {/* 7. TECHNICAL EXCELLENCE */}
-            <section
-              className="bg-black text-white p-8 md:p-12 rounded-3xl comic-border-thick"
-            >
+            <section className="bg-black text-white p-8 md:p-12 rounded-3xl comic-border-thick">
               <h2 className="font-headline text-3xl mb-6 text-yellow-400">
                 7. Technical Excellence on SUI
               </h2>
@@ -509,9 +493,7 @@ export default function WhitepaperPage() {
             </section>
 
             {/* FINAL WORD */}
-            <section
-              className="bg-gradient-to-br from-yellow-400 via-orange-400 to-red-400 p-8 md:p-12 rounded-3xl comic-border-thick text-center"
-            >
+            <section className="bg-gradient-to-br from-yellow-400 via-orange-400 to-red-400 p-8 md:p-12 rounded-3xl comic-border-thick text-center">
               <p className="font-headline text-5xl md:text-6xl mb-4 text-white drop-shadow-lg">
                 Stay Pogi.
               </p>
