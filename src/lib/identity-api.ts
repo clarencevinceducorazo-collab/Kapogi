@@ -26,12 +26,15 @@ export async function loginWithX(): Promise<void> {
   }
 
   const redirectUri = `${window.location.origin}/auth/x/callback`;
+  
+  // Debug log to help match with X Portal settings
+  console.log('DEBUG: Sending Redirect URI to X:', redirectUri);
 
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: xClientId,
     redirect_uri: redirectUri,
-    scope: 'users.read tweet.read',
+    scope: 'users.read', // Reduced scope to just what we need
     state: state,
     code_challenge: codeChallenge,
     code_challenge_method: 'S256',
