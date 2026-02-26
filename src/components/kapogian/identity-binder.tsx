@@ -56,7 +56,7 @@ const StepCard = ({
   </div>
 );
 
-export function IdentityBinder() {
+export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
   const [step, setStep] = useState<Step>('start');
   const [xUser, setXUser] = useState<XUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -213,114 +213,110 @@ export function IdentityBinder() {
 
   // --- RENDER: ALREADY BOUND STATE ---
   if (step === 'already_bound' || step === 'verified') {
-    return (
-        <BrutalCard className="text-center">
-            <div className="relative inline-block mb-6">
-                <div className="w-24 h-24 bg-blue-500 rounded-[2rem] border-4 border-black flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                    <ShieldCheck className="w-12 h-12 text-white" />
-                </div>
-                <div className="absolute -bottom-2 -right-2 bg-yellow-400 border-2 border-black rounded-lg p-1 animate-bounce">
-                    <CheckCircle size={16} />
-                </div>
+    const SuccessContent = (
+      <div className="text-center">
+        <div className="relative inline-block mb-6">
+          <div className="w-24 h-24 bg-blue-500 rounded-[2rem] border-4 border-black flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <ShieldCheck className="w-12 h-12 text-white" />
+          </div>
+          <div className="absolute -bottom-2 -right-2 bg-yellow-400 border-2 border-black rounded-lg p-1 animate-bounce">
+            <CheckCircle size={16} />
+          </div>
+        </div>
+        
+        <h2 className="font-black text-3xl uppercase tracking-tighter italic mb-2">Identity Bound!</h2>
+        
+        <div className="bg-slate-50 border-4 border-black rounded-2xl p-6 mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-sm mx-auto">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center flex-shrink-0">
+              <iconify-icon icon="ri:twitter-x-fill" class="text-white text-2xl" />
             </div>
-            
-            <h2 className="font-black text-3xl uppercase tracking-tighter italic mb-2">Identity Bound!</h2>
-            
-            <div className="bg-slate-50 border-4 border-black rounded-2xl p-6 mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-sm mx-auto">
-                <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center flex-shrink-0">
-                        <iconify-icon icon="ri:twitter-x-fill" class="text-white text-2xl" />
-                    </div>
-                    <div className="text-left overflow-hidden">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">X Account</p>
-                        <p className="font-black text-lg text-blue-500 truncate">@{xUser?.username}</p>
-                    </div>
-                </div>
-                <div className="h-px bg-slate-200 mb-4" />
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-yellow-400 rounded-xl border-2 border-black flex items-center justify-center flex-shrink-0">
-                        <iconify-icon icon="solar:wallet-bold" class="text-black text-2xl" />
-                    </div>
-                    <div className="text-left overflow-hidden">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Linked Wallet</p>
-                        <p className="font-mono text-xs font-bold text-slate-600 truncate">{formatAddress(account?.address || '')}</p>
-                    </div>
-                </div>
+            <div className="text-left overflow-hidden">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">X Account</p>
+              <p className="font-black text-lg text-blue-500 truncate">@{xUser?.username}</p>
             </div>
+          </div>
+          <div className="h-px bg-slate-200 mb-4" />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-yellow-400 rounded-xl border-2 border-black flex items-center justify-center flex-shrink-0">
+              <iconify-icon icon="solar:wallet-bold" class="text-black text-2xl" />
+            </div>
+            <div className="text-left overflow-hidden">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Linked Wallet</p>
+              <p className="font-mono text-xs font-bold text-slate-600 truncate">{formatAddress(account?.address || '')}</p>
+            </div>
+          </div>
+        </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <BrutalButton onClick={handleUnbind} disabled={isLoading} variant="danger" className="gap-2">
-                    {isLoading ? <LoaderCircle className="animate-spin" /> : <Unlink size={16} />}
-                    Unbind Account
-                </BrutalButton>
-                <a href="/profile">
-                    <BrutalButton variant="yellow" className="gap-2">
-                        View Profile
-                        <ExternalLink size={16} />
-                    </BrutalButton>
-                </a>
-            </div>
-        </BrutalCard>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <BrutalButton onClick={handleUnbind} disabled={isLoading} variant="danger" className="gap-2">
+            {isLoading ? <LoaderCircle className="animate-spin" /> : <Unlink size={16} />}
+            Unbind Account
+          </BrutalButton>
+        </div>
+      </div>
     );
+
+    return noCard ? SuccessContent : <BrutalCard>{SuccessContent}</BrutalCard>;
   }
 
   // --- RENDER: STANDARD FLOW ---
-  return (
-    <BrutalCard>
-      <div className="space-y-8">
-        <StepCard step={1} currentStep={currentStepNumber} title="Authenticate with X">
-            <p className="text-sm font-bold text-gray-500 mb-4">
-                Prove you control your X (Twitter) account.
-            </p>
-            <BrutalButton onClick={handleLoginX} disabled={isLoading} variant="primary">
-              {isLoading ? <LoaderCircle className="animate-spin" /> : 'Connect with X'}
-            </BrutalButton>
-        </StepCard>
+  const MainContent = (
+    <div className="space-y-8">
+      <StepCard step={1} currentStep={currentStepNumber} title="Authenticate with X">
+          <p className="text-sm font-bold text-gray-500 mb-4">
+              Prove you control your X (Twitter) account.
+          </p>
+          <BrutalButton onClick={handleLoginX} disabled={isLoading} variant="primary">
+            {isLoading ? <LoaderCircle className="animate-spin" /> : 'Connect with X'}
+          </BrutalButton>
+      </StepCard>
 
-        <StepCard step={2} currentStep={currentStepNumber} title="Connect Sui Wallet">
-            {xUser && (
-                <p className="text-sm font-bold text-gray-500 mb-4">
-                    Welcome, <span className="text-blue-500 font-black">@{xUser.username}</span>. Now, select your wallet.
-                </p>
-            )}
-            <CustomConnectButton />
-        </StepCard>
+      <StepCard step={2} currentStep={currentStepNumber} title="Connect Sui Wallet">
+          {xUser && (
+              <p className="text-sm font-bold text-gray-500 mb-4">
+                  Welcome, <span className="text-blue-500 font-black">@{xUser.username}</span>. Now, select your wallet.
+              </p>
+          )}
+          <CustomConnectButton />
+      </StepCard>
 
-        <StepCard step={3} currentStep={currentStepNumber} title="Sign to Verify">
-             <p className="text-sm font-bold text-gray-500 mb-4">
-                Final step: Create a secure cryptographic link. This is gas-free.
-            </p>
-            {account && (
-                <div className="bg-gray-50 border-2 border-dashed border-gray-200 p-3 rounded-xl mb-4">
-                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Selected Wallet</p>
-                    <p className="font-mono text-xs font-bold text-slate-600 truncate">{account.address}</p>
-                </div>
-            )}
-            <BrutalButton onClick={handleSign} disabled={isLoading || !account} variant="purple">
-              {isLoading ? <LoaderCircle className="animate-spin" /> : 'Sign & Complete'}
-            </BrutalButton>
-        </StepCard>
+      <StepCard step={3} currentStep={currentStepNumber} title="Sign to Verify">
+           <p className="text-sm font-bold text-gray-500 mb-4">
+              Final step: Create a secure cryptographic link. This is gas-free.
+          </p>
+          {account && (
+              <div className="bg-gray-50 border-2 border-dashed border-gray-200 p-3 rounded-xl mb-4">
+                  <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Selected Wallet</p>
+                  <p className="font-mono text-xs font-bold text-slate-600 truncate">{account.address}</p>
+              </div>
+          )}
+          <BrutalButton onClick={handleSign} disabled={isLoading || !account} variant="purple">
+            {isLoading ? <LoaderCircle className="animate-spin" /> : 'Sign & Complete'}
+          </BrutalButton>
+      </StepCard>
 
-        {step === 'verifying' && (
-            <div className="flex flex-col items-center justify-center gap-4 text-purple-600 font-bold p-8 text-center animate-pulse">
-                <LoaderCircle className="animate-spin w-12 h-12"/>
-                <span className="text-lg uppercase tracking-tight">Finalizing cryptographic link...</span>
-            </div>
-        )}
+      {step === 'verifying' && (
+          <div className="flex flex-col items-center justify-center gap-4 text-purple-600 font-bold p-8 text-center animate-pulse">
+              <LoaderCircle className="animate-spin w-12 h-12"/>
+              <span className="text-lg uppercase tracking-tight">Finalizing cryptographic link...</span>
+          </div>
+      )}
 
-        {step === 'error' && (
-            <div className="bg-red-50 border-4 border-black rounded-2xl p-6 text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-black">
-                    <AlertCircle className="text-red-600" size={24} />
-                </div>
-                <h3 className="font-black text-xl text-red-600 uppercase italic">Verification Error</h3>
-                <p className="text-red-700 font-bold mt-2 mb-6 text-sm leading-tight">{errorMessage}</p>
-                <BrutalButton onClick={handleRetry} variant="danger">
-                    Try Again
-                </BrutalButton>
-            </div>
-        )}
-      </div>
-    </BrutalCard>
+      {step === 'error' && (
+          <div className="bg-red-50 border-4 border-black rounded-2xl p-6 text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-black">
+                  <AlertCircle className="text-red-600" size={24} />
+              </div>
+              <h3 className="font-black text-xl text-red-600 uppercase italic">Verification Error</h3>
+              <p className="text-red-700 font-bold mt-2 mb-6 text-sm leading-tight">{errorMessage}</p>
+              <BrutalButton onClick={handleRetry} variant="danger">
+                  Try Again
+              </BrutalButton>
+          </div>
+      )}
+    </div>
   );
+
+  return noCard ? MainContent : <BrutalCard>{MainContent}</BrutalCard>;
 }

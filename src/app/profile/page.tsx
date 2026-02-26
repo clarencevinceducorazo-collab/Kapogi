@@ -1,25 +1,19 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/kapogian/page-header";
 import { PageFooter } from "@/components/kapogian/page-footer";
 import { useCurrentAccount } from "@mysten/dapp-kit";
-import { getOwnedCharacters, suiClient } from "@/lib/sui";
-import { CONTRACT_ADDRESSES } from "@/lib/constants";
+import { getOwnedCharacters } from "@/lib/sui";
 import { getIPFSGatewayUrl } from "@/lib/pinata";
-import Image from "next/image";
 import { MainProfileV2 } from "@/components/kapogian/main-profile-v2";
 
 export default function Page() {
   const account = useCurrentAccount();
   const [characters, setCharacters] = useState<any[]>([]);
   const [index, setIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState<"Collections" | "Orders" | "Stats">("Stats");
+  const [activeTab, setActiveTab] = useState<"Collections" | "Orders" | "Stats" | "Identity">("Stats");
   const [loading, setLoading] = useState(true);
-
-  // Stats
-  const [podiumEntry, setPodiumEntry] = useState<any | null>(null);
 
   useEffect(() => {
     if (!account?.address) return;
@@ -50,15 +44,6 @@ export default function Page() {
 
         parsed.sort((a: any, b: any) => b.mmr - a.mmr);
         setCharacters(parsed);
-        
-        if (parsed.length > 0) {
-          const best = parsed[0];
-          setPodiumEntry({
-            mmrScore: best.mmr,
-            summons: parsed.length,
-            lineage: best.attributes?.lineage || 'Ancient'
-          });
-        }
       } catch (err) {
         console.error("Failed to load profile data:", err);
       } finally {
@@ -87,7 +72,6 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-100 via-pink-100 to-yellow-100 relative selection:bg-pink-300 selection:text-white">
-      {/* Floating Background Shapes */}
       <div className="fixed top-10 left-10 w-64 aspect-square bg-sky-200/50 rounded-full mix-blend-multiply filter blur-2xl opacity-80 -z-10 animate-pulse"></div>
       <div className="fixed bottom-10 right-10 w-72 aspect-square bg-pink-200/50 rounded-full mix-blend-multiply filter blur-2xl opacity-80 -z-10 animate-pulse delay-75"></div>
       <div className="fixed top-1/2 left-1/2 w-80 aspect-square bg-yellow-200/50 rounded-full mix-blend-multiply filter blur-2xl opacity-80 -z-10 -translate-x-1/2 -translate-y-1/2 animate-pulse delay-150"></div>
@@ -99,7 +83,6 @@ export default function Page() {
           <div className="max-w-md mx-auto text-center py-20 bg-white/80 backdrop-blur-md rounded-[3rem] border-4 border-black shadow-xl">
             <h2 className="text-4xl font-headline mb-4">Sync Required</h2>
             <p className="text-slate-500 font-bold mb-8">Connect your wallet to view your legendary squad.</p>
-            {/* The CustomConnectButton will handle its own display */}
           </div>
         ) : loading ? (
           <div className="flex flex-col items-center justify-center py-40 gap-4">

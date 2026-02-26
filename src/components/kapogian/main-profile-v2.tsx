@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -9,20 +8,12 @@ import {
   Grid3X3, 
   Package, 
   Link as LinkIcon, 
-  UserPlus,
   ChevronRight,
-  Medal,
-  BarChart2,
-  Sparkles,
-  Crown,
-  Heart,
-  Flame,
-  Zap,
-  MapPin,
-  Flag
+  UserCheck
 } from 'lucide-react';
 import { cn, formatAddress } from '@/lib/utils';
 import { OrdersPanel } from './orders-panel';
+import { IdentityBinder } from './identity-binder';
 
 interface MainProfileV2Props {
   characters: any[];
@@ -33,8 +24,8 @@ interface MainProfileV2Props {
   bestMmrNum: number;
   avgMmrNum: number;
   topLineages: string[];
-  activeTab: 'Stats' | 'Collections' | 'Orders';
-  setActiveTab: (tab: 'Stats' | 'Collections' | 'Orders') => void;
+  activeTab: 'Stats' | 'Collections' | 'Orders' | 'Identity';
+  setActiveTab: (tab: 'Stats' | 'Collections' | 'Orders' | 'Identity') => void;
 }
 
 export function MainProfileV2({
@@ -60,6 +51,7 @@ export function MainProfileV2({
     { id: 'Stats', label: 'Dashboard', icon: LayoutDashboard, color: 'bg-sky-50 text-sky-600 border-sky-200 shadow-[0_4px_0_0_rgba(186,230,253,1)]' },
     { id: 'Collections', label: 'Collections', icon: Grid3X3, color: 'bg-pink-50 text-pink-600 border-pink-200 shadow-[0_4px_0_0_rgba(251,207,232,1)]' },
     { id: 'Orders', label: 'Orders', icon: Package, color: 'bg-amber-50 text-amber-600 border-amber-200 shadow-[0_4px_0_0_rgba(253,230,138,1)]' },
+    { id: 'Identity', label: 'Identity', icon: UserCheck, color: 'bg-emerald-50 text-emerald-600 border-emerald-200 shadow-[0_4px_0_0_rgba(167,243,208,1)]' },
   ];
 
   return (
@@ -122,13 +114,6 @@ export function MainProfileV2({
                   <ChevronRight size={16} />
                 </button>
               ))}
-              
-              <a href="/identity" className="block">
-                <button className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border-2 border-emerald-200 px-5 py-3 rounded-2xl font-semibold text-left flex items-center justify-between shadow-[0_4px_0_0_rgba(167,243,208,1)] active:translate-y-[4px] active:shadow-none transition-all">
-                  <span className="flex items-center gap-3"><LinkIcon size={20} /> Bind Accounts</span>
-                  <ChevronRight size={16} />
-                </button>
-              </a>
             </div>
           </div>
         </div>
@@ -253,6 +238,20 @@ export function MainProfileV2({
             {activeTab === 'Orders' && (
               <div className="animate-in slide-in-from-bottom-4 duration-500">
                 <OrdersPanel account={account} />
+              </div>
+            )}
+
+            {activeTab === 'Identity' && (
+              <div className="animate-in slide-in-from-bottom-4 duration-500">
+                <div className="max-w-xl mx-auto">
+                  <div className="mb-8 text-center">
+                    <h3 className="text-2xl tracking-tight font-semibold text-slate-800 flex items-center justify-center gap-2">
+                      <UserCheck className="text-emerald-500" /> Identity Binding
+                    </h3>
+                    <p className="text-slate-500 font-bold mt-2">Securely link your X account to your SUI wallet.</p>
+                  </div>
+                  <IdentityBinder noCard />
+                </div>
               </div>
             )}
 
