@@ -2,31 +2,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { verifyPersonalMessage } from '@mysten/sui.js/verify';
-import { Ed25519PublicKey } from '@mysten/sui.js/keypairs/ed25519';
 
 /**
  * API Route: /api/identity/verify-binding
  * 
  * Verifies a signed message from a Sui wallet and creates an identity binding in Firestore.
- * 
- * Security:
- * 1.  Nonce Verification: Checks Firestore for a valid, unexpired nonce from the message.
- *     Deletes the nonce after use to prevent replay attacks.
- * 2.  Signature Verification: Uses Sui's cryptographic functions to ensure the signature
- *     was created by the claimed wallet address.
- * 3.  Uniqueness Check: Queries Firestore to ensure neither the X account nor the Sui wallet
- *     is already part of another binding, enforcing a 1-to-1 relationship.
  */
 export async function POST(request: NextRequest) {
     try {
-        const adminDb = getAdminDb(); // Initialize DB connection here
+        const adminDb = getAdminDb();
         
         const { message, signature, walletAddress, x_uid, x_username } = await request.json();
+
+        if (!message || !signature || !walletAddress || !x_uid || !x_username) {
+            return NextResponse.json({ error: 'Missing required parameters.' }, { status: 400 });
+        }
 
         // --- 1. Nonce Verification ---
         const nonceMatch = message.match(/Nonce: ([\w-]+)/);
         if (!nonceMatch || !nonceMatch[1]) {
-            throw new Error('Invalid message format: Nonce not found.');
+            throw new Error('Could not find Nonce in the signed message.');
         }
         const nonce = nonceMatch[1];
 
@@ -34,79 +29,83 @@ export async function POST(request: NextRequest) {
         const nonceDoc = await nonceRef.get();
 
         if (!nonceDoc.exists) {
-            throw new Error('Invalid or expired nonce. Please try again.');
+            throw new Error('This security code (nonce) has already been used or never existed. Please restart the process.');
         }
 
         const nonceData = nonceDoc.data();
         if (nonceData?.walletAddress.toLowerCase() !== walletAddress.toLowerCase()) {
-            throw new Error('Nonce was not issued for this wallet address.');
+            throw new Error('This security code was issued for a different wallet address.');
         }
         if (nonceData?.expiresAt < Date.now()) {
-            await nonceRef.delete(); // Clean up expired nonce
-            throw new Error('Nonce has expired. Please try again.');
+            await nonceRef.delete();
+            throw new Error('This security code has expired. Please try again.');
         }
         
         // --- 2. Signature Verification ---
-        const messageBytes = new TextEncoder().encode(message);
-        const publicKey = await verifyPersonalMessage(messageBytes, signature);
-        const recoveredAddress = publicKey.toSuiAddress();
-        
-        if (recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
-            throw new Error('Signature verification failed. The signature does not match the wallet address.');
+        try {
+            const messageBytes = new TextEncoder().encode(message);
+            const publicKey = await verifyPersonalMessage(messageBytes, signature);
+            const recoveredAddress = publicKey.toSuiAddress();
+            
+            if (recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
+                throw new Error(`Signature mismatch. Wallet: ${walletAddress}, Recovered: ${recoveredAddress}`);
+            }
+        } catch (sigError: any) {
+            console.error('[verify-binding] Signature verification error:', sigError);
+            throw new Error(`Cryptographic verification failed: ${sigError.message}`);
         }
 
-        // Security check passed, now delete the nonce to prevent reuse.
+        // Security check passed, delete the nonce to prevent reuse.
         await nonceRef.delete();
 
         // --- 3. Uniqueness Check & Create Binding ---
         const bindingsRef = adminDb.collection('identity-bindings');
 
-        // Firestore transaction to ensure atomic read/write
-        const result = await adminDb.runTransaction(async (transaction) => {
-            const existingByX = await transaction.get(bindingsRef.where('x_uid', '==', x_uid));
-            if (!existingByX.empty) {
-                throw new Error(`X account @${x_username} is already bound to another wallet.`);
-            }
+        try {
+            const result = await adminDb.runTransaction(async (transaction) => {
+                // Check if X ID is already bound
+                const existingByX = await transaction.get(bindingsRef.where('x_uid', '==', x_uid));
+                if (!existingByX.empty) {
+                    throw new Error(`ALREADY_BOUND: X account @${x_username} is already linked to a wallet.`);
+                }
 
-            const existingBySui = await transaction.get(bindingsRef.where('sui_address', '==', walletAddress));
-            if (!existingBySui.empty) {
-                throw new Error('This Sui wallet is already bound to another X account.');
-            }
+                // Check if Wallet is already bound
+                const existingBySui = await transaction.get(bindingsRef.where('sui_address', '==', walletAddress));
+                if (!existingBySui.empty) {
+                    throw new Error(`ALREADY_BOUND: This wallet is already linked to an X account.`);
+                }
 
-            // All checks passed, create the new binding
-            const newBindingRef = bindingsRef.doc(`${x_uid}_${walletAddress}`);
-            transaction.set(newBindingRef, {
-                x_uid,
-                x_username,
-                sui_address: walletAddress,
-                verified_at: new Date(),
-                revoked: false,
+                // Create the new binding
+                const bindingId = `${x_uid}_${walletAddress}`;
+                const newBindingRef = bindingsRef.doc(bindingId);
+                transaction.set(newBindingRef, {
+                    x_uid,
+                    x_username,
+                    sui_address: walletAddress,
+                    verified_at: new Date(),
+                    revoked: false,
+                });
+                return { success: true };
             });
-            return { success: true };
-        });
 
+            return NextResponse.json({ success: true, message: 'Identity verified and bound successfully!' });
 
-        return NextResponse.json({ success: result.success, message: 'Identity verified and bound successfully!' });
+        } catch (transError: any) {
+            if (transError.message.includes('ALREADY_BOUND')) {
+                return NextResponse.json({ 
+                    success: false, 
+                    error: 'already_bound', 
+                    message: transError.message.replace('ALREADY_BOUND: ', '') 
+                }, { status: 409 });
+            }
+            throw transError;
+        }
 
     } catch (error: any) {
-        // Log the full error for server-side debugging
-        console.error('[API /verify-binding] Full error:', error);
-        
-        // Check for our specific "already bound" errors from the transaction
-        if (error.message?.includes('is already bound')) {
-            return NextResponse.json({ 
-                success: false, 
-                error: 'already_bound', // Use a simple key
-                message: error.message  // Pass the original message
-            }, { status: 409 }); // Use 409 Conflict status
-        }
-        
-        // Return a generic error for everything else
+        console.error('[API /verify-binding] Final Error:', error);
         return NextResponse.json({ 
-            success: false, 
             error: error.message || 'An internal server error occurred.',
-            code: error.code,
-            details: error.details,
+            details: error.stack
         }, { status: 500 });
     }
 }

@@ -6,7 +6,7 @@ import { useCurrentAccount, useSignPersonalMessage } from '@mysten/dapp-kit';
 import { BrutalCard } from '@/components/ui/brutal-card';
 import { BrutalButton } from '@/components/ui/brutal-button';
 import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
-import { LoaderCircle, CheckCircle, ShieldCheck } from 'lucide-react';
+import { LoaderCircle, CheckCircle, ShieldCheck, AlertCircle } from 'lucide-react';
 import { loginWithX, getNonceToSign, verifyBinding } from '@/lib/identity-api';
 import { useToast } from "@/hooks/use-toast";
 import { formatAddress } from '@/lib/utils';
@@ -19,7 +19,6 @@ interface XUser {
   username: string;
 }
 
-// A helper component for each step in the flow
 const StepCard = ({
   step,
   currentStep,
@@ -49,7 +48,7 @@ const StepCard = ({
       <h3 className="font-black text-xl uppercase tracking-tight -mt-1">{title}</h3>
       <div
         className={`mt-4 transition-all duration-500 ${
-          currentStep === step ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+          currentStep === step ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
         }`}
       >
         <div className="pb-4">{children}</div>
@@ -80,17 +79,14 @@ export function IdentityBinder() {
     }
   }, [account?.address, step]);
 
-  // Listen for successful auth from popup via localStorage
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'x-auth-user' && event.newValue) {
         try {
           const user = JSON.parse(event.newValue);
-          console.log('Received user data from storage:', user);
           setIsLoading(false);
           setXUser(user);
           setStep('wallet_connect');
-          // Clean up the item from localStorage
           localStorage.removeItem('x-auth-user');
         } catch (e) {
           console.error('Failed to parse user data from storage', e);
@@ -101,20 +97,16 @@ export function IdentityBinder() {
     };
 
     window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const handleLoginX = async () => {
     setIsLoading(true);
     setErrorMessage('');
     try {
-      // This now opens the popup. The result is handled by the `storage` event listener.
       await loginWithX();
     } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to connect with X. Check your browser pop-up blocker.');
+      setErrorMessage(err.message || 'Failed to connect with X.');
       setStep('error');
       setIsLoading(false);
     }
@@ -150,11 +142,11 @@ export function IdentityBinder() {
               } else if (verification.error === 'already_bound') {
                 setStep('verified');
                 toast({
-                    title: "Already Bound!",
+                    title: "Connection Exists",
                     description: verification.message,
                 });
               } else {
-                throw new Error(verification.message || 'Verification failed with an unknown error.');
+                throw new Error(verification.error || verification.message || 'Verification failed.');
               }
             } catch (err: any) {
                 setErrorMessage(err.message || 'Verification failed on the backend.');
@@ -163,7 +155,7 @@ export function IdentityBinder() {
                 setIsLoading(false);
             }
           },
-          onError: (err) => {
+          onError: () => {
             setErrorMessage('Signature rejected by user.');
             setStep('error');
             setIsLoading(false);
@@ -192,9 +184,16 @@ export function IdentityBinder() {
                 Your X account <span className="text-blue-500">@{xUser?.username}</span> is securely bound to your wallet.
             </p>
             <p className="font-mono text-xs bg-gray-100 p-2 rounded-lg mt-4">{account?.address}</p>
-            <BrutalButton onClick={handleRetry} className="mt-6" variant="black">
-                Bind Another
-            </BrutalButton>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+                <BrutalButton onClick={handleRetry} variant="black">
+                    Link Another
+                </BrutalButton>
+                <a href="/profile">
+                    <BrutalButton variant="yellow">
+                        View Profile
+                    </BrutalButton>
+                </a>
+            </div>
         </BrutalCard>
     );
   }
@@ -204,17 +203,17 @@ export function IdentityBinder() {
       <div className="space-y-8">
         <StepCard step={1} currentStep={currentStepNumber} title="Authenticate with X">
             <p className="text-sm font-bold text-gray-500 mb-4">
-                Login with your X (Twitter) account to start the binding process.
+                Prove you control your X (Twitter) account.
             </p>
             <BrutalButton onClick={handleLoginX} disabled={isLoading} variant="primary">
-              {isLoading ? <LoaderCircle className="animate-spin" /> : 'Login with X'}
+              {isLoading ? <LoaderCircle className="animate-spin" /> : 'Connect with X'}
             </BrutalButton>
         </StepCard>
 
         <StepCard step={2} currentStep={currentStepNumber} title="Connect Sui Wallet">
             {xUser && (
                 <p className="text-sm font-bold text-gray-500 mb-4">
-                    Logged in as <span className="text-blue-500 font-black">@{xUser.username}</span>. Now, connect your Sui wallet.
+                    Welcome, <span className="text-blue-500 font-black">@{xUser.username}</span>. Now, select your wallet.
                 </p>
             )}
             <CustomConnectButton />
@@ -222,30 +221,33 @@ export function IdentityBinder() {
 
         <StepCard step={3} currentStep={currentStepNumber} title="Sign to Verify">
              <p className="text-sm font-bold text-gray-500 mb-4">
-                Sign a message with your wallet to prove ownership. This is a gas-free transaction.
+                Final step: Create a secure cryptographic link. This is gas-free.
             </p>
             {account && (
                 <div className="bg-gray-50 border-2 border-dashed border-gray-200 p-3 rounded-xl mb-4">
-                    <p className="text-xs font-bold text-gray-500">Wallet Address:</p>
-                    <p className="font-mono text-sm">{formatAddress(account.address)}</p>
+                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Selected Wallet</p>
+                    <p className="font-mono text-xs font-bold text-slate-600 truncate">{account.address}</p>
                 </div>
             )}
-            <BrutalButton onClick={handleSign} disabled={isLoading} variant="purple">
-              {isLoading ? <LoaderCircle className="animate-spin" /> : 'Sign & Verify'}
+            <BrutalButton onClick={handleSign} disabled={isLoading || !account} variant="purple">
+              {isLoading ? <LoaderCircle className="animate-spin" /> : 'Sign & Complete'}
             </BrutalButton>
         </StepCard>
 
         {step === 'verifying' && (
-            <div className="flex items-center justify-center gap-4 text-purple-600 font-bold p-8">
-                <LoaderCircle className="animate-spin w-8 h-8"/>
-                <span className="text-xl">Verifying your signature on-chain...</span>
+            <div className="flex flex-col items-center justify-center gap-4 text-purple-600 font-bold p-8 text-center animate-pulse">
+                <LoaderCircle className="animate-spin w-12 h-12"/>
+                <span className="text-lg uppercase tracking-tight">Finalizing cryptographic link...</span>
             </div>
         )}
 
         {step === 'error' && (
-            <div className="bg-red-50 border-4 border-dashed border-red-300 p-6 rounded-2xl text-center">
-                <h3 className="font-black text-xl text-red-600">An Error Occurred</h3>
-                <p className="text-red-700 font-medium mt-2 mb-4">{errorMessage}</p>
+            <div className="bg-red-50 border-4 border-black rounded-2xl p-6 text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-black">
+                    <AlertCircle className="text-red-600" size={24} />
+                </div>
+                <h3 className="font-black text-xl text-red-600 uppercase italic">Verification Error</h3>
+                <p className="text-red-700 font-bold mt-2 mb-6 text-sm leading-tight">{errorMessage}</p>
                 <BrutalButton onClick={handleRetry} variant="danger">
                     Try Again
                 </BrutalButton>
