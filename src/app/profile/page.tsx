@@ -12,7 +12,7 @@ export default function Page() {
   const account = useCurrentAccount();
   const [characters, setCharacters] = useState<any[]>([]);
   const [index, setIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState<"Collections" | "Orders" | "Stats" | "Identity">("Stats");
+  const [activeTab, setActiveTab] = useState<"Collections" | "Orders" | "Stats">("Stats");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

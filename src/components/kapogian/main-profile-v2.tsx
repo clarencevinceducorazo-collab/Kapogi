@@ -7,13 +7,10 @@ import {
   LayoutDashboard, 
   Grid3X3, 
   Package, 
-  Link as LinkIcon, 
-  ChevronRight,
-  UserCheck
+  ChevronRight
 } from 'lucide-react';
 import { cn, formatAddress } from '@/lib/utils';
 import { OrdersPanel } from './orders-panel';
-import { IdentityBinder } from './identity-binder';
 
 interface MainProfileV2Props {
   characters: any[];
@@ -24,8 +21,8 @@ interface MainProfileV2Props {
   bestMmrNum: number;
   avgMmrNum: number;
   topLineages: string[];
-  activeTab: 'Stats' | 'Collections' | 'Orders' | 'Identity';
-  setActiveTab: (tab: 'Stats' | 'Collections' | 'Orders' | 'Identity') => void;
+  activeTab: 'Stats' | 'Collections' | 'Orders';
+  setActiveTab: (tab: 'Stats' | 'Collections' | 'Orders') => void;
 }
 
 export function MainProfileV2({
@@ -51,8 +48,40 @@ export function MainProfileV2({
     { id: 'Stats', label: 'Dashboard', icon: LayoutDashboard, color: 'bg-sky-50 text-sky-600 border-sky-200 shadow-[0_4px_0_0_rgba(186,230,253,1)]' },
     { id: 'Collections', label: 'Collections', icon: Grid3X3, color: 'bg-pink-50 text-pink-600 border-pink-200 shadow-[0_4px_0_0_rgba(251,207,232,1)]' },
     { id: 'Orders', label: 'Orders', icon: Package, color: 'bg-amber-50 text-amber-600 border-amber-200 shadow-[0_4px_0_0_rgba(253,230,138,1)]' },
-    { id: 'Identity', label: 'Identity', icon: UserCheck, color: 'bg-emerald-50 text-emerald-600 border-emerald-200 shadow-[0_4px_0_0_rgba(167,243,208,1)]' },
   ];
+
+  // Traits for Visual Traits section
+  const traits = [
+    {
+      label: "Style",
+      value: attrs.clothingStyle,
+      icon: "solar:t-shirt-linear",
+    },
+    {
+      label: "Hair",
+      value: attrs.hairAmount
+        ? `${attrs.hairAmount}% Fluff`
+        : null,
+      icon: "solar:user-hand-up-linear",
+    },
+    {
+      label: "Face",
+      value: attrs.facialHair
+        ? `${attrs.facialHair}% Stubble`
+        : null,
+      icon: "solar:emoji-funny-circle-linear",
+    },
+    {
+      label: "Eyewear",
+      value: (attrs.eyewear ?? 0) > 50 ? "Yes" : "None",
+      icon: "solar:glasses-linear",
+    },
+    {
+      label: "Held",
+      value: attrs.heldItem,
+      icon: "solar:cup-linear",
+    },
+  ].filter((t) => t.value);
 
   return (
     <div className="w-full max-w-6xl mx-auto font-body">
@@ -158,8 +187,8 @@ export function MainProfileV2({
           <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border-4 border-slate-100 shadow-[0_12px_0_0_rgba(226,232,240,1)] flex-grow">
             
             {activeTab === 'Stats' && (
-              <div className="animate-in fade-in duration-500">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4 pb-6 border-b-4 border-slate-100 border-dashed">
+              <div className="animate-in fade-in duration-500 space-y-10">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b-4 border-slate-100 border-dashed">
                   <div>
                     <h3 className="text-2xl tracking-tight font-semibold text-slate-800 flex items-center gap-2">
                       Current Loadout
@@ -204,6 +233,34 @@ export function MainProfileV2({
                     </div>
                   </div>
                 </div>
+
+                {/* Visual Traits Section */}
+                <div className="pt-6 border-t-4 border-slate-100 border-dashed">
+                  <h4 className="text-sm font-semibold text-slate-500 mb-6 flex items-center gap-2 uppercase tracking-wider">
+                    <iconify-icon icon="solar:t-shirt-linear" class="text-orange-500" /> Visual Traits
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                    {traits.map((trait) => (
+                      <div
+                        key={trait.label}
+                        className="flex items-center gap-3 px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl hover:bg-slate-100 transition-colors shadow-sm"
+                      >
+                        <iconify-icon
+                          icon={trait.icon}
+                          class="text-2xl text-slate-400"
+                        />
+                        <div className="flex flex-col overflow-hidden">
+                          <span className="text-[10px] text-slate-400 uppercase font-black leading-tight">
+                            {trait.label}
+                          </span>
+                          <span className="text-xs text-slate-700 font-bold truncate">
+                            {trait.value}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -238,20 +295,6 @@ export function MainProfileV2({
             {activeTab === 'Orders' && (
               <div className="animate-in slide-in-from-bottom-4 duration-500">
                 <OrdersPanel account={account} />
-              </div>
-            )}
-
-            {activeTab === 'Identity' && (
-              <div className="animate-in slide-in-from-bottom-4 duration-500">
-                <div className="max-w-xl mx-auto">
-                  <div className="mb-8 text-center">
-                    <h3 className="text-2xl tracking-tight font-semibold text-slate-800 flex items-center justify-center gap-2">
-                      <UserCheck className="text-emerald-500" /> Identity Binding
-                    </h3>
-                    <p className="text-slate-500 font-bold mt-2">Securely link your X account to your SUI wallet.</p>
-                  </div>
-                  <IdentityBinder noCard />
-                </div>
               </div>
             )}
 
