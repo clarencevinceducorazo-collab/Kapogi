@@ -1,4 +1,3 @@
-
 'use client';
 
 /**
@@ -32,7 +31,7 @@ export async function loginWithX(): Promise<void> {
     response_type: 'code',
     client_id: xClientId,
     redirect_uri: redirectUri,
-    scope: 'users.read tweet.read', // Added tweet.read scope
+    scope: 'users.read tweet.read',
     state: state,
     code_challenge: codeChallenge,
     code_challenge_method: 'S256',
@@ -70,7 +69,6 @@ export async function exchangeCodeForXUser(code: string, codeVerifier: string): 
   if (!response.ok) {
       let errorMessage = data.error || 'Failed to exchange authorization code.';
       if (data.details) {
-        // Pretty print the details object for better readability in the error popup
         errorMessage = `${errorMessage}\n\nServer Response:\n${JSON.stringify(data.details, null, 2)}`;
       }
       throw new Error(errorMessage);
@@ -129,14 +127,11 @@ export async function verifyBinding(payload: VerificationPayload): Promise<{ suc
 
   const data = await response.json();
 
-  // If the request was not successful (e.g., 500, 400)
   if (!response.ok) {
-    // But if it's the specific 409 Conflict for an existing binding, we pass it on.
     if (response.status === 409 && data.error === 'already_bound') {
-        return data; // Let the UI component handle this special case
+        return data;
     }
     
-    // For all other errors, we throw.
     let detailedError = data.error || 'Binding verification failed.';
     if (data.details) {
         detailedError += ` (Details: ${JSON.stringify(data.details, null, 2)})`;
@@ -147,6 +142,27 @@ export async function verifyBinding(payload: VerificationPayload): Promise<{ suc
     throw new Error(detailedError);
   }
 
-  // If response.ok is true, it's a successful new binding.
   return data;
+}
+
+/**
+ * Checks if a wallet address is already bound to an X account.
+ */
+export async function checkBinding(walletAddress: string): Promise<{ bound: boolean; x_username?: string; x_uid?: string }> {
+  const response = await fetch(`/api/identity/check-binding?address=${walletAddress}`);
+  if (!response.ok) return { bound: false };
+  return response.json();
+}
+
+/**
+ * Removes the binding for a wallet address.
+ */
+export async function unbind(walletAddress: string): Promise<{ success: boolean }> {
+  const response = await fetch('/api/identity/unbind', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ walletAddress }),
+  });
+  if (!response.ok) return { success: false };
+  return response.json();
 }

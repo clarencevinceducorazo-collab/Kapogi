@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,12 +5,12 @@ import { useCurrentAccount, useSignPersonalMessage } from '@mysten/dapp-kit';
 import { BrutalCard } from '@/components/ui/brutal-card';
 import { BrutalButton } from '@/components/ui/brutal-button';
 import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
-import { LoaderCircle, CheckCircle, ShieldCheck, AlertCircle } from 'lucide-react';
-import { loginWithX, getNonceToSign, verifyBinding } from '@/lib/identity-api';
+import { LoaderCircle, CheckCircle, ShieldCheck, AlertCircle, Unlink, ExternalLink } from 'lucide-react';
+import { loginWithX, getNonceToSign, verifyBinding, checkBinding, unbind } from '@/lib/identity-api';
 import { useToast } from "@/hooks/use-toast";
 import { formatAddress } from '@/lib/utils';
 
-type Step = 'start' | 'wallet_connect' | 'sign_message' | 'verifying' | 'verified' | 'error';
+type Step = 'start' | 'wallet_connect' | 'sign_message' | 'verifying' | 'verified' | 'error' | 'already_bound';
 
 interface XUser {
   id: string;
@@ -73,11 +72,29 @@ export function IdentityBinder() {
     : step === 'sign_message' ? 3
     : 4;
 
+  // Auto-check for existing binding when a wallet is connected
   useEffect(() => {
-    if (account?.address && step === 'wallet_connect') {
-      setStep('sign_message');
+    if (account?.address) {
+      setIsLoading(true);
+      checkBinding(account.address).then(res => {
+        if (res.bound) {
+          setXUser({ id: res.x_uid!, name: '', username: res.x_username! });
+          setStep('already_bound');
+        } else if (step === 'wallet_connect' || step === 'start') {
+          // If we were in the middle of a flow, proceed to sign
+          if (xUser) setStep('sign_message');
+          else setStep('start');
+        }
+      }).finally(() => {
+        setIsLoading(false);
+      });
+    } else {
+      // If wallet disconnected, reset to start or x_login step
+      if (step === 'already_bound' || step === 'sign_message') {
+        setStep(xUser ? 'wallet_connect' : 'start');
+      }
     }
-  }, [account?.address, step]);
+  }, [account?.address]);
 
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
@@ -140,7 +157,7 @@ export function IdentityBinder() {
                     description: `@${xUser.username} is now linked to your wallet.`,
                 });
               } else if (verification.error === 'already_bound') {
-                setStep('verified');
+                setStep('already_bound');
                 toast({
                     title: "Connection Exists",
                     description: verification.message,
@@ -168,6 +185,25 @@ export function IdentityBinder() {
       setIsLoading(false);
     }
   };
+
+  const handleUnbind = async () => {
+    if (!account?.address) return;
+    setIsLoading(true);
+    try {
+      const res = await unbind(account.address);
+      if (res.success) {
+        toast({ title: "Account Unlinked", description: "Binding has been removed." });
+        setXUser(null);
+        setStep('start');
+      } else {
+        throw new Error('Unbind failed');
+      }
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to unlink account." });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   const handleRetry = () => {
     setErrorMessage('');
@@ -175,22 +211,52 @@ export function IdentityBinder() {
     setStep('start');
   }
 
-  if (step === 'verified') {
+  // --- RENDER: ALREADY BOUND STATE ---
+  if (step === 'already_bound' || step === 'verified') {
     return (
         <BrutalCard className="text-center">
-            <ShieldCheck className="w-16 h-16 text-green-500 mx-auto mb-4"/>
-            <h2 className="font-black text-2xl uppercase text-green-600">Identity Verified</h2>
-            <p className="text-gray-600 font-bold mt-2">
-                Your X account <span className="text-blue-500">@{xUser?.username}</span> is securely bound to your wallet.
-            </p>
-            <p className="font-mono text-xs bg-gray-100 p-2 rounded-lg mt-4">{account?.address}</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-                <BrutalButton onClick={handleRetry} variant="black">
-                    Link Another
+            <div className="relative inline-block mb-6">
+                <div className="w-24 h-24 bg-blue-500 rounded-[2rem] border-4 border-black flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    <ShieldCheck className="w-12 h-12 text-white" />
+                </div>
+                <div className="absolute -bottom-2 -right-2 bg-yellow-400 border-2 border-black rounded-lg p-1 animate-bounce">
+                    <CheckCircle size={16} />
+                </div>
+            </div>
+            
+            <h2 className="font-black text-3xl uppercase tracking-tighter italic mb-2">Identity Bound!</h2>
+            
+            <div className="bg-slate-50 border-4 border-black rounded-2xl p-6 mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-sm mx-auto">
+                <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center flex-shrink-0">
+                        <iconify-icon icon="ri:twitter-x-fill" class="text-white text-2xl" />
+                    </div>
+                    <div className="text-left overflow-hidden">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">X Account</p>
+                        <p className="font-black text-lg text-blue-500 truncate">@{xUser?.username}</p>
+                    </div>
+                </div>
+                <div className="h-px bg-slate-200 mb-4" />
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-yellow-400 rounded-xl border-2 border-black flex items-center justify-center flex-shrink-0">
+                        <iconify-icon icon="solar:wallet-bold" class="text-black text-2xl" />
+                    </div>
+                    <div className="text-left overflow-hidden">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Linked Wallet</p>
+                        <p className="font-mono text-xs font-bold text-slate-600 truncate">{formatAddress(account?.address || '')}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <BrutalButton onClick={handleUnbind} disabled={isLoading} variant="danger" className="gap-2">
+                    {isLoading ? <LoaderCircle className="animate-spin" /> : <Unlink size={16} />}
+                    Unbind Account
                 </BrutalButton>
                 <a href="/profile">
-                    <BrutalButton variant="yellow">
+                    <BrutalButton variant="yellow" className="gap-2">
                         View Profile
+                        <ExternalLink size={16} />
                     </BrutalButton>
                 </a>
             </div>
@@ -198,6 +264,7 @@ export function IdentityBinder() {
     );
   }
 
+  // --- RENDER: STANDARD FLOW ---
   return (
     <BrutalCard>
       <div className="space-y-8">
