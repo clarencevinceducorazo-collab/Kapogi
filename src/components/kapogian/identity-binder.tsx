@@ -1,12 +1,14 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession, signIn } from 'next-auth/react';
 import { useCurrentAccount, useSignPersonalMessage } from '@mysten/dapp-kit';
 import { BrutalCard } from '@/components/ui/brutal-card';
 import { BrutalButton } from '@/components/ui/brutal-button';
 import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
-import { LoaderCircle, CheckCircle, ShieldCheck, AlertCircle, Unlink, User, AtSign } from 'lucide-react';
-import { getNonceToSign, verifyBinding, checkBinding, unbind } from '@/lib/identity-api';
+import { LoaderCircle, CheckCircle, ShieldCheck, AlertCircle, Unlink, Twitter } from 'lucide-react';
+import { getNonceToSign, verifyBinding, checkBinding, checkBindingByXUid, unbind } from '@/lib/identity-api';
 import { useToast } from "@/hooks/use-toast";
 import { formatAddress } from '@/lib/utils';
 
@@ -51,15 +53,15 @@ const StepCard = ({
 );
 
 export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
-  const [step, setStep] = useState<Step>('start');
-  const [xUsername, setXUsername] = useState('');
-  const [boundUsername, setBoundUsername] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  
+  const { data: session, status: sessionStatus } = useSession();
   const account = useCurrentAccount();
   const { mutate: signPersonalMessage } = useSignPersonalMessage();
   const { toast } = useToast();
+
+  const [step, setStep] = useState<Step>('start');
+  const [boundData, setBoundData] = useState<{ x_username?: string; sui_address?: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const currentStepNumber =
     step === 'start' ? 1
@@ -69,51 +71,55 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
 
   useEffect(() => {
     const handleSync = async () => {
-      if (!account?.address) {
-        if (step === 'already_bound' || step === 'sign_message' || step === 'verified') {
-          setStep('start');
-        }
-        return;
+      // 1. If wallet connected, check binding by address
+      if (account?.address) {
+        setIsLoading(true);
+        try {
+          const res = await checkBinding(account.address);
+          if (res.bound) {
+            setBoundData({ x_username: res.x_username, sui_address: account.address });
+            setStep('already_bound');
+            setIsLoading(false);
+            return;
+          }
+        } catch (e) { console.error(e); }
       }
 
-      setIsLoading(true);
-      try {
-        const res = await checkBinding(account.address);
-        if (res.bound) {
-          setBoundUsername(res.x_username || '');
-          setStep('already_bound');
-        } else {
-          if (xUsername && account.address) {
-            setStep('sign_message');
-          } else if (step !== 'error') {
-            setStep('start');
+      // 2. If X session exists, check binding by X UID
+      if (session?.user?.x_uid) {
+        setIsLoading(true);
+        try {
+          const res = await checkBindingByXUid(session.user.x_uid);
+          if (res.bound) {
+            setBoundData({ x_username: res.x_username, sui_address: res.sui_address });
+            setStep('already_bound');
+            setIsLoading(false);
+            return;
           }
-        }
-      } catch (e) {
-        console.error("Identity sync error:", e);
-      } finally {
-        setIsLoading(false);
+          // If X is logged in but not bound, determine next step based on wallet connection
+          if (!account?.address) {
+            setStep('wallet_connect');
+          } else {
+            setStep('sign_message');
+          }
+        } catch (e) { console.error(e); }
+      } else if (sessionStatus === 'unauthenticated') {
+        setStep('start');
       }
+      setIsLoading(false);
     };
 
     handleSync();
-  }, [account?.address, xUsername]);
-
-  const handleNextFromUsername = () => {
-    if (!xUsername.trim()) {
-      toast({ variant: "destructive", title: "Missing Username", description: "Please enter your X username." });
-      return;
-    }
-    setStep(account?.address ? 'sign_message' : 'wallet_connect');
-  };
+  }, [account?.address, session, sessionStatus]);
 
   const handleSign = async () => {
-    if (!account?.address || !xUsername) return;
+    if (!account?.address || !session?.user?.x_username || !session?.user?.x_uid) return;
     setIsLoading(true);
     setErrorMessage('');
     try {
-      const cleanUsername = xUsername.replace(/^@/, '');
-      const messageToSign = await getNonceToSign(account.address, cleanUsername);
+      const x_username = session.user.x_username;
+      const x_uid = session.user.x_uid;
+      const messageToSign = await getNonceToSign(account.address, x_username);
       
       signPersonalMessage(
         { message: new TextEncoder().encode(messageToSign) },
@@ -125,23 +131,17 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
                 message: messageToSign,
                 signature: result.signature,
                 walletAddress: account.address,
-                x_uid: 'manual', // Static since we don't have OAuth ID anymore
-                x_username: cleanUsername,
+                x_uid,
+                x_username,
               });
 
               if (verification.success) {
-                setBoundUsername(cleanUsername);
+                setBoundData({ x_username, sui_address: account.address });
                 setStep('verified');
-                toast({
-                    title: "Identity Verified!",
-                    description: `@${cleanUsername} is now linked to your wallet.`,
-                });
+                toast({ title: "Identity Verified!", description: `@${x_username} is now linked to your wallet.` });
               } else if (verification.error === 'already_bound') {
                 setStep('already_bound');
-                toast({
-                    title: "Connection Exists",
-                    description: verification.message,
-                });
+                toast({ title: "Connection Exists", description: verification.message });
               } else {
                 throw new Error(verification.error || verification.message || 'Verification failed.');
               }
@@ -173,8 +173,7 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
       const res = await unbind(account.address);
       if (res.success) {
         toast({ title: "Account Unlinked", description: "Binding has been removed." });
-        setXUsername('');
-        setBoundUsername('');
+        setBoundData(null);
         setStep('start');
       } else {
         throw new Error('Unbind failed');
@@ -185,36 +184,29 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
       setIsLoading(false);
     }
   };
-  
-  const handleRetry = () => {
-    setErrorMessage('');
-    setStep('start');
-  }
 
   const MainContent = (
     <div className="space-y-8">
-      <StepCard step={1} currentStep={currentStepNumber} title="Enter X Username">
+      <StepCard step={1} currentStep={currentStepNumber} title="Login with X">
           <p className="text-sm font-bold text-gray-500 mb-4">
-              Enter the handle of the X account you want to link.
+              Authenticate your X (Twitter) account to start the binding process.
           </p>
-          <div className="relative mb-4">
-            <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="username" 
-              value={xUsername}
-              onChange={(e) => setXUsername(e.target.value.replace(/^@/, ''))}
-              className="w-full h-14 bg-slate-50 border-4 border-black rounded-2xl pl-10 pr-4 text-lg font-black outline-none focus:bg-white transition-all shadow-inner"
-            />
-          </div>
-          <BrutalButton onClick={handleNextFromUsername} variant="primary" disabled={!xUsername.trim()}>
-            Continue
-          </BrutalButton>
+          {session?.user ? (
+            <div className="flex items-center gap-3 bg-blue-50 border-2 border-blue-200 p-3 rounded-xl">
+              <Twitter className="text-blue-500" size={20} />
+              <span className="font-black text-blue-700">@{session.user.x_username}</span>
+              <CheckCircle className="text-blue-500 ml-auto" size={18} />
+            </div>
+          ) : (
+            <BrutalButton onClick={() => signIn('twitter')} variant="primary" className="gap-2">
+              <Twitter size={18} /> Login with X
+            </BrutalButton>
+          )}
       </StepCard>
 
       <StepCard step={2} currentStep={currentStepNumber} title="Connect Sui Wallet">
           <p className="text-sm font-bold text-gray-500 mb-4">
-              Connect the wallet you want to link to <span className="text-blue-500">@{xUsername}</span>.
+              Connect the wallet you want to link to your X account.
           </p>
           <CustomConnectButton />
       </StepCard>
@@ -229,7 +221,7 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
                   <p className="font-mono text-xs font-bold text-slate-600 truncate">{account.address}</p>
               </div>
           )}
-          <BrutalButton onClick={handleSign} disabled={isLoading || !account} variant="purple" className="w-full sm:w-auto h-12 text-base">
+          <BrutalButton onClick={handleSign} disabled={isLoading || !account || !session} variant="purple" className="w-full sm:w-auto h-12 text-base">
             {isLoading ? <LoaderCircle className="animate-spin" /> : 'Sign & Link Account'}
           </BrutalButton>
       </StepCard>
@@ -248,9 +240,7 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
               </div>
               <h3 className="font-black text-xl text-red-600 uppercase italic">Binding Error</h3>
               <p className="text-red-700 font-bold mt-2 mb-6 text-sm leading-tight">{errorMessage}</p>
-              <BrutalButton onClick={handleRetry} variant="danger">
-                  Try Again
-              </BrutalButton>
+              <BrutalButton onClick={() => setStep('start')} variant="danger">Try Again</BrutalButton>
           </div>
       )}
     </div>
@@ -273,11 +263,11 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
         <div className="bg-slate-50 border-4 border-black rounded-2xl p-6 mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-sm mx-auto">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center flex-shrink-0">
-              <iconify-icon icon="ri:twitter-x-fill" class="text-white text-2xl" />
+              <Twitter className="text-white text-2xl" />
             </div>
             <div className="text-left overflow-hidden">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">X Account</p>
-              <p className="font-black text-lg text-blue-500 truncate">@{boundUsername}</p>
+              <p className="font-black text-lg text-blue-500 truncate">@{boundData?.x_username}</p>
             </div>
           </div>
           <div className="h-px bg-slate-200 mb-4" />
@@ -287,7 +277,7 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
             </div>
             <div className="text-left overflow-hidden">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Linked Wallet</p>
-              <p className="font-mono text-xs font-bold text-slate-600 truncate">{formatAddress(account?.address || '')}</p>
+              <p className="font-mono text-xs font-bold text-slate-600 truncate">{formatAddress(boundData?.sui_address || '')}</p>
             </div>
           </div>
         </div>

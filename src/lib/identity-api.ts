@@ -1,3 +1,4 @@
+
 'use client';
 
 /**
@@ -9,8 +10,6 @@ export async function getNonceToSign(
   walletAddress: string,
   xUsername: string
 ): Promise<string> {
-  console.log('API Client: Fetching nonce from backend...');
-  
   const response = await fetch('/api/identity/get-nonce', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -18,18 +17,7 @@ export async function getNonceToSign(
   });
 
   const data = await response.json();
-
-  if (!response.ok) {
-    let detailedError = data.error || 'Failed to get signing message.';
-    if (data.details) {
-        detailedError += ` (Details: ${data.details})`;
-    }
-    if (data.code) {
-        detailedError += ` (Code: ${data.code})`;
-    }
-    throw new Error(detailedError);
-  }
-
+  if (!response.ok) throw new Error(data.error || 'Failed to get signing message.');
   return data.message;
 }
 
@@ -43,8 +31,6 @@ interface VerificationPayload {
 
 // Sends the signature and original message to the backend for verification.
 export async function verifyBinding(payload: VerificationPayload): Promise<{ success: boolean; message: string; error?: string }> {
-  console.log('API Client: Sending signature to backend for verification...');
-
   const response = await fetch('/api/identity/verify-binding', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -52,23 +38,11 @@ export async function verifyBinding(payload: VerificationPayload): Promise<{ suc
   });
 
   const data = await response.json();
-
   if (!response.ok) {
-    if (response.status === 409 && data.error === 'already_bound') {
-        return data;
-    }
-    
-    let detailedError = data.error || 'Binding verification failed.';
-    if (data.details) {
-        detailedError += ` (Details: ${JSON.stringify(data.details, null, 2)})`;
-    }
-    if (data.code) {
-        detailedError += ` (Code: ${data.code})`;
-    }
-    throw new Error(detailedError);
+    if (response.status === 409 && data.error === 'already_bound') return data;
+    throw new Error(data.error || 'Binding verification failed.');
   }
-
-  return data.success ? data : { success: true, message: 'Verified' };
+  return data;
 }
 
 /**
@@ -76,6 +50,15 @@ export async function verifyBinding(payload: VerificationPayload): Promise<{ suc
  */
 export async function checkBinding(walletAddress: string): Promise<{ bound: boolean; x_username?: string; x_uid?: string }> {
   const response = await fetch(`/api/identity/check-binding?address=${walletAddress}`);
+  if (!response.ok) return { bound: false };
+  return response.json();
+}
+
+/**
+ * Checks if an X account is already bound to a wallet address.
+ */
+export async function checkBindingByXUid(x_uid: string): Promise<{ bound: boolean; sui_address?: string; x_username?: string }> {
+  const response = await fetch(`/api/identity/check-binding-x?x_uid=${x_uid}`);
   if (!response.ok) return { bound: false };
   return response.json();
 }

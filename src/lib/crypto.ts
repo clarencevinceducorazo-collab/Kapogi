@@ -1,2 +1,5 @@
-// This file is deprecated and has been removed.
+
+/**
+ * This file is deprecated. PKCE crypto is handled internally by NextAuth.
+ */
 export {};
