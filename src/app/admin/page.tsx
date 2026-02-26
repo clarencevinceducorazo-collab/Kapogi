@@ -1,7 +1,4 @@
-// Admin console page for managing orders, shipments, and admin configuration.
-// Provides tools for decrypting shipping PII, updating tracking, and
-// performing super-admin actions (manage admins, pause minting, pricing).
-'use client';
+"use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
@@ -67,13 +64,8 @@ import { decryptShippingInfo, type ShippingInfo } from "@/lib/encryption";
 import { ORDER_STATUS, CONTRACT_ADDRESSES } from "@/lib/constants";
 import { getIPFSGatewayUrl } from "@/lib/pinata";
 import { mistToSui, suiToMist } from "@/lib/constants";
-import { BrutalCard } from "@/components/ui/brutal-card";
-import { BrutalButton } from "@/components/ui/brutal-button";
-import { BrutalBadge } from "@/components/ui/badge-brutal";
-import { formatAddress } from "@/lib/utils";
 
-// Type augmentation: define `iconify-icon` as a valid JSX intrinsic element
-// so Iconify icons can be used directly in TSX files.
+// I have to define IconifyIcon for typescript since it's not a standard element
 declare global {
   namespace JSX {
     interface IntrinsicElements {
@@ -89,10 +81,7 @@ declare global {
 }
 
 // ─────────────────────────────────────────────
-// Domain Types
-// - `Receipt`: on-chain order receipt fields
-// - `DecryptedCard`: shipping PII after local AES decryption
-// - `RegistryInfo` / `TreasuryInfo`: admin registry & treasury config
+// Types
 // ─────────────────────────────────────────────
 
 interface Receipt {
@@ -130,13 +119,8 @@ interface TreasuryInfo {
 
 // ─────────────────────────────────────────────
 // Toast System
-// Lightweight in-page toast implementation used by this admin console.
 // ─────────────────────────────────────────────
 
-<<<<<<< Updated upstream
-=======
-// Simple card wrapper used across the admin UI to provide
-// a consistent "brutalist" visual container (border, shadow, padding).
 const BrutalCard = ({
   children,
   className = "",
@@ -153,8 +137,6 @@ const BrutalCard = ({
   </div>
 );
 
-// Reusable button with several visual variants and disabled handling.
-// Accepts an `onClick` handler and renders children with the selected style.
 const BrutalButton = ({
   children,
   onClick,
@@ -202,11 +184,9 @@ const BrutalButton = ({
   );
 };
 
-// Shorten a hex address for display (e.g. 0x1234...abcd)
 const shortAddr = (addr: string) =>
   addr.length > 10 ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : addr;
 
-// Small badge component used to highlight counts, statuses, and labels.
 const Badge = ({
   children,
   className = "",
@@ -225,14 +205,12 @@ const Badge = ({
 // Toast System
 // ─────────────────────────────────────────────
 
->>>>>>> Stashed changes
 interface Toast {
   id: number;
   message: string;
   type: "success" | "error" | "info";
 }
 
-// ToastContainer: renders a stack of toast messages and handles removal.
 const ToastContainer = ({
   toasts,
   onRemove,
@@ -277,15 +255,6 @@ const ToastContainer = ({
 // Super Admin Panel (drawer/modal)
 // ─────────────────────────────────────────────
 
-/**
- * SuperAdminPanel
- * Drawer component for performing super-admin actions like:
- * - viewing registry & treasury info
- * - adding/removing admins
- * - pausing/unpausing minting and updating pricing
- * All actions call into the `signAndExecute` transaction helper and
- * report user-facing toasts via `onToast`.
- */
 function SuperAdminPanel({
   onClose,
   signAndExecute,
@@ -324,7 +293,6 @@ function SuperAdminPanel({
     loadInfo();
   }, []);
 
-  // Load registry + treasury info and detect SuperAdminCap owned by wallet
   const loadInfo = async () => {
     setLoadingInfo(true);
     try {
@@ -354,7 +322,6 @@ function SuperAdminPanel({
     }
   };
 
-  // Add a new admin address using the SuperAdmin capability.
   const handleAddAdmin = async () => {
     if (!newAdminAddr.startsWith("0x")) {
       onToast("Invalid address format", "error");
@@ -382,7 +349,6 @@ function SuperAdminPanel({
     }
   };
 
-  // Remove an admin address using the SuperAdmin capability.
   const handleRemoveAdmin = async (addr: string) => {
     setRemovingAdmin(addr);
     try {
@@ -400,7 +366,6 @@ function SuperAdminPanel({
     }
   };
 
-  // Toggle minting pause state. When pausing, a `pauseReason` is required.
   const handleTogglePause = async () => {
     if (!registry) return;
     setTogglingPause(true);
@@ -433,7 +398,6 @@ function SuperAdminPanel({
     }
   };
 
-  // Update the on-chain treasury address for incoming mint payments.
   const handleUpdateTreasury = async () => {
     if (!newTreasuryAddr.startsWith("0x")) {
       onToast("Invalid address format", "error");
@@ -456,7 +420,6 @@ function SuperAdminPanel({
     }
   };
 
-  // Update the base mint price (accepts SUI amount as string input).
   const handleUpdateMintPrice = async () => {
     const sui = parseFloat(newMintPriceSui);
     if (isNaN(sui) || sui <= 0) {
@@ -480,7 +443,6 @@ function SuperAdminPanel({
     }
   };
 
-  // Update the bundle upgrade price (accepts SUI amount as string input).
   const handleUpdateBundlePrice = async () => {
     const sui = parseFloat(newBundlePriceSui);
     if (isNaN(sui) || sui <= 0) {
@@ -543,7 +505,7 @@ function SuperAdminPanel({
               Cap:
             </span>
             <span className="text-[10px] font-mono text-yellow-600">
-              {formatAddress(superCapId)}
+              {shortAddr(superCapId)}
             </span>
           </div>
         )}
@@ -568,7 +530,7 @@ function SuperAdminPanel({
                 <h3 className="font-black uppercase tracking-tight text-sm">
                   Minting Status
                 </h3>
-                <BrutalBadge
+                <Badge
                   className={
                     registry?.mintPaused
                       ? "bg-red-500 text-white ml-auto"
@@ -576,7 +538,7 @@ function SuperAdminPanel({
                   }
                 >
                   {registry?.mintPaused ? "PAUSED" : "ACTIVE"}
-                </BrutalBadge>
+                </Badge>
               </div>
 
               {registry?.mintPaused && (
@@ -624,9 +586,9 @@ function SuperAdminPanel({
                 <h3 className="font-black uppercase tracking-tight text-sm">
                   Admin Whitelist
                 </h3>
-                <BrutalBadge className="bg-slate-100 ml-auto">
+                <Badge className="bg-slate-100 ml-auto">
                   {registry?.admins.length ?? 0} admins
-                </BrutalBadge>
+                </Badge>
               </div>
 
               <div className="space-y-2 mb-4 max-h-[160px] overflow-y-auto">
@@ -809,10 +771,6 @@ function SuperAdminPanel({
   );
 }
 
-// TrackingModal
-// Small modal used to add or edit tracking information for an order.
-// - preloads values when `receipt` changes
-// - calls `onSave` with the tracking payload when saved
 function TrackingModal({
   isOpen,
   onClose,
@@ -948,12 +906,6 @@ function TrackingModal({
 // Main Page
 // ─────────────────────────────────────────────
 
-// AdminPage
-// Main admin console page. Responsibilities:
-// - verify admin / super-admin roles
-// - load and display order receipts
-// - provide controls to decrypt shipping PII, update tracking,
-//   and perform admin/super-admin management actions
 export default function AdminPage() {
   const account = useCurrentAccount();
   const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
@@ -982,7 +934,6 @@ export default function AdminPage() {
   const [estDeliveryDate, setEstDeliveryDate] = useState("");
   const [isSavingTracking, setIsSavingTracking] = useState(false);
 
-  // Toast helpers: `showToast` pushes a toast with auto-dismiss, `removeToast` removes it.
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastCounter = useRef(0);
   const showToast = (message: string, type: Toast["type"] = "info") => {
@@ -997,7 +948,6 @@ export default function AdminPage() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
 
   useEffect(() => {
-    // Verify whether the connected wallet is in the admin or super-admin lists.
     if (!account?.address) {
       setIsAdmin(false);
       setIsSuperAdmin(false);
@@ -1022,12 +972,10 @@ export default function AdminPage() {
   }, [account?.address]);
 
   useEffect(() => {
-    // When the user is recognized as an admin, fetch order receipts.
     if (isAdmin) loadReceipts();
     else setLoading(false);
   }, [isAdmin]);
 
-  // Dashboard stats derived from `receipts` for quick summary cards.
   const stats = useMemo(
     () => ({
       pending: receipts.filter((r) => r.status === ORDER_STATUS.PENDING).length,
@@ -1038,8 +986,6 @@ export default function AdminPage() {
     [receipts],
   );
 
-  // Compute the unique set of purchased items across receipts for the
-  // item filter dropdown (sorted alphabetically).
   const allItems = useMemo(() => {
     const items = new Set<string>();
     receipts.forEach((r) =>
@@ -1048,8 +994,6 @@ export default function AdminPage() {
     return Array.from(items).sort();
   }, [receipts]);
 
-  // Apply active tab, item filter, and search query to the receipts list.
-  // Returns receipts that match all active filters for table rendering.
   const filteredReceipts = useMemo(() => {
     const q = searchQuery.toLowerCase();
     return receipts.filter((r) => {
@@ -1077,7 +1021,6 @@ export default function AdminPage() {
     });
   }, [receipts, searchQuery, filterItem, activeTab]);
 
-  // Fetch receipts from chain, enrich with NFT display data, and store in state.
   const loadReceipts = async () => {
     try {
       setLoading(true);
@@ -1138,7 +1081,6 @@ export default function AdminPage() {
     }
   };
 
-  // Open tracking modal and preload fields from the selected receipt.
   const handleOpenTrackingModal = (receipt: Receipt) => {
     setSelectedReceipt(receipt);
     setTrackingNumber(receipt.trackingNumber || "");
@@ -1151,7 +1093,6 @@ export default function AdminPage() {
     setTrackingModalOpen(true);
   };
 
-  // Validate and persist tracking info on-chain, then refresh receipts.
   const handleSaveTracking = async () => {
     if (!selectedReceipt || !trackingNumber || !carrier || !estDeliveryDate) {
       showToast("All tracking fields are required.", "error");
@@ -1176,8 +1117,6 @@ export default function AdminPage() {
     }
   };
 
-  // Toggle decryption of the shipping PII for the provided receipt.
-  // If already decrypted, clears the displayed decrypted card.
   const handleToggleDecrypt = async (receipt: Receipt) => {
     if (decryptedCards.some((c) => c.id === receipt.objectId)) {
       setDecryptedCards([]);
@@ -1205,7 +1144,6 @@ export default function AdminPage() {
     }
   };
 
-  // Mark an order as shipped on-chain, then refresh receipts.
   const handleMarkShipped = async (receiptId: string) => {
     try {
       await markAsShipped({ receiptObjectId: receiptId, signAndExecute });
@@ -1216,7 +1154,6 @@ export default function AdminPage() {
     }
   };
 
-  // Mark an order as delivered on-chain, then refresh receipts.
   const handleMarkDelivered = async (receiptId: string) => {
     try {
       await markAsDelivered({ receiptObjectId: receiptId, signAndExecute });
@@ -1227,8 +1164,6 @@ export default function AdminPage() {
     }
   };
 
-  // Download the NFT image for the character, falling back to opening
-  // the image in a new tab if the download flow fails.
   const handleDownloadImage = async (
     imageUrl: string,
     characterName: string,
@@ -1250,7 +1185,6 @@ export default function AdminPage() {
   };
 
   if (!account) {
-    // Prompt the user to connect a wallet before accessing admin features.
     return (
       <div
         className="min-h-screen flex items-center justify-center bg-slate-50 p-4"
@@ -1272,7 +1206,6 @@ export default function AdminPage() {
   }
 
   if (roleLoading) {
-    // Role verification in progress — show a spinner while checking ACLs.
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
         <div className="flex items-center gap-3 font-bold text-slate-400 uppercase">
@@ -1284,7 +1217,6 @@ export default function AdminPage() {
   }
 
   if (!isAdmin) {
-    // Connected wallet is not authorized as admin — show access denied.
     return (
       <div
         className="min-h-screen flex items-center justify-center bg-slate-50 p-4"
@@ -1356,7 +1288,7 @@ export default function AdminPage() {
 
             <div className="bg-white border-4 border-black px-6 py-2 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-black text-sm flex items-center gap-2">
               {isSuperAdmin && <Crown size={14} className="text-yellow-500" />}
-              {formatAddress(account.address)}
+              {shortAddr(account.address)}
             </div>
             <CustomConnectButton className="!bg-blue-500 !border-4 !border-black !text-white !font-black !px-5 !py-2 !rounded-xl !shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:!bg-blue-600 !text-sm" />
           </div>
@@ -1512,7 +1444,7 @@ export default function AdminPage() {
                             className="text-xs font-mono font-bold text-slate-400 mt-1 uppercase truncate w-40"
                             title={card.id}
                           >
-                            {formatAddress(card.id)}
+                            {shortAddr(card.id)}
                           </p>
                         </div>
                       </div>
@@ -1564,12 +1496,12 @@ export default function AdminPage() {
                           </label>
                           <div className="flex flex-wrap gap-1.5 p-3 bg-slate-50 border-2 border-black rounded-xl">
                             {card.itemsSelected.split(",").map((item) => (
-                              <BrutalBadge
+                              <Badge
                                 key={item}
                                 className="bg-white !text-[10px]"
                               >
                                 {item.trim()}
-                              </BrutalBadge>
+                              </Badge>
                             ))}
                           </div>
                         </div>
@@ -1606,9 +1538,9 @@ export default function AdminPage() {
                   <h3 className="text-xl font-black uppercase tracking-tighter">
                     Order Registry
                   </h3>
-                  <BrutalBadge className="bg-yellow-400 border-2 border-black !text-xs !px-2.5 !py-0.5">
+                  <Badge className="bg-yellow-400 border-2 border-black !text-xs !px-2.5 !py-0.5">
                     {receipts.length}
-                  </BrutalBadge>
+                  </Badge>
                 </div>
                 <div className="flex items-center border-2 border-black rounded-xl overflow-hidden shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                   {["pending", "shipped", "delivered"].map((tab, i) => {
@@ -1734,7 +1666,6 @@ export default function AdminPage() {
               </div>
 
               {/* Table */}
-              <div className="flex-1 overflow-auto max-h-[70vh]">
               {loading ? (
                 <div className="p-16 flex justify-center items-center gap-3 text-slate-400 font-black text-sm uppercase">
                   <LoaderCircle className="animate-spin" size={24} /> Loading
@@ -1791,13 +1722,13 @@ export default function AdminPage() {
                                 <div>
                                   <p className="font-black text-slate-900 text-sm leading-none">
                                     {receipt.character?.name ||
-                                      formatAddress(receipt.nftId)}
+                                      shortAddr(receipt.nftId)}
                                   </p>
                                   <p
                                     className="text-xs font-mono font-bold text-slate-400 mt-1.5 uppercase tracking-tighter"
                                     title={receipt.objectId}
                                   >
-                                    {formatAddress(receipt.objectId)}
+                                    {shortAddr(receipt.objectId)}
                                   </p>
                                 </div>
                               </div>
@@ -1807,28 +1738,28 @@ export default function AdminPage() {
                                 {receipt.itemsSelected
                                   .split(",")
                                   .map((item) => (
-                                    <BrutalBadge
+                                    <Badge
                                       key={item}
                                       className={`!text-[10px] tracking-tighter ${item.trim() === "ALL_BUNDLE" ? "bg-blue-500 text-white" : "bg-white"}`}
                                     >
                                       {item.trim()}
-                                    </BrutalBadge>
+                                    </Badge>
                                   ))}
                               </div>
                             </td>
                             <td className="p-4 text-center">
                               {receipt.status === ORDER_STATUS.PENDING ? (
-                                <BrutalBadge className="bg-yellow-300 border-yellow-500 !text-[11px] !px-2.5 !py-1">
+                                <Badge className="bg-yellow-300 border-yellow-500 !text-[11px] !px-2.5 !py-1">
                                   Pending
-                                </BrutalBadge>
+                                </Badge>
                               ) : receipt.status === ORDER_STATUS.SHIPPED ? (
-                                <BrutalBadge className="bg-blue-400 text-white !text-[11px] !px-2.5 !py-1">
+                                <Badge className="bg-blue-400 text-white !text-[11px] !px-2.5 !py-1">
                                   Shipped
-                                </BrutalBadge>
+                                </Badge>
                               ) : (
-                                <BrutalBadge className="bg-green-500 text-white !text-[11px] !px-2.5 !py-1">
+                                <Badge className="bg-green-500 text-white !text-[11px] !px-2.5 !py-1">
                                   Delivered
-                                </BrutalBadge>
+                                </Badge>
                               )}
                             </td>
                             <td className="p-4 pr-6">
@@ -1892,7 +1823,6 @@ export default function AdminPage() {
                   </table>
                 </div>
               )}
-              </div>
             </BrutalCard>
           </section>
         </div>
@@ -1929,7 +1859,7 @@ export default function AdminPage() {
                   <option value="J&T Express">J&T Express</option>
                   <option value="LBC">LBC</option>
                   <option value="DHL">DHL World</option>
-                  <option value="SPX">Shopee Express</option>
+                  <option value="SPX">Shoppe Express</option>
                   <option value="J&T">J&T (17Track)</option>
                   <option value="NINJA">NINJA Van Philippines</option>
                 </select>
