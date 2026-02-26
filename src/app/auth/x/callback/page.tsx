@@ -20,9 +20,11 @@ export default function XCallbackPage() {
       const code = searchParams.get('code');
       const state = searchParams.get('state');
       const errorParam = searchParams.get('error');
+      const errorDescription = searchParams.get('error_description');
 
       if (errorParam) {
-        setError(errorParam === 'access_denied' ? 'Authorization was denied.' : 'An unknown error occurred.');
+        console.error('X Auth Error:', errorParam, errorDescription);
+        setError(errorDescription || (errorParam === 'access_denied' ? 'Authorization was denied by the user.' : `Authentication failed: ${errorParam}`));
         setStatus('Authentication failed.');
         return;
       }
@@ -31,13 +33,13 @@ export default function XCallbackPage() {
       const codeVerifier = sessionStorage.getItem('pkce_code_verifier');
 
       if (!code || !state || !storedState || !codeVerifier) {
-        setError('Invalid request. Missing parameters for verification.');
+        setError('Invalid request. The authentication flow was interrupted or timed out.');
         setStatus('Verification failed.');
         return;
       }
 
       if (state !== storedState) {
-        setError('Invalid state parameter. Possible CSRF attack detected.');
+        setError('Security check failed. State mismatch detected.');
         setStatus('Security check failed.');
         return;
       }
@@ -57,6 +59,7 @@ export default function XCallbackPage() {
         }, 100);
 
       } catch (err: any) {
+        console.error('Exchange Code Error:', err);
         setError(err.message || 'Failed to exchange authorization code for user details.');
         setStatus('Authentication failed.');
       }
@@ -85,7 +88,8 @@ export default function XCallbackPage() {
         {error ? (
             <div className="mt-4 text-sm bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 text-left">
                 <p className="font-semibold">Error Details:</p>
-                <pre className="whitespace-pre-wrap font-mono text-xs mt-2">{error}</pre>
+                <p className="font-medium mt-1">{error}</p>
+                <p className="mt-4 text-xs text-gray-400">You can close this window and try again.</p>
             </div>
         ) : (
             <p className="mt-2 text-gray-500">
