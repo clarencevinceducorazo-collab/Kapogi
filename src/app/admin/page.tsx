@@ -1676,9 +1676,11 @@ export default function AdminPage() {
                   No orders to display.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <div
+                  className={`relative overflow-x-auto ${filteredReceipts.length >= 5 ? "max-h-[70vh] overflow-y-auto border-4 border-black" : ""}`}
+                >
                   <table className="w-full border-collapse">
-                    <thead className="bg-slate-50 border-b-4 border-black">
+                    <thead className="bg-slate-50 border-b-4 border-black sticky top-0 z-20">
                       <tr>
                         <th className="p-4 text-left text-[11px] font-black uppercase text-slate-400 tracking-widest pl-6">
                           Asset & ID
