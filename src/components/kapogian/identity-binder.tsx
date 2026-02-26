@@ -72,29 +72,42 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
     : step === 'sign_message' ? 3
     : 4;
 
-  // Auto-check for existing binding when a wallet is connected
+  // Auto-check for existing binding when a wallet is connected or X user changes
   useEffect(() => {
-    if (account?.address) {
+    const handleSync = async () => {
+      if (!account?.address) {
+        // If wallet disconnected, reset to start or x_login step
+        if (step === 'already_bound' || step === 'sign_message') {
+          setStep(xUser ? 'wallet_connect' : 'start');
+        }
+        return;
+      }
+
       setIsLoading(true);
-      checkBinding(account.address).then(res => {
+      try {
+        const res = await checkBinding(account.address);
         if (res.bound) {
           setXUser({ id: res.x_uid!, name: '', username: res.x_username! });
           setStep('already_bound');
-        } else if (step === 'wallet_connect' || step === 'start') {
-          // If we were in the middle of a flow, proceed to sign
-          if (xUser) setStep('sign_message');
-          else setStep('start');
+        } else {
+          // Not bound. 
+          // If we have an X user already, jump straight to sign step
+          if (xUser) {
+            setStep('sign_message');
+          } else if (step !== 'error') {
+            // If no X user, we need to authenticate with X first
+            setStep('start');
+          }
         }
-      }).finally(() => {
+      } catch (e) {
+        console.error("Identity sync error:", e);
+      } finally {
         setIsLoading(false);
-      });
-    } else {
-      // If wallet disconnected, reset to start or x_login step
-      if (step === 'already_bound' || step === 'sign_message') {
-        setStep(xUser ? 'wallet_connect' : 'start');
       }
-    }
-  }, [account?.address]);
+    };
+
+    handleSync();
+  }, [account?.address, xUser?.id]); // Re-run when wallet address or X user changes
 
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
@@ -103,7 +116,10 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
           const user = JSON.parse(event.newValue);
           setIsLoading(false);
           setXUser(user);
-          setStep('wallet_connect');
+          // If wallet is already connected, the other useEffect will catch the xUser change and move to 'sign_message'
+          if (!account?.address) {
+            setStep('wallet_connect');
+          }
           localStorage.removeItem('x-auth-user');
         } catch (e) {
           console.error('Failed to parse user data from storage', e);
@@ -115,7 +131,7 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [account?.address]);
 
   const handleLoginX = async () => {
     setIsLoading(true);
@@ -273,9 +289,13 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
       </StepCard>
 
       <StepCard step={2} currentStep={currentStepNumber} title="Connect Sui Wallet">
-          {xUser && (
+          {xUser ? (
+              <p className="text-sm font-bold text-green-600 mb-4 flex items-center gap-2">
+                  <CheckCircle size={16} /> Authenticated as <span className="font-black">@{xUser.username}</span>. Connect your wallet.
+              </p>
+          ) : (
               <p className="text-sm font-bold text-gray-500 mb-4">
-                  Welcome, <span className="text-blue-500 font-black">@{xUser.username}</span>. Now, select your wallet.
+                  Connect your Sui wallet to complete the binding.
               </p>
           )}
           <CustomConnectButton />
@@ -287,12 +307,12 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
           </p>
           {account && (
               <div className="bg-gray-50 border-2 border-dashed border-gray-200 p-3 rounded-xl mb-4">
-                  <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Selected Wallet</p>
+                  <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Connected Wallet</p>
                   <p className="font-mono text-xs font-bold text-slate-600 truncate">{account.address}</p>
               </div>
           )}
-          <BrutalButton onClick={handleSign} disabled={isLoading || !account} variant="purple">
-            {isLoading ? <LoaderCircle className="animate-spin" /> : 'Sign & Complete'}
+          <BrutalButton onClick={handleSign} disabled={isLoading || !account} variant="purple" className="w-full sm:w-auto h-12 text-base">
+            {isLoading ? <LoaderCircle className="animate-spin" /> : 'Sign & Complete Binding'}
           </BrutalButton>
       </StepCard>
 
