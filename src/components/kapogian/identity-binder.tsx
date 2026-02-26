@@ -5,18 +5,12 @@ import { useCurrentAccount, useSignPersonalMessage } from '@mysten/dapp-kit';
 import { BrutalCard } from '@/components/ui/brutal-card';
 import { BrutalButton } from '@/components/ui/brutal-button';
 import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
-import { LoaderCircle, CheckCircle, ShieldCheck, AlertCircle, Unlink, ExternalLink, Bug, ChevronDown, ChevronUp } from 'lucide-react';
-import { loginWithX, getNonceToSign, verifyBinding, checkBinding, unbind } from '@/lib/identity-api';
+import { LoaderCircle, CheckCircle, ShieldCheck, AlertCircle, Unlink, User, AtSign } from 'lucide-react';
+import { getNonceToSign, verifyBinding, checkBinding, unbind } from '@/lib/identity-api';
 import { useToast } from "@/hooks/use-toast";
 import { formatAddress } from '@/lib/utils';
 
 type Step = 'start' | 'wallet_connect' | 'sign_message' | 'verifying' | 'verified' | 'error' | 'already_bound';
-
-interface XUser {
-  id: string;
-  name: string;
-  username: string;
-}
 
 const StepCard = ({
   step,
@@ -58,10 +52,10 @@ const StepCard = ({
 
 export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
   const [step, setStep] = useState<Step>('start');
-  const [xUser, setXUser] = useState<XUser | null>(null);
+  const [xUsername, setXUsername] = useState('');
+  const [boundUsername, setBoundUsername] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [showDebug, setShowDebug] = useState(false);
   
   const account = useCurrentAccount();
   const { mutate: signPersonalMessage } = useSignPersonalMessage();
@@ -76,8 +70,8 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
   useEffect(() => {
     const handleSync = async () => {
       if (!account?.address) {
-        if (step === 'already_bound' || step === 'sign_message') {
-          setStep(xUser ? 'wallet_connect' : 'start');
+        if (step === 'already_bound' || step === 'sign_message' || step === 'verified') {
+          setStep('start');
         }
         return;
       }
@@ -86,10 +80,10 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
       try {
         const res = await checkBinding(account.address);
         if (res.bound) {
-          setXUser({ id: res.x_uid!, name: '', username: res.x_username! });
+          setBoundUsername(res.x_username || '');
           setStep('already_bound');
         } else {
-          if (xUser) {
+          if (xUsername && account.address) {
             setStep('sign_message');
           } else if (step !== 'error') {
             setStep('start');
@@ -103,49 +97,23 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
     };
 
     handleSync();
-  }, [account?.address, xUser?.id]);
+  }, [account?.address, xUsername]);
 
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'x-auth-user' && event.newValue) {
-        try {
-          const user = JSON.parse(event.newValue);
-          setIsLoading(false);
-          setXUser(user);
-          if (!account?.address) {
-            setStep('wallet_connect');
-          }
-          localStorage.removeItem('x-auth-user');
-        } catch (e) {
-          console.error('Failed to parse user data from storage', e);
-          setErrorMessage('Failed to receive user data from X.');
-          setStep('error');
-        }
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [account?.address]);
-
-  const handleLoginX = async () => {
-    setIsLoading(true);
-    setErrorMessage('');
-    try {
-      await loginWithX();
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to connect with X.');
-      setStep('error');
-      setIsLoading(false);
+  const handleNextFromUsername = () => {
+    if (!xUsername.trim()) {
+      toast({ variant: "destructive", title: "Missing Username", description: "Please enter your X username." });
+      return;
     }
+    setStep(account?.address ? 'sign_message' : 'wallet_connect');
   };
 
   const handleSign = async () => {
-    if (!account?.address || !xUser) return;
+    if (!account?.address || !xUsername) return;
     setIsLoading(true);
     setErrorMessage('');
     try {
-      const messageToSign = await getNonceToSign(account.address, xUser.username);
+      const cleanUsername = xUsername.replace(/^@/, '');
+      const messageToSign = await getNonceToSign(account.address, cleanUsername);
       
       signPersonalMessage(
         { message: new TextEncoder().encode(messageToSign) },
@@ -157,15 +125,16 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
                 message: messageToSign,
                 signature: result.signature,
                 walletAddress: account.address,
-                x_uid: xUser.id,
-                x_username: xUser.username,
+                x_uid: 'manual', // Static since we don't have OAuth ID anymore
+                x_username: cleanUsername,
               });
 
               if (verification.success) {
+                setBoundUsername(cleanUsername);
                 setStep('verified');
                 toast({
                     title: "Identity Verified!",
-                    description: `@${xUser.username} is now linked to your wallet.`,
+                    description: `@${cleanUsername} is now linked to your wallet.`,
                 });
               } else if (verification.error === 'already_bound') {
                 setStep('already_bound');
@@ -204,7 +173,8 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
       const res = await unbind(account.address);
       if (res.success) {
         toast({ title: "Account Unlinked", description: "Binding has been removed." });
-        setXUser(null);
+        setXUsername('');
+        setBoundUsername('');
         setStep('start');
       } else {
         throw new Error('Unbind failed');
@@ -218,44 +188,40 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
   
   const handleRetry = () => {
     setErrorMessage('');
-    setXUser(null);
     setStep('start');
   }
 
-  const debugInfo = {
-    redirectUri: typeof window !== 'undefined' ? `${window.location.origin}/auth/x/callback` : 'N/A',
-    clientId: process.env.NEXT_PUBLIC_X_CLIENT_ID || 'MISSING',
-    wallet: account?.address || 'NOT CONNECTED',
-    xAuthenticated: xUser ? `@${xUser.username}` : 'NO',
-  };
-
   const MainContent = (
     <div className="space-y-8">
-      <StepCard step={1} currentStep={currentStepNumber} title="Authenticate with X">
+      <StepCard step={1} currentStep={currentStepNumber} title="Enter X Username">
           <p className="text-sm font-bold text-gray-500 mb-4">
-              Prove you control your X (Twitter) account.
+              Enter the handle of the X account you want to link.
           </p>
-          <BrutalButton onClick={handleLoginX} disabled={isLoading} variant="primary">
-            {isLoading ? <LoaderCircle className="animate-spin" /> : 'Connect with X'}
+          <div className="relative mb-4">
+            <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input 
+              type="text" 
+              placeholder="username" 
+              value={xUsername}
+              onChange={(e) => setXUsername(e.target.value.replace(/^@/, ''))}
+              className="w-full h-14 bg-slate-50 border-4 border-black rounded-2xl pl-10 pr-4 text-lg font-black outline-none focus:bg-white transition-all shadow-inner"
+            />
+          </div>
+          <BrutalButton onClick={handleNextFromUsername} variant="primary" disabled={!xUsername.trim()}>
+            Continue
           </BrutalButton>
       </StepCard>
 
       <StepCard step={2} currentStep={currentStepNumber} title="Connect Sui Wallet">
-          {xUser ? (
-              <p className="text-sm font-bold text-green-600 mb-4 flex items-center gap-2">
-                  <CheckCircle size={16} /> Authenticated as <span className="font-black">@{xUser.username}</span>. Connect your wallet.
-              </p>
-          ) : (
-              <p className="text-sm font-bold text-gray-500 mb-4">
-                  Connect your Sui wallet to complete the binding.
-              </p>
-          )}
+          <p className="text-sm font-bold text-gray-500 mb-4">
+              Connect the wallet you want to link to <span className="text-blue-500">@{xUsername}</span>.
+          </p>
           <CustomConnectButton />
       </StepCard>
 
       <StepCard step={3} currentStep={currentStepNumber} title="Sign to Verify">
            <p className="text-sm font-bold text-gray-500 mb-4">
-              Final step: Create a secure cryptographic link. This is gas-free.
+              Create a secure cryptographic link. This is gas-free.
           </p>
           {account && (
               <div className="bg-gray-50 border-2 border-dashed border-gray-200 p-3 rounded-xl mb-4">
@@ -264,7 +230,7 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
               </div>
           )}
           <BrutalButton onClick={handleSign} disabled={isLoading || !account} variant="purple" className="w-full sm:w-auto h-12 text-base">
-            {isLoading ? <LoaderCircle className="animate-spin" /> : 'Sign & Complete Binding'}
+            {isLoading ? <LoaderCircle className="animate-spin" /> : 'Sign & Link Account'}
           </BrutalButton>
       </StepCard>
 
@@ -280,36 +246,13 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-black">
                   <AlertCircle className="text-red-600" size={24} />
               </div>
-              <h3 className="font-black text-xl text-red-600 uppercase italic">Verification Error</h3>
+              <h3 className="font-black text-xl text-red-600 uppercase italic">Binding Error</h3>
               <p className="text-red-700 font-bold mt-2 mb-6 text-sm leading-tight">{errorMessage}</p>
               <BrutalButton onClick={handleRetry} variant="danger">
                   Try Again
               </BrutalButton>
           </div>
       )}
-
-      {/* DEBUG SECTION */}
-      <div className="pt-8 border-t-2 border-slate-100">
-        <button 
-          onClick={() => setShowDebug(!showDebug)}
-          className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-300 hover:text-slate-500 transition-colors"
-        >
-          <Bug size={12} /> {showDebug ? 'Hide Debug' : 'Show Debug Info'}
-          {showDebug ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-        </button>
-        
-        {showDebug && (
-          <div className="mt-4 p-4 bg-slate-900 rounded-2xl border-2 border-black font-mono text-[10px] text-emerald-400 overflow-x-auto">
-            <p className="mb-2 text-white font-bold">// Use these values in X Developer Portal</p>
-            <div className="space-y-1">
-              <p>REDIRECT_URI: <span className="text-white select-all">{debugInfo.redirectUri}</span></p>
-              <p>CLIENT_ID: <span className="text-white select-all">{debugInfo.clientId}</span></p>
-              <p>WALLET: <span className="text-slate-500">{debugInfo.wallet}</span></p>
-              <p>X_AUTH: <span className="text-slate-500">{debugInfo.xAuthenticated}</span></p>
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 
@@ -334,7 +277,7 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
             </div>
             <div className="text-left overflow-hidden">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">X Account</p>
-              <p className="font-black text-lg text-blue-500 truncate">@{xUser?.username}</p>
+              <p className="font-black text-lg text-blue-500 truncate">@{boundUsername}</p>
             </div>
           </div>
           <div className="h-px bg-slate-200 mb-4" />
@@ -352,7 +295,7 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <BrutalButton onClick={handleUnbind} disabled={isLoading} variant="danger" className="gap-2">
             {isLoading ? <LoaderCircle className="animate-spin" /> : <Unlink size={16} />}
-            Unbind Account
+            Unlink Account
           </BrutalButton>
         </div>
       </div>
