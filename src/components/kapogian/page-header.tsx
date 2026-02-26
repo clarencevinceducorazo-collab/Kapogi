@@ -60,7 +60,7 @@ export const PageHeader = () => {
       ],
     },
     { name: "PODIUM", href: "/podium" },
-    { name: "IDENTITY", href: "/identity" },
+  
   ];
 
   const avatar = PlaceHolderImages.find((img) => img.id === "header-avatar");
