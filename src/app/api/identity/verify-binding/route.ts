@@ -1,12 +1,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase-admin';
-import { verifyPersonalMessage } from '@mysten/sui.js/verify';
+import { verifyPersonalMessageSignature } from '@mysten/sui/verify';
 
 /**
  * API Route: /api/identity/verify-binding
  * 
  * Verifies a signed message from a Sui wallet and creates an identity binding in Firestore.
+ * Uses purely local cryptographic verification to avoid 502/Bad Gateway errors from RPC nodes.
  */
 export async function POST(request: NextRequest) {
     try {
@@ -41,10 +42,11 @@ export async function POST(request: NextRequest) {
             throw new Error('This security code has expired. Please try again.');
         }
         
-        // --- 2. Signature Verification ---
+        // --- 2. Local Signature Verification ---
+        // Using @mysten/sui/verify ensures this is purely cryptographic and doesn't hit any RPC nodes.
         try {
             const messageBytes = new TextEncoder().encode(message);
-            const publicKey = await verifyPersonalMessage(messageBytes, signature);
+            const publicKey = await verifyPersonalMessageSignature(messageBytes, signature);
             const recoveredAddress = publicKey.toSuiAddress();
             
             if (recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
@@ -105,7 +107,7 @@ export async function POST(request: NextRequest) {
         console.error('[API /verify-binding] Final Error:', error);
         return NextResponse.json({ 
             error: error.message || 'An internal server error occurred.',
-            details: error.stack
+            details: error.stack || JSON.stringify(error)
         }, { status: 500 });
     }
 }
