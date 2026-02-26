@@ -3,16 +3,16 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { exchangeCodeForXUser } from '@/lib/identity-api';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, AlertTriangle, XCircle, Info } from 'lucide-react';
 
 export default function XCallbackPage() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState('Authenticating with X...');
   const [error, setError] = useState<string | null>(null);
+  const [errorType, setErrorType] = useState<'security' | 'auth' | 'sandbox' | 'unknown' | null>(null);
   const hasRun = useRef(false);
 
   useEffect(() => {
-    // This guard prevents the effect from running twice in React 18's Strict Mode.
     if (hasRun.current) return;
     hasRun.current = true;
       
@@ -24,7 +24,14 @@ export default function XCallbackPage() {
 
       if (errorParam) {
         console.error('X Auth Error:', errorParam, errorDescription);
-        setError(errorDescription || (errorParam === 'access_denied' ? 'Authorization was denied by the user.' : `Authentication failed: ${errorParam}`));
+        
+        if (errorParam === 'access_denied') {
+          setErrorType('sandbox');
+          setError('Authorization denied or Sandbox restriction. If this isn\'t your developer account, you must be added as an "App Tester" in the X Developer Portal.');
+        } else {
+          setErrorType('auth');
+          setError(errorDescription || `Authentication failed: ${errorParam}`);
+        }
         setStatus('Authentication failed.');
         return;
       }
@@ -33,26 +40,29 @@ export default function XCallbackPage() {
       const codeVerifier = sessionStorage.getItem('pkce_code_verifier');
 
       if (!code || !state || !storedState || !codeVerifier) {
-        setError('Invalid request. The authentication flow was interrupted or timed out.');
+        setErrorType('security');
+        setError('Verification parameters are missing. The flow might have timed out.');
         setStatus('Verification failed.');
         return;
       }
 
       if (state !== storedState) {
-        setError('Security check failed. State mismatch detected.');
+        setErrorType('security');
+        setError('Security mismatch. The response state did not match the request.');
         setStatus('Security check failed.');
         return;
       }
 
-      // Cleanup session storage
+      // Cleanup
       sessionStorage.removeItem('pkce_state');
       sessionStorage.removeItem('pkce_code_verifier');
 
       try {
-        setStatus('Verifying credentials...');
+        setStatus('Fetching your profile...');
         const user = await exchangeCodeForXUser(code, codeVerifier);
         
         localStorage.setItem('x-auth-user', JSON.stringify(user));
+        setStatus('Profile verified!');
         
         setTimeout(() => {
           window.close();
@@ -60,7 +70,8 @@ export default function XCallbackPage() {
 
       } catch (err: any) {
         console.error('Exchange Code Error:', err);
-        setError(err.message || 'Failed to exchange authorization code for user details.');
+        setErrorType('auth');
+        setError(err.message || 'Failed to communicate with X backend.');
         setStatus('Authentication failed.');
       }
     };
@@ -71,29 +82,52 @@ export default function XCallbackPage() {
   }, [searchParams]);
 
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center bg-gray-50 p-8 text-center">
-      <div className="w-full max-w-md">
-        <div className="flex justify-center mb-6">
+    <div className="flex h-screen w-full flex-col items-center justify-center bg-gray-50 p-8 text-center font-sans">
+      <div className="w-full max-w-lg bg-white border-4 border-black rounded-[2.5rem] p-10 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+        <div className="flex justify-center mb-8">
             {error ? (
-                <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center border-4 border-red-200">
-                    <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                <div className="w-20 h-20 rounded-[2rem] bg-red-50 flex items-center justify-center border-4 border-black">
+                    {errorType === 'sandbox' ? <AlertTriangle className="w-10 h-10 text-amber-500" /> : <XCircle className="w-10 h-10 text-red-500" />}
                 </div>
             ) : (
-                 <LoaderCircle className="w-12 h-12 animate-spin text-blue-500" />
+                 <LoaderCircle className="w-16 h-16 animate-spin text-blue-500" />
             )}
         </div>
-        <h1 className="text-2xl font-bold text-gray-800">{status}</h1>
+        
+        <h1 className="text-3xl font-black uppercase italic tracking-tighter text-slate-800 mb-2">{status}</h1>
+        
         {error ? (
-            <div className="mt-4 text-sm bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 text-left">
-                <p className="font-semibold">Error Details:</p>
-                <p className="font-medium mt-1">{error}</p>
-                <p className="mt-4 text-xs text-gray-400">You can close this window and try again.</p>
+            <div className="mt-6 text-left space-y-4">
+                <div className="p-5 bg-red-50 border-2 border-red-200 rounded-2xl">
+                    <p className="text-xs font-black uppercase text-red-400 tracking-widest mb-1">Error Message</p>
+                    <p className="font-bold text-red-700 leading-tight">{error}</p>
+                </div>
+
+                {errorType === 'sandbox' && (
+                  <div className="p-5 bg-blue-50 border-2 border-blue-200 rounded-2xl">
+                    <div className="flex items-center gap-2 text-blue-600 mb-2">
+                      <Info size={16} />
+                      <p className="text-xs font-black uppercase tracking-widest">How to Fix</p>
+                    </div>
+                    <ol className="text-xs font-bold text-blue-700 space-y-2 list-decimal pl-4">
+                      <li>Go to <span className="underline">developer.twitter.com</span></li>
+                      <li>Select your App &gt; User authentication settings</li>
+                      <li>Scroll to "App Testers" and add the other account handle</li>
+                      <li>Accept the invitation on that other account</li>
+                    </ol>
+                  </div>
+                )}
+
+                <button 
+                  onClick={() => window.close()}
+                  className="w-full mt-4 bg-black text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-slate-800 transition-colors"
+                >
+                  Close Window
+                </button>
             </div>
         ) : (
-            <p className="mt-2 text-gray-500">
-                Please wait, you will be redirected shortly. This window will close automatically.
+            <p className="mt-4 text-slate-400 font-bold uppercase text-xs tracking-widest animate-pulse">
+                Please wait, linking your accounts...
             </p>
         )}
       </div>

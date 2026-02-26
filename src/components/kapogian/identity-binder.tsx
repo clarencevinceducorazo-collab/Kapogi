@@ -5,7 +5,7 @@ import { useCurrentAccount, useSignPersonalMessage } from '@mysten/dapp-kit';
 import { BrutalCard } from '@/components/ui/brutal-card';
 import { BrutalButton } from '@/components/ui/brutal-button';
 import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
-import { LoaderCircle, CheckCircle, ShieldCheck, AlertCircle, Unlink, ExternalLink } from 'lucide-react';
+import { LoaderCircle, CheckCircle, ShieldCheck, AlertCircle, Unlink, ExternalLink, Bug, ChevronDown, ChevronUp } from 'lucide-react';
 import { loginWithX, getNonceToSign, verifyBinding, checkBinding, unbind } from '@/lib/identity-api';
 import { useToast } from "@/hooks/use-toast";
 import { formatAddress } from '@/lib/utils';
@@ -61,6 +61,7 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
   const [xUser, setXUser] = useState<XUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showDebug, setShowDebug] = useState(false);
   
   const account = useCurrentAccount();
   const { mutate: signPersonalMessage } = useSignPersonalMessage();
@@ -72,11 +73,9 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
     : step === 'sign_message' ? 3
     : 4;
 
-  // Auto-check for existing binding when a wallet is connected or X user changes
   useEffect(() => {
     const handleSync = async () => {
       if (!account?.address) {
-        // If wallet disconnected, reset to start or x_login step
         if (step === 'already_bound' || step === 'sign_message') {
           setStep(xUser ? 'wallet_connect' : 'start');
         }
@@ -90,12 +89,9 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
           setXUser({ id: res.x_uid!, name: '', username: res.x_username! });
           setStep('already_bound');
         } else {
-          // Not bound. 
-          // If we have an X user already, jump straight to sign step
           if (xUser) {
             setStep('sign_message');
           } else if (step !== 'error') {
-            // If no X user, we need to authenticate with X first
             setStep('start');
           }
         }
@@ -107,7 +103,7 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
     };
 
     handleSync();
-  }, [account?.address, xUser?.id]); // Re-run when wallet address or X user changes
+  }, [account?.address, xUser?.id]);
 
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
@@ -116,7 +112,6 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
           const user = JSON.parse(event.newValue);
           setIsLoading(false);
           setXUser(user);
-          // If wallet is already connected, the other useEffect will catch the xUser change and move to 'sign_message'
           if (!account?.address) {
             setStep('wallet_connect');
           }
@@ -227,56 +222,13 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
     setStep('start');
   }
 
-  // --- RENDER: ALREADY BOUND STATE ---
-  if (step === 'already_bound' || step === 'verified') {
-    const SuccessContent = (
-      <div className="text-center">
-        <div className="relative inline-block mb-6">
-          <div className="w-24 h-24 bg-blue-500 rounded-[2rem] border-4 border-black flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <ShieldCheck className="w-12 h-12 text-white" />
-          </div>
-          <div className="absolute -bottom-2 -right-2 bg-yellow-400 border-2 border-black rounded-lg p-1 animate-bounce">
-            <CheckCircle size={16} />
-          </div>
-        </div>
-        
-        <h2 className="font-black text-3xl uppercase tracking-tighter italic mb-2">Identity Bound!</h2>
-        
-        <div className="bg-slate-50 border-4 border-black rounded-2xl p-6 mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-sm mx-auto">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center flex-shrink-0">
-              <iconify-icon icon="ri:twitter-x-fill" class="text-white text-2xl" />
-            </div>
-            <div className="text-left overflow-hidden">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">X Account</p>
-              <p className="font-black text-lg text-blue-500 truncate">@{xUser?.username}</p>
-            </div>
-          </div>
-          <div className="h-px bg-slate-200 mb-4" />
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-yellow-400 rounded-xl border-2 border-black flex items-center justify-center flex-shrink-0">
-              <iconify-icon icon="solar:wallet-bold" class="text-black text-2xl" />
-            </div>
-            <div className="text-left overflow-hidden">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Linked Wallet</p>
-              <p className="font-mono text-xs font-bold text-slate-600 truncate">{formatAddress(account?.address || '')}</p>
-            </div>
-          </div>
-        </div>
+  const debugInfo = {
+    redirectUri: typeof window !== 'undefined' ? `${window.location.origin}/auth/x/callback` : 'N/A',
+    clientId: process.env.NEXT_PUBLIC_X_CLIENT_ID || 'MISSING',
+    wallet: account?.address || 'NOT CONNECTED',
+    xAuthenticated: xUser ? `@${xUser.username}` : 'NO',
+  };
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <BrutalButton onClick={handleUnbind} disabled={isLoading} variant="danger" className="gap-2">
-            {isLoading ? <LoaderCircle className="animate-spin" /> : <Unlink size={16} />}
-            Unbind Account
-          </BrutalButton>
-        </div>
-      </div>
-    );
-
-    return noCard ? SuccessContent : <BrutalCard>{SuccessContent}</BrutalCard>;
-  }
-
-  // --- RENDER: STANDARD FLOW ---
   const MainContent = (
     <div className="space-y-8">
       <StepCard step={1} currentStep={currentStepNumber} title="Authenticate with X">
@@ -335,8 +287,79 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
               </BrutalButton>
           </div>
       )}
+
+      {/* DEBUG SECTION */}
+      <div className="pt-8 border-t-2 border-slate-100">
+        <button 
+          onClick={() => setShowDebug(!showDebug)}
+          className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-300 hover:text-slate-500 transition-colors"
+        >
+          <Bug size={12} /> {showDebug ? 'Hide Debug' : 'Show Debug Info'}
+          {showDebug ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        </button>
+        
+        {showDebug && (
+          <div className="mt-4 p-4 bg-slate-900 rounded-2xl border-2 border-black font-mono text-[10px] text-emerald-400 overflow-x-auto">
+            <p className="mb-2 text-white font-bold">// Use these values in X Developer Portal</p>
+            <div className="space-y-1">
+              <p>REDIRECT_URI: <span className="text-white select-all">{debugInfo.redirectUri}</span></p>
+              <p>CLIENT_ID: <span className="text-white select-all">{debugInfo.clientId}</span></p>
+              <p>WALLET: <span className="text-slate-500">{debugInfo.wallet}</span></p>
+              <p>X_AUTH: <span className="text-slate-500">{debugInfo.xAuthenticated}</span></p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
+
+  if (step === 'already_bound' || step === 'verified') {
+    const SuccessContent = (
+      <div className="text-center">
+        <div className="relative inline-block mb-6">
+          <div className="w-24 h-24 bg-blue-500 rounded-[2rem] border-4 border-black flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <ShieldCheck className="w-12 h-12 text-white" />
+          </div>
+          <div className="absolute -bottom-2 -right-2 bg-yellow-400 border-2 border-black rounded-lg p-1 animate-bounce">
+            <CheckCircle size={16} />
+          </div>
+        </div>
+        
+        <h2 className="font-black text-3xl uppercase tracking-tighter italic mb-2">Identity Bound!</h2>
+        
+        <div className="bg-slate-50 border-4 border-black rounded-2xl p-6 mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-sm mx-auto">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center flex-shrink-0">
+              <iconify-icon icon="ri:twitter-x-fill" class="text-white text-2xl" />
+            </div>
+            <div className="text-left overflow-hidden">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">X Account</p>
+              <p className="font-black text-lg text-blue-500 truncate">@{xUser?.username}</p>
+            </div>
+          </div>
+          <div className="h-px bg-slate-200 mb-4" />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-yellow-400 rounded-xl border-2 border-black flex items-center justify-center flex-shrink-0">
+              <iconify-icon icon="solar:wallet-bold" class="text-black text-2xl" />
+            </div>
+            <div className="text-left overflow-hidden">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Linked Wallet</p>
+              <p className="font-mono text-xs font-bold text-slate-600 truncate">{formatAddress(account?.address || '')}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <BrutalButton onClick={handleUnbind} disabled={isLoading} variant="danger" className="gap-2">
+            {isLoading ? <LoaderCircle className="animate-spin" /> : <Unlink size={16} />}
+            Unbind Account
+          </BrutalButton>
+        </div>
+      </div>
+    );
+
+    return noCard ? SuccessContent : <BrutalCard>{SuccessContent}</BrutalCard>;
+  }
 
   return noCard ? MainContent : <BrutalCard>{MainContent}</BrutalCard>;
 }
