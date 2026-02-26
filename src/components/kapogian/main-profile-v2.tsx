@@ -1,17 +1,22 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { 
   Wallet, 
   LayoutDashboard, 
   Grid3X3, 
   Package, 
   ChevronRight,
-  BookOpen
+  BookOpen,
+  Twitter,
+  ShieldCheck,
+  UserPlus
 } from 'lucide-react';
 import { cn, formatAddress } from '@/lib/utils';
 import { OrdersPanel } from './orders-panel';
+import { checkBinding } from '@/lib/identity-api';
 
 interface MainProfileV2Props {
   characters: any[];
@@ -38,13 +43,26 @@ export function MainProfileV2({
   activeTab,
   setActiveTab
 }: MainProfileV2Props) {
-  
+  const [bindingStatus, setBindingStatus] = useState<{ bound: boolean; x_username?: string } | null>(null);
+  const [loadingBinding, setLoadingBinding] = useState(false);
+
   const currentCharacter = characters[index];
   const attrs = currentCharacter?.attributes ?? {};
   
   const shortAddr = account?.address ? formatAddress(account.address) : '0x...';
 
-  // Navigation Items - Identity removed
+  // Fetch binding status on mount
+  useEffect(() => {
+    if (account?.address) {
+      setLoadingBinding(true);
+      checkBinding(account.address)
+        .then(res => setBindingStatus(res))
+        .catch(e => console.error(e))
+        .finally(() => setLoadingBinding(false));
+    }
+  }, [account?.address]);
+
+  // Navigation Items
   const navItems = [
     { id: 'Stats', label: 'Dashboard', icon: LayoutDashboard, color: 'bg-sky-50 text-sky-600 border-sky-200 shadow-[0_4px_0_0_rgba(186,230,253,1)]' },
     { id: 'Collections', label: 'Collections', icon: Grid3X3, color: 'bg-pink-50 text-pink-600 border-pink-200 shadow-[0_4px_0_0_rgba(251,207,232,1)]' },
@@ -120,6 +138,49 @@ export function MainProfileV2({
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Social Identity Management */}
+          <div className="bg-white rounded-[2rem] p-5 border-4 border-slate-100 shadow-[0_8px_0_0_rgba(226,232,240,1)]">
+            <h3 className="text-sm tracking-wide font-semibold text-slate-400 uppercase mb-4 px-2 flex items-center gap-2">
+              <Twitter size={14} className="text-blue-400" /> Social Identity
+            </h3>
+            
+            {loadingBinding ? (
+              <div className="p-4 flex items-center justify-center">
+                <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : bindingStatus?.bound ? (
+              <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white border-2 border-blue-200 flex items-center justify-center shadow-sm">
+                  <Twitter size={18} className="text-blue-500" />
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Verified Account</p>
+                  <p className="font-black text-blue-600 truncate text-sm">@{bindingStatus.x_username}</p>
+                </div>
+                <ShieldCheck className="ml-auto text-green-500" size={20} />
+              </div>
+            ) : (
+              <Link href="/identity">
+                <button className="w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-4 flex items-center gap-3 hover:bg-white hover:border-blue-300 transition-all group">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
+                    <UserPlus size={18} />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-slate-600">Link X Account</p>
+                    <p className="text-[10px] font-semibold text-slate-400">Earn extra rewards & status</p>
+                  </div>
+                  <ChevronRight size={16} className="ml-auto text-slate-300" />
+                </button>
+              </Link>
+            )}
+            
+            {bindingStatus?.bound && (
+              <Link href="/identity" className="block text-center mt-3 text-[10px] font-black text-slate-400 hover:text-blue-500 uppercase tracking-widest">
+                Manage Identity
+              </Link>
+            )}
           </div>
 
           {/* Profile Action Buttons */}
