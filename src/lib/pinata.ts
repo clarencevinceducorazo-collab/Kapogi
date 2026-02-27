@@ -22,7 +22,7 @@ export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Prom
       name: filename,
     };
     
-    // Add to group/folder if configured (NOW PROPERLY READS FROM ENV)
+    // Add to group/folder if configured
     if (IPFS_CONFIG.groupId) {
       metadata.keyvalues = {
         group: IPFS_CONFIG.groupId,
@@ -146,57 +146,56 @@ export async function uploadCharacterToIPFS(
 
 /**
  * Get IPFS gateway URL for display with proper authentication
- * FIXED: Now properly applies gateway key to authenticate requests
+ * FIXED: Now more robust against raw CIDs and different URL patterns
  */
 export function getIPFSGatewayUrl(ipfsUrl: string): string {
   if (!ipfsUrl) return '';
   
   let cid = '';
+  const baseUrl = IPFS_CONFIG.gatewayUrl || 'https://nft.kapogian.xyz';
   
-  // Extract CID from ipfs:// protocol
-  if (ipfsUrl.startsWith('ipfs://')) {
-    cid = ipfsUrl.replace('ipfs://', '');
-  } 
-  // Extract CID from gateway URLs
-  else if (ipfsUrl.includes('/ipfs/')) {
-    try {
-      const url = new URL(ipfsUrl);
-      const parts = url.pathname.split('/ipfs/');
-      if (parts.length > 1 && parts[1]) {
-        cid = parts[1];
-      }
-    } catch(e) {
-      // Not a valid URL, return as is
+  // 1. If it's already a full HTTP URL
+  if (ipfsUrl.startsWith('http')) {
+    // If it's already using our gateway and has a token, return as is
+    if (ipfsUrl.includes('pinataGatewayToken') && ipfsUrl.includes(baseUrl)) {
       return ipfsUrl;
     }
+    
+    // If it's a gateway URL but missing token, extract CID
+    if (ipfsUrl.includes('/ipfs/')) {
+      const parts = ipfsUrl.split('/ipfs/');
+      if (parts.length > 1 && parts[1]) {
+        cid = parts[1].split('?')[0].split('#')[0];
+      }
+    } else {
+      return ipfsUrl; // External non-IPFS URL
+    }
   } 
-  // Already a full URL without /ipfs/ path
+  // 2. Extract CID from ipfs:// protocol
+  else if (ipfsUrl.startsWith('ipfs://')) {
+    cid = ipfsUrl.replace('ipfs://', '');
+  } 
+  // 3. Assume it's a raw CID
   else {
-    return ipfsUrl;
+    cid = ipfsUrl;
   }
 
   if (!cid) return ipfsUrl;
 
-  // Remove any trailing slashes or query params from CID
+  // Clean the CID of any trailing fragments
   cid = cid.split('?')[0].split('#')[0];
 
-  // Build the authenticated gateway URL
-  const baseUrl = IPFS_CONFIG.gatewayUrl || 'https://nft.kapogian.xyz';
-  
   // Apply gateway authentication token if available
   if (IPFS_CONFIG.gatewayKey) {
-    console.log('🔐 Using authenticated gateway access');
     return `${baseUrl}/ipfs/${cid}?pinataGatewayToken=${IPFS_CONFIG.gatewayKey}`;
   }
   
-  // Fallback: Use gateway without authentication (may fail for restricted gateways)
-  console.warn('⚠️ No gateway key found - using unauthenticated access (may fail)');
-  return `${IPFS_CONFIG.gateway}${cid}`;
+  // Fallback to basic gateway path
+  return `${baseUrl}/ipfs/${cid}`;
 }
 
 /**
  * Verify IPFS configuration is complete
- * Useful for debugging
  */
 export function verifyIPFSConfig(): {
   hasAuth: boolean;

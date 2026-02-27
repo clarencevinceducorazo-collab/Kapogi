@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
-import { ChevronDown, LogOut, User } from "lucide-react";
+import { ChevronDown, LogOut, User, UserCheck } from "lucide-react";
 
 /**
  * CustomConnectButton
@@ -43,7 +43,6 @@ export function CustomConnectButton({
    * STATE: CONNECTED
    * -------------------------
    * Render a small profile trigger (icon + label) that opens a dropdown.
-   * We intentionally do not render the raw address here to keep the UI tidy.
    */
   if (account) {
     return (
@@ -60,7 +59,7 @@ export function CustomConnectButton({
           align="end"
           className="bg-[#FFC83D] border-2 border-black rounded-xl min-w-[200px] z-[60] shadow-xl p-2"
         >
-          {/* Navigation Links: quick access to profile */}
+          {/* Main Profile */}
           <DropdownMenuItem
             asChild
             className="cursor-pointer hover:bg-black/5 rounded-lg"
@@ -70,18 +69,30 @@ export function CustomConnectButton({
               className="flex w-full items-center p-2"
               style={{ fontSize: "16px", fontWeight: "700" }}
             >
+              <User className="w-4 h-4 mr-2" />
               Main Profile
+            </Link>
+          </DropdownMenuItem>
+
+          {/* ProfileV2 - High Fidelity Experience */}
+          <DropdownMenuItem
+            asChild
+            className="cursor-pointer hover:bg-black/5 rounded-lg"
+          >
+            <Link
+              href="/profile-v2"
+              className="flex w-full items-center p-2"
+              style={{ fontSize: "16px", fontWeight: "700" }}
+            >
+              <UserCheck className="w-4 h-4 mr-2" />
+              ProfileV2
             </Link>
           </DropdownMenuItem>
 
           {/* Divider */}
           <div className="h-[1px] bg-black/10 my-2" />
 
-          {/*
-            Disconnect Option
-            - Calls `disconnect()` to clear the wallet connection state
-            - Kept as a visible action rather than nested settings
-          */}
+          {/* Disconnect Option */}
           <DropdownMenuItem
             onClick={() => disconnect()}
             className="cursor-pointer text-red-600 hover:bg-red-50 rounded-lg flex items-center justify-between p-2"
@@ -98,7 +109,6 @@ export function CustomConnectButton({
 
   /**
    * STATE: DISCONNECTED
-   * Default Mysten logic for "Connect Wallet"
    */
   return (
     <ConnectButton
