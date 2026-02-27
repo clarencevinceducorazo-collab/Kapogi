@@ -24,7 +24,7 @@ function getServerConfig() {
     // Gateway key is also kept server-side; URLs with the token are
     // computed here and returned as opaque strings to the client.
     gatewayKey: process.env.PINATA_GATEWAY_KEY || "",
-    groupId: process.env.NEXT_PUBLIC_PINATA_GROUP_KAPOGIAN || "",
+    groupId: process.env.PINATA_GROUP_KAPOGIAN || "",
   };
 }
 

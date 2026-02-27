@@ -70,14 +70,9 @@ export const IPFS_CONFIG = {
   /** Custom Pinata gateway hostname — used to build /ipfs/<cid> URLs. */
   gatewayUrl:
     process.env.NEXT_PUBLIC_PINATA_GATEWAY_URL || "https://nft.kapogian.xyz",
-  /**
-   * Pinata Gateway token — READ-ONLY access token for displaying pinned files.
-   * This is safe as NEXT_PUBLIC_ because it cannot upload or delete content.
-   * Set NEXT_PUBLIC_PINATA_GATEWAY_KEY in your .env file.
-   */
-  gatewayKey: process.env.NEXT_PUBLIC_PINATA_GATEWAY_KEY || "",
-  /** Pinata group/folder ID for organising uploaded files. */
-  groupId: process.env.NEXT_PUBLIC_PINATA_GROUP_KAPOGIAN || "",
+  // gatewayKey and groupId moved to server-only env vars (PINATA_GATEWAY_KEY,
+  // PINATA_GROUP_KAPOGIAN).  Image URLs are now generated via the
+  // /api/pinata/image-url proxy route so the token never reaches the browser.
 };
 
 // Encryption

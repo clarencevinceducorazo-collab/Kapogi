@@ -277,15 +277,11 @@ export default function Page() {
   const account = useCurrentAccount();
   const [characters, setCharacters] = useState<any[]>([]);
   const [index, setIndex] = useState(0);
-<<<<<<< Updated upstream
-  const [activeTab, setActiveTab] = useState<"Collections" | "Orders" | "Stats">("Stats");
-  const [loading, setLoading] = useState(true);
-=======
   const [podiumEntry, setPodiumEntry] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState<
     "Collections" | "Orders" | "Stats"
   >("Stats");
->>>>>>> Stashed changes
+  const [loading, setLoading] = useState(true);
 
   /* -----------------------------
    * Load characters
@@ -375,7 +371,8 @@ export default function Page() {
             return {
               objectId: obj.data?.objectId || "",
               name: displayData.name || "Unnamed",
-              description: displayData.description || "No lore recorded for this spirit.",
+              description:
+                displayData.description || "No lore recorded for this spirit.",
               imageUrl: getIPFSGatewayUrl(displayData.image_url || ""),
               attributes: normalized,
               mmr: resolvedMmr,

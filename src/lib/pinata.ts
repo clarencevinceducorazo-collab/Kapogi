@@ -12,7 +12,7 @@
  *      POST /api/pinata/unpin     ← unpin by hash
  */
 
-import { IPFS_CONFIG } from './constants';
+import { IPFS_CONFIG } from "./constants";
 
 /**
  * Upload image to IPFS via the server-side API route.
@@ -25,10 +25,13 @@ import { IPFS_CONFIG } from './constants';
  *     const res  = await fetch('/api/pinata/upload', { method: 'POST', body: form });
  *     const { imageUrl, imageHash } = await res.json();
  */
-export async function uploadImageToIPFS(_imageBlob: Blob, _filename: string): Promise<{ ipfsHash: string }> {
+export async function uploadImageToIPFS(
+  _imageBlob: Blob,
+  _filename: string,
+): Promise<{ ipfsHash: string }> {
   throw new Error(
-    'uploadImageToIPFS is no longer available on the client. ' +
-    'Use fetch(\'/api/pinata/upload\') instead.',
+    "uploadImageToIPFS is no longer available on the client. " +
+      "Use fetch('/api/pinata/upload') instead.",
   );
 }
 
@@ -45,8 +48,8 @@ export async function uploadImageToIPFS(_imageBlob: Blob, _filename: string): Pr
  */
 export async function unpinFromIPFS(_ipfsHash: string): Promise<void> {
   throw new Error(
-    'unpinFromIPFS is no longer available on the client. ' +
-    'Use fetch(\'/api/pinata/unpin\') instead.',
+    "unpinFromIPFS is no longer available on the client. " +
+      "Use fetch('/api/pinata/unpin') instead.",
   );
 }
 
@@ -60,37 +63,37 @@ export async function uploadCharacterToIPFS(
   _characterData: { name: string },
 ): Promise<{ imageUrl: string; imageHash: string }> {
   throw new Error(
-    'uploadCharacterToIPFS is no longer available on the client. ' +
-    'Use fetch(\'/api/pinata/upload\') instead.',
+    "uploadCharacterToIPFS is no longer available on the client. " +
+      "Use fetch('/api/pinata/upload') instead.",
   );
 }
 
 /**
  * Get IPFS gateway URL for display.
- * Uses the public gateway config from IPFS_CONFIG (NEXT_PUBLIC_ vars only).
- * The optional gateway key is a read-only Pinata access token — safe in the browser.
+ * Authenticated image URLs are generated server-side via the
+ * /api/pinata/image-url proxy so the gateway token never reaches the browser.
  */
 export function getIPFSGatewayUrl(ipfsUrl: string): string {
-  if (!ipfsUrl) return '';
-  
-  let cid = '';
-  
+  if (!ipfsUrl) return "";
+
+  let cid = "";
+
   // Extract CID from ipfs:// protocol
-  if (ipfsUrl.startsWith('ipfs://')) {
-    cid = ipfsUrl.replace('ipfs://', '');
-  } 
+  if (ipfsUrl.startsWith("ipfs://")) {
+    cid = ipfsUrl.replace("ipfs://", "");
+  }
   // Extract CID from gateway URLs
-  else if (ipfsUrl.includes('/ipfs/')) {
+  else if (ipfsUrl.includes("/ipfs/")) {
     try {
       const url = new URL(ipfsUrl);
-      const parts = url.pathname.split('/ipfs/');
+      const parts = url.pathname.split("/ipfs/");
       if (parts.length > 1 && parts[1]) {
         cid = parts[1];
       }
     } catch {
       return ipfsUrl;
     }
-  } 
+  }
   // Already a full URL without /ipfs/ path
   else {
     return ipfsUrl;
@@ -99,16 +102,10 @@ export function getIPFSGatewayUrl(ipfsUrl: string): string {
   if (!cid) return ipfsUrl;
 
   // Remove any trailing slashes or query params from CID
-  cid = cid.split('?')[0].split('#')[0];
+  cid = cid.split("?")[0].split("#")[0];
 
-  const baseUrl = IPFS_CONFIG.gatewayUrl || 'https://nft.kapogian.xyz';
-  
-  // Append read-only gateway token when available
-  if (IPFS_CONFIG.gatewayKey) {
-    return `${baseUrl}/ipfs/${cid}?pinataGatewayToken=${IPFS_CONFIG.gatewayKey}`;
-  }
-  
-  return `${IPFS_CONFIG.gateway}${cid}`;
+  // Route through the server-side proxy — the gateway token is added there.
+  return `/api/pinata/image-url?cid=${encodeURIComponent(cid)}`;
 }
 
 /**
@@ -122,15 +119,15 @@ export function verifyIPFSConfig(): {
   warnings: string[];
 } {
   const warnings: string[] = [];
-  
+
   const hasGateway = !!IPFS_CONFIG.gatewayUrl;
-  if (!hasGateway) warnings.push('No gateway URL configured (NEXT_PUBLIC_PINATA_GATEWAY_URL)');
-  
-  const hasGatewayKey = !!IPFS_CONFIG.gatewayKey;
-  if (!hasGatewayKey) warnings.push('No gateway key found (NEXT_PUBLIC_PINATA_GATEWAY_KEY) — image display may require public access');
-  
-  const hasGroup = !!IPFS_CONFIG.groupId;
-  if (!hasGroup) warnings.push('No group ID configured (NEXT_PUBLIC_PINATA_GROUP_KAPOGIAN)');
+  if (!hasGateway)
+    warnings.push("No gateway URL configured (NEXT_PUBLIC_PINATA_GATEWAY_URL)");
+
+  const hasGatewayKey = true; // key lives server-side (PINATA_GATEWAY_KEY)
+  // No client-side check needed — the proxy route applies the token.
+
+  const hasGroup = true; // group ID lives server-side (PINATA_GROUP_KAPOGIAN)
 
   return { hasGateway, hasGatewayKey, hasGroup, warnings };
 }
