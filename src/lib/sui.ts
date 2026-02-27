@@ -1,4 +1,3 @@
-
 /**
  * SUI Blockchain Utilities
  */
@@ -12,13 +11,47 @@ export const suiClient = new SuiClient({ url: NETWORK_CONFIG.rpcUrl });
 console.log('🔍 SUI Client URL:', NETWORK_CONFIG.rpcUrl);
 
 // ─────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────
+
+export interface AchievementDef {
+  objectId: string;
+  name: string;
+  description: string;
+  badgeUrl: string;
+  requirementType: number; // 0=total_mmr, 1=best_mmr, 2=total_summons, 3=admin_granted
+  threshold: number;
+  isActive: boolean;
+  createdAt: number;
+}
+
+export interface UnlockedAchievement {
+  achievementId: string;
+  achievementName: string;
+  requirementType: number;
+  claimedAt: number;
+}
+
+export interface PlayerStatsObject {
+  objectId: string;
+  owner: string;
+  unlocked: UnlockedAchievement[];
+}
+
+export interface AchievementGrant {
+  objectId: string;
+  achievementId: string;
+  intendedRecipient: string;
+  grantedBy: string;
+  grantedAt: number;
+}
+
+// ─────────────────────────────────────────────
 // Role Detection (on-chain, no hardcoded wallets)
 // ─────────────────────────────────────────────
 
 /**
  * Check if a wallet is in the AdminRegistry whitelist.
- * Returns true for both regular admins AND super admin (super admin
- * operates separately via SuperAdminCap object, not the registry).
  */
 export async function checkIsAdmin(walletAddress: string): Promise<boolean> {
   try {
@@ -40,7 +73,6 @@ export async function checkIsAdmin(walletAddress: string): Promise<boolean> {
 
 /**
  * Check if a wallet holds the SuperAdminCap object.
- * This is the source of truth for super admin access — no env variable needed.
  */
 export async function checkIsSuperAdmin(walletAddress: string): Promise<boolean> {
   try {
@@ -202,7 +234,7 @@ export async function superAdminUpdateTreasury(params: {
 
 export async function superAdminUpdateMintPrice(params: {
   superAdminCapId: string;
-  newPrice: number; // in MIST
+  newPrice: number;
   signAndExecute: any;
 }) {
   const tx = new Transaction();
@@ -219,7 +251,7 @@ export async function superAdminUpdateMintPrice(params: {
 
 export async function superAdminUpdateBundlePrice(params: {
   superAdminCapId: string;
-  newPrice: number; // in MIST
+  newPrice: number;
   signAndExecute: any;
 }) {
   const tx = new Transaction();
@@ -375,53 +407,42 @@ export async function upgradeToBundleNFT(params: {
 // Queries
 // ─────────────────────────────────────────────
 
-/**
- * Fetch characters strictly owned by the wallet address.
- * Includes objects directly in the wallet and those inside the user's Kiosks.
- */
 export async function getOwnedCharacters(walletAddress: string): Promise<SuiObjectResponse[]> {
   try {
     const nftType = `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::Character`;
 
-    // 1. Get objects directly owned by address
     const directOwned = await suiClient.getOwnedObjects({
       owner: walletAddress,
-      filter: {
-        StructType: nftType,
-      },
+      filter: { StructType: nftType },
       options: { showContent: true, showOwner: true, showDisplay: true, showType: true },
     });
 
     let allCharacters = [...directOwned.data];
 
-    // 2. Get user's Kiosks to check indirect ownership
     const kioskCaps = await suiClient.getOwnedObjects({
       owner: walletAddress,
       filter: { StructType: '0x2::kiosk::KioskOwnerCap' },
-      options: { showContent: true }
+      options: { showContent: true },
     });
 
-    // 3. For each kiosk, query its items
     for (const cap of kioskCaps.data) {
       if (cap.data?.content?.dataType === 'moveObject') {
         const kioskId = (cap.data.content.fields as any).for;
         if (kioskId) {
           const kioskFields = await suiClient.getDynamicFields({ parentId: kioskId });
           const itemIds = kioskFields.data
-            .filter(f => f.type === 'DynamicObject')
-            .map(f => f.objectId);
-          
+            .filter((f) => f.type === 'DynamicObject')
+            .map((f) => f.objectId);
+
           if (itemIds.length > 0) {
-            // Fetch contents in chunks
             const chunkSize = 50;
             for (let i = 0; i < itemIds.length; i += chunkSize) {
               const chunk = itemIds.slice(i, i + chunkSize);
               const items = await suiClient.multiGetObjects({
                 ids: chunk,
-                options: { showContent: true, showDisplay: true, showType: true }
+                options: { showContent: true, showDisplay: true, showType: true },
               });
-              // Filter for Character type
-              const charactersInKiosk = items.filter(item => item.data?.type === nftType);
+              const charactersInKiosk = items.filter((item) => item.data?.type === nftType);
               allCharacters.push(...charactersInKiosk);
             }
           }
@@ -429,9 +450,8 @@ export async function getOwnedCharacters(walletAddress: string): Promise<SuiObje
       }
     }
 
-    // Deduplicate and return
     const seen = new Set();
-    return allCharacters.filter(obj => {
+    return allCharacters.filter((obj) => {
       const id = obj.data?.objectId;
       if (!id || seen.has(id)) return false;
       seen.add(id);
@@ -557,6 +577,360 @@ export async function addTrackingInfo(params: {
       tx.pure.string(params.trackingNumber),
       tx.pure.string(params.carrier),
       tx.pure.u64(params.estimatedDelivery),
+      tx.object('0x6'),
+    ],
+  });
+  return params.signAndExecute({ transaction: tx }, { showEffects: true });
+}
+
+// ─────────────────────────────────────────────
+// Achievement Queries
+// ─────────────────────────────────────────────
+
+/**
+ * Fetch all Achievement objects by scanning AchievementCreated events.
+ * Returns all achievements regardless of active status — filter on the client.
+ */
+export async function getAllAchievements(): Promise<AchievementDef[]> {
+  try {
+    let allAchievementIds: string[] = [];
+    let hasNextPage = true;
+    let cursor: string | null = null;
+
+    while (hasNextPage) {
+      const page: any = await suiClient.queryEvents({
+        query: {
+          MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::achievement::AchievementCreated`,
+        },
+        cursor,
+        order: 'ascending',
+      });
+
+      const ids = page.data
+        .map((event: any) => event.parsedJson?.achievement_id)
+        .filter(Boolean);
+      allAchievementIds.push(...ids);
+
+      if (page.hasNextPage && page.nextCursor) {
+        cursor = page.nextCursor;
+      } else {
+        hasNextPage = false;
+      }
+    }
+
+    if (allAchievementIds.length === 0) return [];
+
+    const objects = await suiClient.multiGetObjects({
+      ids: allAchievementIds,
+      options: { showContent: true },
+    });
+
+    return objects
+      .filter((obj) => obj.data)
+      .map((obj) => {
+        const fields = (obj.data?.content as any)?.fields;
+        return {
+          objectId: obj.data!.objectId,
+          name: fields.name,
+          description: fields.description,
+          badgeUrl: fields.badge_url,
+          requirementType: Number(fields.requirement_type),
+          threshold: Number(fields.threshold),
+          isActive: fields.is_active,
+          createdAt: Number(fields.created_at),
+        };
+      });
+  } catch (error) {
+    console.error('Failed to fetch achievements:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch a single Achievement by object ID.
+ */
+export async function getAchievement(achievementObjectId: string): Promise<AchievementDef | null> {
+  try {
+    const obj = await suiClient.getObject({
+      id: achievementObjectId,
+      options: { showContent: true },
+    });
+
+    if (!obj.data) return null;
+    const fields = (obj.data.content as any)?.fields;
+
+    return {
+      objectId: obj.data.objectId,
+      name: fields.name,
+      description: fields.description,
+      badgeUrl: fields.badge_url,
+      requirementType: Number(fields.requirement_type),
+      threshold: Number(fields.threshold),
+      isActive: fields.is_active,
+      createdAt: Number(fields.created_at),
+    };
+  } catch (error) {
+    console.error('Failed to fetch achievement:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch the PlayerStats owned object for a wallet.
+ * Returns null if the player has not yet called create_player_stats().
+ */
+export async function getPlayerStats(walletAddress: string): Promise<PlayerStatsObject | null> {
+  try {
+    const ownedObjects = await suiClient.getOwnedObjects({
+      owner: walletAddress,
+      filter: {
+        StructType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::achievement::PlayerStats`,
+      },
+      options: { showContent: true },
+    });
+
+    const statsObj = ownedObjects.data[0];
+    if (!statsObj?.data) return null;
+
+    const fields = (statsObj.data.content as any)?.fields;
+
+    // unlocked is a vector<UnlockedAchievement> — each entry is a struct
+    const unlocked: UnlockedAchievement[] = (fields.unlocked ?? []).map((entry: any) => ({
+      achievementId: entry.fields?.achievement_id,
+      achievementName: entry.fields?.achievement_name,
+      requirementType: Number(entry.fields?.requirement_type),
+      claimedAt: Number(entry.fields?.claimed_at),
+    }));
+
+    return {
+      objectId: statsObj.data.objectId,
+      owner: fields.owner,
+      unlocked,
+    };
+  } catch (error) {
+    console.error('Failed to fetch player stats:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch all pending AchievementGrant objects in a player's wallet.
+ * These are grants issued by admin that the player has not yet claimed.
+ */
+export async function getPendingGrants(walletAddress: string): Promise<AchievementGrant[]> {
+  try {
+    const ownedObjects = await suiClient.getOwnedObjects({
+      owner: walletAddress,
+      filter: {
+        StructType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::achievement::AchievementGrant`,
+      },
+      options: { showContent: true },
+    });
+
+    return ownedObjects.data
+      .filter((obj) => obj.data)
+      .map((obj) => {
+        const fields = (obj.data!.content as any)?.fields;
+        return {
+          objectId: obj.data!.objectId,
+          achievementId: fields.achievement_id,
+          intendedRecipient: fields.intended_recipient,
+          grantedBy: fields.granted_by,
+          grantedAt: Number(fields.granted_at),
+        };
+      });
+  } catch (error) {
+    console.error('Failed to fetch pending grants:', error);
+    return [];
+  }
+}
+
+// ─────────────────────────────────────────────
+// Achievement Transactions — Player
+// ─────────────────────────────────────────────
+
+/**
+ * Create a PlayerStats object for the calling wallet.
+ * Should only be called once per wallet — check getPlayerStats() first.
+ */
+export async function createPlayerStats(params: { signAndExecute: any }) {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::achievement::create_player_stats`,
+    arguments: [tx.object('0x6')],
+  });
+  return params.signAndExecute({ transaction: tx }, { showEffects: true, showObjectChanges: true });
+}
+
+/**
+ * Claim a threshold-based achievement (total_mmr, best_mmr, total_summons).
+ * The player passes their stat value — trust-based, no on-chain proof.
+ *
+ * @param value  The player's current stat value (must meet achievement threshold).
+ */
+export async function claimAchievement(params: {
+  achievementObjectId: string;
+  playerStatsObjectId: string;
+  value: number;
+  signAndExecute: any;
+}) {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::achievement::claim_achievement`,
+    arguments: [
+      tx.object(params.achievementObjectId),
+      tx.object(params.playerStatsObjectId),
+      tx.pure.u64(params.value),
+      tx.object('0x6'),
+    ],
+  });
+  return params.signAndExecute({ transaction: tx }, { showEffects: true });
+}
+
+/**
+ * Claim an admin-granted achievement by consuming the AchievementGrant object.
+ * The grant is deleted on-chain after this call — one-time use.
+ */
+export async function claimGrantedAchievement(params: {
+  grantObjectId: string;
+  achievementObjectId: string;
+  playerStatsObjectId: string;
+  signAndExecute: any;
+}) {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::achievement::claim_granted_achievement`,
+    arguments: [
+      tx.object(params.grantObjectId),
+      tx.object(params.achievementObjectId),
+      tx.object(params.playerStatsObjectId),
+      tx.object('0x6'),
+    ],
+  });
+  return params.signAndExecute({ transaction: tx }, { showEffects: true });
+}
+
+// ─────────────────────────────────────────────
+// Achievement Transactions — Super Admin
+// ─────────────────────────────────────────────
+
+/**
+ * Create a new Achievement definition on-chain.
+ * requirementType: 0=total_mmr, 1=best_mmr, 2=total_summons, 3=admin_granted
+ * threshold is ignored for admin_granted type but must still be passed (use 0).
+ */
+export async function superAdminCreateAchievement(params: {
+  superAdminCapId: string;
+  name: string;
+  description: string;
+  badgeUrl: string;
+  requirementType: number;
+  threshold: number;
+  signAndExecute: any;
+}) {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::achievement::create_achievement`,
+    arguments: [
+      tx.object(params.superAdminCapId),
+      tx.pure.string(params.name),
+      tx.pure.string(params.description),
+      tx.pure.string(params.badgeUrl),
+      tx.pure.u8(params.requirementType),
+      tx.pure.u64(params.threshold),
+      tx.object('0x6'),
+    ],
+  });
+  return params.signAndExecute(
+    { transaction: tx },
+    { showEffects: true, showObjectChanges: true },
+  );
+}
+
+/**
+ * Activate an achievement so players can claim it.
+ */
+export async function superAdminActivateAchievement(params: {
+  superAdminCapId: string;
+  achievementObjectId: string;
+  signAndExecute: any;
+}) {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::achievement::activate_achievement`,
+    arguments: [
+      tx.object(params.superAdminCapId),
+      tx.object(params.achievementObjectId),
+      tx.object('0x6'),
+    ],
+  });
+  return params.signAndExecute({ transaction: tx }, { showEffects: true });
+}
+
+/**
+ * Deactivate an achievement — blocks new claims, existing claims unaffected.
+ */
+export async function superAdminDeactivateAchievement(params: {
+  superAdminCapId: string;
+  achievementObjectId: string;
+  signAndExecute: any;
+}) {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::achievement::deactivate_achievement`,
+    arguments: [
+      tx.object(params.superAdminCapId),
+      tx.object(params.achievementObjectId),
+      tx.object('0x6'),
+    ],
+  });
+  return params.signAndExecute({ transaction: tx }, { showEffects: true });
+}
+
+/**
+ * Update achievement display fields (name, description, badge_url).
+ * requirement_type and threshold cannot be changed after creation.
+ */
+export async function superAdminUpdateAchievementDisplay(params: {
+  superAdminCapId: string;
+  achievementObjectId: string;
+  name: string;
+  description: string;
+  badgeUrl: string;
+  signAndExecute: any;
+}) {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::achievement::update_achievement_display`,
+    arguments: [
+      tx.object(params.superAdminCapId),
+      tx.object(params.achievementObjectId),
+      tx.pure.string(params.name),
+      tx.pure.string(params.description),
+      tx.pure.string(params.badgeUrl),
+      tx.object('0x6'),
+    ],
+  });
+  return params.signAndExecute({ transaction: tx }, { showEffects: true });
+}
+
+/**
+ * Issue an admin-granted AchievementGrant to a player's wallet.
+ * The achievement must have requirementType === 3 (admin_granted).
+ */
+export async function superAdminIssueGrant(params: {
+  superAdminCapId: string;
+  achievementObjectId: string;
+  recipientAddress: string;
+  signAndExecute: any;
+}) {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::achievement::issue_grant`,
+    arguments: [
+      tx.object(params.superAdminCapId),
+      tx.object(params.achievementObjectId),
+      tx.pure.address(params.recipientAddress),
       tx.object('0x6'),
     ],
   });
