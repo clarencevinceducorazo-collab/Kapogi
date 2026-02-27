@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
-import { ChevronDown, LogOut, User, UserCheck } from "lucide-react";
+import { ChevronDown, LogOut, User, Sparkles } from "lucide-react";
 
 /**
  * CustomConnectButton
@@ -75,6 +75,19 @@ export function CustomConnectButton({
           </DropdownMenuItem>
 
           {/* ProfileV2 - High Fidelity Experience */}
+          <DropdownMenuItem
+            asChild
+            className="cursor-pointer hover:bg-black/5 rounded-lg"
+          >
+            <Link
+              href="/profile-v2"
+              className="flex w-full items-center p-2"
+              style={{ fontSize: "16px", fontWeight: "700" }}
+            >
+              <Sparkles className="w-4 h-4 mr-2 text-indigo-600" />
+              Profile V2 (Alpha)
+            </Link>
+          </DropdownMenuItem>
 
           {/* Divider */}
           <div className="h-[1px] bg-black/10 my-2" />
@@ -99,7 +112,7 @@ export function CustomConnectButton({
    */
   return (
     <ConnectButton
-      connectText="Connect Wallet"
+      connectText="Connect to Wallet"
       className={cn(baseStyle, className)}
     />
   );
