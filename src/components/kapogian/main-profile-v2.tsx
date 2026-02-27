@@ -147,7 +147,7 @@ export function MainProfileV2({
   const attrs = currentCharacter?.attributes ?? {};
   const shortAddr = account?.address ? formatAddress(account.address) : '0x...';
 
-  // Determine ranks actually owned in wallet
+  // Strictly filter rank badges to only those found on NFTs currently in the user's wallet
   const ownedRankTitles = useMemo(() => {
     const titles = new Set<string>();
     characters.forEach(c => {
@@ -181,20 +181,21 @@ export function MainProfileV2({
     { label: "Held", value: attrs.heldItem, icon: "solar:cup-linear" },
   ].filter((t) => t.value);
 
-  // Unlocking logic for achievements
+  // Requirement check for the achievement badges
   const isUnlocked = (ach: any) => {
     if (ach.requiredCount !== undefined) {
       if (ach.category === 'Summoning') return summonsCount >= ach.requiredCount;
       if (ach.category === 'Collection') return characters.length >= ach.requiredCount;
-      if (ach.category === 'Social') return false; // Mock referral logic
+      if (ach.category === 'Social') return false; // Mock until referral data is ready
     }
     if (ach.requiredMmr !== undefined) return bestMmrNum >= ach.requiredMmr;
-    if (ach.requiredDays !== undefined) return false; // Mock streak logic
+    if (ach.requiredDays !== undefined) return false; // Mock until streak tracking is on-chain
     return false;
   };
 
   return (
     <div className="w-full max-w-6xl mx-auto font-body">
+      {/* Immersive FX Styles */}
       <style jsx global>{`
         .kpg-fx-aurora {
           background: linear-gradient(90deg,#a78bfa,#60a5fa,#34d399,#f472b6,#fbbf24,#a78bfa);
@@ -237,8 +238,9 @@ export function MainProfileV2({
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
         
-        {/* Left Panel */}
+        {/* ── LEFT PANEL: Identity & Navigation ── */}
         <div className="lg:col-span-4 flex flex-col gap-6">
+          {/* Active Character Preview */}
           <div className="bg-white rounded-[2.5rem] p-6 border-4 border-slate-100 shadow-[0_12px_0_0_rgba(226,232,240,1)] text-center relative overflow-hidden">
             <div className="absolute -top-16 -left-16 w-32 aspect-square bg-pink-50 rounded-full"></div>
             <div className="relative">
@@ -261,6 +263,7 @@ export function MainProfileV2({
             </div>
           </div>
 
+          {/* Social Identity (X Binding) */}
           <div className="bg-white rounded-[2rem] p-5 border-4 border-slate-100 shadow-[0_8px_0_0_rgba(226,232,240,1)]">
             <h3 className="text-sm tracking-wide font-semibold text-slate-400 uppercase mb-4 px-2 flex items-center gap-2">
               <Twitter size={14} className="text-blue-400" /> Social Identity
@@ -270,7 +273,7 @@ export function MainProfileV2({
             ) : bindingStatus?.bound ? (
               <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-4 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-white border-2 border-blue-200 flex items-center justify-center shadow-sm"><Twitter size={18} className="text-blue-500" /></div>
-                <div className="overflow-hidden">
+                <div className="overflow-hidden text-left">
                   <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Verified Account</p>
                   <p className="font-black text-blue-600 truncate text-sm">@{bindingStatus.x_username}</p>
                 </div>
@@ -290,6 +293,7 @@ export function MainProfileV2({
             )}
           </div>
 
+          {/* Profile Navigation */}
           <div className="bg-white rounded-[2rem] p-5 border-4 border-slate-100 shadow-[0_8px_0_0_rgba(226,232,240,1)]">
             <h3 className="text-sm tracking-wide font-semibold text-slate-400 uppercase mb-4 px-2 flex items-center gap-2">
               <iconify-icon icon="solar:user-id-linear" /> Profile Actions
@@ -306,15 +310,16 @@ export function MainProfileV2({
                   )}
                 >
                   <span className="flex items-center gap-3"><item.icon size={20} /> {item.label}</span>
-                  <ChevronRight size={16} />
+                  <ChevronRightIcon size={16} />
                 </button>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Right Panel */}
+        {/* ── RIGHT PANEL: Content Area ── */}
         <div className="lg:col-span-8 flex flex-col gap-6">
+          {/* Header Stats */}
           <div>
             <h3 className="text-lg tracking-wide font-semibold text-slate-600 mb-3 px-2 flex items-center gap-2 uppercase">
               <iconify-icon icon="solar:gamepad-linear" class="text-indigo-500" /> Player Hub
@@ -329,15 +334,16 @@ export function MainProfileV2({
 
           <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border-4 border-slate-100 shadow-[0_12px_0_0_rgba(226,232,240,1)] flex-grow min-h-[600px]">
             
+            {/* Dashboard Tab */}
             {activeTab === 'Stats' && (
               <div className="animate-in fade-in duration-500 space-y-10">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b-4 border-slate-100 border-dashed">
                   <div>
                     <h3 className="text-2xl tracking-tight font-semibold text-slate-800 flex items-center gap-2">Current Loadout</h3>
                     <div className="flex flex-wrap items-center gap-2 mt-3">
-                      <Badge label={`Rank: ${attrs.rank || 'Spirit Seed'}`} icon="solar:stars-linear" theme="indigo" />
-                      <Badge label={`Lineage: ${attrs.lineage || 'Unknown'}`} icon="solar:crown-linear" theme="emerald" />
-                      <Badge label={`Style: ${attrs.clothingStyle || 'Classic'}`} icon="solar:glasses-linear" theme="rose" />
+                      <ProfileBadge label={`Rank: ${attrs.rank || 'Spirit Seed'}`} icon="solar:stars-linear" theme="indigo" />
+                      <ProfileBadge label={`Lineage: ${attrs.lineage || 'Unknown'}`} icon="solar:crown-linear" theme="emerald" />
+                      <ProfileBadge label={`Style: ${attrs.clothingStyle || 'Classic'}`} icon="solar:glasses-linear" theme="rose" />
                     </div>
                   </div>
                   <div className="bg-yellow-100 border-4 border-yellow-300 px-6 py-4 rounded-[2rem] flex items-center gap-4 shadow-[0_6px_0_0_rgba(253,224,71,1)]">
@@ -382,7 +388,7 @@ export function MainProfileV2({
                     {traits.map((trait) => (
                       <div key={trait.label} className="flex items-center gap-3 px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl hover:bg-slate-100 transition-colors shadow-sm">
                         <iconify-icon icon={trait.icon} class="text-2xl text-slate-400" />
-                        <div className="flex flex-col overflow-hidden">
+                        <div className="flex flex-col overflow-hidden text-left">
                           <span className="text-[10px] text-slate-400 uppercase font-black leading-tight">{trait.label}</span>
                           <span className="text-xs text-slate-700 font-bold truncate">{trait.value}</span>
                         </div>
@@ -393,6 +399,7 @@ export function MainProfileV2({
               </div>
             )}
 
+            {/* Badges & Achievements Tab */}
             {activeTab === 'Badges' && (
               <div className="animate-in slide-in-from-bottom-4 duration-500">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -509,6 +516,7 @@ export function MainProfileV2({
               </div>
             )}
 
+            {/* Collection Tab */}
             {activeTab === 'Collections' && (
               <div className="animate-in slide-in-from-bottom-4 duration-500">
                 <h3 className="text-2xl tracking-tight font-semibold text-slate-800 mb-6 flex items-center gap-2"><Grid3X3 className="text-pink-500" /> My Collection ({characters.length})</h3>
@@ -528,6 +536,7 @@ export function MainProfileV2({
               </div>
             )}
 
+            {/* Orders Tab */}
             {activeTab === 'Orders' && (
               <div className="animate-in slide-in-from-bottom-4 duration-500">
                 <OrdersPanel account={account} />
@@ -538,6 +547,7 @@ export function MainProfileV2({
         </div>
       </div>
 
+      {/* Badge Detail Dialog */}
       {selectedBadge && (
         <BadgeDetailModal 
           badge={selectedBadge} 
@@ -548,6 +558,10 @@ export function MainProfileV2({
     </div>
   );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPER COMPONENTS
+// ─────────────────────────────────────────────────────────────────────────────
 
 function EmptyBadges({ msg, sub }: { msg: string, sub: string }) {
   return (
@@ -645,7 +659,7 @@ function BadgeDetailModal({ badge, isOpen, onClose }: { badge: any, isOpen: bool
               </div>
 
               <p className="text-slate-500 font-medium leading-relaxed mb-8 px-4">
-                {badge.desc}
+                {badge.desc || `Unlocked by your verified on-chain activity.`}
               </p>
 
               <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
@@ -697,7 +711,7 @@ function StatCard({ label, value, icon, theme }: { label: string, value: string 
   );
 }
 
-function Badge({ label, icon, theme }: { label: string, icon: string, theme: string }) {
+function ProfileBadge({ label, icon, theme }: { label: string, icon: string, theme: string }) {
   const themes: Record<string, string> = {
     indigo: 'bg-indigo-50 text-indigo-600 border-indigo-200',
     emerald: 'bg-emerald-50 text-emerald-600 border-emerald-200',
@@ -712,7 +726,7 @@ function Badge({ label, icon, theme }: { label: string, icon: string, theme: str
 
 function SkillBar({ label, value, color, icon }: { label: string, value: number, color: string, icon: string }) {
   return (
-    <div>
+    <div className="text-left">
       <div className="flex justify-between text-sm font-semibold mb-2">
         <span className="text-slate-700 flex items-center gap-1.5">
           <iconify-icon icon={icon} class={cn("text-lg", color.split(' ')[1])} /> {label}
