@@ -112,7 +112,7 @@ export function CustomConnectButton({
    */
   return (
     <ConnectButton
-      connectText="Connect to Wallet"
+      connectText="Connect Wallet"
       className={cn(baseStyle, className)}
     />
   );
