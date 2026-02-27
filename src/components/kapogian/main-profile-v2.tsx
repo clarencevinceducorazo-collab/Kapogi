@@ -18,7 +18,9 @@ import {
   ChevronLeft,
   ChevronRight as ChevronRightIcon,
   Star,
-  Lock
+  Lock,
+  Trophy,
+  Sparkles
 } from 'lucide-react';
 import { cn, formatAddress } from '@/lib/utils';
 import { OrdersPanel } from './orders-panel';
@@ -101,10 +103,20 @@ export function MainProfileV2({
   const [loadingBinding, setLoadingBinding] = useState(false);
   const [badgeTab, setBadgeTab] = useState<'ranks' | 'summons' | 'collection'>('ranks');
   const [selectedBadge, setSelectedBadge] = useState<any | null>(null);
+  const [showAllAchievements, setShowAllAchievements] = useState(false);
 
   const currentCharacter = characters[index];
   const attrs = currentCharacter?.attributes ?? {};
   const shortAddr = account?.address ? formatAddress(account.address) : '0x...';
+
+  // Determine ranks actually owned in wallet
+  const ownedRankTitles = useMemo(() => {
+    const titles = new Set<string>();
+    characters.forEach(c => {
+      if (c.attributes?.rank) titles.add(c.attributes.rank);
+    });
+    return titles;
+  }, [characters]);
 
   useEffect(() => {
     if (account?.address) {
@@ -337,55 +349,122 @@ export function MainProfileV2({
 
             {activeTab === 'Badges' && (
               <div className="animate-in slide-in-from-bottom-4 duration-500">
-                <div className="flex items-center justify-between mb-8">
-                  <h3 className="text-2xl tracking-tight font-semibold text-slate-800 flex items-center gap-2">
-                    <Medal className="text-indigo-500" /> Badge Collection
-                  </h3>
-                  <div className="flex bg-slate-100 p-1 rounded-2xl border-2 border-slate-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                  <div>
+                    <h3 className="text-2xl tracking-tight font-semibold text-slate-800 flex items-center gap-2">
+                      <Medal className="text-indigo-500" /> {showAllAchievements ? 'Achievement Gallery' : 'My Earned Badges'}
+                    </h3>
+                    <p className="text-xs font-bold text-slate-400 uppercase mt-1">
+                      {showAllAchievements ? 'Explore all possible milestones and requirements' : 'Ranks represented by your currently owned NFTs'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <button 
-                      onClick={() => setBadgeTab('ranks')}
-                      className={cn("px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all", badgeTab === 'ranks' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
-                    >Ranks</button>
-                    <button 
-                      onClick={() => setBadgeTab('summons')}
-                      className={cn("px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all", badgeTab === 'summons' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
-                    >Feats</button>
+                      onClick={() => setShowAllAchievements(!showAllAchievements)}
+                      className={cn(
+                        "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all border-2",
+                        showAllAchievements 
+                          ? "bg-indigo-500 text-white border-indigo-600 shadow-[0_4px_0_0_#3730a3]" 
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 shadow-[0_4px_0_0_#e2e8f0]"
+                      )}
+                    >
+                      {showAllAchievements ? <Grid3X3 size={14} /> : <Trophy size={14} />}
+                      {showAllAchievements ? 'Hide Gallery' : 'View All Badges'}
+                    </button>
+                    {!showAllAchievements && (
+                      <div className="flex bg-slate-100 p-1 rounded-2xl border-2 border-slate-200">
+                        <button 
+                          onClick={() => setBadgeTab('ranks')}
+                          className={cn("px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all", badgeTab === 'ranks' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
+                        >Ranks</button>
+                        <button 
+                          onClick={() => setBadgeTab('summons')}
+                          className={cn("px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all", badgeTab === 'summons' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
+                        >Feats</button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {badgeTab === 'ranks' && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {RANK_DATA.map((rank, i) => {
-                      const isUnlocked = bestMmrNum >= rank.mmr;
-                      const isCurrent = i === RANK_DATA.findIndex((r, idx) => bestMmrNum >= r.mmr && (idx === RANK_DATA.length - 1 || bestMmrNum < RANK_DATA[idx+1].mmr));
-                      
-                      return (
-                        <BadgeCard 
-                          key={rank.title}
-                          item={rank}
-                          isUnlocked={isUnlocked}
-                          isCurrent={isCurrent}
-                          onClick={() => setSelectedBadge({ ...rank, isUnlocked, type: 'rank' })}
-                        />
-                      );
-                    })}
+                {showAllAchievements ? (
+                  <div className="space-y-10">
+                    <section>
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
+                        <iconify-icon icon="solar:star-fall-bold" class="text-yellow-500" /> All Possible Ranks
+                      </h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        {RANK_DATA.map((rank) => (
+                          <BadgeCard 
+                            key={rank.title}
+                            item={rank}
+                            isUnlocked={ownedRankTitles.has(rank.title)}
+                            showRequirement
+                            onClick={() => setSelectedBadge({ ...rank, isUnlocked: ownedRankTitles.has(rank.title), type: 'rank' })}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                    <section>
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
+                        <iconify-icon icon="solar:magic-stick-3-bold" class="text-indigo-500" /> Summoning & Collection Feats
+                      </h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        {[...ACHIEVEMENT_DATA.summons, ...ACHIEVEMENT_DATA.collection].map((ach) => {
+                          const isUnlocked = ach.category === 'Summoning' 
+                            ? summonsCount >= ach.requiredCount 
+                            : characters.length >= ach.requiredCount;
+                          return (
+                            <BadgeCard 
+                              key={ach.id}
+                              item={ach}
+                              isUnlocked={isUnlocked}
+                              showRequirement
+                              onClick={() => setSelectedBadge({ ...ach, isUnlocked, type: 'feat' })}
+                            />
+                          );
+                        })}
+                      </div>
+                    </section>
                   </div>
-                )}
+                ) : (
+                  <>
+                    {badgeTab === 'ranks' && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        {RANK_DATA.filter(r => ownedRankTitles.has(r.title)).length === 0 ? (
+                          <div className="col-span-full py-20 text-center bg-slate-50 rounded-3xl border-4 border-dashed border-slate-100">
+                            <Sparkles className="mx-auto mb-4 text-slate-200" size={48} />
+                            <p className="font-black uppercase text-slate-400 tracking-widest text-sm">No Ranks Earned Yet</p>
+                            <p className="text-xs font-bold text-slate-300 mt-1">Summon your first spirit to unlock rank badges!</p>
+                          </div>
+                        ) : (
+                          RANK_DATA.filter(r => ownedRankTitles.has(r.title)).map((rank) => (
+                            <BadgeCard 
+                              key={rank.title}
+                              item={rank}
+                              isUnlocked={true}
+                              onClick={() => setSelectedBadge({ ...rank, isUnlocked: true, type: 'rank' })}
+                            />
+                          ))
+                        )}
+                      </div>
+                    )}
 
-                {badgeTab === 'summons' && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {ACHIEVEMENT_DATA.summons.map((ach) => {
-                      const isUnlocked = summonsCount >= ach.requiredCount;
-                      return (
-                        <BadgeCard 
-                          key={ach.id}
-                          item={ach}
-                          isUnlocked={isUnlocked}
-                          onClick={() => setSelectedBadge({ ...ach, isUnlocked, type: 'feat' })}
-                        />
-                      );
-                    })}
-                  </div>
+                    {badgeTab === 'summons' && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        {ACHIEVEMENT_DATA.summons.map((ach) => {
+                          const isUnlocked = summonsCount >= ach.requiredCount;
+                          return (
+                            <BadgeCard 
+                              key={ach.id}
+                              item={ach}
+                              isUnlocked={isUnlocked}
+                              onClick={() => setSelectedBadge({ ...ach, isUnlocked, type: 'feat' })}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -435,7 +514,7 @@ export function MainProfileV2({
 // SUB-COMPONENTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-function BadgeCard({ item, isUnlocked, isCurrent, onClick }: { item: any, isUnlocked: boolean, isCurrent?: boolean, onClick: () => void }) {
+function BadgeCard({ item, isUnlocked, isCurrent, showRequirement, onClick }: { item: any, isUnlocked: boolean, isCurrent?: boolean, showRequirement?: boolean, onClick: () => void }) {
   const rgb = hexToRgb(item.color) || '124,111,239';
   
   return (
@@ -481,7 +560,9 @@ function BadgeCard({ item, isUnlocked, isCurrent, onClick }: { item: any, isUnlo
             "text-[8px] font-bold px-2 py-0.5 rounded-full border inline-block",
             isUnlocked ? "bg-slate-50 text-slate-500 border-slate-100" : "bg-slate-100 text-slate-400 border-slate-200"
           )}>
-            {isUnlocked ? item.rarity : `${item.mmr || item.requiredCount} ${item.mmr ? 'MMR' : 'SUMMONS'}`}
+            {showRequirement || !isUnlocked 
+              ? `${item.mmr !== undefined ? item.mmr : item.requiredCount} ${item.mmr !== undefined ? 'MMR' : (item.category === 'Collection' ? 'NFTs' : 'SUMMONS')}` 
+              : item.rarity}
           </div>
         </div>
       </div>
@@ -490,8 +571,6 @@ function BadgeCard({ item, isUnlocked, isCurrent, onClick }: { item: any, isUnlo
 }
 
 function BadgeDetailModal({ badge, isOpen, onClose }: { badge: any, isOpen: boolean, onClose: () => void }) {
-  const rgb = hexToRgb(badge.color) || '124,111,239';
-  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md w-full p-0 bg-transparent border-none shadow-none !rounded-[2.5rem]">
@@ -515,7 +594,7 @@ function BadgeDetailModal({ badge, isOpen, onClose }: { badge: any, isOpen: bool
 
               <div className="mb-4">
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1 block">
-                  {badge.tier || badge.category} Achievement
+                  {badge.tier || badge.category} Milestone
                 </span>
                 <h2 className={cn("text-3xl font-headline tracking-tight", badge.fx === 'fx-aurora' ? 'kpg-fx-aurora' : '')} style={badge.fx !== 'fx-aurora' ? { color: badge.color } : {}}>
                   {badge.title}
@@ -529,12 +608,16 @@ function BadgeDetailModal({ badge, isOpen, onClose }: { badge: any, isOpen: bool
               <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
                 <div className="px-4 py-1.5 rounded-full bg-slate-50 border-2 border-slate-100 flex items-center gap-2">
                   {badge.isUnlocked ? <ShieldCheck className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-slate-300" />}
-                  <span className="text-xs font-bold text-slate-600 uppercase">{badge.isUnlocked ? 'Unlocked' : 'Locked'}</span>
+                  <span className="text-xs font-bold text-slate-600 uppercase">
+                    {badge.isUnlocked ? 'Unlocked' : `Requires ${badge.mmr !== undefined ? badge.mmr + ' MMR' : badge.requiredCount + ' ' + (badge.category === 'Collection' ? 'NFTs' : 'Summons')}`}
+                  </span>
                 </div>
-                <div className="px-4 py-1.5 rounded-full bg-slate-50 border-2 border-slate-100 flex items-center gap-2">
-                  <iconify-icon icon="solar:users-group-rounded-linear" class="text-indigo-400" />
-                  <span className="text-xs font-bold text-slate-600 uppercase">{badge.rarity} Players</span>
-                </div>
+                {badge.rarity && (
+                  <div className="px-4 py-1.5 rounded-full bg-slate-50 border-2 border-slate-100 flex items-center gap-2">
+                    <iconify-icon icon="solar:users-group-rounded-linear" class="text-indigo-400" />
+                    <span className="text-xs font-bold text-slate-600 uppercase">{badge.rarity} Difficulty</span>
+                  </div>
+                )}
               </div>
 
               <button 
