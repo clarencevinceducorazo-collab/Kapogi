@@ -375,37 +375,70 @@ export async function upgradeToBundleNFT(params: {
 // Queries
 // ─────────────────────────────────────────────
 
+/**
+ * Fetch characters strictly owned by the wallet address.
+ * Includes objects directly in the wallet and those inside the user's Kiosks.
+ */
 export async function getOwnedCharacters(walletAddress: string): Promise<SuiObjectResponse[]> {
   try {
-    const allMintEvents = await suiClient.queryEvents({
-      query: {
-        MoveEventType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::CharacterMinted`,
+    const nftType = `${CONTRACT_ADDRESSES.PACKAGE_ID}::character_nft::Character`;
+
+    // 1. Get objects directly owned by address
+    const directOwned = await suiClient.getOwnedObjects({
+      owner: walletAddress,
+      filter: {
+        StructType: nftType,
       },
-      order: 'descending',
+      options: { showContent: true, showOwner: true, showDisplay: true, showType: true },
     });
 
-    const userMintEvents = allMintEvents.data.filter(
-      (event) => (event.parsedJson as any)?.owner === walletAddress,
-    );
+    let allCharacters = [...directOwned.data];
 
-    const nftIds = userMintEvents
-      .map((event) => (event.parsedJson as any)?.nft_id)
-      .filter(Boolean);
-    if (nftIds.length === 0) return [];
+    // 2. Get user's Kiosks to check indirect ownership
+    const kioskCaps = await suiClient.getOwnedObjects({
+      owner: walletAddress,
+      filter: { StructType: '0x2::kiosk::KioskOwnerCap' },
+      options: { showContent: true }
+    });
 
-    const characterObjects: SuiObjectResponse[] = [];
-    for (let i = 0; i < nftIds.length; i += 50) {
-      const chunk = nftIds.slice(i, i + 50);
-      const chunkObjects = await suiClient.multiGetObjects({
-        ids: chunk,
-        options: { showContent: true, showOwner: true, showDisplay: true },
-      });
-      characterObjects.push(...chunkObjects);
+    // 3. For each kiosk, query its items
+    for (const cap of kioskCaps.data) {
+      if (cap.data?.content?.dataType === 'moveObject') {
+        const kioskId = (cap.data.content.fields as any).for;
+        if (kioskId) {
+          const kioskFields = await suiClient.getDynamicFields({ parentId: kioskId });
+          const itemIds = kioskFields.data
+            .filter(f => f.type === 'DynamicObject')
+            .map(f => f.objectId);
+          
+          if (itemIds.length > 0) {
+            // Fetch contents in chunks
+            const chunkSize = 50;
+            for (let i = 0; i < itemIds.length; i += chunkSize) {
+              const chunk = itemIds.slice(i, i + chunkSize);
+              const items = await suiClient.multiGetObjects({
+                ids: chunk,
+                options: { showContent: true, showDisplay: true, showType: true }
+              });
+              // Filter for Character type
+              const charactersInKiosk = items.filter(item => item.data?.type === nftType);
+              allCharacters.push(...charactersInKiosk);
+            }
+          }
+        }
+      }
     }
 
-    return characterObjects.filter((obj) => obj.data);
+    // Deduplicate and return
+    const seen = new Set();
+    return allCharacters.filter(obj => {
+      const id = obj.data?.objectId;
+      if (!id || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
   } catch (error) {
-    console.error('Failed to fetch owned characters:', error);
+    console.error('Failed to fetch strictly owned characters:', error);
     return [];
   }
 }
