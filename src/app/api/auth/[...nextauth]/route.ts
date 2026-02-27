@@ -1,4 +1,3 @@
-
 import NextAuth, { NextAuthOptions } from "next-auth"
 import TwitterProvider from "next-auth/providers/twitter"
 
@@ -8,6 +7,11 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.NEXT_PUBLIC_X_CLIENT_ID!,
       clientSecret: process.env.X_CLIENT_SECRET!,
       version: "2.0",
+      authorization: {
+        params: {
+          scope: "users.read tweet.read",
+        },
+      },
     }),
   ],
   callbacks: {
