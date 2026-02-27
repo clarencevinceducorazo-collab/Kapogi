@@ -23,7 +23,15 @@ import {
   Sparkles,
   Flame,
   Zap,
-  Target
+  Target,
+  Eye,
+  Scissors,
+  Shirt,
+  MapPin,
+  Clock,
+  Dna,
+  Shield,
+  Palette
 } from 'lucide-react';
 import { cn, formatAddress } from '@/lib/utils';
 import { OrdersPanel } from './orders-panel';
@@ -62,25 +70,25 @@ const RANK_DATA = [
 
 const ACHIEVEMENT_DATA = {
   summons: [
-    {id:"first_summon",title:"First Summon",icon:"solar:magic-stick-3-linear",color:"#94a3b8",gradient:"linear-gradient(135deg,#475569,#cbd5e1)",category:"Summoning",fx:"fx-silver",rarity:"Common",desc:"Complete your very first summon. The journey begins with a single pull.", requiredCount: 1},
-    {id:"apprentice_summoner",title:"Apprentice Summoner",icon:"solar:magic-stick-linear",color:"#d97706",gradient:"linear-gradient(135deg,#92400e,#fbbf24)",category:"Summoning",fx:"fx-bronze",rarity:"Common",desc:"Complete 10 summons total. You're getting the hang of this.", requiredCount: 10},
-    {id:"adept_summoner",title:"Adept Summoner",icon:"solar:stars-linear",color:"#ea580c",gradient:"linear-gradient(135deg,#c2410c,#fb923c)",category:"Summoning",fx:"fx-bronze",rarity:"Uncommon",desc:"Complete 50 summons. The gates of fate open wider for you.", requiredCount: 50},
-    {id:"master_summoner",title:"Master Summoner",icon:"solar:stars-minimalistic-linear",color:"#38bdf8",gradient:"linear-gradient(135deg,#0369a1,#7dd3fc)",category:"Summoning",fx:"fx-sky",rarity:"Rare",desc:"Complete 200 summons. You've become one with the summoning arts.", requiredCount: 200},
-    {id:"relentless",title:"Relentless",icon:"solar:bolt-circle-linear",color:"#f97316",gradient:"linear-gradient(135deg,#c2410c,#fde68a)",category:"Summoning",fx:"fx-flame",rarity:"Epic",desc:"Reach 500 total summons. Unstoppable. Relentless. Legendary.", requiredCount: 500},
-    {id:"summoning_marathon",title:"Summoning Marathon",icon:"solar:running-round-linear",color:"#10b981",gradient:"linear-gradient(135deg,#059669,#6ee7b7)",category:"Summoning",fx:"fx-emerald",rarity:"Epic",desc:"Complete 1,000 summons. Endurance beyond mortal limits.", requiredCount: 1000},
-    {id:"speed_summoner",title:"Speed Summoner",icon:"solar:delivery-speed-linear",color:"#a855f7",gradient:"linear-gradient(135deg,#6d28d9,#e879f9)",category:"Summoning",fx:"fx-purple",rarity:"Rare",desc:"Perform 10 summons within a single hour. Lightning-fast reflexes.", requiredCount: 10},
-    {id:"freebie_fanatic",title:"Freebie Fanatic",icon:"solar:gift-linear",color:"#34d399",gradient:"linear-gradient(135deg,#059669,#a7f3d0)",category:"Summoning",fx:"fx-emerald",rarity:"Uncommon",desc:"Complete 50 free summons. Who says the best things in life aren't free?", requiredCount: 50},
-    {id:"most_summons",title:"Most Summons",icon:"solar:crown-star-linear",color:"#f59e0b",gradient:"linear-gradient(135deg,#b45309,#fde68a)",category:"Summoning",fx:"fx-gold",rarity:"Legendary",desc:"Rank #1 on the weekly or monthly summoning leaderboard.", requiredCount: 1},
+    {id:"first_summon",title:"First Summon",icon:"solar:magic-stick-3-linear",color:"#94a3b8",gradient:"linear-gradient(135deg,#475569,#cbd5e1)",category:"Summoning",fx:"fx-silver",rarity:"Common",desc:"Complete your very first summon.", requiredCount: 1},
+    {id:"apprentice_summoner",title:"Apprentice Summoner",icon:"solar:magic-stick-linear",color:"#d97706",gradient:"linear-gradient(135deg,#92400e,#fbbf24)",category:"Summoning",fx:"fx-bronze",rarity:"Common",desc:"Complete 10 summons total.", requiredCount: 10},
+    {id:"adept_summoner",title:"Adept Summoner",icon:"solar:stars-linear",color:"#ea580c",gradient:"linear-gradient(135deg,#c2410c,#fb923c)",category:"Summoning",fx:"fx-bronze",rarity:"Uncommon",desc:"Complete 50 summons.", requiredCount: 50},
+    {id:"relentless",title:"Relentless",icon:"solar:bolt-circle-linear",color:"#f97316",gradient:"linear-gradient(135deg,#c2410c,#fde68a)",category:"Summoning",fx:"fx-flame",rarity:"Epic",desc:"Reach 500 total summons.", requiredCount: 500},
+    {id:"master_summoner",title:"Master Summoner",icon:"solar:stars-minimalistic-linear",color:"#38bdf8",gradient:"linear-gradient(135deg,#0369a1,#7dd3fc)",category:"Summoning",fx:"fx-sky",rarity:"Rare",desc:"Complete 200 summons.", requiredCount: 200},
+    {id:"summoning_marathon",title:"Summoning Marathon",icon:"solar:running-round-linear",color:"#10b981",gradient:"linear-gradient(135deg,#059669,#6ee7b7)",category:"Summoning",fx:"fx-emerald",rarity:"Epic",desc:"Complete 1,000 summons.", requiredCount: 1000},
+    {id:"speed_summoner",title:"Speed Summoner",icon:"solar:delivery-speed-linear",color:"#a855f7",gradient:"linear-gradient(135deg,#6d28d9,#e879f9)",category:"Summoning",fx:"fx-purple",rarity:"Rare",desc:"Perform 10 summons within a single hour.", requiredCount: 10},
+    {id:"freebie_fanatic",title:"Freebie Fanatic",icon:"solar:gift-linear",color:"#34d399",gradient:"linear-gradient(135deg,#059669,#a7f3d0)",category:"Summoning",fx:"fx-emerald",rarity:"Uncommon",desc:"Complete 50 free summons.", requiredCount: 50},
+    {id:"most_summons",title:"Most Summons",icon:"solar:crown-star-linear",color:"#f59e0b",gradient:"linear-gradient(135deg,#b45309,#fde68a)",category:"Summoning",fx:"fx-gold",rarity:"Legendary",desc:"Rank #1 on the summoning leaderboard.", requiredCount: 1},
   ],
   collection: [
-    {id:"unique_10",title:"Unique Collector (10)",icon:"solar:box-linear",color:"#94a3b8",gradient:"linear-gradient(135deg,#475569,#cbd5e1)",category:"Collection",fx:"fx-silver",rarity:"Common",desc:"Own 10 distinct summoned characters. A growing roster of legends.", requiredCount: 10},
-    {id:"unique_50",title:"Unique Collector (50)",icon:"solar:box-minimalistic-linear",color:"#10b981",gradient:"linear-gradient(135deg,#059669,#6ee7b7)",category:"Collection",fx:"fx-emerald",rarity:"Rare",desc:"Own 50 distinct summoned characters. A true collector's masterpiece.", requiredCount: 50},
-    {id:"legendary_find",title:"Legendary Find",icon:"solar:star-shine-linear",color:"#f59e0b",gradient:"linear-gradient(135deg,#92400e,#fcd34d)",category:"Collection",fx:"fx-gold",rarity:"Legendary",desc:"Summon a legendary or ultra-rare character. Fortune smiles upon you.", requiredCount: 1},
+    {id:"unique_10",title:"Unique Collector (10)",icon:"solar:box-linear",color:"#94a3b8",gradient:"linear-gradient(135deg,#475569,#cbd5e1)",category:"Collection",fx:"fx-silver",rarity:"Common",desc:"Own 10 distinct summoned characters.", requiredCount: 10},
+    {id:"unique_50",title:"Unique Collector (50)",icon:"solar:box-minimalistic-linear",color:"#10b981",gradient:"linear-gradient(135deg,#059669,#6ee7b7)",category:"Collection",fx:"fx-emerald",rarity:"Rare",desc:"Own 50 distinct summoned characters.", requiredCount: 50},
+    {id:"legendary_find",title:"Legendary Find",icon:"solar:star-shine-linear",color:"#f59e0b",gradient:"linear-gradient(135deg,#92400e,#fcd34d)",category:"Collection",fx:"fx-gold",rarity:"Legendary",desc:"Summon a legendary or ultra-rare character.", requiredCount: 1},
     {id:"double_luck",title:"Double Luck",icon:"solar:double-alt-arrow-up-linear",color:"#818cf8",gradient:"linear-gradient(135deg,#4f46e5,#34d399,#60a5fa,#f472b6)",category:"Collection",fx:"fx-aurora",rarity:"Mythic",desc:"Pull two legendaries within 24 hours.", requiredCount: 2},
-    {id:"trait_hunter",title:"Trait Hunter",icon:"solar:eye-linear",color:"#f472b6",gradient:"linear-gradient(135deg,#9f1239,#fda4af)",category:"Collection",fx:"fx-rose",rarity:"Rare",desc:"Summon a character with specified rare traits (e.g., gold eyes).", requiredCount: 1},
-    {id:"set_collector",title:"Set Collector",icon:"solar:layers-linear",color:"#22d3ee",gradient:"linear-gradient(135deg,#164e63,#a5f3fc)",category:"Collection",fx:"fx-cyan",rarity:"Epic",desc:"Obtain all characters from a themed set or collection.", requiredCount: 5},
+    {id:"trait_hunter",title:"Trait Hunter",icon:"solar:eye-linear",color:"#f472b6",gradient:"linear-gradient(135deg,#9f1239,#fda4af)",category:"Collection",fx:"fx-rose",rarity:"Rare",desc:"Summon a character with specified rare traits.", requiredCount: 1},
+    {id:"set_collector",title:"Set Collector",icon:"solar:layers-linear",color:"#22d3ee",gradient:"linear-gradient(135deg,#164e63,#a5f3fc)",category:"Collection",fx:"fx-cyan",rarity:"Epic",desc:"Obtain all characters from a themed set.", requiredCount: 5},
     {id:"battle_tested",title:"Battle-Tested",icon:"solar:shield-check-linear",color:"#38bdf8",gradient:"linear-gradient(135deg,#0284c7,#bae6fd)",category:"Collection",fx:"fx-sky",rarity:"Uncommon",desc:"Win 10 matches using summoned characters.", requiredCount: 10},
-    {id:"longevity",title:"Longevity",icon:"solar:calendar-mark-linear",color:"#a855f7",gradient:"linear-gradient(135deg,#6d28d9,#e879f9)",category:"Collection",fx:"fx-purple",rarity:"Epic",desc:"Keep a summoned character in your account for 365 days.", requiredCount: 365},
+    {id:"longevity",title:"Longevity",icon:"solar:calendar-mark-linear",color:"#a855f7",gradient:"linear-gradient(135deg,#6d28d9,#e879f9)",category:"Collection",fx:"fx-purple",rarity:"Epic",desc:"Keep a summoned character for 365 days.", requiredCount: 365},
   ],
   tiers: [
     {id:"mmr_bronze",title:"MMR Bronze",icon:"solar:medal-ribbons-star-linear",color:"#b45309",gradient:"linear-gradient(135deg,#92400e,#d97706)",category:"Tier",fx:"fx-bronze",rarity:"Common",desc:"Hit the Bronze MMR tier (401+ MMR).", requiredMmr: 401},
@@ -90,13 +98,13 @@ const ACHIEVEMENT_DATA = {
     {id:"mmr_legend",title:"MMR Legend",icon:"solar:crown-linear",color:"#818cf8",gradient:"linear-gradient(135deg,#4f46e5,#34d399,#60a5fa,#f472b6)",category:"Tier",fx:"fx-aurora",rarity:"Mythic",desc:"Hit the Legend MMR tier (3951+ MMR).", requiredMmr: 3951},
   ],
   streaks: [
-    {id:"streak_7",title:"Summon Streak (7)",icon:"solar:fire-linear",color:"#f97316",gradient:"linear-gradient(135deg,#c2410c,#fde68a)",category:"Streak",fx:"fx-flame",rarity:"Uncommon",desc:"Summon at least once per day for 7 consecutive days.", requiredDays: 7},
-    {id:"streak_30",title:"Summon Streak (30)",icon:"solar:fire-bold",color:"#ef4444",gradient:"linear-gradient(135deg,#dc2626,#fca5a5)",category:"Streak",fx:"fx-flame",rarity:"Legendary",desc:"Summon at least once per day for 30 consecutive days.", requiredDays: 30},
+    {id:"streak_7",title:"Summon Streak (7)",icon:"solar:fire-linear",color:"#f97316",gradient:"linear-gradient(135deg,#c2410c,#fde68a)",category:"Streak",fx:"fx-flame",rarity:"Uncommon",desc:"Summon daily for 7 consecutive days.", requiredDays: 7},
+    {id:"streak_30",title:"Summon Streak (30)",icon:"solar:fire-bold",color:"#ef4444",gradient:"linear-gradient(135deg,#dc2626,#fca5a5)",category:"Streak",fx:"fx-flame",rarity:"Legendary",desc:"Summon daily for 30 consecutive days.", requiredDays: 30},
   ],
   social: [
-    {id:"referral_summoner",title:"Referral Summoner",icon:"solar:user-plus-rounded-linear",color:"#10b981",gradient:"linear-gradient(135deg,#059669,#6ee7b7)",category:"Social",fx:"fx-emerald",rarity:"Uncommon",desc:"Bring 5 friends who each perform a summon.", requiredCount: 5},
+    {id:"referral_summoner",title:"Referral Summoner",icon:"solar:user-plus-rounded-linear",color:"#10b981",gradient:"linear-gradient(135deg,#059669,#6ee7b7)",category:"Social",fx:"fx-emerald",rarity:"Uncommon",desc:"Bring 5 friends who perform a summon.", requiredCount: 5},
     {id:"community_champion",title:"Community Champion",icon:"solar:users-group-rounded-linear",color:"#f59e0b",gradient:"linear-gradient(135deg,#b45309,#fde68a)",category:"Social",fx:"fx-gold",rarity:"Legendary",desc:"Have 50 referred players summon.", requiredCount: 50},
-    {id:"event_summoner",title:"Event Summoner",icon:"solar:calendar-linear",color:"#f472b6",gradient:"linear-gradient(135deg,#9f1239,#fda4af)",category:"Social",fx:"fx-rose",rarity:"Rare",desc:"Summon during a special or limited-time event.", requiredCount: 1},
+    {id:"event_summoner",title:"Event Summoner",icon:"solar:calendar-linear",color:"#f472b6",gradient:"linear-gradient(135deg,#9f1239,#fda4af)",category:"Social",fx:"fx-rose",rarity:"Rare",desc:"Summon during a special event.", requiredCount: 1},
   ]
 };
 
@@ -184,10 +192,6 @@ export function MainProfileV2({
     if (ach.requiredDays !== undefined) return false; // Mock streak logic
     return false;
   };
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // RENDERERS
-  // ─────────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="w-full max-w-6xl mx-auto font-body">
@@ -360,7 +364,7 @@ export function MainProfileV2({
                     <h4 className="text-sm font-semibold text-slate-500 mb-2 flex items-center gap-2 uppercase tracking-wider"><iconify-icon icon="solar:star-fall-linear" /> Core Skills</h4>
                     <SkillBar label="Cuteness" value={attrs.cuteness || 0} color="from-pink-400 to-pink-500" icon="solar:heart-angle-linear" />
                     <SkillBar label="Confidence" value={attrs.confidence || 0} color="from-sky-400 to-sky-500" icon="solar:fire-square-linear" />
-                    <SkillBar label="Telli Factor" value={attrs.tiliFactor || 0} color="from-yellow-400 to-yellow-500" icon="solar:bolt-linear" />
+                    <SkillBar label="Tili Factor" value={attrs.tiliFactor || 0} color="from-yellow-400 to-yellow-500" icon="solar:bolt-linear" />
                   </div>
                   <div>
                     <h4 className="text-sm font-semibold text-slate-500 mb-4 flex items-center gap-2 uppercase tracking-wider"><iconify-icon icon="solar:map-point-linear" /> Territory Info</h4>
@@ -397,7 +401,7 @@ export function MainProfileV2({
                       <Medal className="text-indigo-500" /> {showAllAchievements ? 'Achievement Gallery' : 'My Earned Badges'}
                     </h3>
                     <p className="text-xs font-bold text-slate-400 uppercase mt-1">
-                      {showAllAchievements ? 'Explore all possible milestones and requirements' : 'Milestones reached by your verified wallet data'}
+                      {showAllAchievements ? 'Explore all possible milestones' : 'Milestones reached by your verified wallet data'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -411,7 +415,7 @@ export function MainProfileV2({
                       )}
                     >
                       {showAllAchievements ? <Grid3X3 size={14} /> : <Trophy size={14} />}
-                      {showAllAchievements ? 'Hide Gallery' : 'View All Badges'}
+                      {showAllAchievements ? 'Hide Gallery' : 'View Gallery'}
                     </button>
                     {!showAllAchievements && (
                       <div className="flex bg-slate-100 p-1 rounded-2xl border-2 border-slate-200 overflow-x-auto max-w-[300px] sm:max-w-none">
@@ -534,7 +538,6 @@ export function MainProfileV2({
         </div>
       </div>
 
-      {/* Badge Detail Modal */}
       {selectedBadge && (
         <BadgeDetailModal 
           badge={selectedBadge} 
@@ -545,10 +548,6 @@ export function MainProfileV2({
     </div>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SUB-COMPONENTS
-// ─────────────────────────────────────────────────────────────────────────────
 
 function EmptyBadges({ msg, sub }: { msg: string, sub: string }) {
   return (
@@ -573,7 +572,6 @@ function BadgeCard({ item, isUnlocked, isCurrent, showRequirement, onClick }: { 
         "kpg-card-inner p-5 border-2 rounded-[2rem] flex flex-col items-center gap-3 relative overflow-hidden",
         isCurrent ? "bg-white border-transparent shadow-xl" : isUnlocked ? "bg-white border-slate-100 shadow-sm" : "bg-slate-50 border-dashed border-slate-200"
       )}>
-        {/* Glow & Border for Current Rank */}
         {isCurrent && (
           <>
             <div className="absolute inset-[-2px] rounded-[2rem] bg-gradient-to-r from-indigo-500 via-pink-500 to-amber-500 kpg-conic-spin z-[-1]" />
