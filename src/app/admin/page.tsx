@@ -1483,12 +1483,6 @@ export default function AdminPage() {
                               {card.contact_number}
                             </p>
                           </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                              <Mail size={11} /> Email
-                            </label>
-                            {/* Email already displayed above, so skip here */}
-                          </div>
                         </div>
                         <div className="space-y-1.5">
                           <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">

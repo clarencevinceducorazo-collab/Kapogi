@@ -35,6 +35,11 @@ interface Order {
 }
 
 export function OrdersPanel({ account }: { account: any }) {
+  // Component state
+  // - `orders`: array of parsed receipt objects (with optional NFT display data)
+  // - `loading`: shows whether data is being fetched
+  // - `error`: user-facing error message when fetching fails
+  // - `selectedOrder`: when set, shows a modal with the order details
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -64,7 +69,15 @@ export function OrdersPanel({ account }: { account: any }) {
     setLoading(true);
     setError("");
     try {
-      // 1. Fetch ALL ReceiptCreated events
+      // ----------------------------
+      // 1) Fetch ALL `ReceiptCreated` events from the Move contract.
+      //    These events contain `receipt_id` and `buyer`. We need to
+      //    iterate pages of events using the provided cursor until
+      //    we've collected all events. This is necessary because
+      //    the RPC paginates long event lists.
+      // ----------------------------
+      // NOTE: `allReceiptIds` and `allBuyerAddresses` are parallel arrays
+      // where the same index corresponds to the same event.
       let allReceiptIds: string[] = [];
       let allBuyerAddresses: string[] = [];
       let hasNextPage = true;
@@ -91,7 +104,10 @@ export function OrdersPanel({ account }: { account: any }) {
         }
       }
 
-      // 2. Filter to current user's receipts
+      // ----------------------------
+      // 2) Filter receipts to only those bought by the connected account.
+      //    We use the parallel `allBuyerAddresses` array to match buyer -> id.
+      // ----------------------------
       const userReceiptIds = allReceiptIds.filter(
         (_, idx) => allBuyerAddresses[idx] === account.address,
       );
@@ -102,7 +118,11 @@ export function OrdersPanel({ account }: { account: any }) {
         return;
       }
 
-      // 3. Fetch receipt objects
+      // ----------------------------
+      // 3) Fetch receipt objects from the chain. The RPC supports batch
+      //    queries via `multiGetObjects`, so we request receipts in chunks
+      //    to avoid excessively large requests.
+      // ----------------------------
       const receipts = [];
       const chunkSize = 50;
       for (let i = 0; i < userReceiptIds.length; i += chunkSize) {
@@ -116,6 +136,9 @@ export function OrdersPanel({ account }: { account: any }) {
 
       const validReceipts = receipts.filter((r) => r.data);
 
+      // Parse the raw receipt object content into a simpler shape we can
+      // use in the UI. We intentionally omit `character` here because
+      // that data comes from the NFT object and requires a second fetch.
       const parsedReceipts: Omit<Order, "character">[] = validReceipts
         .map((obj: any) => ({
           objectId: obj.data.objectId,
@@ -130,15 +153,22 @@ export function OrdersPanel({ account }: { account: any }) {
             obj.data.content.fields.estimated_delivery || 0,
           ),
         }))
+        // Sort newest first for display
         .sort((a, b) => b.createdAt - a.createdAt);
 
-      // 4. Fetch NFT display data
+      // ----------------------------
+      // 4) Fetch NFT display data (image/name) for each receipt's NFT id.
+      //    We query the display metadata and map it by object id so we can
+      //    attach the NFT's image and name to each receipt before setting
+      //    the `orders` state used by the UI.
+      // ----------------------------
       const nftIds = parsedReceipts.map((r) => r.nftId);
       const nftObjects = await suiClient.multiGetObjects({
         ids: nftIds,
         options: { showDisplay: true },
       });
 
+      // Build a map: nftObjectId -> { imageUrl, name }
       const nftsMap = new Map(
         nftObjects
           .filter((obj) => obj.data)
@@ -153,6 +183,7 @@ export function OrdersPanel({ account }: { account: any }) {
           ]),
       );
 
+      // Attach `character` display data to receipts and update UI state
       setOrders(
         parsedReceipts.map((receipt) => ({
           ...receipt,
@@ -205,6 +236,10 @@ export function OrdersPanel({ account }: { account: any }) {
       return `https://t.17track.net/en#nums=${trackingNumber}`;
     return "";
   };
+
+  const selectedItems = selectedOrder?.itemsSelected
+    ? selectedOrder.itemsSelected.split(",").map((it) => it.trim())
+    : [];
 
   if (loading)
     return (
@@ -308,12 +343,12 @@ export function OrdersPanel({ account }: { account: any }) {
       {selectedOrder && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white border-4 border-black rounded-[2.5rem] p-6 sm:p-8 max-w-lg w-full shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <h2 className="text-3xl font-headline mb-6 border-b-4 border-slate-50 pb-4">
+            <h2 className="text-3xl font-headline mb-2 border-b-4 border-slate-50 pb-4">
               Manifest Detail
             </h2>
 
-            <div className="flex flex-col sm:flex-row items-center gap-6 mb-8">
-              <div className="w-32 h-32 rounded-3xl border-4 border-black overflow-hidden relative shadow-lg bg-slate-50">
+            <div className="flex flex-col sm:flex-row items-center gap-2 mb-2">
+              <div className="w-28 h-28 rounded-3xl border-4 border-black overflow-hidden relative shadow-lg bg-slate-50">
                 {selectedOrder.character?.imageUrl && (
                   <Image
                     src={selectedOrder.character.imageUrl}
@@ -327,20 +362,26 @@ export function OrdersPanel({ account }: { account: any }) {
                 <p className="text-3xl font-black uppercase italic tracking-tighter leading-none">
                   {selectedOrder.character?.name}
                 </p>
-                <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-3">
-                  {selectedOrder.itemsSelected.split(",").map((it, i) => (
+                <div
+                  className={`flex flex-wrap justify-center sm:justify-start gap-2 mt-3 ${
+                    selectedItems.length > 5
+                      ? "max-h-40 overflow-y-auto pr-2"
+                      : ""
+                  }`}
+                >
+                  {selectedItems.map((it, i) => (
                     <span
                       key={i}
                       className="bg-yellow-100 border-2 border-black px-2 py-0.5 rounded-lg text-[9px] font-black uppercase"
                     >
-                      {it.trim()}
+                      {it}
                     </span>
                   ))}
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-2 gap-4 mb-2">
               <div className="bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl flex flex-col items-center sm:items-start">
                 <p className="text-[10px] font-black text-slate-400 uppercase mb-1 flex items-center gap-1">
                   <Clock size={10} /> Status
