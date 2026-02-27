@@ -20,7 +20,10 @@ import {
   Star,
   Lock,
   Trophy,
-  Sparkles
+  Sparkles,
+  Flame,
+  Zap,
+  Target
 } from 'lucide-react';
 import { cn, formatAddress } from '@/lib/utils';
 import { OrdersPanel } from './orders-panel';
@@ -63,10 +66,37 @@ const ACHIEVEMENT_DATA = {
     {id:"apprentice_summoner",title:"Apprentice Summoner",icon:"solar:magic-stick-linear",color:"#d97706",gradient:"linear-gradient(135deg,#92400e,#fbbf24)",category:"Summoning",fx:"fx-bronze",rarity:"Common",desc:"Complete 10 summons total. You're getting the hang of this.", requiredCount: 10},
     {id:"adept_summoner",title:"Adept Summoner",icon:"solar:stars-linear",color:"#ea580c",gradient:"linear-gradient(135deg,#c2410c,#fb923c)",category:"Summoning",fx:"fx-bronze",rarity:"Uncommon",desc:"Complete 50 summons. The gates of fate open wider for you.", requiredCount: 50},
     {id:"master_summoner",title:"Master Summoner",icon:"solar:stars-minimalistic-linear",color:"#38bdf8",gradient:"linear-gradient(135deg,#0369a1,#7dd3fc)",category:"Summoning",fx:"fx-sky",rarity:"Rare",desc:"Complete 200 summons. You've become one with the summoning arts.", requiredCount: 200},
+    {id:"relentless",title:"Relentless",icon:"solar:bolt-circle-linear",color:"#f97316",gradient:"linear-gradient(135deg,#c2410c,#fde68a)",category:"Summoning",fx:"fx-flame",rarity:"Epic",desc:"Reach 500 total summons. Unstoppable. Relentless. Legendary.", requiredCount: 500},
+    {id:"summoning_marathon",title:"Summoning Marathon",icon:"solar:running-round-linear",color:"#10b981",gradient:"linear-gradient(135deg,#059669,#6ee7b7)",category:"Summoning",fx:"fx-emerald",rarity:"Epic",desc:"Complete 1,000 summons. Endurance beyond mortal limits.", requiredCount: 1000},
+    {id:"speed_summoner",title:"Speed Summoner",icon:"solar:delivery-speed-linear",color:"#a855f7",gradient:"linear-gradient(135deg,#6d28d9,#e879f9)",category:"Summoning",fx:"fx-purple",rarity:"Rare",desc:"Perform 10 summons within a single hour. Lightning-fast reflexes.", requiredCount: 10},
+    {id:"freebie_fanatic",title:"Freebie Fanatic",icon:"solar:gift-linear",color:"#34d399",gradient:"linear-gradient(135deg,#059669,#a7f3d0)",category:"Summoning",fx:"fx-emerald",rarity:"Uncommon",desc:"Complete 50 free summons. Who says the best things in life aren't free?", requiredCount: 50},
+    {id:"most_summons",title:"Most Summons",icon:"solar:crown-star-linear",color:"#f59e0b",gradient:"linear-gradient(135deg,#b45309,#fde68a)",category:"Summoning",fx:"fx-gold",rarity:"Legendary",desc:"Rank #1 on the weekly or monthly summoning leaderboard.", requiredCount: 1},
   ],
   collection: [
-    {id:"unique_10",title:"Unique Collector I",icon:"solar:box-linear",color:"#94a3b8",gradient:"linear-gradient(135deg,#475569,#cbd5e1)",category:"Collection",fx:"fx-silver",rarity:"Common",desc:"Own 10 distinct summoned characters. A growing roster of legends.", requiredCount: 10},
-    {id:"unique_50",title:"Unique Collector II",icon:"solar:box-minimalistic-linear",color:"#10b981",gradient:"linear-gradient(135deg,#059669,#6ee7b7)",category:"Collection",fx:"fx-emerald",rarity:"Rare",desc:"Own 50 distinct summoned characters. A true collector's masterpiece.", requiredCount: 50},
+    {id:"unique_10",title:"Unique Collector (10)",icon:"solar:box-linear",color:"#94a3b8",gradient:"linear-gradient(135deg,#475569,#cbd5e1)",category:"Collection",fx:"fx-silver",rarity:"Common",desc:"Own 10 distinct summoned characters. A growing roster of legends.", requiredCount: 10},
+    {id:"unique_50",title:"Unique Collector (50)",icon:"solar:box-minimalistic-linear",color:"#10b981",gradient:"linear-gradient(135deg,#059669,#6ee7b7)",category:"Collection",fx:"fx-emerald",rarity:"Rare",desc:"Own 50 distinct summoned characters. A true collector's masterpiece.", requiredCount: 50},
+    {id:"legendary_find",title:"Legendary Find",icon:"solar:star-shine-linear",color:"#f59e0b",gradient:"linear-gradient(135deg,#92400e,#fcd34d)",category:"Collection",fx:"fx-gold",rarity:"Legendary",desc:"Summon a legendary or ultra-rare character. Fortune smiles upon you.", requiredCount: 1},
+    {id:"double_luck",title:"Double Luck",icon:"solar:double-alt-arrow-up-linear",color:"#818cf8",gradient:"linear-gradient(135deg,#4f46e5,#34d399,#60a5fa,#f472b6)",category:"Collection",fx:"fx-aurora",rarity:"Mythic",desc:"Pull two legendaries within 24 hours.", requiredCount: 2},
+    {id:"trait_hunter",title:"Trait Hunter",icon:"solar:eye-linear",color:"#f472b6",gradient:"linear-gradient(135deg,#9f1239,#fda4af)",category:"Collection",fx:"fx-rose",rarity:"Rare",desc:"Summon a character with specified rare traits (e.g., gold eyes).", requiredCount: 1},
+    {id:"set_collector",title:"Set Collector",icon:"solar:layers-linear",color:"#22d3ee",gradient:"linear-gradient(135deg,#164e63,#a5f3fc)",category:"Collection",fx:"fx-cyan",rarity:"Epic",desc:"Obtain all characters from a themed set or collection.", requiredCount: 5},
+    {id:"battle_tested",title:"Battle-Tested",icon:"solar:shield-check-linear",color:"#38bdf8",gradient:"linear-gradient(135deg,#0284c7,#bae6fd)",category:"Collection",fx:"fx-sky",rarity:"Uncommon",desc:"Win 10 matches using summoned characters.", requiredCount: 10},
+    {id:"longevity",title:"Longevity",icon:"solar:calendar-mark-linear",color:"#a855f7",gradient:"linear-gradient(135deg,#6d28d9,#e879f9)",category:"Collection",fx:"fx-purple",rarity:"Epic",desc:"Keep a summoned character in your account for 365 days.", requiredCount: 365},
+  ],
+  tiers: [
+    {id:"mmr_bronze",title:"MMR Bronze",icon:"solar:medal-ribbons-star-linear",color:"#b45309",gradient:"linear-gradient(135deg,#92400e,#d97706)",category:"Tier",fx:"fx-bronze",rarity:"Common",desc:"Hit the Bronze MMR tier (401+ MMR).", requiredMmr: 401},
+    {id:"mmr_silver",title:"MMR Silver",icon:"solar:medal-linear",color:"#94a3b8",gradient:"linear-gradient(135deg,#475569,#cbd5e1)",category:"Tier",fx:"fx-silver",rarity:"Common",desc:"Hit the Silver MMR tier (701+ MMR).", requiredMmr: 701},
+    {id:"mmr_gold",title:"MMR Gold",icon:"solar:medal-star-linear",color:"#f59e0b",gradient:"linear-gradient(135deg,#b45309,#fde68a)",category:"Tier",fx:"fx-gold",rarity:"Rare",desc:"Hit the Gold MMR tier (2501+ MMR).", requiredMmr: 2501},
+    {id:"mmr_platinum",title:"MMR Platinum",icon:"solar:trophy-star-linear",color:"#818cf8",gradient:"linear-gradient(135deg,#4f46e5,#a5b4fc)",category:"Tier",fx:"fx-purple",rarity:"Epic",desc:"Hit the Platinum MMR tier (3301+ MMR).", requiredMmr: 3301},
+    {id:"mmr_legend",title:"MMR Legend",icon:"solar:crown-linear",color:"#818cf8",gradient:"linear-gradient(135deg,#4f46e5,#34d399,#60a5fa,#f472b6)",category:"Tier",fx:"fx-aurora",rarity:"Mythic",desc:"Hit the Legend MMR tier (3951+ MMR).", requiredMmr: 3951},
+  ],
+  streaks: [
+    {id:"streak_7",title:"Summon Streak (7)",icon:"solar:fire-linear",color:"#f97316",gradient:"linear-gradient(135deg,#c2410c,#fde68a)",category:"Streak",fx:"fx-flame",rarity:"Uncommon",desc:"Summon at least once per day for 7 consecutive days.", requiredDays: 7},
+    {id:"streak_30",title:"Summon Streak (30)",icon:"solar:fire-bold",color:"#ef4444",gradient:"linear-gradient(135deg,#dc2626,#fca5a5)",category:"Streak",fx:"fx-flame",rarity:"Legendary",desc:"Summon at least once per day for 30 consecutive days.", requiredDays: 30},
+  ],
+  social: [
+    {id:"referral_summoner",title:"Referral Summoner",icon:"solar:user-plus-rounded-linear",color:"#10b981",gradient:"linear-gradient(135deg,#059669,#6ee7b7)",category:"Social",fx:"fx-emerald",rarity:"Uncommon",desc:"Bring 5 friends who each perform a summon.", requiredCount: 5},
+    {id:"community_champion",title:"Community Champion",icon:"solar:users-group-rounded-linear",color:"#f59e0b",gradient:"linear-gradient(135deg,#b45309,#fde68a)",category:"Social",fx:"fx-gold",rarity:"Legendary",desc:"Have 50 referred players summon.", requiredCount: 50},
+    {id:"event_summoner",title:"Event Summoner",icon:"solar:calendar-linear",color:"#f472b6",gradient:"linear-gradient(135deg,#9f1239,#fda4af)",category:"Social",fx:"fx-rose",rarity:"Rare",desc:"Summon during a special or limited-time event.", requiredCount: 1},
   ]
 };
 
@@ -101,7 +131,7 @@ export function MainProfileV2({
 }: MainProfileV2Props) {
   const [bindingStatus, setBindingStatus] = useState<{ bound: boolean; x_username?: string } | null>(null);
   const [loadingBinding, setLoadingBinding] = useState(false);
-  const [badgeTab, setBadgeTab] = useState<'ranks' | 'summons' | 'collection'>('ranks');
+  const [badgeTab, setBadgeTab] = useState<'ranks' | 'summons' | 'collection' | 'tiers' | 'social'>('ranks');
   const [selectedBadge, setSelectedBadge] = useState<any | null>(null);
   const [showAllAchievements, setShowAllAchievements] = useState(false);
 
@@ -142,6 +172,18 @@ export function MainProfileV2({
     { label: "Eyewear", value: (attrs.eyewear ?? 0) > 50 ? "Yes" : "None", icon: "solar:glasses-linear" },
     { label: "Held", value: attrs.heldItem, icon: "solar:cup-linear" },
   ].filter((t) => t.value);
+
+  // Unlocking logic for achievements
+  const isUnlocked = (ach: any) => {
+    if (ach.requiredCount !== undefined) {
+      if (ach.category === 'Summoning') return summonsCount >= ach.requiredCount;
+      if (ach.category === 'Collection') return characters.length >= ach.requiredCount;
+      if (ach.category === 'Social') return false; // Mock referral logic
+    }
+    if (ach.requiredMmr !== undefined) return bestMmrNum >= ach.requiredMmr;
+    if (ach.requiredDays !== undefined) return false; // Mock streak logic
+    return false;
+  };
 
   // ─────────────────────────────────────────────────────────────────────────────
   // RENDERERS
@@ -355,7 +397,7 @@ export function MainProfileV2({
                       <Medal className="text-indigo-500" /> {showAllAchievements ? 'Achievement Gallery' : 'My Earned Badges'}
                     </h3>
                     <p className="text-xs font-bold text-slate-400 uppercase mt-1">
-                      {showAllAchievements ? 'Explore all possible milestones and requirements' : 'Ranks represented by your currently owned NFTs'}
+                      {showAllAchievements ? 'Explore all possible milestones and requirements' : 'Milestones reached by your verified wallet data'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -372,15 +414,14 @@ export function MainProfileV2({
                       {showAllAchievements ? 'Hide Gallery' : 'View All Badges'}
                     </button>
                     {!showAllAchievements && (
-                      <div className="flex bg-slate-100 p-1 rounded-2xl border-2 border-slate-200">
-                        <button 
-                          onClick={() => setBadgeTab('ranks')}
-                          className={cn("px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all", badgeTab === 'ranks' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
-                        >Ranks</button>
-                        <button 
-                          onClick={() => setBadgeTab('summons')}
-                          className={cn("px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all", badgeTab === 'summons' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
-                        >Feats</button>
+                      <div className="flex bg-slate-100 p-1 rounded-2xl border-2 border-slate-200 overflow-x-auto max-w-[300px] sm:max-w-none">
+                        {(['ranks', 'summons', 'collection', 'tiers', 'social'] as const).map((tab) => (
+                          <button 
+                            key={tab}
+                            onClick={() => setBadgeTab(tab)}
+                            className={cn("px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap", badgeTab === tab ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
+                          >{tab}</button>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -390,7 +431,7 @@ export function MainProfileV2({
                   <div className="space-y-10">
                     <section>
                       <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
-                        <iconify-icon icon="solar:star-fall-bold" class="text-yellow-500" /> All Possible Ranks
+                        <iconify-icon icon="solar:star-fall-bold" class="text-yellow-500" /> On-Chain Ranks (Locked to NFTs)
                       </h4>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                         {RANK_DATA.map((rank) => (
@@ -406,20 +447,18 @@ export function MainProfileV2({
                     </section>
                     <section>
                       <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
-                        <iconify-icon icon="solar:magic-stick-3-bold" class="text-indigo-500" /> Summoning & Collection Feats
+                        <iconify-icon icon="solar:magic-stick-3-bold" class="text-indigo-500" /> Feats & Milestones
                       </h4>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                        {[...ACHIEVEMENT_DATA.summons, ...ACHIEVEMENT_DATA.collection].map((ach) => {
-                          const isUnlocked = ach.category === 'Summoning' 
-                            ? summonsCount >= ach.requiredCount 
-                            : characters.length >= ach.requiredCount;
+                        {[...ACHIEVEMENT_DATA.summons, ...ACHIEVEMENT_DATA.collection, ...ACHIEVEMENT_DATA.tiers, ...ACHIEVEMENT_DATA.streaks, ...ACHIEVEMENT_DATA.social].map((ach) => {
+                          const unlocked = isUnlocked(ach);
                           return (
                             <BadgeCard 
                               key={ach.id}
                               item={ach}
-                              isUnlocked={isUnlocked}
+                              isUnlocked={unlocked}
                               showRequirement
-                              onClick={() => setSelectedBadge({ ...ach, isUnlocked, type: 'feat' })}
+                              onClick={() => setSelectedBadge({ ...ach, isUnlocked: unlocked, type: 'feat' })}
                             />
                           );
                         })}
@@ -431,11 +470,7 @@ export function MainProfileV2({
                     {badgeTab === 'ranks' && (
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                         {RANK_DATA.filter(r => ownedRankTitles.has(r.title)).length === 0 ? (
-                          <div className="col-span-full py-20 text-center bg-slate-50 rounded-3xl border-4 border-dashed border-slate-100">
-                            <Sparkles className="mx-auto mb-4 text-slate-200" size={48} />
-                            <p className="font-black uppercase text-slate-400 tracking-widest text-sm">No Ranks Earned Yet</p>
-                            <p className="text-xs font-bold text-slate-300 mt-1">Summon your first spirit to unlock rank badges!</p>
-                          </div>
+                          <EmptyBadges msg="No Ranks Found in Wallet" sub="Summon your first spirit to unlock rank badges!" />
                         ) : (
                           RANK_DATA.filter(r => ownedRankTitles.has(r.title)).map((rank) => (
                             <BadgeCard 
@@ -449,19 +484,20 @@ export function MainProfileV2({
                       </div>
                     )}
 
-                    {badgeTab === 'summons' && (
+                    {(['summons', 'collection', 'tiers', 'social'] as const).includes(badgeTab as any) && (
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                        {ACHIEVEMENT_DATA.summons.map((ach) => {
-                          const isUnlocked = summonsCount >= ach.requiredCount;
-                          return (
+                        {ACHIEVEMENT_DATA[badgeTab as keyof typeof ACHIEVEMENT_DATA].filter(a => isUnlocked(a)).length === 0 ? (
+                          <EmptyBadges msg={`No ${badgeTab} Badges Earned`} sub="Keep playing to unlock these milestones!" />
+                        ) : (
+                          ACHIEVEMENT_DATA[badgeTab as keyof typeof ACHIEVEMENT_DATA].filter(a => isUnlocked(a)).map((ach) => (
                             <BadgeCard 
                               key={ach.id}
                               item={ach}
-                              isUnlocked={isUnlocked}
-                              onClick={() => setSelectedBadge({ ...ach, isUnlocked, type: 'feat' })}
+                              isUnlocked={true}
+                              onClick={() => setSelectedBadge({ ...ach, isUnlocked: true, type: 'feat' })}
                             />
-                          );
-                        })}
+                          ))
+                        )}
                       </div>
                     )}
                   </>
@@ -514,9 +550,17 @@ export function MainProfileV2({
 // SUB-COMPONENTS
 // ─────────────────────────────────────────────────────────────────────────────
 
+function EmptyBadges({ msg, sub }: { msg: string, sub: string }) {
+  return (
+    <div className="col-span-full py-20 text-center bg-slate-50 rounded-3xl border-4 border-dashed border-slate-100">
+      <Sparkles className="mx-auto mb-4 text-slate-200" size={48} />
+      <p className="font-black uppercase text-slate-400 tracking-widest text-sm">{msg}</p>
+      <p className="text-xs font-bold text-slate-300 mt-1">{sub}</p>
+    </div>
+  );
+}
+
 function BadgeCard({ item, isUnlocked, isCurrent, showRequirement, onClick }: { item: any, isUnlocked: boolean, isCurrent?: boolean, showRequirement?: boolean, onClick: () => void }) {
-  const rgb = hexToRgb(item.color) || '124,111,239';
-  
   return (
     <div 
       onClick={onClick}
@@ -561,8 +605,8 @@ function BadgeCard({ item, isUnlocked, isCurrent, showRequirement, onClick }: { 
             isUnlocked ? "bg-slate-50 text-slate-500 border-slate-100" : "bg-slate-100 text-slate-400 border-slate-200"
           )}>
             {showRequirement || !isUnlocked 
-              ? `${item.mmr !== undefined ? item.mmr : item.requiredCount} ${item.mmr !== undefined ? 'MMR' : (item.category === 'Collection' ? 'NFTs' : 'SUMMONS')}` 
-              : item.rarity}
+              ? (item.mmr !== undefined ? `${item.mmr} MMR` : (item.requiredMmr !== undefined ? `${item.requiredMmr} MMR` : (item.requiredDays !== undefined ? `${item.requiredDays} Days` : `${item.requiredCount} ${item.category === 'Collection' ? 'NFTs' : (item.category === 'Streak' ? 'Days' : 'Pulls')}`))) 
+              : (item.rarity || 'Unlocked')}
           </div>
         </div>
       </div>
@@ -571,6 +615,8 @@ function BadgeCard({ item, isUnlocked, isCurrent, showRequirement, onClick }: { 
 }
 
 function BadgeDetailModal({ badge, isOpen, onClose }: { badge: any, isOpen: boolean, onClose: () => void }) {
+  const reqText = badge.mmr !== undefined ? `${badge.mmr} MMR` : (badge.requiredMmr !== undefined ? `${badge.requiredMmr} MMR` : (badge.requiredDays !== undefined ? `${badge.requiredDays} Consecutive Days` : `${badge.requiredCount} ${badge.category === 'Collection' ? 'Owned NFTs' : 'Summons'}`));
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md w-full p-0 bg-transparent border-none shadow-none !rounded-[2.5rem]">
@@ -581,7 +627,6 @@ function BadgeDetailModal({ badge, isOpen, onClose }: { badge: any, isOpen: bool
         
         <div className="w-full bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border-4 border-slate-50">
           <div className="p-8 text-center relative overflow-hidden">
-            {/* Background Halo */}
             <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ background: badge.gradient }} />
             
             <div className="relative z-10">
@@ -609,13 +654,13 @@ function BadgeDetailModal({ badge, isOpen, onClose }: { badge: any, isOpen: bool
                 <div className="px-4 py-1.5 rounded-full bg-slate-50 border-2 border-slate-100 flex items-center gap-2">
                   {badge.isUnlocked ? <ShieldCheck className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-slate-300" />}
                   <span className="text-xs font-bold text-slate-600 uppercase">
-                    {badge.isUnlocked ? 'Unlocked' : `Requires ${badge.mmr !== undefined ? badge.mmr + ' MMR' : badge.requiredCount + ' ' + (badge.category === 'Collection' ? 'NFTs' : 'Summons')}`}
+                    {badge.isUnlocked ? 'Unlocked' : `Requires ${reqText}`}
                   </span>
                 </div>
                 {badge.rarity && (
                   <div className="px-4 py-1.5 rounded-full bg-slate-50 border-2 border-slate-100 flex items-center gap-2">
                     <iconify-icon icon="solar:users-group-rounded-linear" class="text-indigo-400" />
-                    <span className="text-xs font-bold text-slate-600 uppercase">{badge.rarity} Difficulty</span>
+                    <span className="text-xs font-bold text-slate-600 uppercase">{badge.rarity} Tier</span>
                   </div>
                 )}
               </div>
@@ -713,9 +758,4 @@ function TerritoryRow({ label, value, theme }: { label: string, value: number, t
       </span>
     </div>
   );
-}
-
-function hexToRgb(hex: string): string | null {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : null;
 }
