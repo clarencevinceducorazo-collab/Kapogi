@@ -57,14 +57,21 @@ export const NETWORK_CONFIG = {
   rpcUrl: process.env.NEXT_PUBLIC_SUI_RPC_URL || 'https://fullnode.testnet.sui.io:443',
 };
 
-// IPFS Configuration
+// IPFS Configuration — public / display-only values.
+// ⚠️  Upload credentials (PINATA_JWT, PINATA_API_KEY, PINATA_API_SECRET) live
+//     server-side in src/lib/server/pinata.ts (no NEXT_PUBLIC_ prefix).
 export const IPFS_CONFIG = {
-  apiKey: process.env.NEXT_PUBLIC_PINATA_API_KEY || '',
-  apiSecret: process.env.NEXT_PUBLIC_PINATA_API_SECRET || '',
-  jwt: process.env.NEXT_PUBLIC_PINATA_JWT || '',
+  /** Base public IPFS gateway URL (no auth token). */
   gateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY || 'https://nft.kapogian.xyz/ipfs/',
+  /** Custom Pinata gateway hostname — used to build /ipfs/<cid> URLs. */
   gatewayUrl: process.env.NEXT_PUBLIC_PINATA_GATEWAY_URL || 'https://nft.kapogian.xyz',
+  /**
+   * Pinata Gateway token — READ-ONLY access token for displaying pinned files.
+   * This is safe as NEXT_PUBLIC_ because it cannot upload or delete content.
+   * Set NEXT_PUBLIC_PINATA_GATEWAY_KEY in your .env file.
+   */
   gatewayKey: process.env.NEXT_PUBLIC_PINATA_GATEWAY_KEY || '',
+  /** Pinata group/folder ID for organising uploaded files. */
   groupId: process.env.NEXT_PUBLIC_PINATA_GROUP_KAPOGIAN || '',
 };
 
@@ -73,11 +80,9 @@ export const ENCRYPTION_CONFIG = {
   adminPublicKey: process.env.NEXT_PUBLIC_ADMIN_PUBLIC_KEY!,
 };
 
-// Gemini AI
-export const GEMINI_CONFIG = {
-  imageApiUrl: process.env.NEXT_PUBLIC_GEMINI_IMAGE_API!,
-  textApiUrl: process.env.NEXT_PUBLIC_GEMINI_TEXT_API!,
-};
+// Gemini AI — API keys and endpoints are handled exclusively in
+// src/app/api/generate-image/route.ts and src/app/api/generate-text/route.ts
+// via the server-side GEMINI_API_KEY env var.  Nothing to export here.
 
 export function suiToMist(sui: number): number {
   return sui * 1_000_000_000;
