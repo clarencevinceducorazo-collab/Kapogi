@@ -256,7 +256,10 @@ export default function PodiumPage() {
     const podiumOrder =
       users.length >= 3 ? [users[1], users[0], users[2]] : [...users];
     if (users.length === 2) podiumOrder.splice(2, 0, undefined);
-    else if (users.length === 1) podiumOrder.splice(1, 0, undefined, undefined);
+    else if (users.length === 1) {
+      podiumOrder.unshift(undefined);
+      podiumOrder.push(undefined);
+    }
 
     return (
       <div className="flex flex-row justify-center items-end gap-2 md:gap-6 mb-12 w-full max-w-2xl mx-auto pt-4">
