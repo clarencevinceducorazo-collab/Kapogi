@@ -1,14 +1,31 @@
 /**
- * Pinata IPFS Utilities - Direct API Implementation
- * FIXED: Now properly uses all environment variables and gateway authentication
+ * Pinata IPFS Utilities — CLIENT-SAFE helpers only.
+ *
+ * ✅ This file may be imported by client components.
+ * ✅ It only reads NEXT_PUBLIC_ env vars (gateway URL + read-only token).
+ *
+ * 🚫 Upload / unpin / auth logic has been moved to:
+ *      src/lib/server/pinata.ts   ← server-only (import 'server-only')
+ *
+ * From the client, use the API routes:
+ *      POST /api/pinata/upload    ← upload a file
+ *      POST /api/pinata/unpin     ← unpin by hash
  */
 
-import { IPFS_CONFIG } from './constants';
+import { IPFS_CONFIG } from "./constants";
 
 /**
- * Upload image to IPFS via Pinata Direct API
- * Uses JWT for authentication (preferred method)
+ * Upload image to IPFS via the server-side API route.
+ *
+ * @deprecated Call POST /api/pinata/upload from your component instead.
+ *   Example:
+ *     const form = new FormData();
+ *     form.append('file', blob, 'character.png');
+ *     form.append('name', characterName);
+ *     const res  = await fetch('/api/pinata/upload', { method: 'POST', body: form });
+ *     const { imageUrl, imageHash } = await res.json();
  */
+<<<<<<< HEAD
 export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Promise<{ ipfsHash: string }> {
   try {
     console.log('📤 Uploading image to IPFS...');
@@ -80,71 +97,53 @@ export async function uploadImageToIPFS(imageBlob: Blob, filename: string): Prom
     }
     throw new Error('An unknown error occurred during IPFS upload.');
   }
+=======
+export async function uploadImageToIPFS(
+  _imageBlob: Blob,
+  _filename: string,
+): Promise<{ ipfsHash: string }> {
+  throw new Error(
+    "uploadImageToIPFS is no longer available on the client. " +
+      "Use fetch('/api/pinata/upload') instead.",
+  );
+>>>>>>> cc07bdab3906e69886e85bf6db0b3eb7da85b3ba
 }
 
-
 /**
- * Unpin (delete) a file from Pinata IPFS by its hash
- * Uses same authentication as upload
+ * Unpin a file from Pinata via the server-side API route.
+ *
+ * @deprecated Call POST /api/pinata/unpin from your component instead.
+ *   Example:
+ *     await fetch('/api/pinata/unpin', {
+ *       method: 'POST',
+ *       headers: { 'Content-Type': 'application/json' },
+ *       body: JSON.stringify({ hash }),
+ *     });
  */
-export async function unpinFromIPFS(ipfsHash: string): Promise<void> {
-  try {
-    console.log(`🗑️ Unpinning ${ipfsHash} from IPFS...`);
-
-    const apiEndpoint = `https://api.pinata.cloud/pinning/unpin/${ipfsHash}`;
-
-    // Use JWT if available, otherwise use API keys
-    const headers: Record<string, string> = {};
-    
-    if (IPFS_CONFIG.jwt) {
-      headers.Authorization = `Bearer ${IPFS_CONFIG.jwt}`;
-    } else if (IPFS_CONFIG.apiKey && IPFS_CONFIG.apiSecret) {
-      headers.pinata_api_key = IPFS_CONFIG.apiKey;
-      headers.pinata_secret_api_key = IPFS_CONFIG.apiSecret;
-    }
-
-    const response = await fetch(apiEndpoint, {
-      method: 'DELETE',
-      headers,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.warn(`⚠️ Failed to unpin ${ipfsHash}:`, errorText);
-    } else {
-      console.log(`✅ Successfully unpinned ${ipfsHash}`);
-    }
-  } catch (error) {
-    console.error(`❌ Error unpinning ${ipfsHash}:`, error);
-  }
+export async function unpinFromIPFS(_ipfsHash: string): Promise<void> {
+  throw new Error(
+    "unpinFromIPFS is no longer available on the client. " +
+      "Use fetch('/api/pinata/unpin') instead.",
+  );
 }
 
-
 /**
- * Simplified upload flow: Just the Image
+ * Upload character image via the server-side API route.
+ *
+ * @deprecated Call POST /api/pinata/upload from your component instead.
  */
 export async function uploadCharacterToIPFS(
-  imageBlob: Blob,
-  characterData: {
-    name: string;
-  }
-): Promise<{ imageUrl: string; imageHash: string; }> {
-  try {
-    const { ipfsHash } = await uploadImageToIPFS(
-      imageBlob,
-      `${characterData.name.replace(/\s/g, '_')}.png`
-    );
-    
-    const gatewayImageUrl = getIPFSGatewayUrl(`ipfs://${ipfsHash}`);
-
-    return { imageUrl: gatewayImageUrl, imageHash: ipfsHash };
-  } catch (error) {
-    console.error('❌ Failed to upload character to IPFS:', error);
-    throw error;
-  }
+  _imageBlob: Blob,
+  _characterData: { name: string },
+): Promise<{ imageUrl: string; imageHash: string }> {
+  throw new Error(
+    "uploadCharacterToIPFS is no longer available on the client. " +
+      "Use fetch('/api/pinata/upload') instead.",
+  );
 }
 
 /**
+<<<<<<< HEAD
  * Get IPFS gateway URL for display with proper authentication
  * FIXED: Now more robust against raw CIDs and different URL patterns
  */
@@ -176,12 +175,41 @@ export function getIPFSGatewayUrl(ipfsUrl: string): string {
     cid = ipfsUrl.replace('ipfs://', '');
   } 
   // 3. Assume it's a raw CID
+=======
+ * Get IPFS gateway URL for display.
+ * Authenticated image URLs are generated server-side via the
+ * /api/pinata/image-url proxy so the gateway token never reaches the browser.
+ */
+export function getIPFSGatewayUrl(ipfsUrl: string): string {
+  if (!ipfsUrl) return "";
+
+  let cid = "";
+
+  // Extract CID from ipfs:// protocol
+  if (ipfsUrl.startsWith("ipfs://")) {
+    cid = ipfsUrl.replace("ipfs://", "");
+  }
+  // Extract CID from gateway URLs
+  else if (ipfsUrl.includes("/ipfs/")) {
+    try {
+      const url = new URL(ipfsUrl);
+      const parts = url.pathname.split("/ipfs/");
+      if (parts.length > 1 && parts[1]) {
+        cid = parts[1];
+      }
+    } catch {
+      return ipfsUrl;
+    }
+  }
+  // Already a full URL without /ipfs/ path
+>>>>>>> cc07bdab3906e69886e85bf6db0b3eb7da85b3ba
   else {
     cid = ipfsUrl;
   }
 
   if (!cid) return ipfsUrl;
 
+<<<<<<< HEAD
   // Clean the CID of any trailing fragments
   cid = cid.split('?')[0].split('#')[0];
 
@@ -196,46 +224,37 @@ export function getIPFSGatewayUrl(ipfsUrl: string): string {
 
 /**
  * Verify IPFS configuration is complete
+=======
+  // Remove any trailing slashes or query params from CID
+  cid = cid.split("?")[0].split("#")[0];
+
+  // Route through the server-side proxy — the gateway token is added there.
+  return `/api/pinata/image-url?cid=${encodeURIComponent(cid)}`;
+}
+
+/**
+ * Verify public IPFS display configuration.
+ * (Auth credentials are verified server-side only.)
+>>>>>>> cc07bdab3906e69886e85bf6db0b3eb7da85b3ba
  */
 export function verifyIPFSConfig(): {
-  hasAuth: boolean;
   hasGateway: boolean;
   hasGatewayKey: boolean;
   hasGroup: boolean;
   warnings: string[];
 } {
   const warnings: string[] = [];
-  
-  const hasJWT = !!IPFS_CONFIG.jwt;
-  const hasAPIKeys = !!(IPFS_CONFIG.apiKey && IPFS_CONFIG.apiSecret);
-  const hasAuth = hasJWT || hasAPIKeys;
-  
-  if (!hasAuth) {
-    warnings.push('No authentication credentials found (JWT or API keys)');
-  }
-  
-  const hasGateway = !!IPFS_CONFIG.gatewayUrl;
-  if (!hasGateway) {
-    warnings.push('No gateway URL configured');
-  }
-  
-  const hasGatewayKey = !!IPFS_CONFIG.gatewayKey;
-  if (!hasGatewayKey) {
-    warnings.push('No gateway key found - authenticated gateway access will not work');
-  }
-  
-  const hasGroup = !!IPFS_CONFIG.groupId;
-  if (!hasGroup) {
-    warnings.push('No group ID configured - files will not be organized in folders');
-  }
 
-  return {
-    hasAuth,
-    hasGateway,
-    hasGatewayKey,
-    hasGroup,
-    warnings,
-  };
+  const hasGateway = !!IPFS_CONFIG.gatewayUrl;
+  if (!hasGateway)
+    warnings.push("No gateway URL configured (NEXT_PUBLIC_PINATA_GATEWAY_URL)");
+
+  const hasGatewayKey = true; // key lives server-side (PINATA_GATEWAY_KEY)
+  // No client-side check needed — the proxy route applies the token.
+
+  const hasGroup = true; // group ID lives server-side (PINATA_GROUP_KAPOGIAN)
+
+  return { hasGateway, hasGatewayKey, hasGroup, warnings };
 }
 
 /**
