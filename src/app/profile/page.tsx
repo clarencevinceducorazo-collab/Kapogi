@@ -1,24 +1,17 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/kapogian/page-header";
 import { PageFooter } from "@/components/kapogian/page-footer";
 import { useCurrentAccount } from "@mysten/dapp-kit";
-import { getOwnedCharacters } from "@/lib/sui";
+import { getOwnedCharacters, getPlayerStats, getAllAchievements, getPendingGrants } from "@/lib/sui";
 import { MainProfileV2 } from "@/components/kapogian/main-profile-v2";
 import Image from "next/image";
 import { Wallet, LoaderCircle } from "lucide-react";
 import { CustomConnectButton } from "@/components/kapogian/CustomConnectButton";
 import { getIPFSGatewayUrl } from "@/lib/pinata";
+import type { PlayerStatsObject, AchievementDef, AchievementGrant } from "@/lib/sui";
 
-/**
- * ProfilePage
- * - Primary entry point for user profile.
- * - Fetches live character inventory from SUI blockchain (direct + kiosks).
- * - Calculates derived statistics (MMR, Lineages, Summon counts).
- * - Passes normalized data to the MainProfileV2 dashboard component.
- */
 export default function ProfilePage() {
   const account = useCurrentAccount();
   const [characters, setCharacters] = useState<any[]>([]);
@@ -26,18 +19,30 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'Stats' | 'Collections' | 'Orders' | 'Badges'>('Stats');
 
+  // Achievement state
+  const [playerStats, setPlayerStats] = useState<PlayerStatsObject | null>(null);
+  const [allAchievements, setAllAchievements] = useState<AchievementDef[]>([]);
+  const [pendingGrants, setPendingGrants] = useState<AchievementGrant[]>([]);
+  const [achievementsLoading, setAchievementsLoading] = useState(true);
+
   useEffect(() => {
     if (!account?.address) {
       setLoading(false);
+      setAchievementsLoading(false);
       return;
     }
 
     const loadData = async () => {
       setLoading(true);
+      setAchievementsLoading(true);
       try {
-        // Fetches strictly owned objects, including kiosk-held characters
-        const owned = await getOwnedCharacters(account.address);
-        
+        const [owned, stats, achievements, grants] = await Promise.all([
+          getOwnedCharacters(account.address),
+          getPlayerStats(account.address),
+          getAllAchievements(),
+          getPendingGrants(account.address),
+        ]);
+
         const parsed = owned.map((obj: any) => {
           const display = obj.data?.display?.data || {};
           const content = obj.data?.content?.fields || {};
@@ -45,49 +50,58 @@ export default function ProfilePage() {
           try {
             if (content.attributes) attributes = JSON.parse(content.attributes);
           } catch (e) {}
-
           return {
             objectId: obj.data?.objectId,
             name: display.name || "Unnamed Spirit",
             description: display.description || "A mysterious spirit from the Kapogian realm.",
             imageUrl: getIPFSGatewayUrl(display.image_url || ""),
             mmr: Number(content.mmr || attributes.mmr || 0),
-            attributes: {
-              ...attributes,
-              lineage: attributes.lineage || "Ancient",
-              rank: attributes.rank || "Spirit Seed",
-            },
+            attributes: { ...attributes, lineage: attributes.lineage || "Ancient", rank: attributes.rank || "Spirit Seed" },
           };
         });
+        parsed.sort((a: any, b: any) => b.mmr - a.mmr);
 
-        // Ensure collection displays highest MMR first
-        parsed.sort((a, b) => b.mmr - a.mmr);
         setCharacters(parsed);
+        setPlayerStats(stats);
+        setAllAchievements(achievements.filter(a => a.isActive));
+        setPendingGrants(grants);
       } catch (e) {
         console.error("Failed to load profile data:", e);
       } finally {
         setLoading(false);
+        setAchievementsLoading(false);
       }
     };
 
     loadData();
   }, [account?.address]);
 
-  // Derived Statistics for Dashboard
+  const refreshAchievements = async () => {
+    if (!account?.address) return;
+    setAchievementsLoading(true);
+    try {
+      const [stats, grants] = await Promise.all([
+        getPlayerStats(account.address),
+        getPendingGrants(account.address),
+      ]);
+      setPlayerStats(stats);
+      setPendingGrants(grants);
+    } finally {
+      setAchievementsLoading(false);
+    }
+  };
+
   const bestMmrNum = characters.length > 0 ? Math.max(...characters.map(c => c.mmr)) : 0;
   const avgMmrNum = characters.length > 0 ? Math.round(characters.reduce((acc, c) => acc + c.mmr, 0) / characters.length) : 0;
-  const summonsCount = characters.length; // Based on total owned
-  
+  const summonsCount = characters.length;
+
   const lineageMap: Record<string, number> = {};
   characters.forEach(c => {
     const lin = c.attributes?.lineage || "Ancient";
     lineageMap[lin] = (lineageMap[lin] || 0) + 1;
   });
-  const topLineages = Object.entries(lineageMap)
-    .sort((a, b) => b[1] - a[1])
-    .map(([name]) => name);
+  const topLineages = Object.entries(lineageMap).sort((a, b) => b[1] - a[1]).map(([name]) => name);
 
-  // Connection State Handling
   if (!account) {
     return (
       <div className="min-h-screen flex flex-col bg-slate-50 relative font-body antialiased">
@@ -110,7 +124,6 @@ export default function ProfilePage() {
     );
   }
 
-  // Loading State
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-slate-50 font-body antialiased">
@@ -139,6 +152,11 @@ export default function ProfilePage() {
           topLineages={topLineages}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
+          playerStats={playerStats}
+          allAchievements={allAchievements}
+          pendingGrants={pendingGrants}
+          achievementsLoading={achievementsLoading}
+          onAchievementsRefresh={refreshAchievements}
         />
       </main>
       <PageFooter />
