@@ -45,7 +45,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { uploadCharacterToIPFS, unpinFromIPFS } from "@/lib/pinata";
 import {
   mintCharacterNFT,
   getAdminRegistryInfo,
@@ -1245,11 +1244,19 @@ export default function GeneratorPage() {
 
       let finalImageUrl = generatedImage;
       if (generatedImageBlob) {
-        console.log("📤 Uploading to IPFS...");
-        const { imageUrl, imageHash: imgHash } = await uploadCharacterToIPFS(
-          generatedImageBlob,
-          { name: generatedName },
-        );
+        console.log("📤 Uploading to IPFS via API...");
+        const uploadForm = new FormData();
+        uploadForm.append("file", generatedImageBlob, `${generatedName}.png`);
+        uploadForm.append("name", generatedName);
+        const uploadRes = await fetch("/api/pinata/upload", {
+          method: "POST",
+          body: uploadForm,
+        });
+        if (!uploadRes.ok) {
+          const uploadErr = await uploadRes.json().catch(() => ({}));
+          throw new Error(uploadErr.error || "IPFS upload failed");
+        }
+        const { imageUrl, imageHash: imgHash } = await uploadRes.json();
         finalImageUrl = imageUrl;
         imageHash = imgHash;
         console.log("✅ IPFS upload complete:", finalImageUrl);
@@ -1293,7 +1300,12 @@ export default function GeneratorPage() {
       console.error("❌ Mint failed:", err);
       setError(err.message || "Failed to mint NFT. Please try again.");
       if (imageHash) {
-        await unpinFromIPFS(imageHash);
+        // Best-effort cleanup — fire and forget
+        fetch("/api/pinata/unpin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ hash: imageHash }),
+        }).catch(() => {});
       }
     } finally {
       setMinting(false);

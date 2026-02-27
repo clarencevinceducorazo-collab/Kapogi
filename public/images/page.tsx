@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { uploadCharacterToIPFS, unpinFromIPFS } from '@/lib/pinata';
 import { mintCharacterNFT } from '@/lib/sui';
 import { ENCRYPTION_CONFIG } from '@/lib/constants';
 import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
@@ -376,14 +375,22 @@ export default function GeneratorPage() {
           return;
       }
   
-      // 4. Upload to IPFS
-      console.log('📤 Uploading to IPFS...');
+      // 4. Upload to IPFS via server API route
+      console.log('📤 Uploading to IPFS via API...');
       const attributes = { cuteness, confidence, tiliFactor, luzon, visayas, mindanao, hairAmount, facialHair, clothingStyle, hairColor, eyewear, skinColor, bodyFat, posture, holdingItem };
-      const { imageUrl, imageHash: imgHash, metadataHash: metaHash } = await uploadCharacterToIPFS(generatedImageBlob, {
-        name: generatedName,
-        description: `A Kapogian character from ${originDescription}`,
-        attributes: attributes,
+      const uploadForm = new FormData();
+      uploadForm.append('file', generatedImageBlob, `${generatedName}.png`);
+      uploadForm.append('name', generatedName);
+      const uploadRes = await fetch('/api/pinata/upload', {
+        method: 'POST',
+        body: uploadForm,
       });
+      if (!uploadRes.ok) {
+        const uploadErr = await uploadRes.json().catch(() => ({}));
+        throw new Error(uploadErr.error || 'IPFS upload failed');
+      }
+      const { imageUrl, imageHash: imgHash } = await uploadRes.json();
+      const metaHash: string | null = null;
 
       // Store hashes for potential cleanup
       imageHash = imgHash;
@@ -418,10 +425,18 @@ export default function GeneratorPage() {
 
       // Cleanup IPFS files if they were uploaded
       if (imageHash) {
-        await unpinFromIPFS(imageHash);
+        fetch('/api/pinata/unpin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hash: imageHash }),
+        }).catch(() => {});
       }
       if (metadataHash) {
-        await unpinFromIPFS(metadataHash);
+        fetch('/api/pinata/unpin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hash: metadataHash }),
+        }).catch(() => {});
       }
     } finally {
       setMinting(false);
