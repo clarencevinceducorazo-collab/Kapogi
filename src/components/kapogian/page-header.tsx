@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/sheet";
 import { Menu, ChevronDown } from "lucide-react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
-import { checkIsAdmin, checkIsSuperAdmin  } from "@/lib/sui";
+import { checkIsAdmin, checkIsSuperAdmin } from "@/lib/sui";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,14 +42,16 @@ export const PageHeader = () => {
     Promise.all([
       checkIsAdmin(account.address),
       checkIsSuperAdmin(account.address),
-    ]).then(([admin, superAdmin]) => {
-      setIsAdmin(admin || superAdmin);
-    }).catch(() => setIsAdmin(false));
+    ])
+      .then(([admin, superAdmin]) => {
+        setIsAdmin(admin || superAdmin);
+      })
+      .catch(() => setIsAdmin(false));
   }, [account?.address]);
 
   const navLinks = [
     { name: "HOME", href: "/" },
-    { name: "SUMMON", href: "/summoning" },
+    { name: "SUMMON", href: "/generate" },
     { name: "EARN", href: "/earn" },
     {
       name: "ABOUT US",
