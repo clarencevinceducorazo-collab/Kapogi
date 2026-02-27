@@ -32,15 +32,9 @@ import {
   Wallet,
   DollarSign,
   RefreshCw,
-  AlertTriangle,
-  Trophy,
-  Plus,
-  ToggleLeft,
-  ToggleRight,
-  Gift,
-  Pencil,
   ChevronDown,
-  ChevronUp,
+  AlertTriangle,
+  Trash2,
 } from "lucide-react";
 import {
   useCurrentAccount,
@@ -65,19 +59,13 @@ import {
   superAdminUpdateTreasury,
   superAdminUpdateMintPrice,
   superAdminUpdateBundlePrice,
-  getAllAchievements,
-  superAdminCreateAchievement,
-  superAdminActivateAchievement,
-  superAdminDeactivateAchievement,
-  superAdminUpdateAchievementDisplay,
-  superAdminIssueGrant,
-  type AchievementDef,
 } from "@/lib/sui";
 import { decryptShippingInfo, type ShippingInfo } from "@/lib/encryption";
 import { ORDER_STATUS, CONTRACT_ADDRESSES } from "@/lib/constants";
 import { getIPFSGatewayUrl } from "@/lib/pinata";
 import { mistToSui, suiToMist } from "@/lib/constants";
 
+// I have to define IconifyIcon for typescript since it's not a standard element
 declare global {
   namespace JSX {
     interface IntrinsicElements {
@@ -130,7 +118,7 @@ interface TreasuryInfo {
 }
 
 // ─────────────────────────────────────────────
-// Shared UI Primitives
+// Toast System
 // ─────────────────────────────────────────────
 
 const BrutalCard = ({
@@ -213,13 +201,6 @@ const Badge = ({
   </span>
 );
 
-const REQ_LABELS: Record<number, { label: string; color: string }> = {
-  0: { label: "Total MMR",     color: "bg-purple-100 text-purple-700 border-purple-300" },
-  1: { label: "Best MMR",      color: "bg-blue-100 text-blue-700 border-blue-300" },
-  2: { label: "Total Summons", color: "bg-orange-100 text-orange-700 border-orange-300" },
-  3: { label: "Admin Granted", color: "bg-yellow-100 text-yellow-700 border-yellow-300" },
-};
-
 // ─────────────────────────────────────────────
 // Toast System
 // ─────────────────────────────────────────────
@@ -251,7 +232,11 @@ const ToastContainer = ({
       >
         <div className="flex-1">
           <p className="font-black text-black text-sm uppercase tracking-tight leading-snug">
-            {toast.type === "success" ? "✓ " : toast.type === "error" ? "✕ " : "● "}
+            {toast.type === "success"
+              ? "✓ "
+              : toast.type === "error"
+                ? "✕ "
+                : "● "}
             {toast.message}
           </p>
         </div>
@@ -267,651 +252,7 @@ const ToastContainer = ({
 );
 
 // ─────────────────────────────────────────────
-// Badge Upload Button — reusable within AchievementSection
-// ─────────────────────────────────────────────
-
-function BadgeUploadButton({
-  currentUrl,
-  onUploaded,
-  onToast,
-}: {
-  currentUrl: string;
-  onUploaded: (url: string) => void;
-  onToast: (msg: string, type: Toast["type"]) => void;
-}) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Client-side guard: images only, max 5MB
-    if (!file.type.startsWith("image/")) {
-      onToast("Please select an image file.", "error");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      onToast("Image must be under 5MB.", "error");
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const form = new FormData();
-      form.append("file", file, file.name);
-      form.append("name", `achievement-badge-${Date.now()}`);
-
-      const res = await fetch("/api/pinata/upload", {
-        method: "POST",
-        body: form,
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error ?? "Upload failed");
-      }
-
-      const { imageUrl } = await res.json();
-      onUploaded(imageUrl);
-      onToast("Badge uploaded!", "success");
-    } catch (err: any) {
-      onToast(err?.message ?? "Upload failed.", "error");
-    } finally {
-      setUploading(false);
-      // Reset input so the same file can be re-selected if needed
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
-
-  return (
-    <div className="flex items-center gap-2">
-      {/* Hidden native file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleFileChange}
-      />
-
-      {/* Preview thumbnail if a URL exists */}
-      {currentUrl && (
-        <div className="w-9 h-9 rounded-lg border-2 border-black overflow-hidden flex-shrink-0 bg-slate-100">
-          <img
-            src={currentUrl}
-            alt="badge preview"
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = "none";
-            }}
-          />
-        </div>
-      )}
-
-      {/* Upload trigger button */}
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={uploading}
-        className="flex-1 h-9 flex items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-xl font-bold text-xs text-slate-500 hover:border-yellow-400 hover:text-yellow-600 hover:bg-yellow-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {uploading ? (
-          <>
-            <LoaderCircle size={13} className="animate-spin" />
-            Uploading...
-          </>
-        ) : currentUrl ? (
-          <>
-            <RefreshCw size={13} />
-            Replace Badge
-          </>
-        ) : (
-          <>
-            <Plus size={13} />
-            Upload Badge Image
-          </>
-        )}
-      </button>
-
-      {/* Clear button — only shown when a URL exists */}
-      {currentUrl && !uploading && (
-        <button
-          type="button"
-          onClick={() => onUploaded("")}
-          title="Remove badge"
-          className="w-9 h-9 flex items-center justify-center border-2 border-red-200 rounded-xl text-red-400 hover:bg-red-50 hover:border-red-400 transition-colors"
-        >
-          <X size={13} />
-        </button>
-      )}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// Achievement Section (inside SuperAdminPanel)
-// ─────────────────────────────────────────────
-
-function AchievementSection({
-  superCapId,
-  signAndExecute,
-  onToast,
-}: {
-  superCapId: string;
-  signAndExecute: any;
-  onToast: (msg: string, type: Toast["type"]) => void;
-}) {
-  const [achievements, setAchievements] = useState<AchievementDef[]>([]);
-  const [loadingAchievements, setLoadingAchievements] = useState(true);
-
-  // Create form state
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newDesc, setNewDesc] = useState("");
-  const [newBadgeUrl, setNewBadgeUrl] = useState("");
-  const [newReqType, setNewReqType] = useState<number>(0);
-  const [newThreshold, setNewThreshold] = useState("");
-
-  // Edit display state — tracks which achievement is being edited
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editDesc, setEditDesc] = useState("");
-  const [editBadgeUrl, setEditBadgeUrl] = useState("");
-  const [savingEdit, setSavingEdit] = useState(false);
-
-  // Issue grant state
-  const [grantingId, setGrantingId] = useState<string | null>(null);
-  const [grantRecipient, setGrantRecipient] = useState("");
-  const [issuingGrant, setIssuingGrant] = useState(false);
-
-  // Toggle active state
-  const [togglingId, setTogglingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadAchievements();
-  }, []);
-
-  const loadAchievements = async () => {
-    setLoadingAchievements(true);
-    try {
-      const data = await getAllAchievements();
-      setAchievements(data.sort((a, b) => b.createdAt - a.createdAt));
-    } catch {
-      onToast("Failed to load achievements.", "error");
-    } finally {
-      setLoadingAchievements(false);
-    }
-  };
-
-  const handleCreate = async () => {
-    if (!newName.trim() || !newDesc.trim()) {
-      onToast("Name and description are required.", "error");
-      return;
-    }
-    if (newReqType !== 3 && (!newThreshold || Number(newThreshold) <= 0)) {
-      onToast("Threshold must be greater than 0 for this type.", "error");
-      return;
-    }
-    setCreating(true);
-    try {
-      await superAdminCreateAchievement({
-        superAdminCapId: superCapId,
-        name: newName.trim(),
-        description: newDesc.trim(),
-        badgeUrl: newBadgeUrl.trim(),
-        requirementType: newReqType,
-        threshold: newReqType === 3 ? 0 : Number(newThreshold),
-        signAndExecute,
-      });
-      onToast("Achievement created!", "success");
-      setNewName("");
-      setNewDesc("");
-      setNewBadgeUrl("");
-      setNewThreshold("");
-      setNewReqType(0);
-      setShowCreateForm(false);
-      loadAchievements();
-    } catch {
-      onToast("Failed to create achievement.", "error");
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const handleToggleActive = async (achievement: AchievementDef) => {
-    setTogglingId(achievement.objectId);
-    try {
-      if (achievement.isActive) {
-        await superAdminDeactivateAchievement({
-          superAdminCapId: superCapId,
-          achievementObjectId: achievement.objectId,
-          signAndExecute,
-        });
-        onToast(`"${achievement.name}" deactivated.`, "info");
-      } else {
-        await superAdminActivateAchievement({
-          superAdminCapId: superCapId,
-          achievementObjectId: achievement.objectId,
-          signAndExecute,
-        });
-        onToast(`"${achievement.name}" activated!`, "success");
-      }
-      loadAchievements();
-    } catch {
-      onToast("Failed to toggle achievement.", "error");
-    } finally {
-      setTogglingId(null);
-    }
-  };
-
-  const handleStartEdit = (achievement: AchievementDef) => {
-    setEditingId(achievement.objectId);
-    setEditName(achievement.name);
-    setEditDesc(achievement.description);
-    setEditBadgeUrl(achievement.badgeUrl);
-    setGrantingId(null);
-  };
-
-  const handleSaveEdit = async (achievementObjectId: string) => {
-    if (!editName.trim() || !editDesc.trim()) {
-      onToast("Name and description are required.", "error");
-      return;
-    }
-    setSavingEdit(true);
-    try {
-      await superAdminUpdateAchievementDisplay({
-        superAdminCapId: superCapId,
-        achievementObjectId,
-        name: editName.trim(),
-        description: editDesc.trim(),
-        badgeUrl: editBadgeUrl.trim(),
-        signAndExecute,
-      });
-      onToast("Achievement updated!", "success");
-      setEditingId(null);
-      loadAchievements();
-    } catch {
-      onToast("Failed to update achievement.", "error");
-    } finally {
-      setSavingEdit(false);
-    }
-  };
-
-  const handleIssueGrant = async (achievementObjectId: string) => {
-    if (!grantRecipient.startsWith("0x")) {
-      onToast("Invalid recipient address.", "error");
-      return;
-    }
-    setIssuingGrant(true);
-    try {
-      await superAdminIssueGrant({
-        superAdminCapId: superCapId,
-        achievementObjectId,
-        recipientAddress: grantRecipient,
-        signAndExecute,
-      });
-      onToast("Grant issued to player's wallet!", "success");
-      setGrantingId(null);
-      setGrantRecipient("");
-    } catch {
-      onToast("Failed to issue grant.", "error");
-    } finally {
-      setIssuingGrant(false);
-    }
-  };
-
-  return (
-    <section className="border-4 border-black rounded-2xl overflow-hidden">
-      {/* Header */}
-      <div className="bg-black text-white px-5 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Trophy size={16} className="text-yellow-400" />
-          <h3 className="font-black uppercase text-sm tracking-tight">
-            Achievements
-          </h3>
-          <span className="ml-1 px-2 py-0.5 bg-white/10 rounded text-[10px] font-black">
-            {achievements.length}
-          </span>
-        </div>
-        <button
-          onClick={() => {
-            setShowCreateForm((v) => !v);
-            setEditingId(null);
-            setGrantingId(null);
-          }}
-          className="flex items-center gap-1.5 h-8 px-3 bg-yellow-400 text-black rounded-lg border-2 border-yellow-200 font-black text-xs uppercase hover:bg-yellow-300 transition-colors"
-        >
-          <Plus size={13} />
-          New
-        </button>
-      </div>
-
-      {/* Create Form */}
-      {showCreateForm && (
-        <div className="p-5 border-b-2 border-black bg-yellow-50 space-y-3">
-          <p className="text-[10px] font-black uppercase tracking-widest text-yellow-700 mb-1">
-            Create New Achievement
-          </p>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Name
-              </label>
-              <input
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="e.g. First Summoner"
-                className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-yellow-400 mt-1"
-              />
-            </div>
-
-            <div className="col-span-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Description
-              </label>
-              <input
-                value={newDesc}
-                onChange={(e) => setNewDesc(e.target.value)}
-                placeholder="e.g. Minted your first character"
-                className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-yellow-400 mt-1"
-              />
-            </div>
-
-            <div className="col-span-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
-                Badge Image
-              </label>
-              <BadgeUploadButton
-                currentUrl={newBadgeUrl}
-                onUploaded={setNewBadgeUrl}
-                onToast={onToast}
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Requirement Type
-              </label>
-              <select
-                value={newReqType}
-                onChange={(e) => setNewReqType(Number(e.target.value))}
-                className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-bold text-sm bg-white outline-none cursor-pointer mt-1"
-              >
-                <option value={0}>Total MMR</option>
-                <option value={1}>Best MMR</option>
-                <option value={2}>Total Summons</option>
-                <option value={3}>Admin Granted</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Threshold {newReqType === 3 && "(ignored)"}
-              </label>
-              <input
-                type="number"
-                value={newThreshold}
-                onChange={(e) => setNewThreshold(e.target.value)}
-                placeholder={newReqType === 3 ? "N/A" : "e.g. 1000"}
-                disabled={newReqType === 3}
-                className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-yellow-400 mt-1 disabled:bg-slate-100 disabled:text-slate-400"
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-2 pt-1">
-            <button
-              onClick={() => setShowCreateForm(false)}
-              className="flex-1 h-10 border-2 border-slate-200 rounded-xl font-bold text-sm text-slate-500 hover:bg-slate-50"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleCreate}
-              disabled={creating}
-              className="flex-1 h-10 bg-black text-white rounded-xl font-black text-sm border-2 border-black disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {creating ? (
-                <LoaderCircle size={14} className="animate-spin" />
-              ) : (
-                <>
-                  <Plus size={14} /> Create
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Achievement List */}
-      <div className="divide-y-2 divide-slate-100 max-h-[420px] overflow-y-auto">
-        {loadingAchievements ? (
-          <div className="p-8 flex items-center justify-center gap-2 text-slate-400 font-black text-xs uppercase">
-            <LoaderCircle size={16} className="animate-spin" /> Loading...
-          </div>
-        ) : achievements.length === 0 ? (
-          <div className="p-8 text-center font-black text-slate-300 text-xs uppercase">
-            No achievements yet. Create one above.
-          </div>
-        ) : (
-          achievements.map((a) => {
-            const req = REQ_LABELS[a.requirementType];
-            const isEditing = editingId === a.objectId;
-            const isGranting = grantingId === a.objectId;
-            const isToggling = togglingId === a.objectId;
-
-            return (
-              <div key={a.objectId} className="p-4 bg-white">
-                {/* Achievement Row */}
-                <div className="flex items-start gap-3">
-                  {/* Badge preview or placeholder */}
-                  <div className="w-10 h-10 rounded-xl border-2 border-black bg-slate-100 flex-shrink-0 overflow-hidden flex items-center justify-center">
-                    {a.badgeUrl ? (
-                      <img
-                        src={a.badgeUrl}
-                        alt={a.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <Trophy size={18} className="text-slate-300" />
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-black text-sm text-slate-800 truncate">
-                        {a.name}
-                      </p>
-                      <span
-                        className={`px-1.5 py-0.5 border rounded text-[9px] font-black uppercase ${req.color}`}
-                      >
-                        {req.label}
-                      </span>
-                      {a.requirementType !== 3 && (
-                        <span className="text-[9px] font-black text-slate-400 uppercase">
-                          ≥ {a.threshold.toLocaleString()}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-400 font-semibold mt-0.5 truncate">
-                      {a.description}
-                    </p>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {/* Toggle active */}
-                    <button
-                      onClick={() => handleToggleActive(a)}
-                      disabled={isToggling}
-                      title={a.isActive ? "Deactivate" : "Activate"}
-                      className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors disabled:opacity-40 ${
-                        a.isActive
-                          ? "bg-green-400 hover:bg-green-500"
-                          : "bg-slate-200 hover:bg-slate-300"
-                      }`}
-                    >
-                      {isToggling ? (
-                        <LoaderCircle size={13} className="animate-spin" />
-                      ) : a.isActive ? (
-                        <ToggleRight size={14} />
-                      ) : (
-                        <ToggleLeft size={14} />
-                      )}
-                    </button>
-
-                    {/* Edit display */}
-                    <button
-                      onClick={() =>
-                        isEditing ? setEditingId(null) : handleStartEdit(a)
-                      }
-                      title="Edit display"
-                      className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors ${
-                        isEditing
-                          ? "bg-blue-400 text-white"
-                          : "bg-white hover:bg-blue-50"
-                      }`}
-                    >
-                      <Pencil size={13} />
-                    </button>
-
-                    {/* Issue grant — only for admin_granted type */}
-                    {a.requirementType === 3 && (
-                      <button
-                        onClick={() => {
-                          setGrantingId(isGranting ? null : a.objectId);
-                          setGrantRecipient("");
-                          setEditingId(null);
-                        }}
-                        title="Issue grant"
-                        className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors ${
-                          isGranting
-                            ? "bg-yellow-400"
-                            : "bg-white hover:bg-yellow-50"
-                        }`}
-                      >
-                        <Gift size={13} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Inline Edit Form */}
-                {isEditing && (
-                  <div className="mt-3 p-3 bg-blue-50 border-2 border-blue-200 rounded-xl space-y-2">
-                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">
-                      Edit Display Fields
-                    </p>
-                    <input
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      placeholder="Name"
-                      className="w-full h-9 border-2 border-slate-200 rounded-lg px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400"
-                    />
-                    <input
-                      value={editDesc}
-                      onChange={(e) => setEditDesc(e.target.value)}
-                      placeholder="Description"
-                      className="w-full h-9 border-2 border-slate-200 rounded-lg px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400"
-                    />
-                    <div>
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
-                        Badge Image
-                      </label>
-                      <BadgeUploadButton
-                        currentUrl={editBadgeUrl}
-                        onUploaded={setEditBadgeUrl}
-                        onToast={onToast}
-                      />
-                    </div>
-                    <div className="flex gap-2 pt-1">
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="flex-1 h-8 border-2 border-slate-200 rounded-lg font-bold text-xs text-slate-500 hover:bg-slate-50"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => handleSaveEdit(a.objectId)}
-                        disabled={savingEdit}
-                        className="flex-1 h-8 bg-blue-500 text-white rounded-lg font-black text-xs border-2 border-blue-300 disabled:opacity-50 flex items-center justify-center gap-1"
-                      >
-                        {savingEdit ? (
-                          <LoaderCircle size={12} className="animate-spin" />
-                        ) : (
-                          "Save"
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Inline Issue Grant Form */}
-                {isGranting && (
-                  <div className="mt-3 p-3 bg-yellow-50 border-2 border-yellow-300 rounded-xl space-y-2">
-                    <p className="text-[10px] font-black text-yellow-700 uppercase tracking-widest">
-                      Issue Grant To Player
-                    </p>
-                    <input
-                      value={grantRecipient}
-                      onChange={(e) => setGrantRecipient(e.target.value)}
-                      placeholder="0x... player wallet address"
-                      className="w-full h-9 border-2 border-slate-200 rounded-lg px-3 font-semibold text-xs bg-white outline-none focus:border-yellow-400"
-                    />
-                    <div className="flex gap-2 pt-1">
-                      <button
-                        onClick={() => {
-                          setGrantingId(null);
-                          setGrantRecipient("");
-                        }}
-                        className="flex-1 h-8 border-2 border-slate-200 rounded-lg font-bold text-xs text-slate-500 hover:bg-slate-50"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => handleIssueGrant(a.objectId)}
-                        disabled={issuingGrant || !grantRecipient}
-                        className="flex-1 h-8 bg-yellow-400 text-black rounded-lg font-black text-xs border-2 border-yellow-300 disabled:opacity-50 flex items-center justify-center gap-1"
-                      >
-                        {issuingGrant ? (
-                          <LoaderCircle size={12} className="animate-spin" />
-                        ) : (
-                          <>
-                            <Gift size={12} /> Send
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* Refresh Footer */}
-      <div className="px-4 py-3 border-t-2 border-slate-100 bg-slate-50">
-        <button
-          onClick={loadAchievements}
-          className="w-full h-8 flex items-center justify-center gap-2 text-slate-500 font-bold text-xs uppercase hover:text-black"
-        >
-          <RefreshCw size={12} /> Refresh Achievements
-        </button>
-      </div>
-    </section>
-  );
-}
-
-// ─────────────────────────────────────────────
-// Super Admin Panel (drawer)
+// Super Admin Panel (drawer/modal)
 // ─────────────────────────────────────────────
 
 function SuperAdminPanel({
@@ -929,16 +270,20 @@ function SuperAdminPanel({
   const [superCapId, setSuperCapId] = useState<string>("");
   const [loadingInfo, setLoadingInfo] = useState(true);
 
+  // Add/Remove Admin
   const [newAdminAddr, setNewAdminAddr] = useState("");
   const [addingAdmin, setAddingAdmin] = useState(false);
   const [removingAdmin, setRemovingAdmin] = useState<string | null>(null);
 
+  // Pause
   const [pauseReason, setPauseReason] = useState("");
   const [togglingPause, setTogglingPause] = useState(false);
 
+  // Treasury
   const [newTreasuryAddr, setNewTreasuryAddr] = useState("");
   const [updatingTreasury, setUpdatingTreasury] = useState(false);
 
+  // Prices
   const [newMintPriceSui, setNewMintPriceSui] = useState("");
   const [newBundlePriceSui, setNewBundlePriceSui] = useState("");
   const [updatingMintPrice, setUpdatingMintPrice] = useState(false);
@@ -958,6 +303,7 @@ function SuperAdminPanel({
       setRegistry(reg);
       setTreasury(treas);
 
+      // Find the SuperAdminCap object ID in the current wallet
       if (account?.address) {
         const ownedObjects = await suiClient.getOwnedObjects({
           owner: account.address,
@@ -1013,7 +359,7 @@ function SuperAdminPanel({
       });
       onToast("Admin removed.", "success");
       loadInfo();
-    } catch {
+    } catch (e) {
       onToast("Failed to remove admin.", "error");
     } finally {
       setRemovingAdmin(null);
@@ -1045,7 +391,7 @@ function SuperAdminPanel({
         setPauseReason("");
       }
       loadInfo();
-    } catch {
+    } catch (e) {
       onToast("Failed to toggle pause.", "error");
     } finally {
       setTogglingPause(false);
@@ -1067,7 +413,7 @@ function SuperAdminPanel({
       onToast("Treasury address updated!", "success");
       setNewTreasuryAddr("");
       loadInfo();
-    } catch {
+    } catch (e) {
       onToast("Failed to update treasury.", "error");
     } finally {
       setUpdatingTreasury(false);
@@ -1090,7 +436,7 @@ function SuperAdminPanel({
       onToast("Mint price updated!", "success");
       setNewMintPriceSui("");
       loadInfo();
-    } catch {
+    } catch (e) {
       onToast("Failed to update mint price.", "error");
     } finally {
       setUpdatingMintPrice(false);
@@ -1113,7 +459,7 @@ function SuperAdminPanel({
       onToast("Bundle price updated!", "success");
       setNewBundlePriceSui("");
       loadInfo();
-    } catch {
+    } catch (e) {
       onToast("Failed to update bundle price.", "error");
     } finally {
       setUpdatingBundlePrice(false);
@@ -1122,10 +468,13 @@ function SuperAdminPanel({
 
   return (
     <div className="fixed inset-0 z-[150] flex">
+      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
+
+      {/* Drawer from right */}
       <div className="relative ml-auto h-full w-full max-w-lg bg-white border-l-4 border-black flex flex-col shadow-[-8px_0_0_0_rgba(0,0,0,1)] overflow-hidden">
         {/* Header */}
         <div className="bg-black text-white px-6 py-5 flex items-center justify-between flex-shrink-0">
@@ -1168,7 +517,6 @@ function SuperAdminPanel({
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-
             {/* ── Mint Pause ── */}
             <section
               className={`border-4 rounded-2xl p-5 ${registry?.mintPaused ? "border-red-500 bg-red-50" : "border-black bg-white"}`}
@@ -1212,14 +560,21 @@ function SuperAdminPanel({
               <button
                 className={`w-full h-10 rounded-xl flex items-center justify-center gap-2 font-bold text-sm text-white ${registry?.mintPaused ? "bg-green-500" : "bg-red-500"} disabled:opacity-50`}
                 onClick={handleTogglePause}
-                disabled={togglingPause || (!registry?.mintPaused && !pauseReason.trim())}
+                disabled={
+                  togglingPause ||
+                  (!registry?.mintPaused && !pauseReason.trim())
+                }
               >
                 {togglingPause ? (
                   <LoaderCircle size={15} className="animate-spin" />
                 ) : registry?.mintPaused ? (
-                  <><PlayCircle size={15} /> Resume Minting</>
+                  <>
+                    <PlayCircle size={15} /> Resume Minting
+                  </>
                 ) : (
-                  <><PauseCircle size={15} /> Pause Minting</>
+                  <>
+                    <PauseCircle size={15} /> Pause Minting
+                  </>
                 )}
               </button>
             </section>
@@ -1247,7 +602,10 @@ function SuperAdminPanel({
                       key={addr}
                       className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"
                     >
-                      <User size={12} className="text-slate-400 flex-shrink-0" />
+                      <User
+                        size={12}
+                        className="text-slate-400 flex-shrink-0"
+                      />
                       <span
                         className="font-mono text-xs font-bold text-slate-600 flex-1 truncate"
                         title={addr}
@@ -1400,15 +758,6 @@ function SuperAdminPanel({
               </div>
             </div>
 
-            {/* ── Achievements ── */}
-            {superCapId && (
-              <AchievementSection
-                superCapId={superCapId}
-                signAndExecute={signAndExecute}
-                onToast={onToast}
-              />
-            )}
-
             <button
               className="w-full h-10 flex items-center justify-center gap-2 bg-white border-2 border-slate-200 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-50"
               onClick={loadInfo}
@@ -1417,6 +766,137 @@ function SuperAdminPanel({
             </button>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function TrackingModal({
+  isOpen,
+  onClose,
+  onSave,
+  receipt,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (data: {
+    trackingNumber: string;
+    carrier: string;
+    estDeliveryDate: string;
+  }) => void;
+  receipt: Receipt | null;
+}) {
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [carrier, setCarrier] = useState("");
+  const [estDeliveryDate, setEstDeliveryDate] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (receipt) {
+      setTrackingNumber(receipt.trackingNumber || "");
+      setCarrier(receipt.carrier || "");
+      setEstDeliveryDate(
+        receipt.estimatedDelivery
+          ? new Date(receipt.estimatedDelivery).toISOString().split("T")[0]
+          : "",
+      );
+    }
+  }, [receipt]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    await onSave({ trackingNumber, carrier, estDeliveryDate });
+    setIsSaving(false);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="toy-card w-full max-w-md rounded-3xl p-6 relative">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-800">
+            Logistics Update
+          </h2>
+          <button
+            onClick={onClose}
+            className="w-9 h-9 bg-white/80 border-2 border-white rounded-full flex items-center justify-center shadow-sm text-slate-500 hover:text-red-500 bouncy-hover"
+          >
+            <iconify-icon
+              icon="solar:close-circle-linear"
+              class="text-2xl"
+            ></iconify-icon>
+          </button>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+              Carrier Service
+            </label>
+            <div className="relative w-full group mt-1">
+              <select
+                value={carrier}
+                onChange={(e) => setCarrier(e.target.value)}
+                className="w-full bg-white/60 border-[3px] border-white rounded-xl text-sm font-bold text-slate-700 pl-4 pr-10 py-3 shadow-inner focus:outline-none focus:border-sky-300 focus:ring-4 focus:ring-sky-100/50 cursor-pointer transition-all appearance-none bouncy-hover"
+              >
+                <option value="">Select a carrier…</option>
+                <option value="UPS">UPS</option>
+                <option value="FedEx">FedEx</option>
+                <option value="J&T Express">J&T Express</option>
+                <option value="LBC">LBC</option>
+                <option value="DHL">DHL World</option>
+                <option value="SPX">Shopee Express</option>
+                <option value="J&T">J&T (17Track)</option>
+                <option value="NINJA">NINJA Van Philippines</option>
+              </select>
+              <iconify-icon
+                icon="solar:alt-arrow-down-linear"
+                class="text-lg absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-hover:text-sky-500 transition-colors"
+              ></iconify-icon>
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+              Tracking Number
+            </label>
+            <input
+              value={trackingNumber}
+              onChange={(e) => setTrackingNumber(e.target.value)}
+              className="w-full bg-white/60 border-[3px] border-white rounded-xl text-sm font-bold text-slate-700 px-4 py-3 shadow-inner focus:outline-none focus:border-sky-300 focus:ring-4 focus:ring-sky-100/50 transition-all mt-1"
+              placeholder="e.g. 1Z999AA10123456784"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+              Estimated Delivery Date
+            </label>
+            <input
+              type="date"
+              value={estDeliveryDate}
+              onChange={(e) => setEstDeliveryDate(e.target.value)}
+              className="w-full bg-white/60 border-[3px] border-white rounded-xl text-sm font-bold text-slate-700 px-4 py-3 shadow-inner focus:outline-none focus:border-sky-300 focus:ring-4 focus:ring-sky-100/50 transition-all mt-1"
+            />
+          </div>
+          <div className="pt-4 flex gap-4">
+            <button
+              onClick={onClose}
+              className="flex-1 bg-white/90 text-slate-600 border-2 border-white rounded-2xl py-3 font-bold shadow-sm bouncy-hover"
+            >
+              Discard
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="flex-1 bg-gradient-to-b from-sky-400 to-blue-500 text-white border-2 border-sky-200/50 rounded-2xl py-3 font-bold shadow-[0_4px_0_0_#2563eb,0_8px_16px_-6px_rgba(59,130,246,0.4)] squishy-btn squishy-btn-blue disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isSaving ? (
+                <LoaderCircle size={18} className="animate-spin" />
+              ) : (
+                "Save Tracking"
+              )}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1441,9 +921,12 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterItem, setFilterItem] = useState<string>("all");
-  const [activeTab, setActiveTab] = useState<"pending" | "shipped" | "delivered">("pending");
+  const [activeTab, setActiveTab] = useState<
+    "pending" | "shipped" | "delivered"
+  >("pending");
   const [superAdminPanelOpen, setSuperAdminPanelOpen] = useState(false);
 
+  // Tracking modal
   const [trackingModalOpen, setTrackingModalOpen] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
   const [trackingNumber, setTrackingNumber] = useState("");
@@ -1456,7 +939,10 @@ export default function AdminPage() {
   const showToast = (message: string, type: Toast["type"] = "info") => {
     const id = ++toastCounter.current;
     setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
+    setTimeout(
+      () => setToasts((prev) => prev.filter((t) => t.id !== id)),
+      3500,
+    );
   };
   const removeToast = (id: number) =>
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -1468,6 +954,7 @@ export default function AdminPage() {
       setRoleLoading(false);
       return;
     }
+
     setRoleLoading(true);
     Promise.all([
       checkIsAdmin(account.address),
@@ -1493,7 +980,8 @@ export default function AdminPage() {
     () => ({
       pending: receipts.filter((r) => r.status === ORDER_STATUS.PENDING).length,
       shipped: receipts.filter((r) => r.status === ORDER_STATUS.SHIPPED).length,
-      delivered: receipts.filter((r) => r.status === ORDER_STATUS.DELIVERED).length,
+      delivered: receipts.filter((r) => r.status === ORDER_STATUS.DELIVERED)
+        .length,
     }),
     [receipts],
   );
@@ -1509,12 +997,18 @@ export default function AdminPage() {
   const filteredReceipts = useMemo(() => {
     const q = searchQuery.toLowerCase();
     return receipts.filter((r) => {
-      if (activeTab === "pending" && r.status !== ORDER_STATUS.PENDING) return false;
-      if (activeTab === "shipped" && r.status !== ORDER_STATUS.SHIPPED) return false;
-      if (activeTab === "delivered" && r.status !== ORDER_STATUS.DELIVERED) return false;
+      if (activeTab === "pending" && r.status !== ORDER_STATUS.PENDING)
+        return false;
+      if (activeTab === "shipped" && r.status !== ORDER_STATUS.SHIPPED)
+        return false;
+      if (activeTab === "delivered" && r.status !== ORDER_STATUS.DELIVERED)
+        return false;
       if (
         filterItem !== "all" &&
-        !r.itemsSelected.split(",").map((i) => i.trim()).includes(filterItem)
+        !r.itemsSelected
+          .split(",")
+          .map((i) => i.trim())
+          .includes(filterItem)
       )
         return false;
       if (q) {
@@ -1544,13 +1038,16 @@ export default function AdminPage() {
           nftId: obj.data.content.fields.nft_id,
           buyer: obj.data.content.fields.buyer,
           itemsSelected: obj.data.content.fields.items_selected,
-          encryptedShippingInfo: obj.data.content.fields.encrypted_shipping_info,
+          encryptedShippingInfo:
+            obj.data.content.fields.encrypted_shipping_info,
           status: Number(obj.data.content.fields.status),
           paymentAmount: Number(obj.data.content.fields.payment_amount),
           createdAt: Number(obj.data.content.fields.created_at),
           trackingNumber: obj.data.content.fields.tracking_number || "",
           carrier: obj.data.content.fields.carrier || "",
-          estimatedDelivery: Number(obj.data.content.fields.estimated_delivery || 0),
+          estimatedDelivery: Number(
+            obj.data.content.fields.estimated_delivery || 0,
+          ),
         }))
         .sort((a, b) => b.createdAt - a.createdAt);
 
@@ -1565,7 +1062,9 @@ export default function AdminPage() {
           .map((obj) => [
             obj.data?.objectId,
             {
-              imageUrl: getIPFSGatewayUrl((obj.data?.display?.data as any)?.image_url),
+              imageUrl: getIPFSGatewayUrl(
+                (obj.data?.display?.data as any)?.image_url,
+              ),
               name: (obj.data?.display?.data as any)?.name,
             },
           ]),
@@ -1611,7 +1110,7 @@ export default function AdminPage() {
       showToast("Tracking information saved!", "success");
       setTrackingModalOpen(false);
       loadReceipts();
-    } catch {
+    } catch (e) {
       showToast("Failed to save tracking info.", "error");
     } finally {
       setIsSavingTracking(false);
@@ -1640,7 +1139,7 @@ export default function AdminPage() {
           character: receipt.character,
         },
       ]);
-    } catch {
+    } catch (e) {
       showToast("Decryption failed. Check your key.", "error");
     }
   };
@@ -1650,7 +1149,7 @@ export default function AdminPage() {
       await markAsShipped({ receiptObjectId: receiptId, signAndExecute });
       showToast("Order marked as Shipped!", "success");
       loadReceipts();
-    } catch {
+    } catch (e) {
       showToast("Failed to mark as shipped.", "error");
     }
   };
@@ -1660,12 +1159,15 @@ export default function AdminPage() {
       await markAsDelivered({ receiptObjectId: receiptId, signAndExecute });
       showToast("Order marked as Delivered!", "success");
       loadReceipts();
-    } catch {
+    } catch (e) {
       showToast("Failed to mark as delivered.", "error");
     }
   };
 
-  const handleDownloadImage = async (imageUrl: string, characterName: string) => {
+  const handleDownloadImage = async (
+    imageUrl: string,
+    characterName: string,
+  ) => {
     try {
       const response = await fetch(imageUrl);
       const blob = await response.blob();
@@ -1682,13 +1184,14 @@ export default function AdminPage() {
     }
   };
 
-  // ── Guards ──────────────────────────────────
-
   if (!account) {
     return (
       <div
         className="min-h-screen flex items-center justify-center bg-slate-50 p-4"
-        style={{ backgroundImage: "radial-gradient(#000 1px, transparent 1px)", backgroundSize: "24px 24px" }}
+        style={{
+          backgroundImage: "radial-gradient(#000 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+        }}
       >
         <BrutalCard className="max-w-md w-full text-center">
           <LockKeyhole size={48} className="mx-auto mb-4 text-slate-400" />
@@ -1706,7 +1209,8 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
         <div className="flex items-center gap-3 font-bold text-slate-400 uppercase">
-          <LoaderCircle className="animate-spin" size={28} /> Verifying access...
+          <LoaderCircle className="animate-spin" size={28} /> Verifying
+          access...
         </div>
       </div>
     );
@@ -1716,11 +1220,16 @@ export default function AdminPage() {
     return (
       <div
         className="min-h-screen flex items-center justify-center bg-slate-50 p-4"
-        style={{ backgroundImage: "radial-gradient(#000 1px, transparent 1px)", backgroundSize: "24px 24px" }}
+        style={{
+          backgroundImage: "radial-gradient(#000 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+        }}
       >
         <BrutalCard className="max-w-md w-full text-center">
           <ShieldAlert size={48} className="mx-auto mb-4 text-red-500" />
-          <h2 className="font-black text-2xl uppercase mb-3">Access Denied...</h2>
+          <h2 className="font-black text-2xl uppercase mb-3">
+            Access Denied...
+          </h2>
           <p className="mb-2 font-bold text-slate-600">
             This wallet is not in the admin whitelist.
           </p>
@@ -1765,6 +1274,7 @@ export default function AdminPage() {
               </BrutalButton>
             </Link>
 
+            {/* ── Super Admin Button (only visible if super admin) ── */}
             {isSuperAdmin && (
               <BrutalButton
                 variant="yellow"
@@ -1794,7 +1304,9 @@ export default function AdminPage() {
                 <Clock size={28} />
               </div>
               <div>
-                <p className="text-xs font-black uppercase text-slate-400">Pending</p>
+                <p className="text-xs font-black uppercase text-slate-400">
+                  Pending
+                </p>
                 <p className="text-4xl font-black">{stats.pending}</p>
               </div>
             </div>
@@ -1805,7 +1317,9 @@ export default function AdminPage() {
                 <Truck size={28} />
               </div>
               <div>
-                <p className="text-xs font-black uppercase text-slate-400">Shipped</p>
+                <p className="text-xs font-black uppercase text-slate-400">
+                  Shipped
+                </p>
                 <p className="text-4xl font-black">{stats.shipped}</p>
               </div>
             </div>
@@ -1816,7 +1330,9 @@ export default function AdminPage() {
                 <CheckCircle size={28} />
               </div>
               <div>
-                <p className="text-xs font-black uppercase text-slate-400">Delivered</p>
+                <p className="text-xs font-black uppercase text-slate-400">
+                  Delivered
+                </p>
                 <p className="text-4xl font-black">{stats.delivered}</p>
               </div>
             </div>
@@ -1827,8 +1343,12 @@ export default function AdminPage() {
                 <Package size={28} />
               </div>
               <div>
-                <p className="text-xs font-black uppercase text-blue-900/60">Total Orders</p>
-                <p className="text-4xl font-black text-black">{receipts.length}</p>
+                <p className="text-xs font-black uppercase text-blue-900/60">
+                  Total Orders
+                </p>
+                <p className="text-4xl font-black text-black">
+                  {receipts.length}
+                </p>
               </div>
             </div>
           </BrutalCard>
@@ -1856,17 +1376,27 @@ export default function AdminPage() {
                   onChange={(e) => setAdminPrivateKey(e.target.value)}
                   className="w-full h-14 bg-slate-50 border-4 border-black rounded-2xl px-5 text-lg font-bold placeholder:text-slate-300 focus:bg-white focus:ring-0 outline-none transition-all"
                 />
-                <Key className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
+                <Key
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300"
+                  size={20}
+                />
               </div>
               <div className="mt-4 flex items-start gap-3 bg-blue-50 border-2 border-dashed border-blue-200 rounded-xl p-3">
-                <ShieldCheck size={18} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                <ShieldCheck
+                  size={18}
+                  className="text-blue-500 flex-shrink-0 mt-0.5"
+                />
                 <p className="text-xs font-bold text-blue-700 leading-tight">
-                  Your private key is never sent to any server. Local decryption only.
+                  Your private key is never sent to any server. Local decryption
+                  only.
                 </p>
               </div>
             </BrutalCard>
 
-            <BrutalCard noPadding className="flex-1 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <BrutalCard
+              noPadding
+              className="flex-1 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+            >
               <div className="p-5 bg-slate-900 text-white flex justify-between items-center">
                 <h3 className="font-black uppercase text-base tracking-widest flex items-center gap-2">
                   <FileText size={18} /> Shipping Payload
@@ -1944,13 +1474,21 @@ export default function AdminPage() {
                             {card.address}
                           </div>
                         </div>
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                            <Phone size={11} /> Contact
-                          </label>
-                          <p className="p-3 bg-slate-50 border-2 border-black rounded-xl font-black text-slate-700 text-xs truncate">
-                            {card.contact_number}
-                          </p>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                              <Phone size={11} /> Contact
+                            </label>
+                            <p className="p-3 bg-slate-50 border-2 border-black rounded-xl font-black text-slate-700 text-xs truncate">
+                              {card.contact_number}
+                            </p>
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                              <Mail size={11} /> Email
+                            </label>
+                            {/* Email already displayed above, so skip here */}
+                          </div>
                         </div>
                         <div className="space-y-1.5">
                           <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
@@ -1958,7 +1496,10 @@ export default function AdminPage() {
                           </label>
                           <div className="flex flex-wrap gap-1.5 p-3 bg-slate-50 border-2 border-black rounded-xl">
                             {card.itemsSelected.split(",").map((item) => (
-                              <Badge key={item} className="bg-white !text-[10px]">
+                              <Badge
+                                key={item}
+                                className="bg-white !text-[10px]"
+                              >
                                 {item.trim()}
                               </Badge>
                             ))}
@@ -1988,7 +1529,10 @@ export default function AdminPage() {
 
           {/* ── Right: Order Registry ── */}
           <section className="lg:col-span-8 flex flex-col">
-            <BrutalCard noPadding className="shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col flex-1">
+            <BrutalCard
+              noPadding
+              className="shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col flex-1"
+            >
               <div className="p-5 border-b-4 border-black flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-3">
                   <h3 className="text-xl font-black uppercase tracking-tighter">
@@ -2001,16 +1545,28 @@ export default function AdminPage() {
                 <div className="flex items-center border-2 border-black rounded-xl overflow-hidden shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                   {["pending", "shipped", "delivered"].map((tab, i) => {
                     const count = receipts.filter((r) =>
-                      tab === "pending" ? r.status === 0 : tab === "shipped" ? r.status === 1 : r.status === 2,
+                      tab === "pending"
+                        ? r.status === 0
+                        : tab === "shipped"
+                          ? r.status === 1
+                          : r.status === 2,
                     ).length;
-                    const Icon = tab === "pending" ? Clock : tab === "shipped" ? Truck : CheckCircle;
+                    const Icon =
+                      tab === "pending"
+                        ? Clock
+                        : tab === "shipped"
+                          ? Truck
+                          : CheckCircle;
                     const activeColor =
                       tab === "pending"
                         ? "bg-yellow-400 text-black"
                         : tab === "shipped"
                           ? "bg-blue-500 text-white"
                           : "bg-green-500 text-white";
-                    const badgeActive = "bg-black text-white border-black";
+                    const badgeActive =
+                      tab === "pending"
+                        ? "bg-black text-white border-black"
+                        : "bg-black text-white border-black";
                     const badgeInactive =
                       tab === "pending"
                         ? "bg-yellow-100 border-yellow-400 text-yellow-700"
@@ -2022,15 +1578,28 @@ export default function AdminPage() {
                       <React.Fragment key={tab}>
                         {i > 0 && <div className="w-0.5 h-6 bg-black" />}
                         <button
-                          onClick={() => setActiveTab(tab as "pending" | "shipped" | "delivered")}
+                          onClick={() =>
+                            setActiveTab(
+                              tab as "pending" | "shipped" | "delivered",
+                            )
+                          }
                           className={`h-10 px-4 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 relative
                             ${isActive ? `${activeColor} shadow-lg scale-105 ring-4 ring-black ring-opacity-30 animate-pulse z-10` : "bg-white text-slate-500 hover:bg-slate-50"}
                           `}
-                          style={isActive ? { boxShadow: "0 0 0 4px #000, 0 6px 16px 0 rgba(0,0,0,0.10)" } : {}}
+                          style={
+                            isActive
+                              ? {
+                                  boxShadow:
+                                    "0 0 0 4px #000, 0 6px 16px 0 rgba(0,0,0,0.10)",
+                                }
+                              : {}
+                          }
                         >
-                          <Icon size={12} />
+                          <Icon size={12} />{" "}
                           {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                          <span className={`ml-1 px-1.5 py-0.5 rounded text-[9px] font-black border ${isActive ? badgeActive : badgeInactive}`}>
+                          <span
+                            className={`ml-1 px-1.5 py-0.5 rounded text-[9px] font-black border ${isActive ? badgeActive : badgeInactive}`}
+                          >
                             {count}
                           </span>
                         </button>
@@ -2049,7 +1618,10 @@ export default function AdminPage() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full bg-white border-2 border-black rounded-xl pl-10 h-10 font-bold text-sm outline-none"
                   />
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+                  <Search
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    size={15}
+                  />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery("")}
@@ -2078,28 +1650,35 @@ export default function AdminPage() {
                 </div>
                 {(searchQuery || filterItem !== "all") && (
                   <button
-                    onClick={() => { setSearchQuery(""); setFilterItem("all"); }}
+                    onClick={() => {
+                      setSearchQuery("");
+                      setFilterItem("all");
+                    }}
                     className="h-10 px-3 border-2 border-red-400 rounded-xl font-black text-xs uppercase text-red-500 hover:bg-red-50 flex items-center gap-1.5"
                   >
                     <X size={12} /> Clear
                   </button>
                 )}
                 <span className="text-[10px] font-black text-slate-400 ml-auto">
-                  {filteredReceipts.length} result{filteredReceipts.length !== 1 ? "s" : ""}
+                  {filteredReceipts.length} result
+                  {filteredReceipts.length !== 1 ? "s" : ""}
                 </span>
               </div>
 
               {/* Table */}
               {loading ? (
                 <div className="p-16 flex justify-center items-center gap-3 text-slate-400 font-black text-sm uppercase">
-                  <LoaderCircle className="animate-spin" size={24} /> Loading orders...
+                  <LoaderCircle className="animate-spin" size={24} /> Loading
+                  orders...
                 </div>
               ) : filteredReceipts.length === 0 ? (
                 <div className="p-16 text-center font-black text-slate-400 uppercase text-sm">
                   No orders to display.
                 </div>
               ) : (
-                <div className={`relative overflow-x-auto ${filteredReceipts.length >= 5 ? "max-h-[70vh] overflow-y-auto border-4 border-black" : ""}`}>
+                <div
+                  className={`relative overflow-x-auto ${filteredReceipts.length >= 5 ? "max-h-[70vh] overflow-y-auto border-4 border-black" : ""}`}
+                >
                   <table className="w-full border-collapse">
                     <thead className="bg-slate-50 border-b-4 border-black sticky top-0 z-20">
                       <tr>
@@ -2119,7 +1698,9 @@ export default function AdminPage() {
                     </thead>
                     <tbody className="divide-y-2 divide-slate-100">
                       {filteredReceipts.map((receipt) => {
-                        const isDecrypted = decryptedCards.some((c) => c.id === receipt.objectId);
+                        const isDecrypted = decryptedCards.some(
+                          (c) => c.id === receipt.objectId,
+                        );
                         return (
                           <tr
                             key={receipt.objectId}
@@ -2142,7 +1723,8 @@ export default function AdminPage() {
                                 )}
                                 <div>
                                   <p className="font-black text-slate-900 text-sm leading-none">
-                                    {receipt.character?.name || shortAddr(receipt.nftId)}
+                                    {receipt.character?.name ||
+                                      shortAddr(receipt.nftId)}
                                   </p>
                                   <p
                                     className="text-xs font-mono font-bold text-slate-400 mt-1.5 uppercase tracking-tighter"
@@ -2155,14 +1737,16 @@ export default function AdminPage() {
                             </td>
                             <td className="p-4">
                               <div className="flex flex-wrap gap-1.5 max-w-[180px]">
-                                {receipt.itemsSelected.split(",").map((item) => (
-                                  <Badge
-                                    key={item}
-                                    className={`!text-[10px] tracking-tighter ${item.trim() === "ALL_BUNDLE" ? "bg-blue-500 text-white" : "bg-white"}`}
-                                  >
-                                    {item.trim()}
-                                  </Badge>
-                                ))}
+                                {receipt.itemsSelected
+                                  .split(",")
+                                  .map((item) => (
+                                    <Badge
+                                      key={item}
+                                      className={`!text-[10px] tracking-tighter ${item.trim() === "ALL_BUNDLE" ? "bg-blue-500 text-white" : "bg-white"}`}
+                                    >
+                                      {item.trim()}
+                                    </Badge>
+                                  ))}
                               </div>
                             </td>
                             <td className="p-4 text-center">
@@ -2184,23 +1768,37 @@ export default function AdminPage() {
                               <div className="flex justify-end gap-2 flex-wrap">
                                 <BrutalButton
                                   onClick={() => handleToggleDecrypt(receipt)}
-                                  title={isDecrypted ? "Clear Data" : "Decrypt PII"}
+                                  title={
+                                    isDecrypted ? "Clear Data" : "Decrypt PII"
+                                  }
                                   variant={isDecrypted ? "danger" : "purple"}
                                 >
-                                  {isDecrypted ? <LockKeyhole size={15} /> : <LockOpen size={15} />}
+                                  {isDecrypted ? (
+                                    <LockKeyhole size={15} />
+                                  ) : (
+                                    <LockOpen size={15} />
+                                  )}
                                   {isDecrypted ? "Hide" : "Decrypt"}
                                 </BrutalButton>
                                 <BrutalButton
                                   variant="primary"
-                                  disabled={receipt.status !== ORDER_STATUS.PENDING}
-                                  onClick={() => handleMarkShipped(receipt.objectId)}
+                                  disabled={
+                                    receipt.status !== ORDER_STATUS.PENDING
+                                  }
+                                  onClick={() =>
+                                    handleMarkShipped(receipt.objectId)
+                                  }
                                 >
                                   <Truck size={15} /> Ship
                                 </BrutalButton>
                                 <BrutalButton
                                   variant="success"
-                                  disabled={receipt.status !== ORDER_STATUS.SHIPPED}
-                                  onClick={() => handleMarkDelivered(receipt.objectId)}
+                                  disabled={
+                                    receipt.status !== ORDER_STATUS.SHIPPED
+                                  }
+                                  onClick={() =>
+                                    handleMarkDelivered(receipt.objectId)
+                                  }
                                 >
                                   <CheckCircle size={15} /> Done
                                 </BrutalButton>
@@ -2211,7 +1809,9 @@ export default function AdminPage() {
                                     receipt.status === ORDER_STATUS.PENDING ||
                                     receipt.status === ORDER_STATUS.DELIVERED
                                   }
-                                  onClick={() => handleOpenTrackingModal(receipt)}
+                                  onClick={() =>
+                                    handleOpenTrackingModal(receipt)
+                                  }
                                   title="Add/Edit Tracking"
                                 >
                                   <ClipboardList size={15} />
@@ -2235,7 +1835,9 @@ export default function AdminPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white border-4 border-black rounded-3xl w-full max-w-md shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-black uppercase italic">Logistics Update</h2>
+              <h2 className="text-2xl font-black uppercase italic">
+                Logistics Update
+              </h2>
               <button
                 onClick={() => setTrackingModalOpen(false)}
                 className="bg-red-500 text-white w-8 h-8 rounded-full border-2 border-black flex items-center justify-center font-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
@@ -2287,7 +1889,10 @@ export default function AdminPage() {
                 />
               </div>
               <div className="pt-4 flex gap-3">
-                <BrutalButton onClick={() => setTrackingModalOpen(false)} className="flex-1">
+                <BrutalButton
+                  onClick={() => setTrackingModalOpen(false)}
+                  className="flex-1"
+                >
                   Discard
                 </BrutalButton>
                 <BrutalButton
