@@ -2020,14 +2020,14 @@ export default function AdminPage() {
 
             <BrutalCard
               noPadding
-              className="flex-1 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+              className="flex-1 flex flex-col shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
             >
               <div className="p-5 bg-slate-900 text-white flex justify-between items-center">
                 <h3 className="font-black uppercase text-base tracking-widest flex items-center gap-2">
                   <FileText size={18} /> Shipping Payload
                 </h3>
               </div>
-              <div className="p-6">
+              <div className="p-6 overflow-y-auto max-h-[48vh]">
                 {decryptedCards.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
                     <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center border-2 border-slate-200">
