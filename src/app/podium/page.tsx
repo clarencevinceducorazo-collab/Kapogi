@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
@@ -630,72 +631,72 @@ function SummonDetailModal({
     const rank = bestNft?.rank || "Spirit Seed";
     const ranks: { [key: string]: { style: string; icon: string } } = {
       "Kapogian Ascendant": {
-        style: "text-purple-400",
+        style: "rank-ascendant",
         icon: "solar:crown-star-bold-duotone",
       },
       "Master Rancher": {
-        style: "text-purple-400",
+        style: "rank-rancher",
         icon: "solar:crown-star-bold-duotone",
       },
       "Generational Tycoon": {
-        style: "text-yellow-500",
+        style: "rank-tycoon",
         icon: "solar:crown-star-linear",
       },
       "Cultural Icon": {
-        style: "text-red-500",
+        style: "rank-icon",
         icon: "solar:crown-star-linear",
       },
       "Eternal Light Bearer": {
-        style: "text-red-500",
+        style: "rank-eternal",
         icon: "solar:crown-star-linear",
       },
       "Ritual Architect": {
-        style: "text-yellow-500",
+        style: "rank-hof",
         icon: "solar:crown-star-linear",
       },
       "Hall of Fame Immortal": {
-        style: "text-yellow-500",
+        style: "rank-hof",
         icon: "solar:star-bold",
       },
-      "Supreme Pogi": { style: "text-yellow-400", icon: "solar:star-bold" },
+      "Supreme Pogi": { style: "rank-supreme", icon: "solar:star-bold" },
       "Proof of Pogi Elite": {
-        style: "text-emerald-400",
+        style: "rank-elite",
         icon: "solar:star-bold",
       },
       "Aura God": {
-        style: "text-emerald-500",
+        style: "rank-auragod",
         icon: "solar:star-line-duotone",
       },
       "Lord of Biringan": {
-        style: "text-emerald-600",
+        style: "rank-biringan",
         icon: "solar:star-line-duotone",
       },
       "Fearless Descent": {
-        style: "text-sky-400",
+        style: "rank-fearless",
         icon: "solar:verified-check-linear",
       },
       "Dalaketnon Slayer": {
-        style: "text-sky-500",
+        style: "rank-slayer",
         icon: "solar:verified-check-linear",
       },
       "Ghost Walker": {
-        style: "text-sky-600",
+        style: "rank-ghost",
         icon: "solar:verified-check-linear",
       },
       "Initiate of Pogi": {
-        style: "text-amber-700",
+        style: "rank-initiate",
         icon: "solar:verified-check-linear",
       },
       "Aura Touched": {
-        style: "text-amber-800",
+        style: "rank-touched",
         icon: "solar:verified-check-linear",
       },
       "Pogi Spark": {
-        style: "text-amber-900",
+        style: "rank-spark",
         icon: "solar:verified-check-linear",
       },
       "Spirit Seed": {
-        style: "text-slate-500",
+        style: "rank-seed",
         icon: "solar:verified-check-linear",
       },
     };
@@ -730,7 +731,7 @@ function SummonDetailModal({
             <div className="slide-up-delay-1 text-center z-20 mt-2">
               <h2
                 className={cn(
-                  "text-lg font-semibold uppercase tracking-wider flex items-center justify-center gap-1",
+                  "uppercase tracking-wider flex items-center justify-center gap-1",
                   rankInfo.style,
                 )}
               >
@@ -767,19 +768,6 @@ function SummonDetailModal({
                   </div>
                 )}
               </div>
-
-              {/* Podium orb (identical to CharacterDetailModal) */}
-              {/* <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-48 h-20 z-0">
-                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-40 h-6 bg-emerald-900/20 blur-lg rounded-[100%]" />
-                <div className="absolute top-1/2 left-[4%] w-[92%] h-full bg-gradient-to-b from-emerald-600 to-emerald-800 rounded-b-[100%] border-b border-emerald-900/30 shadow-xl z-0" />
-                <div className="absolute top-0 w-full h-full bg-gradient-to-b from-emerald-400 to-emerald-500 rounded-[100%] border-[3px] border-emerald-300/50 shadow-[inset_0_6px_12px_rgba(0,0,0,0.1)] z-10 flex items-center justify-center overflow-hidden">
-                  <div className="absolute top-1 left-1/2 -translate-x-1/2 w-[85%] h-[35%] bg-emerald-300/40 rounded-[100%] blur-[1px]" />
-                  <div className="mt-2 text-emerald-900 font-display font-bold text-4xl opacity-20 select-none mix-blend-overlay">
-                    {user.rank}
-                  </div>
-                </div>
-                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-[105%] h-[105%] border border-emerald-300/30 rounded-[100%] animate-pulse z-20" />
-              </div> */}
             </div>
 
             {/* NFT name + wallet lineage badge */}
@@ -1056,7 +1044,7 @@ function SummonDetailModal({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MMR MODAL — unchanged from original
+// MMR MODAL — updated with high-fidelity rank styles
 // ─────────────────────────────────────────────────────────────────────────────
 
 function CharacterDetailModal({
@@ -1097,72 +1085,72 @@ function CharacterDetailModal({
     const rank = user.attributes?.rank || "Spirit Seed";
     const ranks: { [key: string]: { style: string; icon: string } } = {
       "Kapogian Ascendant": {
-        style: "text-purple-400",
+        style: "rank-ascendant",
         icon: "solar:crown-star-bold-duotone",
       },
       "Master Rancher": {
-        style: "text-purple-400",
+        style: "rank-rancher",
         icon: "solar:crown-star-bold-duotone",
       },
       "Generational Tycoon": {
-        style: "text-yellow-500",
+        style: "rank-tycoon",
         icon: "solar:crown-star-linear",
       },
       "Cultural Icon": {
-        style: "text-red-500",
+        style: "rank-icon",
         icon: "solar:crown-star-linear",
       },
       "Eternal Light Bearer": {
-        style: "text-red-500",
+        style: "rank-eternal",
         icon: "solar:crown-star-linear",
       },
       "Ritual Architect": {
-        style: "text-yellow-500",
+        style: "rank-hof",
         icon: "solar:crown-star-linear",
       },
       "Hall of Fame Immortal": {
-        style: "text-yellow-500",
+        style: "rank-hof",
         icon: "solar:star-bold",
       },
-      "Supreme Pogi": { style: "text-yellow-400", icon: "solar:star-bold" },
+      "Supreme Pogi": { style: "rank-supreme", icon: "solar:star-bold" },
       "Proof of Pogi Elite": {
-        style: "text-emerald-400",
+        style: "rank-elite",
         icon: "solar:star-bold",
       },
       "Aura God": {
-        style: "text-emerald-500",
+        style: "rank-auragod",
         icon: "solar:star-line-duotone",
       },
       "Lord of Biringan": {
-        style: "text-emerald-600",
+        style: "rank-biringan",
         icon: "solar:star-line-duotone",
       },
       "Fearless Descent": {
-        style: "text-sky-400",
+        style: "rank-fearless",
         icon: "solar:verified-check-linear",
       },
       "Dalaketnon Slayer": {
-        style: "text-sky-500",
+        style: "rank-slayer",
         icon: "solar:verified-check-linear",
       },
       "Ghost Walker": {
-        style: "text-sky-600",
+        style: "rank-ghost",
         icon: "solar:verified-check-linear",
       },
       "Initiate of Pogi": {
-        style: "text-amber-700",
+        style: "rank-initiate",
         icon: "solar:verified-check-linear",
       },
       "Aura Touched": {
-        style: "text-amber-800",
+        style: "rank-touched",
         icon: "solar:verified-check-linear",
       },
       "Pogi Spark": {
-        style: "text-amber-900",
+        style: "rank-spark",
         icon: "solar:verified-check-linear",
       },
       "Spirit Seed": {
-        style: "text-slate-500",
+        style: "rank-seed",
         icon: "solar:verified-check-linear",
       },
     };
@@ -1219,7 +1207,7 @@ function CharacterDetailModal({
             <div className="-mb-40 slide-up-delay-1 text-center z-20">
               <h2
                 className={cn(
-                  "text-lg font-semibold uppercase tracking-wider mt-40",
+                  "uppercase tracking-wider mt-40 flex items-center justify-center gap-1",
                   rankInfo.style,
                 )}
               >
