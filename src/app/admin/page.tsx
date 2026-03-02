@@ -267,10 +267,19 @@ const ToastContainer = ({
 // ─────────────────────────────────────────────
 // Badge requirement labels
 const REQ_LABELS: Record<number, { label: string; color: string }> = {
-  0: { label: "Total MMR", color: "bg-purple-100 text-purple-700 border-purple-300" },
+  0: {
+    label: "Total MMR",
+    color: "bg-purple-100 text-purple-700 border-purple-300",
+  },
   1: { label: "Best MMR", color: "bg-blue-100 text-blue-700 border-blue-300" },
-  2: { label: "Total Summons", color: "bg-orange-100 text-orange-700 border-orange-300" },
-  3: { label: "Admin Granted", color: "bg-yellow-100 text-yellow-700 border-yellow-300" },
+  2: {
+    label: "Total Summons",
+    color: "bg-orange-100 text-orange-700 border-orange-300",
+  },
+  3: {
+    label: "Admin Granted",
+    color: "bg-yellow-100 text-yellow-700 border-yellow-300",
+  },
 };
 
 // Badge Upload Button used by AchievementSection
@@ -334,7 +343,14 @@ function BadgeUploadButton({
 
       {currentUrl && (
         <div className="w-9 h-9 rounded-lg border-2 border-black overflow-hidden flex-shrink-0 bg-slate-100">
-          <img src={currentUrl} alt="badge preview" className="w-full h-full object-cover" onError={(e) => {(e.target as HTMLImageElement).style.display = "none";}} />
+          <img
+            src={currentUrl}
+            alt="badge preview"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
         </div>
       )}
 
@@ -547,11 +563,19 @@ function AchievementSection({
       <div className="bg-black text-white px-5 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Trophy size={16} className="text-yellow-400" />
-          <h3 className="font-black uppercase text-sm tracking-tight">Achievements</h3>
-          <span className="ml-1 px-2 py-0.5 bg-white/10 rounded text-[10px] font-black">{achievements.length}</span>
+          <h3 className="font-black uppercase text-sm tracking-tight">
+            Achievements
+          </h3>
+          <span className="ml-1 px-2 py-0.5 bg-white/10 rounded text-[10px] font-black">
+            {achievements.length}
+          </span>
         </div>
         <button
-          onClick={() => { setShowCreateForm((v) => !v); setEditingId(null); setGrantingId(null); }}
+          onClick={() => {
+            setShowCreateForm((v) => !v);
+            setEditingId(null);
+            setGrantingId(null);
+          }}
           className="flex items-center gap-1.5 h-8 px-3 bg-yellow-400 text-black rounded-lg border-2 border-yellow-200 font-black text-xs uppercase hover:bg-yellow-300 transition-colors"
         >
           <Plus size={13} /> New
@@ -560,23 +584,51 @@ function AchievementSection({
 
       {showCreateForm && (
         <div className="p-5 border-b-2 border-black bg-yellow-50 space-y-3">
-          <p className="text-[10px] font-black uppercase tracking-widest text-yellow-700 mb-1">Create New Achievement</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-yellow-700 mb-1">
+            Create New Achievement
+          </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Name</label>
-              <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. First Summoner" className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-yellow-400 mt-1" />
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Name
+              </label>
+              <input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="e.g. First Summoner"
+                className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-yellow-400 mt-1"
+              />
             </div>
             <div className="col-span-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</label>
-              <input value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder="e.g. Minted your first character" className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-yellow-400 mt-1" />
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Description
+              </label>
+              <input
+                value={newDesc}
+                onChange={(e) => setNewDesc(e.target.value)}
+                placeholder="e.g. Minted your first character"
+                className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-yellow-400 mt-1"
+              />
             </div>
             <div className="col-span-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Badge Image</label>
-              <BadgeUploadButton currentUrl={newBadgeUrl} onUploaded={setNewBadgeUrl} onToast={onToast} />
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
+                Badge Image
+              </label>
+              <BadgeUploadButton
+                currentUrl={newBadgeUrl}
+                onUploaded={setNewBadgeUrl}
+                onToast={onToast}
+              />
             </div>
             <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Requirement Type</label>
-              <select value={newReqType} onChange={(e) => setNewReqType(Number(e.target.value))} className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-bold text-sm bg-white outline-none cursor-pointer mt-1">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Requirement Type
+              </label>
+              <select
+                value={newReqType}
+                onChange={(e) => setNewReqType(Number(e.target.value))}
+                className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-bold text-sm bg-white outline-none cursor-pointer mt-1"
+              >
                 <option value={0}>Total MMR</option>
                 <option value={1}>Best MMR</option>
                 <option value={2}>Total Summons</option>
@@ -584,22 +636,52 @@ function AchievementSection({
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Threshold {newReqType === 3 && "(ignored)"}</label>
-              <input type="number" value={newThreshold} onChange={(e) => setNewThreshold(e.target.value)} placeholder={newReqType === 3 ? "N/A" : "e.g. 1000"} disabled={newReqType === 3} className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-yellow-400 mt-1 disabled:bg-slate-100 disabled:text-slate-400" />
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Threshold {newReqType === 3 && "(ignored)"}
+              </label>
+              <input
+                type="number"
+                value={newThreshold}
+                onChange={(e) => setNewThreshold(e.target.value)}
+                placeholder={newReqType === 3 ? "N/A" : "e.g. 1000"}
+                disabled={newReqType === 3}
+                className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-yellow-400 mt-1 disabled:bg-slate-100 disabled:text-slate-400"
+              />
             </div>
           </div>
           <div className="flex gap-2 pt-1">
-            <button onClick={() => setShowCreateForm(false)} className="flex-1 h-10 border-2 border-slate-200 rounded-xl font-bold text-sm text-slate-500 hover:bg-slate-50">Cancel</button>
-            <button onClick={handleCreate} disabled={creating} className="flex-1 h-10 bg-black text-white rounded-xl font-black text-sm border-2 border-black disabled:opacity-50 flex items-center justify-center gap-2">{creating ? <LoaderCircle size={14} className="animate-spin" /> : <><Plus size={14} /> Create</>}</button>
+            <button
+              onClick={() => setShowCreateForm(false)}
+              className="flex-1 h-10 border-2 border-slate-200 rounded-xl font-bold text-sm text-slate-500 hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreate}
+              disabled={creating}
+              className="flex-1 h-10 bg-black text-white rounded-xl font-black text-sm border-2 border-black disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {creating ? (
+                <LoaderCircle size={14} className="animate-spin" />
+              ) : (
+                <>
+                  <Plus size={14} /> Create
+                </>
+              )}
+            </button>
           </div>
         </div>
       )}
 
       <div className="divide-y-2 divide-slate-100 max-h-[420px] overflow-y-auto">
         {loadingAchievements ? (
-          <div className="p-8 flex items-center justify-center gap-2 text-slate-400 font-black text-xs uppercase"><LoaderCircle size={16} className="animate-spin" /> Loading...</div>
+          <div className="p-8 flex items-center justify-center gap-2 text-slate-400 font-black text-xs uppercase">
+            <LoaderCircle size={16} className="animate-spin" /> Loading...
+          </div>
         ) : achievements.length === 0 ? (
-          <div className="p-8 text-center font-black text-slate-300 text-xs uppercase">No achievements yet. Create one above.</div>
+          <div className="p-8 text-center font-black text-slate-300 text-xs uppercase">
+            No achievements yet. Create one above.
+          </div>
         ) : (
           achievements.map((a) => {
             const req = REQ_LABELS[a.requirementType];
@@ -610,48 +692,162 @@ function AchievementSection({
               <div key={a.objectId} className="p-4 bg-white">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-xl border-2 border-black bg-slate-100 flex-shrink-0 overflow-hidden flex items-center justify-center">
-                    {a.badgeUrl ? <img src={a.badgeUrl} alt={a.name} className="w-full h-full object-cover" onError={(e) => {(e.target as HTMLImageElement).style.display = "none";}} /> : <Trophy size={18} className="text-slate-300" />}
+                    {a.badgeUrl ? (
+                      <img
+                        src={a.badgeUrl}
+                        alt={a.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <Trophy size={18} className="text-slate-300" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-black text-sm text-slate-800 truncate">{a.name}</p>
-                      <span className={`px-1.5 py-0.5 border rounded text-[9px] font-black uppercase ${req.color}`}>{req.label}</span>
-                      {a.requirementType !== 3 && (<span className="text-[9px] font-black text-slate-400 uppercase">≥ {a.threshold.toLocaleString()}</span>)}
+                      <p className="font-black text-sm text-slate-800 truncate">
+                        {a.name}
+                      </p>
+                      <span
+                        className={`px-1.5 py-0.5 border rounded text-[9px] font-black uppercase ${req.color}`}
+                      >
+                        {req.label}
+                      </span>
+                      {a.requirementType !== 3 && (
+                        <span className="text-[9px] font-black text-slate-400 uppercase">
+                          ≥ {a.threshold.toLocaleString()}
+                        </span>
+                      )}
                     </div>
-                    <p className="text-xs text-slate-400 font-semibold mt-0.5 truncate">{a.description}</p>
+                    <p className="text-xs text-slate-400 font-semibold mt-0.5 truncate">
+                      {a.description}
+                    </p>
                   </div>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <button onClick={() => handleToggleActive(a)} disabled={isToggling} title={a.isActive ? "Deactivate" : "Activate"} className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors disabled:opacity-40 ${a.isActive ? "bg-green-400 hover:bg-green-500" : "bg-slate-200 hover:bg-slate-300"}`}>
-                      {isToggling ? <LoaderCircle size={13} className="animate-spin" /> : a.isActive ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+                    <button
+                      onClick={() => handleToggleActive(a)}
+                      disabled={isToggling}
+                      title={a.isActive ? "Deactivate" : "Activate"}
+                      className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors disabled:opacity-40 ${a.isActive ? "bg-green-400 hover:bg-green-500" : "bg-slate-200 hover:bg-slate-300"}`}
+                    >
+                      {isToggling ? (
+                        <LoaderCircle size={13} className="animate-spin" />
+                      ) : a.isActive ? (
+                        <ToggleRight size={14} />
+                      ) : (
+                        <ToggleLeft size={14} />
+                      )}
                     </button>
-                    <button onClick={() => isEditing ? setEditingId(null) : handleStartEdit(a)} title="Edit display" className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors ${isEditing ? "bg-blue-400 text-white" : "bg-white hover:bg-blue-50"}`}><Pencil size={13} /></button>
-                    {a.requirementType === 3 && (<button onClick={() => { setGrantingId(isGranting ? null : a.objectId); setGrantRecipient(""); setEditingId(null); }} title="Issue grant" className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors ${isGranting ? "bg-yellow-400" : "bg-white hover:bg-yellow-50"}`}><Gift size={13} /></button>)}
+                    <button
+                      onClick={() =>
+                        isEditing ? setEditingId(null) : handleStartEdit(a)
+                      }
+                      title="Edit display"
+                      className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors ${isEditing ? "bg-blue-400 text-white" : "bg-white hover:bg-blue-50"}`}
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    {a.requirementType === 3 && (
+                      <button
+                        onClick={() => {
+                          setGrantingId(isGranting ? null : a.objectId);
+                          setGrantRecipient("");
+                          setEditingId(null);
+                        }}
+                        title="Issue grant"
+                        className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors ${isGranting ? "bg-yellow-400" : "bg-white hover:bg-yellow-50"}`}
+                      >
+                        <Gift size={13} />
+                      </button>
+                    )}
                   </div>
                 </div>
 
                 {isEditing && (
                   <div className="mt-3 p-3 bg-blue-50 border-2 border-blue-200 rounded-xl space-y-2">
-                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Edit Display Fields</p>
-                    <input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Name" className="w-full h-9 border-2 border-slate-200 rounded-lg px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400" />
-                    <input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="Description" className="w-full h-9 border-2 border-slate-200 rounded-lg px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400" />
+                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">
+                      Edit Display Fields
+                    </p>
+                    <input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="Name"
+                      className="w-full h-9 border-2 border-slate-200 rounded-lg px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400"
+                    />
+                    <input
+                      value={editDesc}
+                      onChange={(e) => setEditDesc(e.target.value)}
+                      placeholder="Description"
+                      className="w-full h-9 border-2 border-slate-200 rounded-lg px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400"
+                    />
                     <div>
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Badge Image</label>
-                      <BadgeUploadButton currentUrl={editBadgeUrl} onUploaded={setEditBadgeUrl} onToast={onToast} />
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
+                        Badge Image
+                      </label>
+                      <BadgeUploadButton
+                        currentUrl={editBadgeUrl}
+                        onUploaded={setEditBadgeUrl}
+                        onToast={onToast}
+                      />
                     </div>
                     <div className="flex gap-2 pt-1">
-                      <button onClick={() => setEditingId(null)} className="flex-1 h-8 border-2 border-slate-200 rounded-lg font-bold text-xs text-slate-500 hover:bg-slate-50">Cancel</button>
-                      <button onClick={() => handleSaveEdit(a.objectId)} disabled={savingEdit} className="flex-1 h-8 bg-blue-500 text-white rounded-lg font-black text-xs border-2 border-blue-300 disabled:opacity-50 flex items-center justify-center gap-1">{savingEdit ? <LoaderCircle size={12} className="animate-spin" /> : "Save"}</button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="flex-1 h-8 border-2 border-slate-200 rounded-lg font-bold text-xs text-slate-500 hover:bg-slate-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleSaveEdit(a.objectId)}
+                        disabled={savingEdit}
+                        className="flex-1 h-8 bg-blue-500 text-white rounded-lg font-black text-xs border-2 border-blue-300 disabled:opacity-50 flex items-center justify-center gap-1"
+                      >
+                        {savingEdit ? (
+                          <LoaderCircle size={12} className="animate-spin" />
+                        ) : (
+                          "Save"
+                        )}
+                      </button>
                     </div>
                   </div>
                 )}
 
                 {isGranting && (
                   <div className="mt-3 p-3 bg-yellow-50 border-2 border-yellow-300 rounded-xl space-y-2">
-                    <p className="text-[10px] font-black text-yellow-700 uppercase tracking-widest">Issue Grant To Player</p>
-                    <input value={grantRecipient} onChange={(e) => setGrantRecipient(e.target.value)} placeholder="0x... player wallet address" className="w-full h-9 border-2 border-slate-200 rounded-lg px-3 font-semibold text-xs bg-white outline-none focus:border-yellow-400" />
+                    <p className="text-[10px] font-black text-yellow-700 uppercase tracking-widest">
+                      Issue Grant To Player
+                    </p>
+                    <input
+                      value={grantRecipient}
+                      onChange={(e) => setGrantRecipient(e.target.value)}
+                      placeholder="0x... player wallet address"
+                      className="w-full h-9 border-2 border-slate-200 rounded-lg px-3 font-semibold text-xs bg-white outline-none focus:border-yellow-400"
+                    />
                     <div className="flex gap-2 pt-1">
-                      <button onClick={() => { setGrantingId(null); setGrantRecipient(""); }} className="flex-1 h-8 border-2 border-slate-200 rounded-lg font-bold text-xs text-slate-500 hover:bg-slate-50">Cancel</button>
-                      <button onClick={() => handleIssueGrant(a.objectId)} disabled={issuingGrant || !grantRecipient} className="flex-1 h-8 bg-yellow-400 text-black rounded-lg font-black text-xs border-2 border-yellow-300 disabled:opacity-50 flex items-center justify-center gap-1">{issuingGrant ? <LoaderCircle size={12} className="animate-spin" /> : <><Gift size={12} /> Send</>}</button>
+                      <button
+                        onClick={() => {
+                          setGrantingId(null);
+                          setGrantRecipient("");
+                        }}
+                        className="flex-1 h-8 border-2 border-slate-200 rounded-lg font-bold text-xs text-slate-500 hover:bg-slate-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleIssueGrant(a.objectId)}
+                        disabled={issuingGrant || !grantRecipient}
+                        className="flex-1 h-8 bg-yellow-400 text-black rounded-lg font-black text-xs border-2 border-yellow-300 disabled:opacity-50 flex items-center justify-center gap-1"
+                      >
+                        {issuingGrant ? (
+                          <LoaderCircle size={12} className="animate-spin" />
+                        ) : (
+                          <>
+                            <Gift size={12} /> Send
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
                 )}
@@ -662,7 +858,12 @@ function AchievementSection({
       </div>
 
       <div className="px-4 py-3 border-t-2 border-slate-100 bg-slate-50">
-        <button onClick={loadAchievements} className="w-full h-8 flex items-center justify-center gap-2 text-slate-500 font-bold text-xs uppercase hover:text-black"><RefreshCw size={12} /> Refresh Achievements</button>
+        <button
+          onClick={loadAchievements}
+          className="w-full h-8 flex items-center justify-center gap-2 text-slate-500 font-bold text-xs uppercase hover:text-black"
+        >
+          <RefreshCw size={12} /> Refresh Achievements
+        </button>
       </div>
     </section>
   );
