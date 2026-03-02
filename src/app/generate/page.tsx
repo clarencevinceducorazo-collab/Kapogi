@@ -141,12 +141,12 @@ const CarouselSelector = ({
             {current.name}
           </span>
           <div className="flex gap-1 mt-1">
-            options.map((_, i) => (
+            {options.map((_, i) => (
               <div
                 key={i}
                 className={`w-1.5 h-1.5 rounded-full border border-black/20 ${i === currentIndex ? "bg-black w-4" : "bg-black/10"}`}
               />
-            ))
+            ))}
           </div>
         </div>
 
