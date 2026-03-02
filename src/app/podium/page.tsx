@@ -280,9 +280,6 @@ export default function PodiumPage() {
               </div>
               <div
                 className="w-full h-32 md:h-40 rounded-t-2xl md:rounded-t-3xl podium-silver flex flex-col justify-end items-center p-3 text-center relative overflow-hidden"
-                style={{
-                  background: "url('/images/podium/silver.png') center/cover no-repeat",
-                }}
               >
                 <div className="absolute top-0 left-0 w-full h-2 bg-white/30" />
                 <span className="text-xs md:text-sm text-slate-500 font-bold mb-1 truncate w-full px-2">
@@ -326,9 +323,6 @@ export default function PodiumPage() {
               </div>
               <div
                 className="w-full h-44 md:h-52 rounded-t-2xl md:rounded-t-3xl podium-gold flex flex-col justify-end items-center p-3 text-center relative overflow-hidden"
-                style={{
-                  background: "url('/images/podium/gold.png') center/cover no-repeat",
-                }}
               >
                 <div className="absolute top-0 left-0 w-full h-3 bg-white/30" />
                 <span className="text-xs md:text-sm text-yellow-800/70 font-bold mb-1 truncate w-full px-2">
@@ -368,9 +362,6 @@ export default function PodiumPage() {
               </div>
               <div
                 className="w-full h-24 md:h-32 rounded-t-2xl md:rounded-t-3xl podium-bronze flex flex-col justify-end items-center p-3 text-center relative overflow-hidden"
-                style={{
-                  background: "url('/images/podium/bronze.png') center/cover no-repeat",
-                }}
               >
                 <div className="absolute top-0 left-0 w-full h-2 bg-white/30" />
                 <span className="text-xs md:text-sm text-orange-800/60 font-bold mb-1 truncate w-full px-2">
@@ -714,7 +705,6 @@ function SummonDetailModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         className="max-w-4xl w-full p-0 bg-transparent border-none shadow-none !rounded-[2rem]"
-        hideCloseButton
       >
         <DialogHeader className="sr-only">
           <DialogTitle>Summoner: {short(user.walletAddress)}</DialogTitle>
@@ -724,13 +714,6 @@ function SummonDetailModal({
         </DialogHeader>
 
         <div className="w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[750px] relative">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 z-50 p-2 bg-white/80 backdrop-blur-md rounded-full border-2 border-slate-100 text-slate-400 hover:text-slate-800 transition-colors shadow-sm"
-          >
-            <X size={20} />
-          </button>
-
           <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r border-slate-100 flex flex-col items-center justify-center p-4">
             <div className="slide-up-delay-1 text-center z-20 mt-20">
               <span className="inline-flex items-center gap-1 bg-white/60 backdrop-blur-sm border border-white/50 text-[9px] font-black uppercase tracking-[0.18em] text-amber-600 px-3 py-1 rounded-full shadow-sm">
@@ -1020,6 +1003,15 @@ function SummonDetailModal({
                 )}
               </div>
             </div>
+            {/* Reverted Close Button */}
+            <div className="p-6 bg-gray-50 border-t border-slate-100 mt-auto">
+              <button
+                onClick={onClose}
+                className="w-full py-4 bg-slate-900 hover:bg-black text-white rounded-2xl font-black uppercase tracking-widest text-sm transition-all"
+              >
+                Close Profile
+              </button>
+            </div>
           </div>
         </div>
       </DialogContent>
@@ -1173,7 +1165,6 @@ function CharacterDetailModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         className="max-w-4xl w-full p-0 bg-transparent border-none shadow-none !rounded-[2rem]"
-        hideCloseButton
       >
         <DialogHeader className="sr-only">
           <DialogTitle>Character Details: {user.nftName}</DialogTitle>
@@ -1182,13 +1173,6 @@ function CharacterDetailModal({
           </DialogDescription>
         </DialogHeader>
         <div className="w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row relative">
-          <button
-            onClick={onClose}
-            aria-label="Close profile modal"
-            className="absolute top-4 right-4 z-40 p-2 bg-white/80 backdrop-blur-md rounded-full border-2 border-slate-100 text-slate-500 hover:text-slate-800 transition-colors shadow-sm"
-          >
-            <X size={20} />
-          </button>
           <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r border-slate-100 flex flex-col items-center justify-center p-4">
             <div className="-mb-40 slide-up-delay-1 text-center z-20">
               <h2
@@ -1405,6 +1389,15 @@ function CharacterDetailModal({
                   ))}
                 </div>
               </div>
+            </div>
+            {/* Reverted Close Button */}
+            <div className="p-6 bg-gray-50 border-t border-slate-100 mt-auto">
+              <button
+                onClick={onClose}
+                className="w-full py-4 bg-slate-900 hover:bg-black text-white rounded-2xl font-black uppercase tracking-widest text-sm transition-all"
+              >
+                Close Profile
+              </button>
             </div>
           </div>
         </div>
