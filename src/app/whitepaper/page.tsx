@@ -134,7 +134,7 @@ export default function WhitepaperPage() {
                       <p className="font-bold text-xs">Mugs</p>
                     </div>
                     <div className="bg-white p-4 rounded-xl border-2 border-black">
-                      <p className="font-bold text-xs">Aluminum Plates</p>
+                      <p className="font-bold text-xs">Mouse Pad</p>
                     </div>
                   </div>
                 </div>
