@@ -141,12 +141,12 @@ const CarouselSelector = ({
             {current.name}
           </span>
           <div className="flex gap-1 mt-1">
-            {options.map((_, i) => (
+            options.map((_, i) => (
               <div
                 key={i}
                 className={`w-1.5 h-1.5 rounded-full border border-black/20 ${i === currentIndex ? "bg-black w-4" : "bg-black/10"}`}
               />
-            ))}
+            ))
           </div>
         </div>
 
@@ -407,7 +407,7 @@ export default function GeneratorPage() {
   const [shufflingMmr, setShufflingMmr] = useState(0);
   const [shufflingRank, setShufflingRank] = useState({
     name: "Shuffling...",
-    style: "text-slate-500",
+    style: "rank-seed",
     rarity: "??%",
   });
 
@@ -448,101 +448,98 @@ export default function GeneratorPage() {
     if (mmr >= 3951)
       return {
         name: "Kapogian Ascendant",
-        style:
-          "text-mythic-aurora text-4xl font-black uppercase tracking-tighter",
+        style: "rank-ascendant",
         rarity: "Top 0.005%",
       };
     if (mmr >= 3851)
       return {
         name: "Master Rancher",
-        style:
-          "text-purple-300 text-2xl font-bold [text-shadow:0_0_10px_theme(colors.purple.300)]",
+        style: "rank-rancher",
         rarity: "Top 0.02%",
       };
     if (mmr >= 3701)
       return {
         name: "Generational Tycoon",
-        style:
-          "text-yellow-400 text-2xl font-bold [text-shadow:0_0_10px_theme(colors.yellow.400)]",
+        style: "rank-tycoon",
         rarity: "Top 0.04%",
       };
     if (mmr >= 3501)
       return {
         name: "Cultural Icon",
-        style: "effect-flame text-2xl font-black uppercase",
+        style: "rank-icon",
         rarity: "Top 0.08%",
       };
     if (mmr >= 3301)
       return {
         name: "Eternal Light Bearer",
-        style: "effect-flame text-xl",
+        style: "rank-eternal",
         rarity: "Top 0.18%",
       };
     if (mmr >= 2801)
       return {
         name: "Hall of Fame Immortal",
-        style: "effect-gold text-xl",
+        style: "rank-hof",
         rarity: "Top 0.6%",
       };
     if (mmr >= 2501)
       return {
         name: "Supreme Pogi",
-        style: "text-yellow-400 font-bold text-lg",
+        style: "rank-supreme",
         rarity: "Top 1.2%",
       };
     if (mmr >= 2201)
       return {
         name: "Proof of Pogi Elite",
-        style: "text-emerald-400 font-bold text-lg",
+        style: "rank-elite",
         rarity: "Top 2.5%",
       };
     if (mmr >= 1901)
       return {
         name: "Aura God",
-        style: "text-emerald-500 effect-aura font-bold",
+        style: "rank-auragod",
         rarity: "Top 4%",
       };
     if (mmr >= 1601)
       return {
         name: "Lord of Biringan",
-        style: "text-emerald-600 effect-aura",
+        style: "rank-biringan",
         rarity: "Top 7%",
       };
     if (mmr >= 1301)
       return {
         name: "Fearless Descent",
-        style: "text-sky-400 font-medium",
+        style: "rank-fearless",
         rarity: "Top 12%",
       };
     if (mmr >= 1001)
       return {
         name: "Dalaketnon Slayer",
-        style: "text-sky-500",
+        style: "rank-slayer",
         rarity: "Top 18%",
       };
     if (mmr >= 701)
       return {
         name: "Ghost Walker",
-        style: "text-sky-600 italic",
+        style: "rank-ghost",
         rarity: "Top 28%",
       };
     if (mmr >= 401)
       return {
         name: "Initiate of Pogi",
-        style: "text-amber-700 font-medium",
+        style: "rank-initiate",
         rarity: "Top 45%",
       };
     if (mmr >= 251)
       return {
         name: "Aura Touched",
-        style: "text-amber-800",
+        style: "rank-touched",
         rarity: "Top 65%",
       };
     if (mmr >= 101)
-      return { name: "Pogi Spark", style: "text-amber-900", rarity: "Top 85%" };
+      return { name: "Pogi Spark", style: "rank-spark", rarity: "Top 85%" };
     return {
       name: "Spirit Seed",
-      style: "text-slate-500 italic",
+      style: "rank-seed",
       rarity: "Top 100%",
     };
   };
@@ -972,7 +969,7 @@ export default function GeneratorPage() {
       holdingItemDescriptor = `holding ${attributes.heldItem}`;
     }
 
-    return `full body shot of a high quality, well-proportioned, anatomically correct cute ${bodyFatDescriptor} chibi pinoy character with two arms and two legs, of the ${lineage} lineage (${identityContext}), named ${name}, from ${originDesc}, with ${skinToneDescriptor}. The character has ${hairDescriptor} with ${hairColorDescription} hair. The character has ${facialHairDescriptor}, is wearing ${clothingDescriptor}, with ${eyewearDescriptor}, in a ${pose}, and is ${holdingItemDescriptor}, showing confident pose, smiling. Chibi character art, clean vector line art, cel-shaded, sticker style, simple transparent background, PNG format.`;
+    return `full body shot of a high quality, well-proportioned, anatomically correct cute ${bodyFatDescriptor} chibi pinoy character with two arms and two legs, of the ${lineage} lineage (${identityContext}), named ${name}, from ${originDesc}, with ${skinToneDescriptor}. The character has ${hairDescriptor} with ${hairColorDescription} hair. The character has ${facialHairDescriptor}, is wearing ${clothingDescriptor}, with ${eyewearDescriptor}, in a ${pose}, and is ${holdingItemDescriptor}, showing confident pose, smiling. Chibi character art, clean vector line art, cel-shaded, sticker style, simple White background, PNG format.`;
   };
 
   /**
@@ -1372,8 +1369,7 @@ export default function GeneratorPage() {
     if (eggRank) {
       return {
         name: eggRank,
-        style:
-          "effect-mythic-glow text-4xl font-black uppercase tracking-tighter",
+        style: "rank-ascendant", // Default highly visible rank for eggs
         rarity: "Legendary Find",
       };
     }
@@ -2355,7 +2351,7 @@ export default function GeneratorPage() {
                       {loading ? (
                         <h3
                           className={cn(
-                            "font-display font-bold uppercase leading-none w-32 text-center truncate",
+                            "w-32 text-center truncate",
                             shufflingRank.style,
                           )}
                         >
@@ -2365,7 +2361,7 @@ export default function GeneratorPage() {
                         <>
                           <h3
                             className={cn(
-                              "font-display font-bold uppercase leading-none drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] animate__animated animate__fadeInUp",
+                              "animate__animated animate__fadeInUp",
                               displayRankInfo.style,
                             )}
                           >
