@@ -34,6 +34,7 @@ const ALLOWED_ORIGINS: string[] = [
   // Local development
   "http://localhost:3000",
   "http://localhost:3001",
+  "http://localhost:9002",
   "http://127.0.0.1:3000",
 ];
 
@@ -42,16 +43,25 @@ const ALLOWED_ORIGINS: string[] = [
 // ---------------------------------------------------------------------------
 
 function isAllowedOrigin(origin: string | null, req?: NextRequest): boolean {
+  // 1. Always allow in non-production environments for ease of development
+  if (process.env.NODE_ENV !== "production") {
+    return true;
+  }
+
   if (!origin) {
     // No Origin header = server-to-server call (curl, Postman, etc.)
-    // Allow in development; block in production.
-    return process.env.NODE_ENV !== "production";
+    return false;
   }
+
+  // 2. Check explicit whitelist
   if (ALLOWED_ORIGINS.includes(origin)) return true;
 
-  // Allow same-host requests regardless of which domain the app is served from.
-  // This handles Firebase App Hosting preview URLs, custom domains, etc.
-  // where NEXT_PUBLIC_APP_URL may not be set in the hosting environment.
+  // 3. Allow Cloud Workstations and Firebase App Hosting dynamic domains
+  if (origin.endsWith(".cloudworkstations.dev") || origin.endsWith(".web.app") || origin.endsWith(".firebaseapp.com")) {
+    return true;
+  }
+
+  // 4. Allow same-host requests regardless of which domain the app is served from.
   if (req) {
     const host = req.headers.get("host");
     const proto = req.headers.get("x-forwarded-proto") || "https";
@@ -72,9 +82,9 @@ function isAllowedOrigin(origin: string | null, req?: NextRequest): boolean {
   return false;
 }
 
-function corsHeaders(origin: string): Record<string, string> {
+function corsHeaders(origin: string | null): Record<string, string> {
   return {
-    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Origin": origin || "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Max-Age": "86400", // 24 h preflight cache
@@ -82,17 +92,11 @@ function corsHeaders(origin: string): Record<string, string> {
 }
 
 const SECURITY_HEADERS: Record<string, string> = {
-  // Prevent browsers from MIME-sniffing the response type
   "X-Content-Type-Options": "nosniff",
-  // Disallow iframe embedding (clickjacking protection)
   "X-Frame-Options": "DENY",
-  // Basic XSS filter (legacy browsers)
   "X-XSS-Protection": "1; mode=block",
-  // Don't send the full URL as Referer to third parties
   "Referrer-Policy": "strict-origin-when-cross-origin",
-  // Only allow HTTPS for 1 year (enable once you're fully on HTTPS)
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-  // Restrict which browser features are available
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
 };
 
@@ -111,14 +115,14 @@ export function middleware(req: NextRequest) {
     return new NextResponse(null, {
       status: 204,
       headers: {
-        ...corsHeaders(origin!),
+        ...corsHeaders(origin),
         ...SECURITY_HEADERS,
       },
     });
   }
 
   // ── 2. Block actual requests from disallowed origins ────────────────────
-  if (origin && !isAllowedOrigin(origin, req)) {
+  if (!isAllowedOrigin(origin, req)) {
     return NextResponse.json(
       { error: "Forbidden: Origin not allowed" },
       {
@@ -136,8 +140,8 @@ export function middleware(req: NextRequest) {
     response.headers.set(key, value);
   });
 
-  // CORS headers when there IS a valid origin
-  if (origin && isAllowedOrigin(origin, req)) {
+  // CORS headers when there IS an origin
+  if (origin) {
     Object.entries(corsHeaders(origin)).forEach(([key, value]) => {
       response.headers.set(key, value);
     });
