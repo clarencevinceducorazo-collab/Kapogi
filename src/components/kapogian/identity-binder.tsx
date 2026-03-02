@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import { useCurrentAccount, useSignPersonalMessage } from '@mysten/dapp-kit';
 import { BrutalCard } from '@/components/ui/brutal-card';
@@ -69,48 +69,66 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
     : step === 'sign_message' ? 3
     : 4;
 
+  const hasSynced = useRef(false);
+
   useEffect(() => {
+    // Don't run while session is still loading
+    if (sessionStatus === 'loading') return;
+    
+    // Don't run again if already synced
+    if (hasSynced.current) return;
+    hasSynced.current = true;
+
     const handleSync = async () => {
-      // 1. If wallet connected, check binding by address
-      if (account?.address) {
-        setIsLoading(true);
-        try {
+      setIsLoading(true);
+      try {
+        // Check by wallet address first
+        if (account?.address) {
           const res = await checkBinding(account.address);
           if (res.bound) {
-            setBoundData({ x_username: res.x_username, sui_address: account.address });
+            setBoundData({ 
+              x_username: res.x_username, 
+              sui_address: account.address 
+            });
             setStep('already_bound');
-            setIsLoading(false);
             return;
           }
-        } catch (e) { console.error(e); }
-      }
+        }
 
-      // 2. If X session exists, check binding by X UID
-      if (session?.user?.x_uid) {
-        setIsLoading(true);
-        try {
+        // Check by X UID
+        if (session?.user?.x_uid) {
           const res = await checkBindingByXUid(session.user.x_uid);
           if (res.bound) {
-            setBoundData({ x_username: res.x_username, sui_address: res.sui_address });
+            setBoundData({ 
+              x_username: res.x_username, 
+              sui_address: res.sui_address 
+            });
             setStep('already_bound');
-            setIsLoading(false);
             return;
           }
-          // If X is logged in but not bound, determine next step based on wallet connection
-          if (!account?.address) {
-            setStep('wallet_connect');
-          } else {
+          if (account?.address) {
             setStep('sign_message');
+          } else {
+            setStep('wallet_connect');
           }
-        } catch (e) { console.error(e); }
-      } else if (sessionStatus === 'unauthenticated') {
+          return;
+        }
+
         setStep('start');
+      } catch (e) {
+        console.error('Sync error:', e);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     handleSync();
-  }, [account?.address, session, sessionStatus]);
+  }, [sessionStatus, account?.address, session?.user?.x_uid]);
+
+  // Reset hasSynced when wallet or session changes so it re-checks
+  useEffect(() => {
+    hasSynced.current = false;
+  }, [account?.address, session?.user?.x_uid]);
 
   const handleSign = async () => {
     if (!account?.address || !session?.user?.x_username || !session?.user?.x_uid) return;
