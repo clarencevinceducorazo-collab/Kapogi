@@ -1136,7 +1136,7 @@ export function MainProfileV2({
                     </div>
                   </div>
                   <div className="bg-yellow-100 border border-yellow-300 px-3 py-1 rounded-lg flex items-center gap-2 shadow-sm">
-                    <div className="bg-white w-8 aspect-square rounded-full flex items-center justify-center border-2 border-yellow-200 shadow-sm">
+                    <div className="bg-white w-12 aspect-square rounded-full flex items-center justify-center border-2 border-yellow-200 shadow-sm">
                       <iconify-icon
                         icon="solar:cup-star-linear"
                         class="text-lg text-yellow-500"
@@ -1647,7 +1647,11 @@ function BadgeDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md w-full p-0 bg-transparent border-none shadow-none !rounded-[2.5rem]">
+      {/* Hide the default top-right 'x' close button provided by DialogContent */}
+      <DialogContent
+        hideCloseButton
+        className="max-w-md w-full p-0 bg-transparent border-none shadow-none !rounded-[2.5rem]"
+      >
         <DialogHeader className="sr-only">
           <DialogTitle>{badge.title}</DialogTitle>
           <DialogDescription>{badge.desc}</DialogDescription>
