@@ -33,6 +33,12 @@ import {
   DollarSign,
   RefreshCw,
   ChevronDown,
+  Trophy,
+  Plus,
+  ToggleLeft,
+  ToggleRight,
+  Gift,
+  Pencil,
   AlertTriangle,
   Trash2,
 } from "lucide-react";
@@ -59,6 +65,13 @@ import {
   superAdminUpdateTreasury,
   superAdminUpdateMintPrice,
   superAdminUpdateBundlePrice,
+  getAllAchievements,
+  superAdminCreateAchievement,
+  superAdminActivateAchievement,
+  superAdminDeactivateAchievement,
+  superAdminUpdateAchievementDisplay,
+  superAdminIssueGrant,
+  type AchievementDef,
 } from "@/lib/sui";
 import { decryptShippingInfo, type ShippingInfo } from "@/lib/encryption";
 import { ORDER_STATUS, CONTRACT_ADDRESSES } from "@/lib/constants";
@@ -252,6 +265,409 @@ const ToastContainer = ({
 );
 
 // ─────────────────────────────────────────────
+// Badge requirement labels
+const REQ_LABELS: Record<number, { label: string; color: string }> = {
+  0: { label: "Total MMR", color: "bg-purple-100 text-purple-700 border-purple-300" },
+  1: { label: "Best MMR", color: "bg-blue-100 text-blue-700 border-blue-300" },
+  2: { label: "Total Summons", color: "bg-orange-100 text-orange-700 border-orange-300" },
+  3: { label: "Admin Granted", color: "bg-yellow-100 text-yellow-700 border-yellow-300" },
+};
+
+// Badge Upload Button used by AchievementSection
+function BadgeUploadButton({
+  currentUrl,
+  onUploaded,
+  onToast,
+}: {
+  currentUrl: string;
+  onUploaded: (url: string) => void;
+  onToast: (msg: string, type: Toast["type"]) => void;
+}) {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      onToast("Please select an image file.", "error");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      onToast("Image must be under 5MB.", "error");
+      return;
+    }
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file, file.name);
+      form.append("name", `achievement-badge-${Date.now()}`);
+
+      const res = await fetch("/api/pinata/upload", {
+        method: "POST",
+        body: form,
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? "Upload failed");
+      }
+      const { imageUrl } = await res.json();
+      onUploaded(imageUrl);
+      onToast("Badge uploaded!", "success");
+    } catch (err: any) {
+      onToast(err?.message ?? "Upload failed.", "error");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      {currentUrl && (
+        <div className="w-9 h-9 rounded-lg border-2 border-black overflow-hidden flex-shrink-0 bg-slate-100">
+          <img src={currentUrl} alt="badge preview" className="w-full h-full object-cover" onError={(e) => {(e.target as HTMLImageElement).style.display = "none";}} />
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={uploading}
+        className="flex-1 h-9 flex items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-xl font-bold text-xs text-slate-500 hover:border-yellow-400 hover:text-yellow-600 hover:bg-yellow-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {uploading ? (
+          <>
+            <LoaderCircle size={13} className="animate-spin" />
+            Uploading...
+          </>
+        ) : currentUrl ? (
+          <>
+            <RefreshCw size={13} />
+            Replace Badge
+          </>
+        ) : (
+          <>
+            <Plus size={13} />
+            Upload Badge Image
+          </>
+        )}
+      </button>
+
+      {currentUrl && !uploading && (
+        <button
+          type="button"
+          onClick={() => onUploaded("")}
+          title="Remove badge"
+          className="w-9 h-9 flex items-center justify-center border-2 border-red-200 rounded-xl text-red-400 hover:bg-red-50 hover:border-red-400 transition-colors"
+        >
+          <X size={13} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// Achievement Section for Super Admins
+function AchievementSection({
+  superCapId,
+  signAndExecute,
+  onToast,
+}: {
+  superCapId: string;
+  signAndExecute: any;
+  onToast: (msg: string, type: Toast["type"]) => void;
+}) {
+  const [achievements, setAchievements] = useState<AchievementDef[]>([]);
+  const [loadingAchievements, setLoadingAchievements] = useState(true);
+
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [newBadgeUrl, setNewBadgeUrl] = useState("");
+  const [newReqType, setNewReqType] = useState<number>(0);
+  const [newThreshold, setNewThreshold] = useState("");
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editBadgeUrl, setEditBadgeUrl] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const [grantingId, setGrantingId] = useState<string | null>(null);
+  const [grantRecipient, setGrantRecipient] = useState("");
+  const [issuingGrant, setIssuingGrant] = useState(false);
+
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadAchievements();
+  }, []);
+
+  const loadAchievements = async () => {
+    setLoadingAchievements(true);
+    try {
+      const data = await getAllAchievements();
+      setAchievements(data.sort((a, b) => b.createdAt - a.createdAt));
+    } catch (e) {
+      onToast("Failed to load achievements.", "error");
+    } finally {
+      setLoadingAchievements(false);
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!newName.trim() || !newDesc.trim()) {
+      onToast("Name and description are required.", "error");
+      return;
+    }
+    if (newReqType !== 3 && (!newThreshold || Number(newThreshold) <= 0)) {
+      onToast("Threshold must be greater than 0 for this type.", "error");
+      return;
+    }
+    setCreating(true);
+    try {
+      await superAdminCreateAchievement({
+        superAdminCapId: superCapId,
+        name: newName.trim(),
+        description: newDesc.trim(),
+        badgeUrl: newBadgeUrl.trim(),
+        requirementType: newReqType,
+        threshold: newReqType === 3 ? 0 : Number(newThreshold),
+        signAndExecute,
+      });
+      onToast("Achievement created!", "success");
+      setNewName("");
+      setNewDesc("");
+      setNewBadgeUrl("");
+      setNewThreshold("");
+      setNewReqType(0);
+      setShowCreateForm(false);
+      loadAchievements();
+    } catch (e) {
+      onToast("Failed to create achievement.", "error");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleToggleActive = async (achievement: AchievementDef) => {
+    setTogglingId(achievement.objectId);
+    try {
+      if (achievement.isActive) {
+        await superAdminDeactivateAchievement({
+          superAdminCapId: superCapId,
+          achievementObjectId: achievement.objectId,
+          signAndExecute,
+        });
+        onToast(`"${achievement.name}" deactivated.`, "info");
+      } else {
+        await superAdminActivateAchievement({
+          superAdminCapId: superCapId,
+          achievementObjectId: achievement.objectId,
+          signAndExecute,
+        });
+        onToast(`"${achievement.name}" activated!`, "success");
+      }
+      loadAchievements();
+    } catch (e) {
+      onToast("Failed to toggle achievement.", "error");
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const handleStartEdit = (achievement: AchievementDef) => {
+    setEditingId(achievement.objectId);
+    setEditName(achievement.name);
+    setEditDesc(achievement.description);
+    setEditBadgeUrl(achievement.badgeUrl);
+    setGrantingId(null);
+  };
+
+  const handleSaveEdit = async (achievementObjectId: string) => {
+    if (!editName.trim() || !editDesc.trim()) {
+      onToast("Name and description are required.", "error");
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      await superAdminUpdateAchievementDisplay({
+        superAdminCapId: superCapId,
+        achievementObjectId,
+        name: editName.trim(),
+        description: editDesc.trim(),
+        badgeUrl: editBadgeUrl.trim(),
+        signAndExecute,
+      });
+      onToast("Achievement updated!", "success");
+      setEditingId(null);
+      loadAchievements();
+    } catch (e) {
+      onToast("Failed to update achievement.", "error");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleIssueGrant = async (achievementObjectId: string) => {
+    if (!grantRecipient.startsWith("0x")) {
+      onToast("Invalid recipient address.", "error");
+      return;
+    }
+    setIssuingGrant(true);
+    try {
+      await superAdminIssueGrant({
+        superAdminCapId: superCapId,
+        achievementObjectId,
+        recipientAddress: grantRecipient,
+        signAndExecute,
+      });
+      onToast("Grant issued to player's wallet!", "success");
+      setGrantingId(null);
+      setGrantRecipient("");
+    } catch (e) {
+      onToast("Failed to issue grant.", "error");
+    } finally {
+      setIssuingGrant(false);
+    }
+  };
+
+  return (
+    <section className="border-4 border-black rounded-2xl overflow-hidden">
+      <div className="bg-black text-white px-5 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Trophy size={16} className="text-yellow-400" />
+          <h3 className="font-black uppercase text-sm tracking-tight">Achievements</h3>
+          <span className="ml-1 px-2 py-0.5 bg-white/10 rounded text-[10px] font-black">{achievements.length}</span>
+        </div>
+        <button
+          onClick={() => { setShowCreateForm((v) => !v); setEditingId(null); setGrantingId(null); }}
+          className="flex items-center gap-1.5 h-8 px-3 bg-yellow-400 text-black rounded-lg border-2 border-yellow-200 font-black text-xs uppercase hover:bg-yellow-300 transition-colors"
+        >
+          <Plus size={13} /> New
+        </button>
+      </div>
+
+      {showCreateForm && (
+        <div className="p-5 border-b-2 border-black bg-yellow-50 space-y-3">
+          <p className="text-[10px] font-black uppercase tracking-widest text-yellow-700 mb-1">Create New Achievement</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Name</label>
+              <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. First Summoner" className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-yellow-400 mt-1" />
+            </div>
+            <div className="col-span-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</label>
+              <input value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder="e.g. Minted your first character" className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-yellow-400 mt-1" />
+            </div>
+            <div className="col-span-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Badge Image</label>
+              <BadgeUploadButton currentUrl={newBadgeUrl} onUploaded={setNewBadgeUrl} onToast={onToast} />
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Requirement Type</label>
+              <select value={newReqType} onChange={(e) => setNewReqType(Number(e.target.value))} className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-bold text-sm bg-white outline-none cursor-pointer mt-1">
+                <option value={0}>Total MMR</option>
+                <option value={1}>Best MMR</option>
+                <option value={2}>Total Summons</option>
+                <option value={3}>Admin Granted</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Threshold {newReqType === 3 && "(ignored)"}</label>
+              <input type="number" value={newThreshold} onChange={(e) => setNewThreshold(e.target.value)} placeholder={newReqType === 3 ? "N/A" : "e.g. 1000"} disabled={newReqType === 3} className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-yellow-400 mt-1 disabled:bg-slate-100 disabled:text-slate-400" />
+            </div>
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button onClick={() => setShowCreateForm(false)} className="flex-1 h-10 border-2 border-slate-200 rounded-xl font-bold text-sm text-slate-500 hover:bg-slate-50">Cancel</button>
+            <button onClick={handleCreate} disabled={creating} className="flex-1 h-10 bg-black text-white rounded-xl font-black text-sm border-2 border-black disabled:opacity-50 flex items-center justify-center gap-2">{creating ? <LoaderCircle size={14} className="animate-spin" /> : <><Plus size={14} /> Create</>}</button>
+          </div>
+        </div>
+      )}
+
+      <div className="divide-y-2 divide-slate-100 max-h-[420px] overflow-y-auto">
+        {loadingAchievements ? (
+          <div className="p-8 flex items-center justify-center gap-2 text-slate-400 font-black text-xs uppercase"><LoaderCircle size={16} className="animate-spin" /> Loading...</div>
+        ) : achievements.length === 0 ? (
+          <div className="p-8 text-center font-black text-slate-300 text-xs uppercase">No achievements yet. Create one above.</div>
+        ) : (
+          achievements.map((a) => {
+            const req = REQ_LABELS[a.requirementType];
+            const isEditing = editingId === a.objectId;
+            const isGranting = grantingId === a.objectId;
+            const isToggling = togglingId === a.objectId;
+            return (
+              <div key={a.objectId} className="p-4 bg-white">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl border-2 border-black bg-slate-100 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                    {a.badgeUrl ? <img src={a.badgeUrl} alt={a.name} className="w-full h-full object-cover" onError={(e) => {(e.target as HTMLImageElement).style.display = "none";}} /> : <Trophy size={18} className="text-slate-300" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-black text-sm text-slate-800 truncate">{a.name}</p>
+                      <span className={`px-1.5 py-0.5 border rounded text-[9px] font-black uppercase ${req.color}`}>{req.label}</span>
+                      {a.requirementType !== 3 && (<span className="text-[9px] font-black text-slate-400 uppercase">≥ {a.threshold.toLocaleString()}</span>)}
+                    </div>
+                    <p className="text-xs text-slate-400 font-semibold mt-0.5 truncate">{a.description}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <button onClick={() => handleToggleActive(a)} disabled={isToggling} title={a.isActive ? "Deactivate" : "Activate"} className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors disabled:opacity-40 ${a.isActive ? "bg-green-400 hover:bg-green-500" : "bg-slate-200 hover:bg-slate-300"}`}>
+                      {isToggling ? <LoaderCircle size={13} className="animate-spin" /> : a.isActive ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+                    </button>
+                    <button onClick={() => isEditing ? setEditingId(null) : handleStartEdit(a)} title="Edit display" className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors ${isEditing ? "bg-blue-400 text-white" : "bg-white hover:bg-blue-50"}`}><Pencil size={13} /></button>
+                    {a.requirementType === 3 && (<button onClick={() => { setGrantingId(isGranting ? null : a.objectId); setGrantRecipient(""); setEditingId(null); }} title="Issue grant" className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors ${isGranting ? "bg-yellow-400" : "bg-white hover:bg-yellow-50"}`}><Gift size={13} /></button>)}
+                  </div>
+                </div>
+
+                {isEditing && (
+                  <div className="mt-3 p-3 bg-blue-50 border-2 border-blue-200 rounded-xl space-y-2">
+                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Edit Display Fields</p>
+                    <input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Name" className="w-full h-9 border-2 border-slate-200 rounded-lg px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400" />
+                    <input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="Description" className="w-full h-9 border-2 border-slate-200 rounded-lg px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400" />
+                    <div>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Badge Image</label>
+                      <BadgeUploadButton currentUrl={editBadgeUrl} onUploaded={setEditBadgeUrl} onToast={onToast} />
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button onClick={() => setEditingId(null)} className="flex-1 h-8 border-2 border-slate-200 rounded-lg font-bold text-xs text-slate-500 hover:bg-slate-50">Cancel</button>
+                      <button onClick={() => handleSaveEdit(a.objectId)} disabled={savingEdit} className="flex-1 h-8 bg-blue-500 text-white rounded-lg font-black text-xs border-2 border-blue-300 disabled:opacity-50 flex items-center justify-center gap-1">{savingEdit ? <LoaderCircle size={12} className="animate-spin" /> : "Save"}</button>
+                    </div>
+                  </div>
+                )}
+
+                {isGranting && (
+                  <div className="mt-3 p-3 bg-yellow-50 border-2 border-yellow-300 rounded-xl space-y-2">
+                    <p className="text-[10px] font-black text-yellow-700 uppercase tracking-widest">Issue Grant To Player</p>
+                    <input value={grantRecipient} onChange={(e) => setGrantRecipient(e.target.value)} placeholder="0x... player wallet address" className="w-full h-9 border-2 border-slate-200 rounded-lg px-3 font-semibold text-xs bg-white outline-none focus:border-yellow-400" />
+                    <div className="flex gap-2 pt-1">
+                      <button onClick={() => { setGrantingId(null); setGrantRecipient(""); }} className="flex-1 h-8 border-2 border-slate-200 rounded-lg font-bold text-xs text-slate-500 hover:bg-slate-50">Cancel</button>
+                      <button onClick={() => handleIssueGrant(a.objectId)} disabled={issuingGrant || !grantRecipient} className="flex-1 h-8 bg-yellow-400 text-black rounded-lg font-black text-xs border-2 border-yellow-300 disabled:opacity-50 flex items-center justify-center gap-1">{issuingGrant ? <LoaderCircle size={12} className="animate-spin" /> : <><Gift size={12} /> Send</>}</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <div className="px-4 py-3 border-t-2 border-slate-100 bg-slate-50">
+        <button onClick={loadAchievements} className="w-full h-8 flex items-center justify-center gap-2 text-slate-500 font-bold text-xs uppercase hover:text-black"><RefreshCw size={12} /> Refresh Achievements</button>
+      </div>
+    </section>
+  );
+}
+
 // Super Admin Panel (drawer/modal)
 // ─────────────────────────────────────────────
 
@@ -757,6 +1173,14 @@ function SuperAdminPanel({
                 </div>
               </div>
             </div>
+
+            {superCapId && (
+              <AchievementSection
+                superCapId={superCapId}
+                signAndExecute={signAndExecute}
+                onToast={onToast}
+              />
+            )}
 
             <button
               className="w-full h-10 flex items-center justify-center gap-2 bg-white border-2 border-slate-200 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-50"
