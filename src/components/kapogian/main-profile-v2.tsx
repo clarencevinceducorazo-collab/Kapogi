@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -987,7 +985,6 @@ export function MainProfileV2({
           }
           100% {
             left: 200%;
-            aqsd
           }
         }
       `}</style>
@@ -1976,4 +1973,3 @@ function TerritoryRow({
     </div>
   );
 }
->>>>>>> Stashed changes
