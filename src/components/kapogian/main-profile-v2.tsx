@@ -59,6 +59,27 @@ import {
 } from "@/lib/sui";
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ICONIFY TYPE DECLARATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      "iconify-icon": React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      > & {
+        icon: string;
+        class?: string;
+        style?: React.CSSProperties | string;
+        width?: string | number;
+        height?: string | number;
+      };
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DATA STRUCTURES (kept for rank badges — purely front-end / off-chain)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -281,7 +302,7 @@ function isAchievementEligible(
   bestMmr: number,
   summons: number,
 ): boolean {
-  if (ach.requirementType === 3) return false; // admin granted — needs a grant object
+  if (ach.requirementType === 3) return false;
   const playerVal = getPlayerValueForReq(
     ach.requirementType,
     totalMmr,
@@ -306,7 +327,6 @@ interface MainProfileV2Props {
   topLineages: string[];
   activeTab: "Stats" | "Collections" | "Orders" | "Badges";
   setActiveTab: (tab: "Stats" | "Collections" | "Orders" | "Badges") => void;
-  // Achievement props
   playerStats: PlayerStatsObject | null;
   allAchievements: AchievementDef[];
   pendingGrants: AchievementGrant[];
@@ -348,45 +368,38 @@ export function MainProfileV2({
     "all" | "earned" | "available" | "locked"
   >("all");
 
-  // Initialise PlayerStats
   const [initializing, setInitializing] = useState(false);
   const [initError, setInitError] = useState("");
-
-  // Claim state
   const [claimingId, setClaimingId] = useState<string | null>(null);
 
   const currentCharacter = characters[index];
   const attrs = currentCharacter?.attributes ?? {};
   const shortAddr = account?.address ? formatAddress(account.address) : "0x...";
-  // Description handling: split into sentences and enable scroll if there are more than 5
+
   const descriptionText =
     currentCharacter?.description ??
     "This spirit's origin is shrouded in mystery...";
   const sentences = useMemo(() => {
     if (!descriptionText) return [] as string[];
-    // Match sentences including punctuation; fallback to whole text
-    const m = descriptionText.match(/[^.!?]+[.!?]+[\])'"`’”]*|.+$/g);
-    return (m || [descriptionText]).map((s) => s.trim());
+    const m = descriptionText.match(/[^.!?]+[.!?]+[\])'"`'"]*|.+$/g);
+    return (m || [descriptionText]).map((s: string) => s.trim());
   }, [descriptionText]);
   const showScrollableDescription = sentences.length > 5;
 
-  // Total MMR = sum of all characters' MMR
   const totalMmr = useMemo(
-    () => characters.reduce((acc, c) => acc + c.mmr, 0),
+    () => characters.reduce((acc: number, c: any) => acc + c.mmr, 0),
     [characters],
   );
 
-  // Set of on-chain unlocked achievement IDs
   const unlockedIds = useMemo(() => {
     const s = new Set<string>();
     playerStats?.unlocked.forEach((u) => s.add(u.achievementId));
     return s;
   }, [playerStats]);
 
-  // Rank badges locked to NFTs
   const ownedRankTitles = useMemo(() => {
     const titles = new Set<string>();
-    characters.forEach((c) => {
+    characters.forEach((c: any) => {
       if (c.attributes?.rank) titles.add(c.attributes.rank);
     });
     return titles;
@@ -396,8 +409,8 @@ export function MainProfileV2({
     if (account?.address) {
       setLoadingBinding(true);
       checkBinding(account.address)
-        .then((res) => setBindingStatus(res))
-        .catch((e) => console.error(e))
+        .then((res: any) => setBindingStatus(res))
+        .catch((e: any) => console.error(e))
         .finally(() => setLoadingBinding(false));
     }
   }, [account?.address]);
@@ -461,7 +474,6 @@ export function MainProfileV2({
     }
   };
 
-  // Filter achievements for the gallery view
   const filteredGallery = useMemo(() => {
     return allAchievements.filter((ach) => {
       if (galleryFilter === "earned") return unlockedIds.has(ach.objectId);
@@ -489,14 +501,7 @@ export function MainProfileV2({
       }
       return true;
     });
-  }, [
-    allAchievements,
-    galleryFilter,
-    unlockedIds,
-    totalMmr,
-    bestMmrNum,
-    summonsCount,
-  ]);
+  }, [allAchievements, galleryFilter, unlockedIds, totalMmr, bestMmrNum, summonsCount]);
 
   const navItems = [
     {
@@ -556,7 +561,6 @@ export function MainProfileV2({
   // ── Badges tab content ─────────────────────────────────────────────────────
 
   const renderBadgesTab = () => {
-    // 1. Loading
     if (achievementsLoading) {
       return (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
@@ -568,7 +572,6 @@ export function MainProfileV2({
       );
     }
 
-    // 2. Not initialized
     if (!playerStats) {
       return (
         <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
@@ -597,8 +600,7 @@ export function MainProfileV2({
           >
             {initializing ? (
               <>
-                <LoaderCircle size={18} className="animate-spin" />{" "}
-                Initializing...
+                <LoaderCircle size={18} className="animate-spin" /> Initializing...
               </>
             ) : (
               <>
@@ -610,7 +612,6 @@ export function MainProfileV2({
       );
     }
 
-    // 3. Initialized — show earned badges or gallery
     return (
       <div className="animate-in slide-in-from-bottom-4 duration-500">
         {/* Header row */}
@@ -722,10 +723,7 @@ export function MainProfileV2({
             {/* Rank badges section */}
             <section className="mb-8">
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
-                <iconify-icon
-                  icon="solar:star-fall-bold"
-                  class="text-yellow-500"
-                />{" "}
+                <iconify-icon icon="solar:star-fall-bold" class="text-yellow-500" />
                 On-Chain Ranks
               </h4>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -750,10 +748,7 @@ export function MainProfileV2({
             {/* On-chain achievements section */}
             <section>
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
-                <iconify-icon
-                  icon="solar:magic-stick-3-bold"
-                  class="text-indigo-500"
-                />{" "}
+                <iconify-icon icon="solar:magic-stick-3-bold" class="text-indigo-500" />
                 On-Chain Achievements
               </h4>
               {filteredGallery.length === 0 ? (
@@ -767,12 +762,7 @@ export function MainProfileV2({
                     const earned = unlockedIds.has(ach.objectId);
                     const eligible =
                       !earned &&
-                      isAchievementEligible(
-                        ach,
-                        totalMmr,
-                        bestMmrNum,
-                        summonsCount,
-                      );
+                      isAchievementEligible(ach, totalMmr, bestMmrNum, summonsCount);
                     const playerVal = getPlayerValueForReq(
                       ach.requirementType,
                       totalMmr,
@@ -791,6 +781,8 @@ export function MainProfileV2({
                         onClick={() =>
                           setSelectedBadge({
                             ...ach,
+                            title: ach.name,
+                            desc: ach.description,
                             icon: "solar:trophy-linear",
                             gradient: "linear-gradient(135deg,#4f46e5,#818cf8)",
                             color: "#6366f1",
@@ -812,10 +804,7 @@ export function MainProfileV2({
             {ownedRankTitles.size > 0 && (
               <section className="mb-8">
                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
-                  <iconify-icon
-                    icon="solar:star-fall-bold"
-                    class="text-yellow-500"
-                  />{" "}
+                  <iconify-icon icon="solar:star-fall-bold" class="text-yellow-500" />
                   Rank Badges
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -842,14 +831,10 @@ export function MainProfileV2({
             {/* On-chain earned achievements */}
             <section>
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
-                <iconify-icon
-                  icon="solar:magic-stick-3-bold"
-                  class="text-indigo-500"
-                />{" "}
+                <iconify-icon icon="solar:magic-stick-3-bold" class="text-indigo-500" />
                 Claimed Achievements
               </h4>
-              {playerStats.unlocked.length === 0 &&
-              ownedRankTitles.size === 0 ? (
+              {playerStats.unlocked.length === 0 && ownedRankTitles.size === 0 ? (
                 <EmptyBadges
                   msg="No achievements claimed yet"
                   sub={`You have ${allAchievements.length} achievements to explore. Open the Gallery to see what you can earn!`}
@@ -868,9 +853,7 @@ export function MainProfileV2({
                         onClick={() =>
                           setSelectedBadge({
                             title: u.achievementName,
-                            desc:
-                              achDef?.description ??
-                              "Claimed on-chain achievement.",
+                            desc: achDef?.description ?? "Claimed on-chain achievement.",
                             icon: "solar:trophy-linear",
                             gradient: "linear-gradient(135deg,#4f46e5,#818cf8)",
                             color: "#6366f1",
@@ -1074,10 +1057,7 @@ export function MainProfileV2({
           {/* Header Stats */}
           <div>
             <h3 className="text-lg tracking-wide font-semibold text-slate-600 mb-3 px-2 flex items-center gap-2 uppercase">
-              <iconify-icon
-                icon="solar:gamepad-linear"
-                class="text-indigo-500"
-              />{" "}
+              <iconify-icon icon="solar:gamepad-linear" class="text-indigo-500" />
               Player Hub
             </h3>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1137,10 +1117,7 @@ export function MainProfileV2({
                   </div>
                   <div className="bg-yellow-100 border border-yellow-300 px-3 py-1 rounded-lg flex items-center gap-2 shadow-sm">
                     <div className="bg-white w-12 aspect-square rounded-full flex items-center justify-center border-2 border-yellow-200 shadow-sm">
-                      <iconify-icon
-                        icon="solar:cup-star-linear"
-                        class="text-lg text-yellow-500"
-                      />
+                      <iconify-icon icon="solar:cup-star-linear" class="text-lg text-yellow-500" />
                     </div>
                     <div>
                       <p className="text-[10px] font-semibold text-yellow-700 uppercase tracking-wider mb-0.5">
@@ -1158,18 +1135,13 @@ export function MainProfileV2({
                     <BookOpen size={36} className="text-slate-400" />
                   </div>
                   <h4 className="text-sm font-semibold text-slate-500 mb-2 flex items-center gap-2 uppercase tracking-wider relative z-10">
-                    <iconify-icon
-                      icon="solar:notes-linear"
-                      class="text-indigo-500"
-                    />{" "}
+                    <iconify-icon icon="solar:notes-linear" class="text-indigo-500" />
                     Spirit Lore
                   </h4>
                   <div
                     className={cn(
                       "relative z-10",
-                      showScrollableDescription
-                        ? "max-h-[9rem] overflow-auto pr-2"
-                        : "",
+                      showScrollableDescription ? "max-h-[9rem] overflow-auto pr-2" : "",
                     )}
                   >
                     <p className="text-slate-600 font-medium leading-relaxed italic">
@@ -1204,35 +1176,19 @@ export function MainProfileV2({
                   </div>
                   <div>
                     <h4 className="text-sm font-semibold text-slate-500 mb-2 flex items-center gap-2 uppercase tracking-wider">
-                      <iconify-icon icon="solar:map-point-linear" /> Territory
-                      Info
+                      <iconify-icon icon="solar:map-point-linear" /> Territory Info
                     </h4>
                     <div className="flex flex-col gap-6">
-                      <TerritoryRow
-                        label="Luzon"
-                        value={attrs.luzon || 0}
-                        theme="blue"
-                      />
-                      <TerritoryRow
-                        label="Visayas"
-                        value={attrs.visayas || 0}
-                        theme="teal"
-                      />
-                      <TerritoryRow
-                        label="Mindanao"
-                        value={attrs.mindanao || 0}
-                        theme="rose"
-                      />
+                      <TerritoryRow label="Luzon" value={attrs.luzon || 0} theme="blue" />
+                      <TerritoryRow label="Visayas" value={attrs.visayas || 0} theme="teal" />
+                      <TerritoryRow label="Mindanao" value={attrs.mindanao || 0} theme="rose" />
                     </div>
                   </div>
                 </div>
 
                 <div className="pt-4 border-t-2 border-slate-100 border-dashed">
                   <h4 className="text-sm font-semibold text-slate-500 mb-8 flex items-center gap-2 uppercase tracking-wider">
-                    <iconify-icon
-                      icon="solar:t-shirt-linear"
-                      class="text-orange-500"
-                    />{" "}
+                    <iconify-icon icon="solar:t-shirt-linear" class="text-orange-500" />
                     Visual Traits
                   </h4>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
@@ -1241,10 +1197,7 @@ export function MainProfileV2({
                         key={trait.label}
                         className="flex items-center gap-3 px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg hover:bg-slate-100 transition-colors"
                       >
-                        <iconify-icon
-                          icon={trait.icon}
-                          class="text-xl text-slate-400"
-                        />
+                        <iconify-icon icon={trait.icon} class="text-xl text-slate-400" />
                         <div className="flex flex-col overflow-hidden text-left">
                           <span className="text-[10px] text-slate-400 uppercase font-black leading-tight">
                             {trait.label}
@@ -1271,7 +1224,7 @@ export function MainProfileV2({
                   {characters.length})
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {characters.map((c, i) => (
+                  {characters.map((c: any, i: number) => (
                     <div
                       key={c.objectId}
                       onClick={() => {
@@ -1506,7 +1459,7 @@ function EarnedAchievementCard({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// EXISTING HELPER COMPONENTS (unchanged)
+// HELPER COMPONENTS
 // ─────────────────────────────────────────────────────────────────────────────
 
 function EmptyBadges({ msg, sub }: { msg: string; sub: string }) {
@@ -1565,9 +1518,7 @@ function BadgeCard({
           <div
             className={cn(
               "w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all",
-              isUnlocked
-                ? "bg-white shadow-md"
-                : "bg-slate-200 border-slate-300",
+              isUnlocked ? "bg-white shadow-md" : "bg-slate-200 border-slate-300",
             )}
             style={isUnlocked ? { borderColor: `${item.color}44` } : {}}
           >
@@ -1647,7 +1598,6 @@ function BadgeDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      {/* Hide the default top-right 'x' close button provided by DialogContent */}
       <DialogContent
         hideCloseButton
         className="max-w-md w-full p-0 bg-transparent border-none shadow-none !rounded-[2.5rem]"
