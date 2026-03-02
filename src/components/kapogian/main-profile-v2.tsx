@@ -614,7 +614,7 @@ export function MainProfileV2({
     return (
       <div className="animate-in slide-in-from-bottom-4 duration-500">
         {/* Header row */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
           <div>
             <h3 className="text-2xl tracking-tight font-semibold text-slate-800 flex items-center gap-2">
               <Medal className="text-indigo-500" />
@@ -720,7 +720,7 @@ export function MainProfileV2({
             </div>
 
             {/* Rank badges section */}
-            <section className="mb-8">
+            <section className="mb-2">
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
                 <iconify-icon
                   icon="solar:star-fall-bold"
@@ -728,7 +728,12 @@ export function MainProfileV2({
                 />{" "}
                 On-Chain Ranks
               </h4>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div
+                className={cn(
+                  "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4",
+                  RANK_DATA.length > 4 ? "max-h-96 overflow-auto p-2" : "",
+                )}
+              >
                 {RANK_DATA.map((rank) => (
                   <BadgeCard
                     key={rank.title}
@@ -749,7 +754,7 @@ export function MainProfileV2({
 
             {/* On-chain achievements section */}
             <section>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1 flex items-center gap-2">
                 <iconify-icon
                   icon="solar:magic-stick-3-bold"
                   class="text-indigo-500"
@@ -762,7 +767,14 @@ export function MainProfileV2({
                   sub="Try switching to a different filter above."
                 />
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div
+                  className={cn(
+                    "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4",
+                    filteredGallery.length > 4
+                      ? "max-h-96 overflow-auto p-2"
+                      : "",
+                  )}
+                >
                   {filteredGallery.map((ach) => {
                     const earned = unlockedIds.has(ach.objectId);
                     const eligible =
@@ -818,7 +830,14 @@ export function MainProfileV2({
                   />{" "}
                   Rank Badges
                 </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div
+                  className={cn(
+                    "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4",
+                    ownedRankTitles.size > 4
+                      ? "max-h-96 overflow-auto p-2"
+                      : "",
+                  )}
+                >
                   {RANK_DATA.filter((r) => ownedRankTitles.has(r.title)).map(
                     (rank) => (
                       <BadgeCard
@@ -855,7 +874,14 @@ export function MainProfileV2({
                   sub={`You have ${allAchievements.length} achievements to explore. Open the Gallery to see what you can earn!`}
                 />
               ) : playerStats.unlocked.length === 0 ? null : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div
+                  className={cn(
+                    "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4",
+                    playerStats.unlocked.length > 4
+                      ? "max-h-96 overflow-auto p-2"
+                      : "",
+                  )}
+                >
                   {playerStats.unlocked.map((u) => {
                     const achDef = allAchievements.find(
                       (a) => a.objectId === u.achievementId,
