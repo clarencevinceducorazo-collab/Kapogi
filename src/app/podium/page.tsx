@@ -427,7 +427,15 @@ export default function PodiumPage() {
     <>
       <Script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js" />
       <PageHeader />
-      <div className="text-slate-600 antialiased min-h-screen bg-slate-50">
+      <div
+        className="text-slate-600 antialiased min-h-screen"
+        style={{
+          backgroundImage: "url('/images/podium/biringanbg.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
         <main className="flex-1 max-w-5xl mx-auto w-full px-4 pb-24 pt-32">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
             <div className="text-center md:text-left">
@@ -801,7 +809,10 @@ function SummonDetailModal({
 
                 <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl flex-1 border border-slate-100 shadow-sm">
                   <div className="w-12 h-12 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-emerald-200 shadow-lg">
-                    <iconify-icon icon="fluent-emoji:package" class="text-2xl" />
+                    <iconify-icon
+                      icon="fluent-emoji:package"
+                      class="text-2xl"
+                    />
                   </div>
                   <div>
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
@@ -817,10 +828,7 @@ function SummonDetailModal({
               {Object.keys(lineageCounts).length > 0 && (
                 <div>
                   <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-3">
-                    <iconify-icon
-                      icon="fluent-emoji:dna"
-                      class="text-lg"
-                    />
+                    <iconify-icon icon="fluent-emoji:dna" class="text-lg" />
                     Lineage Breakdown
                   </h3>
                   <div className="flex flex-wrap gap-2">
@@ -1159,16 +1167,22 @@ function CharacterDetailModal({
             Detailed statistics and traits for {user.nftName}.
           </DialogDescription>
         </DialogHeader>
-        <div className="w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row">
+        <div className="w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row relative">
+          <button
+            onClick={onClose}
+            aria-label="Close profile modal"
+            className="absolute top-4 right-4 z-40 text-slate-500 hover:text-slate-800 transition-colors"
+          >
+            <iconify-icon icon="solar:close-circle-linear" width="20" />
+          </button>
           <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r border-slate-100 flex flex-col items-center justify-center p-4">
             <div className="-mb-40 slide-up-delay-1 text-center z-20">
               <h2
                 className={cn(
-                  "uppercase tracking-wider mt-40 flex items-center justify-center gap-1",
+                  "uppercase tracking-wider mt-32 flex items-center justify-center gap-1",
                   rankInfo.style,
                 )}
               >
-               
                 {user.attributes?.rank || "Spirit Seed"}
               </h2>
             </div>
@@ -1351,10 +1365,7 @@ function CharacterDetailModal({
 
               <div className="pt-4">
                 <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-4">
-                  <iconify-icon
-                    icon="fluent-emoji:t-shirt"
-                    class="text-lg"
-                  />
+                  <iconify-icon icon="fluent-emoji:t-shirt" class="text-lg" />
                   Visual Traits
                 </h3>
                 <div className="grid grid-flow-col grid-rows-2 gap-3 overflow-x-auto pb-2 custom-scrollbar">
@@ -1381,14 +1392,7 @@ function CharacterDetailModal({
               </div>
             </div>
 
-            <div className="p-6 border-t border-slate-100 flex justify-end bg-slate-50/50">
-              <button
-                onClick={onClose}
-                className="bg-slate-900 hover:bg-black text-white px-8 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg hover:shadow-xl active:scale-95"
-              >
-                Close Profile
-              </button>
-            </div>
+            <div className="p-6 border-t border-slate-100 bg-slate-50/50" />
           </div>
         </div>
       </DialogContent>

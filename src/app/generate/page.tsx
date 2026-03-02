@@ -291,7 +291,8 @@ export default function GeneratorPage() {
   const items = [
     "Nothing",
     "Boquet of Flowers",
-    "Machine Gun",
+    "Torch",
+    "Rock",
     "Machete",
     "Juice",
     "Arnis Sticks",
@@ -884,25 +885,32 @@ export default function GeneratorPage() {
     let pose = "standing confidently";
     switch (attributes.posture) {
       case "Slumped":
-        pose = "with a shy, slumped posture";
+        pose =
+          "with a shy, slumped posture (Important: The character should have only two hands and two feet. Do not add any extra limbs.)";
         break;
       case "Neutral":
-        pose = "with a casual, relaxed posture";
+        pose =
+          "with a casual, relaxed posture (Important: The character should have only two hands and two feet. Do not add any extra limbs.)";
         break;
       case "Heroic":
-        pose = "flexing heroically in a bodybuilder-inspired stance";
+        pose =
+          "flexing heroically in a bodybuilder-inspired stance (Important: The character should have only two hands and two feet. Do not add any extra limbs.)";
         break;
       case "Divine":
-        pose = "glowing with divine energy, floating slightly";
+        pose =
+          "glowing with divine energy, floating slightly (Important: The character should have only two hands and two feet. Do not add any extra limbs.)";
         break;
       case "Meditation":
-        pose = "in a peaceful meditation pose";
+        pose =
+          "in a peaceful meditation pose (Important: The character should have only two hands and two feet. Do not add any extra limbs.)";
         break;
       case "Ready":
-        pose = "in a ready stance, as if preparing for battle";
+        pose =
+          "in a ready stance, as if preparing for battle (Important: The character should have only two hands and two feet. Do not add any extra limbs.)";
         break;
       case "Floating":
-        pose = "floating gracefully in the air";
+        pose =
+          "floating gracefully in the air (Important: The character should have only two hands and two feet. Do not add any extra limbs.)";
         break;
     }
 
