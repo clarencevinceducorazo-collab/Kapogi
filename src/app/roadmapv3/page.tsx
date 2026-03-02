@@ -918,7 +918,7 @@ export default function RoadmapV3Page() {
                 onClick={() => {
                   // Opens the Discord link in a new tab
                   window.open(
-                    "https://discord.gg/VHgx9EnX",
+                    "https://discord.gg/kV37u9w48g",
                     "_blank",
                     "noopener,noreferrer",
                   );

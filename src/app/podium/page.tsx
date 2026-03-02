@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
@@ -91,7 +90,6 @@ export default function PodiumPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  // Two separate modal states — one per mode
   const [selectedUser, setSelectedUser] = useState<PodiumUser | null>(null);
   const [selectedSummonUser, setSelectedSummonUser] =
     useState<SummonEntry | null>(null);
@@ -174,7 +172,6 @@ export default function PodiumPage() {
         const stats = ownerStats.get(ownerAddress)!;
         stats.totalNftSummon += 1;
 
-        // Push every NFT into allNfts for the summon modal
         stats.allNfts.push({
           objectId: obj.data.objectId,
           name: nftName,
@@ -193,7 +190,6 @@ export default function PodiumPage() {
         }
       });
 
-      // Sort each wallet's collection by MMR desc
       ownerStats.forEach((s) => s.allNfts.sort((a, b) => b.mmr - a.mmr));
 
       const processedData = Array.from(ownerStats.values());
@@ -226,7 +222,6 @@ export default function PodiumPage() {
     setMode(newMode);
   };
 
-  // Route click to the right modal depending on active tab
   const handleUserClick = (user: PodiumUser | undefined) => {
     if (!user) return;
     if (mode === "summon") {
@@ -264,7 +259,6 @@ export default function PodiumPage() {
 
     return (
       <div className="flex flex-row justify-center items-end gap-2 md:gap-6 mb-12 w-full max-w-2xl mx-auto pt-4">
-        {/* Rank 2 */}
         <div
           className="w-1/3 flex flex-col items-center animate-float-2 group cursor-pointer"
           onClick={() => handleUserClick(podiumOrder[0])}
@@ -302,7 +296,6 @@ export default function PodiumPage() {
           )}
         </div>
 
-        {/* Rank 1 */}
         <div
           className="w-1/3 flex flex-col items-center z-10 animate-float-1 group cursor-pointer -mx-1"
           onClick={() => handleUserClick(podiumOrder[1])}
@@ -344,7 +337,6 @@ export default function PodiumPage() {
           )}
         </div>
 
-        {/* Rank 3 */}
         <div
           className="w-1/3 flex flex-col items-center animate-float-3 group cursor-pointer"
           onClick={() => handleUserClick(podiumOrder[2])}
@@ -507,7 +499,6 @@ export default function PodiumPage() {
             </div>
           )}
 
-          {/* MMR modal */}
           {selectedUser && (
             <CharacterDetailModal
               user={selectedUser}
@@ -516,7 +507,6 @@ export default function PodiumPage() {
             />
           )}
 
-          {/* Summon modal — only triggered in summon tab */}
           {selectedSummonUser && (
             <SummonDetailModal
               user={selectedSummonUser}
@@ -556,7 +546,7 @@ export default function PodiumPage() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SUMMON MODAL — wallet stats header + fixed-height scrollable NFT list
+// SUMMON MODAL
 // ─────────────────────────────────────────────────────────────────────────────
 
 function SummonDetailModal({
@@ -571,7 +561,6 @@ function SummonDetailModal({
   const [mmr, setMmr] = useState(0);
   const [animate, setAnimate] = useState(false);
 
-  // Pagination state for Rest of Collection
   const PAGE_SIZE = 3;
   const [restPage, setRestPage] = useState(1);
   const bestNft = user.allNfts[0] ?? null;
@@ -601,7 +590,6 @@ function SummonDetailModal({
     {},
   );
 
-  // Animate MMR counter whenever modal opens
   useEffect(() => {
     if (isOpen) {
       setMmr(0);
@@ -626,78 +614,73 @@ function SummonDetailModal({
     }
   }, [isOpen, highestMmr]);
 
-  // Derive rank style for best NFT (mirrors CharacterDetailModal rankInfo logic)
   const rankInfo = useMemo(() => {
     const rank = bestNft?.rank || "Spirit Seed";
     const ranks: { [key: string]: { style: string; icon: string } } = {
       "Kapogian Ascendant": {
         style: "rank-ascendant",
-        icon: "solar:crown-star-bold-duotone",
+        icon: "fluent-emoji:shooting-star",
       },
       "Master Rancher": {
         style: "rank-rancher",
-        icon: "solar:crown-star-bold-duotone",
+        icon: "fluent-emoji:cow-face",
       },
       "Generational Tycoon": {
         style: "rank-tycoon",
-        icon: "solar:crown-star-linear",
+        icon: "fluent-emoji:money-bag",
       },
       "Cultural Icon": {
         style: "rank-icon",
-        icon: "solar:crown-star-linear",
+        icon: "fluent-emoji:performing-arts",
       },
       "Eternal Light Bearer": {
         style: "rank-eternal",
-        icon: "solar:crown-star-linear",
-      },
-      "Ritual Architect": {
-        style: "rank-hof",
-        icon: "solar:crown-star-linear",
+        icon: "fluent-emoji:fire",
       },
       "Hall of Fame Immortal": {
         style: "rank-hof",
-        icon: "solar:star-bold",
+        icon: "fluent-emoji:trophy",
       },
-      "Supreme Pogi": { style: "rank-supreme", icon: "solar:star-bold" },
+      "Supreme Pogi": { style: "rank-supreme", icon: "fluent-emoji:star" },
       "Proof of Pogi Elite": {
         style: "rank-elite",
-        icon: "solar:star-bold",
+        icon: "fluent-emoji:gem-stone",
       },
       "Aura God": {
         style: "rank-auragod",
-        icon: "solar:star-line-duotone",
+        icon: "fluent-emoji:crown",
       },
       "Lord of Biringan": {
         style: "rank-biringan",
-        icon: "solar:star-line-duotone",
+        icon: "fluent-emoji:classical-building",
       },
       "Fearless Descent": {
         style: "rank-fearless",
-        icon: "solar:verified-check-linear",
+        icon: "fluent-emoji:shield",
       },
       "Dalaketnon Slayer": {
         style: "rank-slayer",
-        icon: "solar:verified-check-linear",
+        icon: "fluent-emoji:crossed-swords",
       },
       "Ghost Walker": {
         style: "rank-ghost",
-        icon: "solar:verified-check-linear",
+        icon: "fluent-emoji:ghost",
       },
       "Initiate of Pogi": {
         style: "rank-initiate",
-        icon: "solar:verified-check-linear",
+        icon: "fluent-emoji:person-raising-hand-light",
       },
       "Aura Touched": {
         style: "rank-touched",
-        icon: "solar:verified-check-linear",
+        icon: "fluent-emoji:sparkles",
       },
       "Pogi Spark": {
         style: "rank-spark",
-        icon: "solar:verified-check-linear",
+        icon: "fluent-emoji:zap",
       },
       "Spirit Seed": {
         style: "rank-seed",
-        icon: "solar:verified-check-linear",
+        icon: "fluent-emoji:seedling",
       },
     };
     return ranks[rank] || ranks["Spirit Seed"];
@@ -717,17 +700,14 @@ function SummonDetailModal({
         </DialogHeader>
 
         <div className="w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[750px]">
-          {/* ── LEFT SIDE — Best MMR NFT showcase ── */}
           <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r border-slate-100 flex flex-col items-center justify-center p-4">
-            {/* "Best MMR NFT" label at the top */}
             <div className="slide-up-delay-1 text-center z-20 mt-20">
               <span className="inline-flex items-center gap-1 bg-white/60 backdrop-blur-sm border border-white/50 text-[9px] font-black uppercase tracking-[0.18em] text-amber-600 px-3 py-1 rounded-full shadow-sm">
-                <iconify-icon icon="solar:cup-star-bold" class="text-sm" />
+                <iconify-icon icon="fluent-emoji:trophy" class="text-sm" />
                 Best MMR NFT
               </span>
             </div>
 
-            {/* Rank label */}
             <div className="slide-up-delay-1 text-center z-20 mt-2">
               <h2
                 className={cn(
@@ -740,7 +720,6 @@ function SummonDetailModal({
               </h2>
             </div>
 
-            {/* NFT avatar + podium */}
             <div className="relative w-full flex-1 flex flex-col items-center justify-center">
               <div
                 className="relative z-30 w-64 h-64 md:w-72 md:h-72 mb-1 transition-all duration-700 ease-out mix-blend-multiply"
@@ -762,7 +741,7 @@ function SummonDetailModal({
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <iconify-icon
-                      icon="solar:ghost-bold"
+                      icon="fluent-emoji:ghost"
                       class="text-8xl text-slate-300"
                     />
                   </div>
@@ -770,7 +749,6 @@ function SummonDetailModal({
               </div>
             </div>
 
-            {/* NFT name + wallet lineage badge */}
             <div className="text-center z-20 mb-20">
               <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight mb-2">
                 {bestNft?.name ?? "—"}
@@ -787,15 +765,12 @@ function SummonDetailModal({
             </div>
           </div>
 
-          {/* ── RIGHT SIDE — Stats + rest of collection ── */}
           <div className="w-full md:w-[65%] flex flex-col h-full bg-white">
             <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 custom-scrollbar">
-              {/* MMR + stats row */}
               <div className="flex flex-col sm:flex-row gap-3 border-b border-slate-50 pb-6">
-                {/* Best MMR counter */}
                 <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl flex-1 border border-slate-100 shadow-sm">
                   <div className="w-12 h-12 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-blue-200 shadow-lg">
-                    <iconify-icon icon="solar:cup-star-bold" class="text-2xl" />
+                    <iconify-icon icon="fluent-emoji:trophy" class="text-2xl" />
                   </div>
                   <div>
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
@@ -807,11 +782,10 @@ function SummonDetailModal({
                   </div>
                 </div>
 
-                {/* Avg MMR */}
                 <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl flex-1 border border-slate-100 shadow-sm">
                   <div className="w-12 h-12 rounded-xl bg-indigo-500 text-white flex items-center justify-center shadow-indigo-200 shadow-lg">
                     <iconify-icon
-                      icon="solar:graph-up-linear"
+                      icon="fluent-emoji:chart-increasing"
                       class="text-2xl"
                     />
                   </div>
@@ -825,10 +799,9 @@ function SummonDetailModal({
                   </div>
                 </div>
 
-                {/* Total summons */}
                 <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl flex-1 border border-slate-100 shadow-sm">
                   <div className="w-12 h-12 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-emerald-200 shadow-lg">
-                    <iconify-icon icon="solar:box-bold" class="text-2xl" />
+                    <iconify-icon icon="fluent-emoji:package" class="text-2xl" />
                   </div>
                   <div>
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
@@ -841,13 +814,12 @@ function SummonDetailModal({
                 </div>
               </div>
 
-              {/* Lineage breakdown */}
               {Object.keys(lineageCounts).length > 0 && (
                 <div>
                   <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-3">
                     <iconify-icon
-                      icon="solar:dna-linear"
-                      class="text-lg text-indigo-400"
+                      icon="fluent-emoji:dna"
+                      class="text-lg"
                     />
                     Lineage Breakdown
                   </h3>
@@ -874,12 +846,11 @@ function SummonDetailModal({
                 </div>
               )}
 
-              {/* Rest of collection */}
               <div>
                 <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-4">
                   <iconify-icon
-                    icon="solar:gallery-linear"
-                    class="text-lg text-sky-500"
+                    icon="fluent-emoji:framed-picture"
+                    class="text-lg"
                   />
                   Rest of Collection
                   {restNfts.length > 0 && (
@@ -901,12 +872,10 @@ function SummonDetailModal({
                           key={nft.objectId}
                           className="flex items-center gap-2.5 bg-slate-50 border border-slate-100 rounded-2xl p-2.5 hover:bg-sky-50 hover:border-sky-100 transition-colors"
                         >
-                          {/* Position index */}
                           <span className="w-5 text-center text-[9px] font-black text-slate-300 flex-shrink-0">
                             #{startIdx + i + 2}
                           </span>
 
-                          {/* Thumbnail */}
                           <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 overflow-hidden flex-shrink-0">
                             {nft.imageUrl ? (
                               <Image
@@ -919,14 +888,13 @@ function SummonDetailModal({
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-slate-300">
                                 <iconify-icon
-                                  icon="solar:ghost-linear"
+                                  icon="fluent-emoji:ghost"
                                   class="text-base"
                                 />
                               </div>
                             )}
                           </div>
 
-                          {/* Name + rank */}
                           <div className="flex-1 min-w-0">
                             <p className="font-black text-xs text-slate-800 truncate leading-tight">
                               {nft.name}
@@ -936,7 +904,6 @@ function SummonDetailModal({
                             </p>
                           </div>
 
-                          {/* MMR + lineage badge */}
                           <div className="flex flex-col items-end gap-1 flex-shrink-0">
                             <span className="font-black text-xs text-slate-700">
                               {nft.mmr.toLocaleString()}
@@ -956,7 +923,6 @@ function SummonDetailModal({
                     {restNfts.length > PAGE_SIZE && (
                       <div className="flex flex-col items-center gap-2 mt-4 bg-[#fdf6e3] border-2 border-dashed border-yellow-200 rounded-2xl py-3 px-4">
                         <div className="flex justify-center items-center gap-3 w-full">
-                          {/* Prev button */}
                           <button
                             onClick={() =>
                               setRestPage((p) => Math.max(1, p - 1))
@@ -972,7 +938,6 @@ function SummonDetailModal({
                             />
                           </button>
 
-                          {/* Page indicator */}
                           <div className="flex items-center px-4 py-2 rounded-2xl border-4 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative min-w-[110px] justify-center">
                             <span className="text-xs font-black text-slate-400 uppercase mr-1">
                               Page
@@ -985,7 +950,6 @@ function SummonDetailModal({
                             </span>
                           </div>
 
-                          {/* Next button */}
                           <button
                             onClick={() =>
                               setRestPage((p) =>
@@ -1008,7 +972,6 @@ function SummonDetailModal({
                             />
                           </button>
                         </div>
-                        {/* Dots indicator below page buttons */}
                         <div className="flex items-center gap-1 ml- mt-2">
                           {Array.from({ length: totalRestPages }).map(
                             (_, idx) => (
@@ -1027,7 +990,6 @@ function SummonDetailModal({
               </div>
             </div>
 
-            {/* Footer */}
             <div className="p-6 border-t border-slate-100 flex justify-end bg-slate-50/50">
               <button
                 onClick={onClose}
@@ -1044,7 +1006,7 @@ function SummonDetailModal({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MMR MODAL — updated with high-fidelity rank styles
+// MMR MODAL
 // ─────────────────────────────────────────────────────────────────────────────
 
 function CharacterDetailModal({
@@ -1086,72 +1048,68 @@ function CharacterDetailModal({
     const ranks: { [key: string]: { style: string; icon: string } } = {
       "Kapogian Ascendant": {
         style: "rank-ascendant",
-        icon: "solar:crown-star-bold-duotone",
+        icon: "fluent-emoji:shooting-star",
       },
       "Master Rancher": {
         style: "rank-rancher",
-        icon: "solar:crown-star-bold-duotone",
+        icon: "fluent-emoji:cow-face",
       },
       "Generational Tycoon": {
         style: "rank-tycoon",
-        icon: "solar:crown-star-linear",
+        icon: "fluent-emoji:money-bag",
       },
       "Cultural Icon": {
         style: "rank-icon",
-        icon: "solar:crown-star-linear",
+        icon: "fluent-emoji:performing-arts",
       },
       "Eternal Light Bearer": {
         style: "rank-eternal",
-        icon: "solar:crown-star-linear",
-      },
-      "Ritual Architect": {
-        style: "rank-hof",
-        icon: "solar:crown-star-linear",
+        icon: "fluent-emoji:fire",
       },
       "Hall of Fame Immortal": {
         style: "rank-hof",
-        icon: "solar:star-bold",
+        icon: "fluent-emoji:trophy",
       },
-      "Supreme Pogi": { style: "rank-supreme", icon: "solar:star-bold" },
+      "Supreme Pogi": { style: "rank-supreme", icon: "fluent-emoji:star" },
       "Proof of Pogi Elite": {
         style: "rank-elite",
-        icon: "solar:star-bold",
+        icon: "fluent-emoji:gem-stone",
       },
       "Aura God": {
         style: "rank-auragod",
-        icon: "solar:star-line-duotone",
+        icon: "fluent-emoji:crown",
       },
       "Lord of Biringan": {
         style: "rank-biringan",
-        icon: "solar:star-line-duotone",
+        icon: "fluent-emoji:classical-building",
       },
       "Fearless Descent": {
         style: "rank-fearless",
-        icon: "solar:verified-check-linear",
+        icon: "fluent-emoji:shield",
       },
       "Dalaketnon Slayer": {
         style: "rank-slayer",
-        icon: "solar:verified-check-linear",
+        icon: "fluent-emoji:crossed-swords",
       },
       "Ghost Walker": {
         style: "rank-ghost",
-        icon: "solar:verified-check-linear",
+        icon: "fluent-emoji:ghost",
       },
       "Initiate of Pogi": {
         style: "rank-initiate",
-        icon: "solar:verified-check-linear",
+        icon: "fluent-emoji:person-raising-hand-light",
       },
       "Aura Touched": {
         style: "rank-touched",
-        icon: "solar:verified-check-linear",
+        icon: "fluent-emoji:sparkles",
       },
       "Pogi Spark": {
         style: "rank-spark",
-        icon: "solar:verified-check-linear",
+        icon: "fluent-emoji:zap",
       },
       "Spirit Seed": {
         style: "rank-seed",
-        icon: "solar:verified-check-linear",
+        icon: "fluent-emoji:seedling",
       },
     };
     return ranks[rank] || ranks["Spirit Seed"];
@@ -1202,7 +1160,6 @@ function CharacterDetailModal({
           </DialogDescription>
         </DialogHeader>
         <div className="w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row">
-          {/* Left Side */}
           <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r border-slate-100 flex flex-col items-center justify-center p-4">
             <div className="-mb-40 slide-up-delay-1 text-center z-20">
               <h2
@@ -1211,7 +1168,7 @@ function CharacterDetailModal({
                   rankInfo.style,
                 )}
               >
-            
+               
                 {user.attributes?.rank || "Spirit Seed"}
               </h2>
             </div>
@@ -1259,14 +1216,13 @@ function CharacterDetailModal({
             </div>
           </div>
 
-          {/* Right Side */}
           <div className="w-full md:w-[60%] flex flex-col h-full bg-white">
             <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 custom-scrollbar">
               <div className="flex justify-between items-center border-b border-slate-50 pb-6">
                 <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl w-full border border-slate-100 shadow-sm">
                   <div className="w-12 h-12 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-blue-200 shadow-lg">
                     <iconify-icon
-                      icon="solar:graph-up-linear"
+                      icon="fluent-emoji:chart-increasing"
                       class="text-2xl"
                     />
                   </div>
@@ -1285,8 +1241,8 @@ function CharacterDetailModal({
                 <div className="space-y-5">
                   <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
                     <iconify-icon
-                      icon="solar:magic-stick-3-linear"
-                      class="text-lg text-blue-500"
+                      icon="fluent-emoji:magic-wand"
+                      class="text-lg"
                     />
                     Core Skills
                   </h3>
@@ -1332,7 +1288,7 @@ function CharacterDetailModal({
                 <div className="space-y-4">
                   <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                     <iconify-icon
-                      icon="solar:map-point-wave-linear"
+                      icon="fluent-emoji:map-point"
                       class="text-lg"
                     />
                     Country Affinity
@@ -1396,8 +1352,8 @@ function CharacterDetailModal({
               <div className="pt-4">
                 <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-4">
                   <iconify-icon
-                    icon="solar:t-shirt-linear"
-                    class="text-lg text-orange-500"
+                    icon="fluent-emoji:t-shirt"
+                    class="text-lg"
                   />
                   Visual Traits
                 </h3>

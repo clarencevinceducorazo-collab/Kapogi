@@ -59,16 +59,16 @@ import {
 } from "@/lib/sui";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DATA STRUCTURES (kept for rank badges — purely front-end / off-chain)
+// DATA STRUCTURES (High-fidelity game badge style icons)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const RANK_DATA = [
   {
     mmr: 0,
     title: "Spirit Seed",
-    icon: "solar:leaf-linear",
-    color: "#94a3b8",
-    gradient: "linear-gradient(135deg,#475569,#cbd5e1)",
+    icon: "fluent-emoji:seedling",
+    color: "#5dd68a",
+    gradient: "linear-gradient(135deg,#38a169,#c6f6d5)",
     rarity: "Top 100%",
     tier: "Starter",
     fx: "fx-silver",
@@ -77,9 +77,9 @@ const RANK_DATA = [
   {
     mmr: 101,
     title: "Pogi Spark",
-    icon: "solar:bolt-linear",
-    color: "#d97706",
-    gradient: "linear-gradient(135deg,#92400e,#fbbf24)",
+    icon: "fluent-emoji:zap",
+    color: "#fbbf24",
+    gradient: "linear-gradient(135deg,#92400e,#fde68a)",
     rarity: "Top 85%",
     tier: "Starter",
     fx: "fx-bronze",
@@ -88,9 +88,9 @@ const RANK_DATA = [
   {
     mmr: 251,
     title: "Aura Touched",
-    icon: "solar:sprout-linear",
-    color: "#b45309",
-    gradient: "linear-gradient(135deg,#92400e,#d97706)",
+    icon: "fluent-emoji:sparkles",
+    color: "#d97706",
+    gradient: "linear-gradient(135deg,#92400e,#ffedd5)",
     rarity: "Top 65%",
     tier: "Initiate",
     fx: "fx-bronze",
@@ -99,9 +99,9 @@ const RANK_DATA = [
   {
     mmr: 401,
     title: "Initiate of Pogi",
-    icon: "solar:emoji-funny-circle-linear",
-    color: "#ea580c",
-    gradient: "linear-gradient(135deg,#c2410c,#fb923c)",
+    icon: "fluent-emoji:person-raising-hand-light",
+    color: "#f97316",
+    gradient: "linear-gradient(135deg,#c2410c,#ffedd5)",
     rarity: "Top 45%",
     tier: "Initiate",
     fx: "fx-bronze",
@@ -110,9 +110,9 @@ const RANK_DATA = [
   {
     mmr: 701,
     title: "Ghost Walker",
-    icon: "solar:ghost-smile-linear",
+    icon: "fluent-emoji:ghost",
     color: "#38bdf8",
-    gradient: "linear-gradient(135deg,#0369a1,#7dd3fc)",
+    gradient: "linear-gradient(135deg,#0369a1,#e0f2fe)",
     rarity: "Top 28%",
     tier: "Adept",
     fx: "fx-sky",
@@ -121,9 +121,9 @@ const RANK_DATA = [
   {
     mmr: 1001,
     title: "Dalaketnon Slayer",
-    icon: "solar:sword-linear",
+    icon: "fluent-emoji:crossed-swords",
     color: "#2563eb",
-    gradient: "linear-gradient(135deg,#1d4ed8,#60a5fa)",
+    gradient: "linear-gradient(135deg,#1d4ed8,#dbeafe)",
     rarity: "Top 18%",
     tier: "Adept",
     fx: "fx-sky",
@@ -132,9 +132,9 @@ const RANK_DATA = [
   {
     mmr: 1301,
     title: "Fearless Descent",
-    icon: "solar:shield-linear",
-    color: "#38bdf8",
-    gradient: "linear-gradient(135deg,#0284c7,#bae6fd)",
+    icon: "fluent-emoji:shield",
+    color: "#0ea5e9",
+    gradient: "linear-gradient(135deg,#0369a1,#e0f2fe)",
     rarity: "Top 12%",
     tier: "Adept",
     fx: "fx-sky",
@@ -143,9 +143,9 @@ const RANK_DATA = [
   {
     mmr: 1601,
     title: "Lord of Biringan",
-    icon: "solar:water-sun-linear",
+    icon: "fluent-emoji:classical-building",
     color: "#10b981",
-    gradient: "linear-gradient(135deg,#059669,#6ee7b7)",
+    gradient: "linear-gradient(135deg,#059669,#d1fae5)",
     rarity: "Top 7%",
     tier: "Elite",
     fx: "fx-emerald",
@@ -154,9 +154,9 @@ const RANK_DATA = [
   {
     mmr: 1901,
     title: "Aura God",
-    icon: "solar:crown-star-linear",
+    icon: "fluent-emoji:crown",
     color: "#059669",
-    gradient: "linear-gradient(135deg,#065f46,#34d399)",
+    gradient: "linear-gradient(135deg,#064e3b,#d1fae5)",
     rarity: "Top 4%",
     tier: "Elite",
     fx: "fx-emerald",
@@ -165,9 +165,9 @@ const RANK_DATA = [
   {
     mmr: 2201,
     title: "Proof of Pogi Elite",
-    icon: "solar:gem-linear",
+    icon: "fluent-emoji:gem-stone",
     color: "#34d399",
-    gradient: "linear-gradient(135deg,#059669,#a7f3d0)",
+    gradient: "linear-gradient(135deg,#065f46,#ecfdf5)",
     rarity: "Top 2.5%",
     tier: "Elite",
     fx: "fx-emerald",
@@ -176,9 +176,9 @@ const RANK_DATA = [
   {
     mmr: 2501,
     title: "Supreme Pogi",
-    icon: "solar:star-fall-linear",
+    icon: "fluent-emoji:star",
     color: "#f59e0b",
-    gradient: "linear-gradient(135deg,#b45309,#fde68a)",
+    gradient: "linear-gradient(135deg,#b45309,#fef3c7)",
     rarity: "Top 1.2%",
     tier: "Master",
     fx: "fx-gold",
@@ -187,9 +187,9 @@ const RANK_DATA = [
   {
     mmr: 2801,
     title: "Hall of Fame Immortal",
-    icon: "solar:cup-star-linear",
-    color: "#f59e0b",
-    gradient: "linear-gradient(135deg,#92400e,#fcd34d)",
+    icon: "fluent-emoji:trophy",
+    color: "#fbbf24",
+    gradient: "linear-gradient(135deg,#92400e,#fef3c7)",
     rarity: "Top 0.6%",
     tier: "Champion",
     fx: "fx-gold",
@@ -198,9 +198,9 @@ const RANK_DATA = [
   {
     mmr: 3301,
     title: "Eternal Light Bearer",
-    icon: "solar:flower-linear",
+    icon: "fluent-emoji:fire",
     color: "#f97316",
-    gradient: "linear-gradient(135deg,#c2410c,#fde68a)",
+    gradient: "linear-gradient(135deg,#c2410c,#fff7ed)",
     rarity: "Top 0.18%",
     tier: "Champion",
     fx: "fx-flame",
@@ -209,9 +209,9 @@ const RANK_DATA = [
   {
     mmr: 3501,
     title: "Cultural Icon",
-    icon: "solar:ribbon-linear",
+    icon: "fluent-emoji:performing-arts",
     color: "#ef4444",
-    gradient: "linear-gradient(135deg,#dc2626,#fca5a5)",
+    gradient: "linear-gradient(135deg,#dc2626,#fee2e2)",
     rarity: "Top 0.08%",
     tier: "Legend",
     fx: "fx-flame",
@@ -220,9 +220,9 @@ const RANK_DATA = [
   {
     mmr: 3701,
     title: "Generational Tycoon",
-    icon: "solar:wad-of-money-linear",
+    icon: "fluent-emoji:money-bag",
     color: "#eab308",
-    gradient: "linear-gradient(135deg,#a16207,#fef08a)",
+    gradient: "linear-gradient(135deg,#a16207,#fef9c3)",
     rarity: "Top 0.04%",
     tier: "Legend",
     fx: "fx-gold",
@@ -231,9 +231,9 @@ const RANK_DATA = [
   {
     mmr: 3851,
     title: "Master Rancher",
-    icon: "solar:palette-linear",
+    icon: "fluent-emoji:cow-face",
     color: "#a855f7",
-    gradient: "linear-gradient(135deg,#6d28d9,#e879f9)",
+    gradient: "linear-gradient(135deg,#6d28d9,#f3e8ff)",
     rarity: "Top 0.02%",
     tier: "Mythic",
     fx: "fx-purple",
@@ -242,7 +242,7 @@ const RANK_DATA = [
   {
     mmr: 3951,
     title: "Kapogian Ascendant",
-    icon: "solar:crown-linear",
+    icon: "fluent-emoji:shooting-star",
     color: "#818cf8",
     gradient: "linear-gradient(135deg,#4f46e5,#34d399,#60a5fa,#f472b6)",
     rarity: "Top 0.005%",
@@ -358,32 +358,28 @@ export function MainProfileV2({
   const currentCharacter = characters[index];
   const attrs = currentCharacter?.attributes ?? {};
   const shortAddr = account?.address ? formatAddress(account.address) : "0x...";
-  // Description handling: split into sentences and enable scroll if there are more than 5
+  
   const descriptionText =
     currentCharacter?.description ??
     "This spirit's origin is shrouded in mystery...";
   const sentences = useMemo(() => {
     if (!descriptionText) return [] as string[];
-    // Match sentences including punctuation; fallback to whole text
     const m = descriptionText.match(/[^.!?]+[.!?]+[\])'"`’”]*|.+$/g);
     return (m || [descriptionText]).map((s) => s.trim());
   }, [descriptionText]);
   const showScrollableDescription = sentences.length > 5;
 
-  // Total MMR = sum of all characters' MMR
   const totalMmr = useMemo(
     () => characters.reduce((acc, c) => acc + c.mmr, 0),
     [characters],
   );
 
-  // Set of on-chain unlocked achievement IDs
   const unlockedIds = useMemo(() => {
     const s = new Set<string>();
     playerStats?.unlocked.forEach((u) => s.add(u.achievementId));
     return s;
   }, [playerStats]);
 
-  // Rank badges locked to NFTs
   const ownedRankTitles = useMemo(() => {
     const titles = new Set<string>();
     characters.forEach((c) => {
@@ -461,7 +457,6 @@ export function MainProfileV2({
     }
   };
 
-  // Filter achievements for the gallery view
   const filteredGallery = useMemo(() => {
     return allAchievements.filter((ach) => {
       if (galleryFilter === "earned") return unlockedIds.has(ach.objectId);
@@ -553,10 +548,7 @@ export function MainProfileV2({
     { label: "Held", value: attrs.heldItem, icon: "solar:cup-linear" },
   ].filter((t) => t.value);
 
-  // ── Badges tab content ─────────────────────────────────────────────────────
-
   const renderBadgesTab = () => {
-    // 1. Loading
     if (achievementsLoading) {
       return (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
@@ -568,7 +560,6 @@ export function MainProfileV2({
       );
     }
 
-    // 2. Not initialized
     if (!playerStats) {
       return (
         <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
@@ -610,10 +601,8 @@ export function MainProfileV2({
       );
     }
 
-    // 3. Initialized — show earned badges or gallery
     return (
       <div className="animate-in slide-in-from-bottom-4 duration-500">
-        {/* Header row */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
           <div>
             <h3 className="text-2xl tracking-tight font-semibold text-slate-800 flex items-center gap-2">
@@ -663,7 +652,6 @@ export function MainProfileV2({
           </div>
         </div>
 
-        {/* Pending grants banner */}
         {pendingGrants.length > 0 && (
           <div className="mb-5 p-4 bg-yellow-50 border-4 border-yellow-300 rounded-2xl shadow-[0_4px_0_0_rgba(253,224,71,1)]">
             <p className="text-xs font-black uppercase text-yellow-700 mb-3 flex items-center gap-2">
@@ -695,10 +683,8 @@ export function MainProfileV2({
           </div>
         )}
 
-        {/* Gallery view */}
         {showGallery ? (
           <div>
-            {/* Filter bar */}
             <div className="flex bg-slate-100 p-1 rounded-2xl border-2 border-slate-200 mb-6 w-fit gap-0.5">
               {(["all", "earned", "available", "locked"] as const).map((f) => (
                 <button
@@ -719,12 +705,11 @@ export function MainProfileV2({
               ))}
             </div>
 
-            {/* Rank badges section */}
             <section className="mb-2">
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
                 <iconify-icon
-                  icon="solar:star-fall-bold"
-                  class="text-yellow-500"
+                  icon="fluent-emoji:glowing-star"
+                  class="text-sm"
                 />{" "}
                 On-Chain Ranks
               </h4>
@@ -752,12 +737,11 @@ export function MainProfileV2({
               </div>
             </section>
 
-            {/* On-chain achievements section */}
             <section>
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1 flex items-center gap-2">
                 <iconify-icon
-                  icon="solar:magic-stick-3-bold"
-                  class="text-indigo-500"
+                  icon="fluent-emoji:trophy"
+                  class="text-sm"
                 />{" "}
                 On-Chain Achievements
               </h4>
@@ -803,9 +787,9 @@ export function MainProfileV2({
                         onClick={() =>
                           setSelectedBadge({
                             ...ach,
-                            title: ach.name,        // modal uses badge.title
-                            desc: ach.description,  // modal uses badge.desc
-                            icon: "solar:trophy-linear",
+                            title: ach.name,
+                            desc: ach.description,
+                            icon: "fluent-emoji:trophy",
                             gradient: "linear-gradient(135deg,#4f46e5,#818cf8)",
                             color: "#6366f1",
                             isUnlocked: earned,
@@ -820,15 +804,13 @@ export function MainProfileV2({
             </section>
           </div>
         ) : (
-          /* My Earned Badges — only claimed on-chain achievements */
           <div>
-            {/* Rank badges (NFT-based, off-chain) */}
             {ownedRankTitles.size > 0 && (
               <section className="mb-8">
                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
                   <iconify-icon
-                    icon="solar:star-fall-bold"
-                    class="text-yellow-500"
+                    icon="fluent-emoji:star"
+                    class="text-sm"
                   />{" "}
                   Rank Badges
                 </h4>
@@ -860,12 +842,11 @@ export function MainProfileV2({
               </section>
             )}
 
-            {/* On-chain earned achievements */}
             <section>
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
                 <iconify-icon
-                  icon="solar:magic-stick-3-bold"
-                  class="text-indigo-500"
+                  icon="fluent-emoji:magic-wand"
+                  class="text-sm"
                 />{" "}
                 Claimed Achievements
               </h4>
@@ -897,7 +878,7 @@ export function MainProfileV2({
                             setSelectedBadge({
                               title: u.achievementName,
                               desc: achDef?.description ?? "Claimed on-chain achievement.",
-                              icon: "solar:trophy-linear",
+                              icon: "fluent-emoji:trophy",
                               gradient: "linear-gradient(135deg,#4f46e5,#818cf8)",
                               color: "#6366f1",
                               rarity: REQ_TYPE_LABEL[u.requirementType],
@@ -990,9 +971,7 @@ export function MainProfileV2({
       `}</style>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-        {/* ── LEFT PANEL ── */}
         <div className="lg:col-span-4 flex flex-col gap-6">
-          {/* Active Character Preview */}
           <div className="bg-white rounded-[2.5rem] p-6 border-4 border-slate-100 shadow-[0_12px_0_0_rgba(226,232,240,1)] text-center relative overflow-hidden">
             <div className="absolute -top-16 -left-16 w-32 aspect-square bg-pink-50 rounded-full"></div>
             <div className="relative">
@@ -1023,7 +1002,6 @@ export function MainProfileV2({
             </div>
           </div>
 
-          {/* Social Identity */}
           <div className="bg-white rounded-[2rem] p-5 border-4 border-slate-100 shadow-[0_8px_0_0_rgba(226,232,240,1)]">
             <h3 className="text-sm tracking-wide font-semibold text-slate-400 uppercase mb-4 px-2 flex items-center gap-2">
               <Twitter size={14} className="text-blue-400" /> Social Identity
@@ -1067,7 +1045,6 @@ export function MainProfileV2({
             )}
           </div>
 
-          {/* Profile Navigation */}
           <div className="bg-white rounded-[2rem] p-5 border-4 border-slate-100 shadow-[0_8px_0_0_rgba(226,232,240,1)]">
             <h3 className="text-sm tracking-wide font-semibold text-slate-400 uppercase mb-4 px-2 flex items-center gap-2">
               <iconify-icon icon="solar:user-id-linear" /> Profile Actions
@@ -1095,9 +1072,7 @@ export function MainProfileV2({
           </div>
         </div>
 
-        {/* ── RIGHT PANEL ── */}
         <div className="lg:col-span-8 flex flex-col gap-6">
-          {/* Header Stats */}
           <div>
             <h3 className="text-lg tracking-wide font-semibold text-slate-600 mb-3 px-2 flex items-center gap-2 uppercase">
               <iconify-icon
@@ -1135,7 +1110,6 @@ export function MainProfileV2({
           </div>
 
           <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border-4 border-slate-100 shadow-[0_12px_0_0_rgba(226,232,240,1)] flex-grow min-h-[600px]">
-            {/* Dashboard Tab */}
             {activeTab === "Stats" && (
               <div className="animate-in fade-in duration-500 space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1 pb-1 border-b border-slate-100 border-dashed">
@@ -1286,10 +1260,8 @@ export function MainProfileV2({
               </div>
             )}
 
-            {/* Badges Tab */}
             {activeTab === "Badges" && renderBadgesTab()}
 
-            {/* Collections Tab */}
             {activeTab === "Collections" && (
               <div className="animate-in slide-in-from-bottom-4 duration-500">
                 <h3 className="text-2xl tracking-tight font-semibold text-slate-800 mb-6 flex items-center gap-2">
@@ -1333,7 +1305,6 @@ export function MainProfileV2({
               </div>
             )}
 
-            {/* Orders Tab */}
             {activeTab === "Orders" && (
               <div className="animate-in slide-in-from-bottom-4 duration-500">
                 <OrdersPanel account={account} />
@@ -1343,7 +1314,6 @@ export function MainProfileV2({
         </div>
       </div>
 
-      {/* Badge Detail Dialog */}
       {selectedBadge && (
         <BadgeDetailModal
           badge={selectedBadge}
@@ -1394,7 +1364,6 @@ function OnChainAchievementCard({
         )}
         onClick={onClick}
       >
-        {/* Badge image or icon */}
         <div className="relative w-14 h-14 flex items-center justify-center">
           <div
             className={cn(
@@ -1414,14 +1383,13 @@ function OnChainAchievementCard({
               <iconify-icon
                 icon={
                   earned
-                    ? "solar:trophy-linear"
+                    ? "fluent-emoji:trophy"
                     : eligible
-                      ? "solar:lock-unlocked-linear"
-                      : "solar:lock-linear"
+                      ? "fluent-emoji:lock-unlocked"
+                      : "fluent-emoji:lock"
                 }
                 style={{
                   fontSize: "28px",
-                  color: earned ? "#6366f1" : eligible ? "#8b5cf6" : "#94a3b8",
                 }}
               />
             )}
@@ -1433,7 +1401,6 @@ function OnChainAchievementCard({
           )}
         </div>
 
-        {/* Title + req type */}
         <div className="text-center space-y-1 w-full">
           <p
             className={cn(
@@ -1450,7 +1417,6 @@ function OnChainAchievementCard({
           </div>
         </div>
 
-        {/* Claim button — only shown when eligible and not yet claimed */}
         {eligible && !earned && (
           <button
             onClick={(e) => {
@@ -1470,7 +1436,6 @@ function OnChainAchievementCard({
           </button>
         )}
 
-        {/* Progress hint for non-eligible non-admin */}
         {!earned && !eligible && ach.requirementType !== 3 && (
           <div className="w-full text-center text-[8px] font-bold text-slate-400 uppercase">
             {playerVal.toLocaleString()} / {ach.threshold.toLocaleString()}
@@ -1511,8 +1476,8 @@ function EarnedAchievementCard({
               />
             ) : (
               <iconify-icon
-                icon="solar:trophy-linear"
-                style={{ fontSize: "28px", color: "#6366f1" }}
+                icon="fluent-emoji:trophy"
+                style={{ fontSize: "28px" }}
               />
             )}
           </div>
@@ -1530,10 +1495,6 @@ function EarnedAchievementCard({
     </div>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// EXISTING HELPER COMPONENTS (unchanged)
-// ─────────────────────────────────────────────────────────────────────────────
 
 function EmptyBadges({ msg, sub }: { msg: string; sub: string }) {
   return (
@@ -1599,15 +1560,7 @@ function BadgeCard({
           >
             <iconify-icon
               icon={item.icon}
-              style={
-                isUnlocked
-                  ? {
-                      color: item.color,
-                      fontSize: "28px",
-                      filter: `drop-shadow(0 0 8px ${item.color}66)`,
-                    }
-                  : { color: "#94a3b8", fontSize: "24px" }
-              }
+              style={{ fontSize: "28px" }}
             />
           </div>
           {isCurrent && (
@@ -1673,7 +1626,6 @@ function BadgeDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      {/* Hide the default top-right 'x' close button provided by DialogContent */}
       <DialogContent
         hideCloseButton
         className="max-w-md w-full p-0 bg-transparent border-none shadow-none !rounded-[2.5rem]"
@@ -1706,11 +1658,9 @@ function BadgeDetailModal({
                     />
                   ) : (
                     <iconify-icon
-                      icon={badge.icon || "solar:trophy-linear"}
+                      icon={badge.icon || "fluent-emoji:trophy"}
                       style={{
                         fontSize: "48px",
-                        color: badge.color,
-                        filter: `drop-shadow(0 4px 12px ${badge.color}44)`,
                       }}
                     />
                   )}
