@@ -16,6 +16,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
 
 declare global {
   namespace JSX {
@@ -707,7 +708,15 @@ function SummonDetailModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[750px]">
+        <div className="w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[750px] relative">
+          {/* Floating X Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute top-6 right-6 z-50 p-2 rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90"
+          >
+            <X size={20} strokeWidth={3} />
+          </button>
+
           <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r border-slate-100 flex flex-col items-center justify-center p-4">
             <div className="slide-up-delay-1 text-center z-20 mt-20">
               <span className="inline-flex items-center gap-1 bg-white/60 backdrop-blur-sm border border-white/50 text-[9px] font-black uppercase tracking-[0.18em] text-amber-600 px-3 py-1 rounded-full shadow-sm">
@@ -997,15 +1006,6 @@ function SummonDetailModal({
                 )}
               </div>
             </div>
-
-            <div className="p-6 border-t border-slate-100 flex justify-end bg-slate-50/50">
-              <button
-                onClick={onClose}
-                className="bg-slate-900 hover:bg-black text-white px-8 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg hover:shadow-xl active:scale-95"
-              >
-                Close Profile
-              </button>
-            </div>
           </div>
         </div>
       </DialogContent>
@@ -1168,6 +1168,7 @@ function CharacterDetailModal({
           </DialogDescription>
         </DialogHeader>
         <div className="w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row relative">
+<<<<<<< HEAD
           <button
             onClick={onClose}
             aria-label="Close profile modal"
@@ -1175,6 +1176,16 @@ function CharacterDetailModal({
           >
             <iconify-icon icon="solar:close-circle-linear" width="20" />
           </button>
+=======
+          {/* Floating X Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute top-6 right-6 z-50 p-2 rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90"
+          >
+            <X size={20} strokeWidth={3} />
+          </button>
+
+>>>>>>> 14f2f40ecaf4fe138e8ae31bec538c5b73ae301e
           <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r border-slate-100 flex flex-col items-center justify-center p-4">
             <div className="-mb-40 slide-up-delay-1 text-center z-20">
               <h2
@@ -1391,8 +1402,11 @@ function CharacterDetailModal({
                 </div>
               </div>
             </div>
+<<<<<<< HEAD
 
             <div className="p-6 border-t border-slate-100 bg-slate-50/50" />
+=======
+>>>>>>> 14f2f40ecaf4fe138e8ae31bec538c5b73ae301e
           </div>
         </div>
       </DialogContent>
