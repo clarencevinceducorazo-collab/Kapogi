@@ -985,7 +985,6 @@ export function MainProfileV2({
           }
           100% {
             left: 200%;
-            aqsd
           }
         }
       `}</style>
