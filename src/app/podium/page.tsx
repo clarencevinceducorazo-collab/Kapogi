@@ -1168,7 +1168,7 @@ function CharacterDetailModal({
                   rankInfo.style,
                 )}
               >
-                <iconify-icon icon={rankInfo.icon} />
+               
                 {user.attributes?.rank || "Spirit Seed"}
               </h2>
             </div>
