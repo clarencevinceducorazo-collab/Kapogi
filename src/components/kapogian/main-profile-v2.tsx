@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -805,6 +803,8 @@ export function MainProfileV2({
                         onClick={() =>
                           setSelectedBadge({
                             ...ach,
+                            title: ach.name,        // modal uses badge.title
+                            desc: ach.description,  // modal uses badge.desc
                             icon: "solar:trophy-linear",
                             gradient: "linear-gradient(135deg,#4f46e5,#818cf8)",
                             color: "#6366f1",
@@ -894,20 +894,18 @@ export function MainProfileV2({
                         unlocked={u}
                         achDef={achDef}
                         onClick={() =>
-                          setSelectedBadge({
-                            title: u.achievementName,
-                            desc:
-                              achDef?.description ??
-                              "Claimed on-chain achievement.",
-                            icon: "solar:trophy-linear",
-                            gradient: "linear-gradient(135deg,#4f46e5,#818cf8)",
-                            color: "#6366f1",
-                            rarity: REQ_TYPE_LABEL[u.requirementType],
-                            isUnlocked: true,
-                            type: "onchain",
-                            badgeUrl: achDef?.badgeUrl,
-                            claimedAt: u.claimedAt,
-                          })
+                            setSelectedBadge({
+                              title: u.achievementName,
+                              desc: achDef?.description ?? "Claimed on-chain achievement.",
+                              icon: "solar:trophy-linear",
+                              gradient: "linear-gradient(135deg,#4f46e5,#818cf8)",
+                              color: "#6366f1",
+                              rarity: REQ_TYPE_LABEL[u.requirementType],
+                              isUnlocked: true,
+                              type: "onchain",
+                              badgeUrl: achDef?.badgeUrl,
+                              claimedAt: u.claimedAt,
+                            })
                         }
                       />
                     );
@@ -1976,4 +1974,3 @@ function TerritoryRow({
     </div>
   );
 }
->>>>>>> Stashed changes
