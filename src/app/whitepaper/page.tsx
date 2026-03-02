@@ -134,7 +134,7 @@ export default function WhitepaperPage() {
                       <p className="font-bold text-xs">Mugs</p>
                     </div>
                     <div className="bg-white p-4 rounded-xl border-2 border-black">
-                      <p className="font-bold text-xs">Aluminum Plates</p>
+                      <p className="font-bold text-xs">Mouse Pad</p>
                     </div>
                   </div>
                 </div>
@@ -382,7 +382,7 @@ export default function WhitepaperPage() {
                   </div>
                   <p className="text-sm text-slate-600">
                     Launch of the Kapogian Spirit NFT Collection & the 1-to-1
-                    Merch Store (Apparel, Mugs, Aluminum Plates).
+                    Merch Store (Apparel, Mugs, Mouse Pad).
                   </p>
                 </div>
 
