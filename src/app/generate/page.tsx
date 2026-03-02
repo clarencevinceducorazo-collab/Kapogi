@@ -290,10 +290,10 @@ export default function GeneratorPage() {
 
   const items = [
     "Nothing",
-    "Balut",
-    "Sampaguita",
-    "Kalis",
-    "Buko Juice",
+    "Boquet of Flowers",
+    "Machine Gun",
+    "Machete",
+    "Juice",
     "Arnis Sticks",
   ];
 
@@ -2237,14 +2237,15 @@ export default function GeneratorPage() {
                 <div className="relative bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-0">
                   {loading ? (
                     showExitLoader ? (
-                      <div className="relative w-full h-full flex items-center justify-center">
+                      <div className="relative w-[800px] h-[400px] flex items-center justify-center">
                         <Image
                           src="/images/latefinalexit.gif"
                           alt="Finishing up..."
-                          width={800}
-                          height={1400}
-                          className="object-contain"
+                          width={300}
+                          height={400}
+                          className="object-contain w-[800px] h-[400px]"
                           unoptimized
+                          priority
                         />
                       </div>
                     ) : (
