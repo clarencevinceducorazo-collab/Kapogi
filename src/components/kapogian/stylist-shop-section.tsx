@@ -169,15 +169,15 @@ export const StylistShopSection = () => {
           )}
         </div>
       </div>
-      <div className="absolute bottom-0 left-0 w-full h-auto z-0">
+      <div className="absolute bottom-0 left-0 w-full h-auto z-0 translate-y-[1px]">
         <svg
           viewBox="0 0 1440 60"
           xmlns="http://www.w3.org/2000/svg"
           preserveAspectRatio="none"
-          className="w-full h-auto"
+          className="w-full h-auto animate-wave-loop"
         >
           <path
-            fill="hsl(var(--primary))"
+            fill="#4A80FF"
             d="M0 15L40 18.7C80 22.3 160 29.3 240 30.2C320 31.1 400 25.8 480 24.3C560 22.8 640 25.1 720 21.7C800 18.3 880 9.2 960 10.3C1040 11.5 1120 23 1200 26.2C1280 29.3 1360 24.2 1400 21.7L1440 19.2V60H1400C1360 60 1280 60 1200 60C1120 60 1040 60 960 60C880 60 800 60 720 60C640 60 560 60 480 60C400 60 320 60 240 60C160 60 80 60 40 60H0V15Z"
           ></path>
         </svg>
