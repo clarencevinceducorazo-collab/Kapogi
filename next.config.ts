@@ -122,8 +122,12 @@ const nextConfig: NextConfig = {
   
   // SWC minification (faster builds)
   swcMinify: true,
+
+  // Environment variables for NextAuth
+  env: {
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'https://kapogian.xyz',
+    AUTH_TRUST_HOST: 'true',
+  },
 };
 
 export default nextConfig;
-
-    

@@ -14,11 +14,15 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
+  trustHost: true,
+  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async jwt({ token, profile }) {
       if (profile) {
-        token.x_username = (profile as any).data?.username || (profile as any).username
-        token.x_uid = (profile as any).data?.id || (profile as any).id
+        token.x_username = (profile as any).data?.username 
+          || (profile as any).username
+        token.x_uid = (profile as any).data?.id 
+          || (profile as any).id
       }
       return token
     },
