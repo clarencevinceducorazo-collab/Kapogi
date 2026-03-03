@@ -5,16 +5,15 @@ import { getAdminDb } from '@/lib/firebase-admin';
  * API Route: /api/identity/unbind
  * 
  * Removes the link between an X account and a Sui wallet.
- * Security: For a production app, you should require a signature to unbind.
- * For this prototype, we trust the caller if the wallet is connected.
  */
 export async function POST(request: NextRequest) {
     try {
-        const { walletAddress } = await request.json();
-        if (!walletAddress) {
+        const { walletAddress: rawAddress } = await request.json();
+        if (!rawAddress) {
             return NextResponse.json({ success: false, error: 'Missing walletAddress' }, { status: 400 });
         }
 
+        const walletAddress = rawAddress.toLowerCase();
         const adminDb = getAdminDb();
         
         // Find all bindings for this wallet

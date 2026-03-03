@@ -1,4 +1,3 @@
-
 'use client';
 
 /**
@@ -47,9 +46,11 @@ export async function verifyBinding(payload: VerificationPayload): Promise<{ suc
 
 /**
  * Checks if a wallet address is already bound to an X account.
+ * Uses a timestamp parameter to avoid browser caching of stale data.
  */
 export async function checkBinding(walletAddress: string): Promise<{ bound: boolean; x_username?: string; x_uid?: string }> {
-  const response = await fetch(`/api/identity/check-binding?address=${walletAddress}`);
+  if (!walletAddress) return { bound: false };
+  const response = await fetch(`/api/identity/check-binding?address=${walletAddress.toLowerCase()}&t=${Date.now()}`);
   if (!response.ok) return { bound: false };
   return response.json();
 }
@@ -58,7 +59,8 @@ export async function checkBinding(walletAddress: string): Promise<{ bound: bool
  * Checks if an X account is already bound to a wallet address.
  */
 export async function checkBindingByXUid(x_uid: string): Promise<{ bound: boolean; sui_address?: string; x_username?: string }> {
-  const response = await fetch(`/api/identity/check-binding-x?x_uid=${x_uid}`);
+  if (!x_uid) return { bound: false };
+  const response = await fetch(`/api/identity/check-binding-x?x_uid=${x_uid}&t=${Date.now()}`);
   if (!response.ok) return { bound: false };
   return response.json();
 }
