@@ -9,14 +9,14 @@ WORKDIR /usr/src/app
 ################################################################################
 FROM base as deps
 COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev || npm install --omit=dev
+RUN npm install
 
 ################################################################################
-FROM deps as build
-RUN npm ci || npm install
+FROM base as build
+RUN npm install
 COPY . .
 
-# Set build-time environment variables to be baked into the Next.js build
+# ADD THESE LINES HERE ↓
 ENV NEXTAUTH_URL=https://kapogian.xyz
 ENV AUTH_TRUST_HOST=true
 ENV NEXTAUTH_SECRET=K8pX2mNqR5vY9wL3jH7tF4cA6dB0eG1iJ
@@ -28,8 +28,7 @@ RUN npm run build
 FROM base as final
 
 ENV NODE_ENV=production
-
-# Set runtime environment variables
+# ADD THESE LINES HERE TOO ↓
 ENV NEXTAUTH_URL=https://kapogian.xyz
 ENV AUTH_TRUST_HOST=true
 ENV NEXTAUTH_SECRET=K8pX2mNqR5vY9wL3jH7tF4cA6dB0eG1iJ
