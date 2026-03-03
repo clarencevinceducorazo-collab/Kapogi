@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
-import Script from "next/script";
 import { PageHeader } from "@/components/kapogian/page-header";
 import { PageFooter } from "@/components/kapogian/page-footer";
 import { suiClient } from "@/lib/sui";
@@ -15,8 +14,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
-import { X, Trophy as TrophyIcon, Sparkles, Medal, Crown as CrownIcon, ArrowLeft, ArrowRight, LoaderCircle } from "lucide-react";
+import { cn, formatAddress } from "@/lib/utils";
+import { X, ShieldAlert, ArrowLeft, ArrowRight, LoaderCircle } from "lucide-react";
 
 declare global {
   namespace JSX {
@@ -259,7 +258,7 @@ export default function PodiumPage() {
     }
 
     return (
-      <div className="flex flex-row justify-center items-end gap-2 md:gap-6 mb-12 w-full max-w-3xl mx-auto pt-12">
+      <div className="flex flex-row justify-center items-end gap-2 md:gap-6 mb-12 w-full max-w-3xl mx-auto pt-12 relative z-10">
         {/* Silver #2 */}
         <div
           className="w-1/3 flex flex-col items-center animate-float-2 group cursor-pointer"
@@ -283,12 +282,12 @@ export default function PodiumPage() {
                 className="w-full h-32 md:h-44 rounded-t-[2.5rem] podium-silver flex flex-col justify-end items-center p-4 text-center relative overflow-hidden border-4 border-black"
               >
                 <div className="absolute top-0 left-0 w-full h-3 bg-white/40" />
-                <span className="text-[10px] md:text-xs font-black text-slate-600 uppercase tracking-widest mb-1 truncate w-full px-2">
+                <span className="text-[10px] md:text-xs font-black text-slate-700 uppercase tracking-widest mb-1 truncate w-full px-2">
                   {mode === "mmr"
                     ? podiumOrder[0].nftName
                     : `${podiumOrder[0].walletAddress.slice(0, 6)}...${podiumOrder[0].walletAddress.slice(-4)}`}
                 </span>
-                <span className="text-xl md:text-3xl font-black text-slate-800 tracking-tighter">
+                <span className="text-xl md:text-3xl font-black text-slate-900 tracking-tighter">
                   {mode === "mmr"
                     ? podiumOrder[0].mmrScore?.toLocaleString()
                     : (
@@ -327,7 +326,7 @@ export default function PodiumPage() {
                 className="w-full h-44 md:h-60 rounded-t-[3rem] podium-gold flex flex-col justify-end items-center p-5 text-center relative overflow-hidden border-4 border-black"
               >
                 <div className="absolute top-0 left-0 w-full h-4 bg-white/50" />
-                <span className="text-xs md:text-sm font-black text-yellow-900 uppercase tracking-widest mb-1 truncate w-full px-2 opacity-70">
+                <span className="text-xs md:text-sm font-black text-yellow-950 uppercase tracking-widest mb-1 truncate w-full px-2 opacity-80">
                   {mode === "mmr"
                     ? podiumOrder[1].nftName
                     : `${podiumOrder[1].walletAddress.slice(0, 6)}...${podiumOrder[1].walletAddress.slice(-4)}`}
@@ -367,7 +366,7 @@ export default function PodiumPage() {
                 className="w-full h-24 md:h-36 rounded-t-[2.5rem] podium-bronze flex flex-col justify-end items-center p-4 text-center relative overflow-hidden border-4 border-black"
               >
                 <div className="absolute top-0 left-0 w-full h-2 bg-white/30" />
-                <span className="text-[10px] md:text-xs font-black text-orange-900 uppercase tracking-widest mb-1 truncate w-full px-2 opacity-60">
+                <span className="text-[10px] md:text-xs font-black text-orange-950 uppercase tracking-widest mb-1 truncate w-full px-2 opacity-70">
                   {mode === "mmr"
                     ? podiumOrder[2].nftName
                     : `${podiumOrder[2].walletAddress.slice(0, 6)}...${podiumOrder[2].walletAddress.slice(-4)}`}
@@ -437,11 +436,10 @@ export default function PodiumPage() {
   );
 
   return (
-    <>
-      <Script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js" />
+    <div className="flex flex-col min-h-screen">
       <PageHeader />
       <div
-        className="text-slate-600 antialiased min-h-screen relative"
+        className="text-slate-600 antialiased min-h-screen relative flex-1 flex flex-col"
         style={{
           backgroundImage: "url('/images/podium/biringanbg.png')",
           backgroundSize: "cover",
@@ -450,7 +448,6 @@ export default function PodiumPage() {
           backgroundAttachment: "fixed"
         }}
       >
-        {/* Dark overlay for readability */}
         <div className="absolute inset-0 bg-black/20 pointer-events-none z-0" />
 
         <main className="relative flex-1 max-w-5xl mx-auto w-full px-4 pb-24 pt-32 z-10">
@@ -460,14 +457,14 @@ export default function PodiumPage() {
                   style={{ textShadow: '6px 6px 0px rgba(0,0,0,0.5)' }}>
                 Leaderboard
               </h1>
-              <p className="text-white/90 font-black uppercase tracking-[0.2em] text-sm md:text-base bg-black/30 backdrop-blur-sm px-4 py-1.5 rounded-xl border border-white/10 inline-block">
+              <p className="text-white font-black uppercase tracking-[0.2em] text-sm md:text-base bg-black/40 backdrop-blur-md px-6 py-2 rounded-2xl border-2 border-white/20 inline-block shadow-lg">
                 Climb the ranks and earn rewards!
               </p>
             </div>
-            <div className="bg-white/90 backdrop-blur-md p-2 rounded-[2rem] border-4 border-black inline-flex relative shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <div className="bg-white/95 backdrop-blur-md p-2 rounded-[2.5rem] border-4 border-black inline-flex relative shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]">
               <div
                 id="tab-bg"
-                className="absolute top-2 bottom-2 left-2 w-[calc(50%-8px)] bg-sky-400 border-4 border-black rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+                className="absolute top-2 bottom-2 left-2 w-[calc(50%-8px)] bg-sky-400 border-4 border-black rounded-[1.8rem] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
                 style={{
                   transform:
                     mode === "mmr" ? "translateX(0)" : "translateX(100%)",
@@ -475,13 +472,13 @@ export default function PodiumPage() {
               />
               <button
                 onClick={() => switchMode("mmr")}
-                className={`relative z-10 px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors duration-200 flex items-center gap-2 ${mode === "mmr" ? "text-white drop-shadow-[2px_2px_0_#000]" : "text-slate-500 hover:text-sky-600"}`}
+                className={`relative z-10 px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-colors duration-200 flex items-center gap-2 ${mode === "mmr" ? "text-white drop-shadow-[2px_2px_0_#000]" : "text-slate-500 hover:text-sky-600"}`}
               >
                 <iconify-icon icon="solar:cup-star-bold" width="20" /> MMR Rank
               </button>
               <button
                 onClick={() => switchMode("summon")}
-                className={`relative z-10 px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors duration-200 flex items-center gap-2 ${mode === "summon" ? "text-white drop-shadow-[2px_2px_0_#000]" : "text-slate-500 hover:text-sky-600"}`}
+                className={`relative z-10 px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-colors duration-200 flex items-center gap-2 ${mode === "summon" ? "text-white drop-shadow-[2px_2px_0_#000]" : "text-slate-500 hover:text-sky-600"}`}
               >
                 <iconify-icon icon="solar:box-bold" width="20" /> Summons
               </button>
@@ -490,10 +487,7 @@ export default function PodiumPage() {
 
           {loading ? (
             <div className="flex justify-center items-center p-20 bg-white/10 backdrop-blur-xl rounded-[3rem] border-4 border-white/20">
-              <iconify-icon
-                icon="solar:spinner-gap-bold"
-                class="text-6xl animate-spin text-white drop-shadow-lg"
-              />
+              <LoaderCircle className="text-6xl animate-spin text-white drop-shadow-lg" size={64} />
             </div>
           ) : error ? (
             <div className="bg-red-50 text-red-700 p-8 rounded-[2.5rem] border-4 border-red-200 text-center font-black uppercase tracking-tight shadow-xl">
@@ -574,7 +568,7 @@ export default function PodiumPage() {
         </div>
       )}
       <PageFooter />
-    </>
+    </div>
   );
 }
 
@@ -733,7 +727,6 @@ function SummonDetailModal({
         </DialogHeader>
 
         <div className="w-full bg-white rounded-[2.5rem] border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col md:flex-row max-h-[85vh] relative">
-          {/* Close button in top-right */}
           <button 
             onClick={onClose}
             className="absolute top-6 right-6 z-[60] bg-white border-4 border-black rounded-full p-2 hover:bg-red-500 hover:text-white transition-all active:scale-95"
@@ -1170,7 +1163,6 @@ function CharacterDetailModal({
           </DialogDescription>
         </DialogHeader>
         <div className="w-full bg-white rounded-[2.5rem] border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col md:flex-row relative">
-          {/* Close button in top-right */}
           <button 
             onClick={onClose}
             className="absolute top-6 right-6 z-[60] bg-white border-4 border-black rounded-full p-2 hover:bg-red-500 hover:text-white transition-all active:scale-95"
@@ -1209,7 +1201,6 @@ function CharacterDetailModal({
                 />
               </div>
               
-              {/* Podium Base for Single Character */}
               <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-48 h-20 z-0">
                 <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-40 h-6 bg-emerald-900/20 blur-lg rounded-[100%]" />
                 <div className="absolute top-1/2 left-[4%] w-[92%] h-full bg-gradient-to-b from-emerald-600 to-emerald-800 rounded-b-[100%] border-b-4 border-black shadow-xl z-0" />
