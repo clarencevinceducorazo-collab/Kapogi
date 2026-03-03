@@ -801,7 +801,7 @@ export default function GeneratorPage() {
         JSON.stringify(data),
       );
     } catch (e) {
-      console.error("Failed to autosave shipping data", e);
+      console.error("Failed to autosave shipping data.", e);
     }
   }, [
     account?.address,
