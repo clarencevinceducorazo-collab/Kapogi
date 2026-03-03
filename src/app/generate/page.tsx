@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   useCurrentAccount,
@@ -398,6 +398,9 @@ export default function GeneratorPage() {
   const [citiesLoading, setCitiesLoading] = useState(false);
   const [barangaysLoading, setBarangaysLoading] = useState(false);
 
+  // Synchronization flag for shipping localStorage
+  const [isShippingInitialized, setIsShippingInitialized] = useState(false);
+
   // Merch selection state
   const [selection, setSelection] = useState<string | null>("Tee");
   const [shirtSize, setShirtSize] = useState<string>("M");
@@ -663,8 +666,12 @@ export default function GeneratorPage() {
     };
   }, [loading, showExitLoader, loadingSteps.length]);
 
+  // Handle loading shipping data from localStorage on mount
   useEffect(() => {
-    if (!account?.address) return;
+    if (!account?.address) {
+      setIsShippingInitialized(false);
+      return;
+    }
 
     const savedDataRaw = localStorage.getItem(
       `kapogian_shipping_${account.address}`,
@@ -672,10 +679,10 @@ export default function GeneratorPage() {
     if (savedDataRaw) {
       try {
         const data = JSON.parse(savedDataRaw);
-        setShippingName(data.name ?? "");
-        setShippingEmail(data.email ?? "");
-        setShippingContact(data.contact ?? "");
-        setStreetAddress(data.street ?? "");
+        if (data.name) setShippingName(data.name);
+        if (data.email) setShippingEmail(data.email);
+        if (data.contact) setShippingContact(data.contact);
+        if (data.street) setStreetAddress(data.street);
         if (data.province) setSelectedProvince(data.province);
         if (data.city) setSelectedCity(data.city);
         if (data.barangay) setSelectedBarangay(data.barangay);
@@ -683,8 +690,11 @@ export default function GeneratorPage() {
         console.error("Failed to parse saved shipping data", e);
       }
     }
+    // Flag that we've attempted to load data, so auto-save can begin
+    setIsShippingInitialized(true);
   }, [account?.address]);
 
+  // Handle PSGC API fetches
   useEffect(() => {
     const fetchProvinces = async () => {
       setProvincesLoading(true);
@@ -705,7 +715,6 @@ export default function GeneratorPage() {
       }
     };
     fetchProvinces();
-    // Optionally, add a retry button or logic here if needed
   }, []);
 
   useEffect(() => {
@@ -722,24 +731,20 @@ export default function GeneratorPage() {
           setCities(data);
         } catch (error) {
           console.error("Failed to fetch cities", error);
-          setError(
-            "Could not load city data. Please check your internet connection or try again later.",
-          );
           setCities([]);
         } finally {
           setCitiesLoading(false);
         }
       };
 
-      if (selectedCity?.provinceCode === selectedProvince.code) {
-        fetchCities();
-      } else {
+      // Only clear child if we switched to a DIFFERENT parent
+      if (selectedCity && selectedCity.provinceCode !== selectedProvince.code) {
         setCities([]);
         setSelectedCity(null);
         setBarangays([]);
         setSelectedBarangay(null);
-        fetchCities();
       }
+      fetchCities();
     } else {
       setCities([]);
       setSelectedCity(null);
@@ -760,27 +765,55 @@ export default function GeneratorPage() {
           setBarangays(data);
         } catch (error) {
           console.error("Failed to fetch barangays", error);
-          setError(
-            "Could not load barangay data. Please check your internet connection or try again later.",
-          );
           setBarangays([]);
         } finally {
           setBarangaysLoading(false);
         }
       };
 
-      if (selectedBarangay?.cityCode === selectedCity.code) {
-        fetchBarangays();
-      } else {
+      if (selectedBarangay && selectedBarangay.cityCode !== selectedCity.code) {
         setBarangays([]);
         setSelectedBarangay(null);
-        fetchBarangays();
       }
+      fetchBarangays();
     } else {
       setBarangays([]);
       setSelectedBarangay(null);
     }
   }, [selectedCity]);
+
+  // Auto-save shipping fields whenever they change, but ONLY after initialization
+  useEffect(() => {
+    if (!account?.address || !isShippingInitialized) return;
+    
+    const data = {
+      name: shippingName,
+      email: shippingEmail,
+      contact: shippingContact,
+      province: selectedProvince,
+      city: selectedCity,
+      barangay: selectedBarangay,
+      street: streetAddress,
+    };
+    try {
+      localStorage.setItem(
+        `kapogian_shipping_${account.address}`,
+        JSON.stringify(data),
+      );
+    } catch (e) {
+      console.error("Failed to autosave shipping data", e);
+    }
+  }, [
+    account?.address,
+    isShippingInitialized,
+    shippingName,
+    shippingEmail,
+    shippingContact,
+    selectedProvince,
+    selectedCity,
+    selectedBarangay,
+    streetAddress,
+  ]);
 
   const navigate = (targetId: string) => {
     setPage(targetId);
@@ -878,16 +911,6 @@ export default function GeneratorPage() {
     }
   };
 
-  /**
-   * buildCharacterPrompt
-   * Build a descriptive image prompt for the character image generator.
-   * - name: the chosen character name (may be generated)
-   * - originDesc: short origin/location description used in the prompt
-   *
-   * Returns a single-line prompt string describing visual details (pose,
-   * clothing, hair, facial hair, accessories, skin tone, etc.) suitable for
-   * the image generation backend.
-   */
   const buildCharacterPrompt = (name: string, originDesc: string): string => {
     const identityContext = getIdentityContext(lineage);
     const skinToneDescriptor = getSkinToneDescription(attributes.skinTone);
@@ -991,12 +1014,6 @@ export default function GeneratorPage() {
     return `full body shot of a high quality, well-proportioned, anatomically correct cute ${bodyFatDescriptor} chibi pinoy character with two arms and two legs, of the ${lineage} lineage (${identityContext}), named ${name}, from ${originDesc}, with ${skinToneDescriptor}. The character has ${hairDescriptor} with ${hairColorDescription} hair. The character has ${facialHairDescriptor}, is wearing ${clothingDescriptor}, with ${eyewearDescriptor}, in a ${pose}, and is ${holdingItemDescriptor}, showing confident pose, smiling. Chibi character art, clean vector line art, cel-shaded, sticker style, simple White background, PNG format.`;
   };
 
-  /**
-   * handleShuffle
-   * Randomize visual options and stats for a new candidate character.
-   * Updates outfit/posture indices, `attributes`, `stats`, and `lineage`.
-   * This is purely local UI state (does not persist or call external APIs).
-   */
   const handleShuffle = () => {
     const rOutfit = Math.floor(Math.random() * clothingOptions.length);
     const rPosture = Math.floor(Math.random() * postureOptions.length);
@@ -1027,17 +1044,6 @@ export default function GeneratorPage() {
     setLineage(lineages[Math.floor(Math.random() * lineages.length)].name);
   };
 
-  /**
-   * handleGenerate
-   * Orchestrates the character generation flow:
-   * - sets loading UI state and starts a brief shuffling animation
-   * - constructs a final prompt via `buildCharacterPrompt`
-   * - calls `generateImage` and `generateText` in parallel
-   * - sets generated image, lore, name, and derived MMR/rank outputs
-   * - navigates to the preview page and clears loading state on completion
-   *
-   * Handles and logs failures, and ensures UI state is restored on error.
-   */
   const handleGenerate = async () => {
     let shuffleInterval: NodeJS.Timeout | undefined;
 
@@ -1103,7 +1109,6 @@ export default function GeneratorPage() {
       if (shuffleInterval) clearInterval(shuffleInterval);
       console.error("Generation failed:", err);
 
-      // Check for quota exhaustion
       if (
         err.message?.includes("RESOURCE_EXHAUSTED") ||
         err.message?.includes("429")
@@ -1122,12 +1127,6 @@ export default function GeneratorPage() {
     }
   };
 
-  /**
-   * saveShippingToLocal
-   * Persist the current shipping form values into `localStorage` scoped
-   * to the connected account. This is invoked when the user proceeds to
-   * mint and is also used by the autosave effect.
-   */
   const saveShippingToLocal = () => {
     if (!account?.address) return;
 
@@ -1148,49 +1147,6 @@ export default function GeneratorPage() {
     console.log("📦 Shipping info saved to local storage.");
   };
 
-  // Auto-save shipping fields whenever they change
-  useEffect(() => {
-    if (!account?.address) return;
-    const data = {
-      name: shippingName,
-      email: shippingEmail,
-      contact: shippingContact,
-      province: selectedProvince,
-      city: selectedCity,
-      barangay: selectedBarangay,
-      street: streetAddress,
-    };
-    try {
-      localStorage.setItem(
-        `kapogian_shipping_${account.address}`,
-        JSON.stringify(data),
-      );
-    } catch (e) {
-      console.error("Failed to autosave shipping data", e);
-    }
-  }, [
-    account?.address,
-    shippingName,
-    shippingEmail,
-    shippingContact,
-    selectedProvince,
-    selectedCity,
-    selectedBarangay,
-    streetAddress,
-  ]);
-
-  /**
-   * handleMint
-   * Perform the full mint flow:
-   * - validate presence of connected wallet, pricing and generated character
-   * - upload image blob to IPFS (if present)
-   * - encrypt shipping info for on-chain storage
-   * - call `mintCharacterNFT` with prepared metadata and payment
-   * - on success, navigate to receipt and persist shipping info
-   *
-   * Errors are surfaced to the `error` state and any uploaded IPFS pins
-   * are cleaned up on failure.
-   */
   const handleMint = async () => {
     if (!account || !account.address) {
       setError("Wallet not connected or address is missing.");
@@ -1328,7 +1284,6 @@ export default function GeneratorPage() {
       console.error("❌ Mint failed:", err);
       setError(err.message || "Failed to mint NFT. Please try again.");
       if (imageHash) {
-        // Best-effort cleanup — fire and forget
         fetch("/api/pinata/unpin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1340,12 +1295,6 @@ export default function GeneratorPage() {
     }
   };
 
-  /**
-   * handleContinueToShipping
-   * Validate merch selection (sizes/colors) before advancing to the
-   * shipping form. Sets `error` for any validation failures and navigates
-   * to `page-shipping` when validation passes.
-   */
   const handleContinueToShipping = () => {
     if (!selection) {
       setError("Please select at least one merchandise item or the bundle.");
@@ -1366,31 +1315,16 @@ export default function GeneratorPage() {
     navigate("page-shipping");
   };
 
-  /**
-   * handleProvinceChange
-   * Lookup and set the selected province by code. Used by the province
-   * `Select` control. Keeps `selectedProvince` nullable when not found.
-   */
   const handleProvinceChange = (provinceCode: string) => {
     const province = provinces.find((p) => p.code === provinceCode) || null;
     setSelectedProvince(province);
   };
 
-  /**
-   * handleCityChange
-   * Lookup and set the selected city by code. Used by the city `Select`
-   * control. Clears to `null` when not found.
-   */
   const handleCityChange = (cityCode: string) => {
     const city = cities.find((c) => c.code === cityCode) || null;
     setSelectedCity(city);
   };
 
-  /**
-   * handleBarangayChange
-   * Lookup and set the selected barangay by code. Used by the barangay
-   * `Select` control. Keeps `selectedBarangay` nullable when not found.
-   */
   const handleBarangayChange = (barangayCode: string) => {
     const barangay = barangays.find((b) => b.code === barangayCode) || null;
     setSelectedBarangay(barangay);
@@ -1400,7 +1334,7 @@ export default function GeneratorPage() {
     if (eggRank) {
       return {
         name: eggRank,
-        style: "rank-ascendant", // Default highly visible rank for eggs
+        style: "rank-ascendant",
         rarity: "Legendary Find",
       };
     }
@@ -1966,7 +1900,6 @@ export default function GeneratorPage() {
                         </div>
 
                         <div className="bg-white border-4 border-black p-4 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-[250px] flex flex-col justify-between">
-                          {/* Header: Reduced margin-bottom */}
                           <div className="flex items-center gap-2 mb-2">
                             <Crown size={20} className="text-yellow-600" />
                             <h2 className="font-bold text-lg uppercase tracking-tight">
@@ -1974,7 +1907,6 @@ export default function GeneratorPage() {
                             </h2>
                           </div>
 
-                          {/* Controls Container: Reduced space-y and padding */}
                           <div className="-space-y-6  flex-1 flex flex-col justify-center">
                             <EnchantmentControl
                               label="Cuteness"
@@ -2004,7 +1936,6 @@ export default function GeneratorPage() {
                         </div>
 
                         <div className="bg-white border-4 border-black p-4 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-[250px] flex flex-col justify-between">
-                          {/* Header: Reduced margin-bottom */}
                           <div className="flex items-center gap-2 mb-2">
                             <Crown size={20} className="text-red-600" />
                             <h2 className="font-bold text-lg uppercase tracking-tight">
@@ -2012,7 +1943,6 @@ export default function GeneratorPage() {
                             </h2>
                           </div>
 
-                          {/* Controls Container: Reduced space-y and padding */}
                           <div className="-space-y-6  flex-1 flex flex-col justify-center">
                             <EnchantmentControl
                               label="Luzon"
@@ -2600,7 +2530,6 @@ export default function GeneratorPage() {
                 </h2>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                    {/* Left: Identity fields */}
                     <div className="flex flex-col gap-4">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-yellow-300 border-2 border-black font-bold text-lg">
@@ -2612,9 +2541,7 @@ export default function GeneratorPage() {
                       </div>
                       <div>
                         <label className="font-semibold uppercase text-xs tracking-wide flex items-center gap-2">
-                          <span className="material-icons text-base align-middle">
-                            Full Name
-                          </span>
+                          Full Name
                         </label>
                         <Input
                           type="text"
@@ -2626,9 +2553,7 @@ export default function GeneratorPage() {
                       </div>
                       <div>
                         <label className="font-semibold uppercase text-xs tracking-wide flex items-center gap-2">
-                          <span className="material-icons text-base align-middle">
-                            Email
-                          </span>
+                          Email
                         </label>
                         <Input
                           type="email"
@@ -2640,9 +2565,7 @@ export default function GeneratorPage() {
                       </div>
                       <div>
                         <label className="font-semibold uppercase text-xs tracking-wide flex items-center gap-2">
-                          <span className="material-icons text-base align-middle">
-                            Contact Number
-                          </span>
+                          Contact Number
                         </label>
                         <Input
                           type="text"
@@ -2653,7 +2576,6 @@ export default function GeneratorPage() {
                         />
                       </div>
                     </div>
-                    {/* Right: Destination fields */}
                     <div className="flex flex-col gap-6">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-300 border-2 border-black font-bold text-lg">
@@ -2750,7 +2672,6 @@ export default function GeneratorPage() {
                       </div>
                     </div>
                   </div>
-                  {/* Street Address Full Width */}
                   <div className="mt-6">
                     <label className="font-semibold uppercase text-xs tracking-wide">
                       Street Address / House No.
