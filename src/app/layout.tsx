@@ -8,6 +8,11 @@ import { StartingScreen } from "@/components/kapogian/StartingScreen";
 export const metadata: Metadata = {
   title: "Kapogian | Collectible Reality",
   description: "Generate a 1-of-1 character. Mint on SUI. Receive exclusive merchandise delivered to your door.",
+  icons: {
+    icon: "/images/KapogianLogo.webp",
+    shortcut: "/images/KapogianLogo.webp",
+    apple: "/images/KapogianLogo.webp",
+  },
 };
 
 export default function RootLayout({
