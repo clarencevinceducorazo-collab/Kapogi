@@ -6,10 +6,11 @@ import { useCurrentAccount, useSignPersonalMessage } from '@mysten/dapp-kit';
 import { BrutalCard } from '@/components/ui/brutal-card';
 import { BrutalButton } from '@/components/ui/brutal-button';
 import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
-import { LoaderCircle, CheckCircle, ShieldCheck, AlertCircle, Unlink, Twitter, LogOut } from 'lucide-react';
+import { LoaderCircle, CheckCircle, ShieldCheck, AlertCircle, Unlink, Twitter, LogOut, LayoutDashboard } from 'lucide-react';
 import { getNonceToSign, verifyBinding, checkBinding, checkBindingByXUid, unbind } from '@/lib/identity-api';
 import { useToast } from "@/hooks/use-toast";
 import { formatAddress } from '@/lib/utils';
+import Link from 'next/link';
 
 type Step = 'start' | 'wallet_connect' | 'sign_message' | 'verifying' | 'verified' | 'error' | 'already_bound';
 
@@ -305,12 +306,17 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <BrutalButton onClick={handleUnbind} disabled={isLoading} variant="danger" className="gap-2">
+          <Link href="/profile">
+            <BrutalButton variant="primary" className="w-full sm:w-auto gap-2">
+              <LayoutDashboard size={16} /> View Profile
+            </BrutalButton>
+          </Link>
+          <BrutalButton onClick={handleUnbind} disabled={isLoading} variant="danger" className="w-full sm:w-auto gap-2">
             {isLoading ? <LoaderCircle className="animate-spin" /> : <Unlink size={16} />}
-            Unlink Account
+            Unbind Account
           </BrutalButton>
           {session?.user && (
-            <BrutalButton onClick={() => signOut()} variant="default" className="gap-2">
+            <BrutalButton onClick={() => signOut()} variant="default" className="w-full sm:w-auto gap-2">
               <LogOut size={16} /> Logout from X
             </BrutalButton>
           )}
