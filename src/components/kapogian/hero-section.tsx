@@ -55,7 +55,7 @@ export const HeroSection = () => {
             KAPOGIAN
           </h1>
           <p className="text-xl md:text-2xl font-bold text-white [text-shadow:2px_2px_0_#000,-2px_2px_0_#000,2px_-2px_0_#000,-2px_-2px_0_#000]">
-            Be Pogi! Be Confident Everyday
+            Be Pogi!, Be Confident Everyday
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4 ">
             <Link href="/summoning">
