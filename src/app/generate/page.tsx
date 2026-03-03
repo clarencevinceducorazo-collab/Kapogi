@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   useCurrentAccount,
   useSignAndExecuteTransaction,
@@ -42,6 +43,7 @@ import {
   Target,
   Cloud,
   Eye,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -76,6 +78,13 @@ import {
   getHairColorDescription,
   getSkinToneDescription,
 } from "@/lib/color-mapping";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 // Reusable Enchantment Slider
 const EnchantmentControl = ({
@@ -209,6 +218,7 @@ interface Province {
 
 export default function GeneratorPage() {
   const account = useCurrentAccount();
+  const router = useRouter();
   const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
 
   const [page, setPage] = useState("generator");
@@ -218,6 +228,7 @@ export default function GeneratorPage() {
   const [showExitLoader, setShowExitLoader] = useState(false);
   const [minting, setMinting] = useState(false);
   const [error, setError] = useState("");
+  const [quotaModalOpen, setQuotaModalOpen] = useState(false);
 
   const [mintPaused, setMintPaused] = useState(false);
   const [pauseReason, setPauseReason] = useState("");
@@ -1091,6 +1102,18 @@ export default function GeneratorPage() {
     } catch (err: any) {
       if (shuffleInterval) clearInterval(shuffleInterval);
       console.error("Generation failed:", err);
+
+      // Check for quota exhaustion
+      if (
+        err.message?.includes("RESOURCE_EXHAUSTED") ||
+        err.message?.includes("429")
+      ) {
+        setQuotaModalOpen(true);
+        setLoading(false);
+        setShowExitLoader(false);
+        return;
+      }
+
       setError(
         err.message || "Failed to generate character. Please try again.",
       );
@@ -2844,6 +2867,35 @@ export default function GeneratorPage() {
           </div>
         </main>
       </div>
+
+      <Dialog open={quotaModalOpen} onOpenChange={() => {}}>
+        <DialogContent className="max-w-md w-full p-0 bg-transparent border-none shadow-none !rounded-3xl">
+          <div className="bg-white border-4 border-black rounded-3xl p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] text-center">
+            <div className="w-20 h-20 bg-red-100 rounded-full border-4 border-black flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="text-red-500 w-10 h-10" />
+            </div>
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black uppercase italic text-center mb-2">
+                Generation Temporarily Unavailable
+              </DialogTitle>
+              <DialogDescription className="text-slate-600 font-bold text-center text-base leading-relaxed">
+                Too many users are generating characters right now.
+                <br />
+                Please come back in a few minutes and try again.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-8">
+              <button
+                onClick={() => router.push("/")}
+                className="w-full bg-blue-500 text-white border-4 border-black rounded-xl py-4 font-black uppercase tracking-widest text-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-1 transition-all"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <PageFooter />
     </>
   );
