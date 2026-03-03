@@ -1,4 +1,3 @@
-
 import type {NextConfig} from 'next';
 
 // Security headers applied to every page/route response
@@ -86,7 +85,7 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-       {
+      {
         protocol: 'https',
         hostname: 'api.dicebear.com',
         port: '',
@@ -123,9 +122,13 @@ const nextConfig: NextConfig = {
   // SWC minification (faster builds)
   swcMinify: true,
 
-  // Environment variables for NextAuth
+  // Permanent NextAuth configuration baked into the build
+  serverRuntimeConfig: {
+    NEXTAUTH_URL: 'https://kapogian.xyz',
+  },
   env: {
-    NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'https://kapogian.xyz',
+    NEXTAUTH_URL: 'https://kapogian.xyz',
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     AUTH_TRUST_HOST: 'true',
   },
 };

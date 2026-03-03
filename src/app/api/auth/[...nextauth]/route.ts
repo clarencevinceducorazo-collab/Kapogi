@@ -1,7 +1,7 @@
-import NextAuth, { NextAuthOptions } from "next-auth"
+import NextAuth from "next-auth"
 import TwitterProvider from "next-auth/providers/twitter"
 
-export const authOptions: NextAuthOptions = {
+const handler = NextAuth({
   providers: [
     TwitterProvider({
       clientId: process.env.NEXT_PUBLIC_X_CLIENT_ID!,
@@ -14,8 +14,8 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-  trustHost: true,
   secret: process.env.NEXTAUTH_SECRET,
+  trustHost: true,
   callbacks: {
     async jwt({ token, profile }) {
       if (profile) {
@@ -37,7 +37,6 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/identity',
   },
-}
+})
 
-const handler = NextAuth(authOptions)
 export { handler as GET, handler as POST }

@@ -1,94 +1,43 @@
 /**
- * Next.js Middleware — CORS + Security Gate
+ * Next.js Middleware — CORS + Security Gate + NextAuth
  *
- * Runs on every /api/* request BEFORE the route handler.
- *
- * What it does:
- *  1. Blocks cross-origin requests from unknown domains
- *     → Prevents random websites from abusing your Gemini / Pinata keys
- *  2. Handles CORS preflight (OPTIONS) so browsers don't block same-origin flows
- *  3. Adds a base set of security headers to every response
+ * This middleware combines NextAuth route handling with critical CORS/Security protections.
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { withAuth } from "next-auth/middleware";
 
 // ---------------------------------------------------------------------------
-// Allowed origins
-// ---------------------------------------------------------------------------
-// Add every domain that is allowed to call your API.
-// In production this should be ONLY your own domain.
-// In development, localhost variants are also allowed.
+// Allowed origins for CORS
 // ---------------------------------------------------------------------------
 const PROD_ORIGIN = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
 
 const ALLOWED_ORIGINS: string[] = [
-  // Production domain — set NEXT_PUBLIC_APP_URL in .env / hosting env vars
   ...(PROD_ORIGIN ? [PROD_ORIGIN] : []),
-  // Common www variant
-  ...(PROD_ORIGIN
-    ? [`https://www.${PROD_ORIGIN.replace(/^https?:\/\//, "")}`]
-    : []),
-  // Well-known fixed origins (fallback when NEXT_PUBLIC_APP_URL is not set)
+  ...(PROD_ORIGIN ? [`https://www.${PROD_ORIGIN.replace(/^https?:\/\//, "")}`] : []),
   "https://kapogian.xyz",
   "https://www.kapogian.xyz",
-  // Local development
   "http://localhost:3000",
   "http://localhost:3001",
   "http://localhost:9002",
   "http://127.0.0.1:3000",
 ];
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 function isAllowedOrigin(origin: string | null, req?: NextRequest): boolean {
-  // 1. Always allow in non-production environments for ease of development
-  if (process.env.NODE_ENV !== "production") {
-    return true;
-  }
-
-  if (!origin) {
-    // No Origin header = server-to-server call (curl, Postman, etc.)
-    return false;
-  }
-
-  // 2. Check explicit whitelist
+  if (process.env.NODE_ENV !== "production") return true;
+  if (!origin) return false;
   if (ALLOWED_ORIGINS.includes(origin)) return true;
-
-  // 3. Allow Cloud Workstations and Firebase App Hosting dynamic domains
-  if (origin.endsWith(".cloudworkstations.dev") || origin.endsWith(".web.app") || origin.endsWith(".firebaseapp.com")) {
-    return true;
-  }
-
-  // 4. Allow same-host requests regardless of which domain the app is served from.
+  if (origin.endsWith(".cloudworkstations.dev") || origin.endsWith(".web.app") || origin.endsWith(".firebaseapp.com")) return true;
+  
   if (req) {
     const host = req.headers.get("host");
     const proto = req.headers.get("x-forwarded-proto") || "https";
     if (host) {
       const sameOrigin = `${proto}://${host}`;
-      const sameOriginHttp = `http://${host}`;
-      const sameOriginHttps = `https://${host}`;
-      if (
-        origin === sameOrigin ||
-        origin === sameOriginHttp ||
-        origin === sameOriginHttps
-      ) {
-        return true;
-      }
+      if (origin === sameOrigin || origin === `http://${host}` || origin === `https://${host}`) return true;
     }
   }
-
   return false;
-}
-
-function corsHeaders(origin: string | null): Record<string, string> {
-  return {
-    "Access-Control-Allow-Origin": origin || "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Max-Age": "86400", // 24 h preflight cache
-  };
 }
 
 const SECURITY_HEADERS: Record<string, string> = {
@@ -100,59 +49,59 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
 };
 
-// ---------------------------------------------------------------------------
-// Middleware
-// ---------------------------------------------------------------------------
+/**
+ * Combined Middleware
+ * 
+ * Uses withAuth to satisfy NextAuth environment discovery requirements
+ * while maintaining our custom CORS and security logic.
+ */
+export default withAuth(
+  function middleware(req: NextRequest) {
+    const origin = req.headers.get("origin");
 
-export function middleware(req: NextRequest) {
-  const origin = req.headers.get("origin");
-
-  // ── 1. CORS preflight (browser sends this before the real POST) ──────────
-  if (req.method === "OPTIONS") {
-    if (!isAllowedOrigin(origin, req)) {
-      return new NextResponse(null, { status: 403 });
+    // 1. Handle CORS Preflight
+    if (req.method === "OPTIONS") {
+      if (!isAllowedOrigin(origin, req)) {
+        return new NextResponse(null, { status: 403 });
+      }
+      return new NextResponse(null, {
+        status: 204,
+        headers: {
+          "Access-Control-Allow-Origin": origin || "*",
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+          "Access-Control-Max-Age": "86400",
+          ...SECURITY_HEADERS,
+        },
+      });
     }
-    return new NextResponse(null, {
-      status: 204,
-      headers: {
-        ...corsHeaders(origin),
-        ...SECURITY_HEADERS,
-      },
-    });
+
+    // 2. Block disallowed origins
+    if (!isAllowedOrigin(origin, req)) {
+      return NextResponse.json({ error: "Forbidden: Origin not allowed" }, { status: 403, headers: SECURITY_HEADERS });
+    }
+
+    // 3. Pass through with headers
+    const response = NextResponse.next();
+    Object.entries(SECURITY_HEADERS).forEach(([key, value]) => response.headers.set(key, value));
+    if (origin) {
+      response.headers.set("Access-Control-Allow-Origin", origin);
+      response.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    }
+
+    return response;
+  },
+  {
+    // matcher controls which routes this runs on.
+    // Setting authorized to true always so our logic above handles the filtering.
+    callbacks: {
+      authorized: () => true,
+    },
   }
+);
 
-  // ── 2. Block actual requests from disallowed origins ────────────────────
-  if (!isAllowedOrigin(origin, req)) {
-    return NextResponse.json(
-      { error: "Forbidden: Origin not allowed" },
-      {
-        status: 403,
-        headers: SECURITY_HEADERS,
-      },
-    );
-  }
-
-  // ── 3. Pass through — attach security + CORS headers to the response ─────
-  const response = NextResponse.next();
-
-  // Security headers on every API response
-  Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
-    response.headers.set(key, value);
-  });
-
-  // CORS headers when there IS an origin
-  if (origin) {
-    Object.entries(corsHeaders(origin)).forEach(([key, value]) => {
-      response.headers.set(key, value);
-    });
-  }
-
-  return response;
-}
-
-// ---------------------------------------------------------------------------
-// Route matcher — only run this middleware on API routes
-// ---------------------------------------------------------------------------
 export const config = {
-  matcher: "/api/:path*",
+  // Apply to API routes for CORS and Auth
+  matcher: ["/api/:path*"],
 };
