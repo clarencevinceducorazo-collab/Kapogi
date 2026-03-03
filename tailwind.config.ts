@@ -231,7 +231,7 @@ export default {
         'float-2': 'float 3.5s ease-in-out infinite 0.5s',
         'float-3': 'float 4s ease-in-out infinite 1s',
         'pop-in': 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
-        'wave-loop': 'wave-loop 8s ease-in-out infinite',
+        'wave-loop': 'wave-loop 2s ease-in-out infinite',
       },
     },
   },
