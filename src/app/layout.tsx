@@ -8,10 +8,32 @@ import { StartingScreen } from "@/components/kapogian/StartingScreen";
 export const metadata: Metadata = {
   title: "Kapogian | Collectible Reality",
   description: "Generate a 1-of-1 character. Mint on SUI. Receive exclusive merchandise delivered to your door.",
+  metadataBase: new URL("https://kapogian.xyz"),
   icons: {
-    icon: "/images/KapogianLogo.webp",
+    icon: [
+      { url: "/images/KapogianLogo.webp" },
+      { url: "/images/KapogianLogo.webp", sizes: "32x32", type: "image/webp" },
+      { url: "/images/KapogianLogo.webp", sizes: "192x192", type: "image/webp" },
+    ],
     shortcut: "/images/KapogianLogo.webp",
-    apple: "/images/KapogianLogo.webp",
+    apple: [
+      { url: "/images/KapogianLogo.webp", sizes: "180x180", type: "image/webp" },
+    ],
+  },
+  openGraph: {
+    title: "Kapogian | Collectible Reality",
+    description: "Generate a 1-of-1 character. Mint on SUI.",
+    url: "https://kapogian.xyz",
+    siteName: "Kapogian",
+    images: [
+      {
+        url: "/images/KapogianLogo.webp",
+        width: 800,
+        height: 800,
+      },
+    ],
+    locale: "en_US",
+    type: "website",
   },
 };
 
