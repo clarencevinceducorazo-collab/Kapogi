@@ -200,6 +200,10 @@ export default {
           "0%": { transform: "translateX(0)" },
           "100%": { transform: "translateX(-50px)" },
         },
+        'wave-loop': {
+          '0%, 100%': { transform: 'translateY(0) scaleY(1)' },
+          '50%': { transform: 'translateY(12px) scaleY(1.02)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.4s ease-out',
@@ -227,7 +231,7 @@ export default {
         'float-2': 'float 3.5s ease-in-out infinite 0.5s',
         'float-3': 'float 4s ease-in-out infinite 1s',
         'pop-in': 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
-
+        'wave-loop': 'wave-loop 8s ease-in-out infinite',
       },
     },
   },

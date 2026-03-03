@@ -100,14 +100,14 @@ export default function EarnPage() {
         {/* Wave Divider */}
         <div className="w-full overflow-hidden leading-[0]">
           <svg
-            className="relative block w-full h-[120px]"
+            className="relative block w-full h-[120px] animate-wave-loop"
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 1440 320"
             preserveAspectRatio="none"
           >
             <path
               fill="#ffffff"
-              fill-opacity="1"
+              fillOpacity="1"
               d="M0,160 C320,300 420,0 720,120 C1020,240 1120,40 1440,160 L1440,320 L0,320 Z"
             ></path>
           </svg>
