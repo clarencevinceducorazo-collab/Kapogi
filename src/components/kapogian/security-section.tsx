@@ -188,8 +188,8 @@ export const SecuritySection = () => {
       style={{ background: 'linear-gradient(to bottom, #4A80FF, #3B70FF, #1A56FF)' }}
     >
       {/* Background decorative blobs */}
-      <div className="absolute top-[-5%] left-[-5%] w-48 h-48 bg-yellow-400 border-8 border-black rounded-full opacity-10 animate-pulse pointer-events-none" />
-      <div className="absolute bottom-10 right-[-5%] w-72 h-16 bg-white border-8 border-black rounded-full rotate-12 opacity-10 pointer-events-none" />
+      <div className="absolute top-24 left-4 w-48 h-48 bg-yellow-400 border-8 border-black rounded-full opacity-100 animate-pulse pointer-events-none z-0" />
+      <div className="absolute bottom-10 right-4 w-72 h-16 bg-white border-8 border-black rounded-full rotate-12 opacity-20 pointer-events-none z-0" />
 
       {/* Header */}
       <div className="relative w-full max-w-5xl flex flex-col items-center mb-10 mt-8 z-10">
