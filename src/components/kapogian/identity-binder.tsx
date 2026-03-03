@@ -1,13 +1,12 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useSession, signIn } from 'next-auth/react';
+import { useSession, signIn, signOut } from 'next-auth/react';
 import { useCurrentAccount, useSignPersonalMessage } from '@mysten/dapp-kit';
 import { BrutalCard } from '@/components/ui/brutal-card';
 import { BrutalButton } from '@/components/ui/brutal-button';
 import { CustomConnectButton } from '@/components/kapogian/CustomConnectButton';
-import { LoaderCircle, CheckCircle, ShieldCheck, AlertCircle, Unlink, Twitter } from 'lucide-react';
+import { LoaderCircle, CheckCircle, ShieldCheck, AlertCircle, Unlink, Twitter, LogOut } from 'lucide-react';
 import { getNonceToSign, verifyBinding, checkBinding, checkBindingByXUid, unbind } from '@/lib/identity-api';
 import { useToast } from "@/hooks/use-toast";
 import { formatAddress } from '@/lib/utils';
@@ -210,10 +209,15 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
               Authenticate your X (Twitter) account to start the binding process.
           </p>
           {session?.user ? (
-            <div className="flex items-center gap-3 bg-blue-50 border-2 border-blue-200 p-3 rounded-xl">
-              <Twitter className="text-blue-500" size={20} />
-              <span className="font-black text-blue-700">@{session.user.x_username}</span>
-              <CheckCircle className="text-blue-500 ml-auto" size={18} />
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 bg-blue-50 border-2 border-blue-200 p-3 rounded-xl">
+                <Twitter className="text-blue-500" size={20} />
+                <span className="font-black text-blue-700">@{session.user.x_username}</span>
+                <CheckCircle className="text-blue-500 ml-auto" size={18} />
+              </div>
+              <BrutalButton onClick={() => signOut()} variant="danger" className="w-full sm:w-auto h-9 text-[10px] gap-2">
+                <LogOut size={14} /> Logout from X
+              </BrutalButton>
             </div>
           ) : (
             <BrutalButton onClick={() => signIn('twitter')} variant="primary" className="gap-2">
@@ -305,6 +309,11 @@ export function IdentityBinder({ noCard = false }: { noCard?: boolean }) {
             {isLoading ? <LoaderCircle className="animate-spin" /> : <Unlink size={16} />}
             Unlink Account
           </BrutalButton>
+          {session?.user && (
+            <BrutalButton onClick={() => signOut()} variant="default" className="gap-2">
+              <LogOut size={16} /> Logout from X
+            </BrutalButton>
+          )}
         </div>
       </div>
     );
