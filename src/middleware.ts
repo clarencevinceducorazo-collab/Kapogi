@@ -17,6 +17,7 @@ const ALLOWED_ORIGINS: string[] = [
   ...(PROD_ORIGIN ? [`https://www.${PROD_ORIGIN.replace(/^https?:\/\//, "")}`] : []),
   "https://kapogian.xyz",
   "https://www.kapogian.xyz",
+  "http://192.168.30.240:8085", // Added from your environment
   "http://localhost:3000",
   "http://localhost:3001",
   "http://localhost:9002",
@@ -24,19 +25,29 @@ const ALLOWED_ORIGINS: string[] = [
 ];
 
 function isAllowedOrigin(origin: string | null, req?: NextRequest): boolean {
+  // If no origin header is present, it is often a same-origin GET request
+  // or a direct server call. We allow these to pass through.
+  if (!origin) return true;
+
   if (process.env.NODE_ENV !== "production") return true;
-  if (!origin) return false;
-  if (ALLOWED_ORIGINS.includes(origin)) return true;
-  if (origin.endsWith(".cloudworkstations.dev") || origin.endsWith(".web.app") || origin.endsWith(".firebaseapp.com")) return true;
   
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  
+  // Check against the current Host header to allow IP-based or proxy access
   if (req) {
     const host = req.headers.get("host");
-    const proto = req.headers.get("x-forwarded-proto") || "https";
     if (host) {
-      const sameOrigin = `${proto}://${host}`;
-      if (origin === sameOrigin || origin === `http://${host}` || origin === `https://${host}`) return true;
+      if (origin === `http://${host}` || origin === `https://${host}`) return true;
     }
   }
+
+  // Allow common deployment patterns
+  if (
+    origin.endsWith(".cloudworkstations.dev") || 
+    origin.endsWith(".web.app") || 
+    origin.endsWith(".firebaseapp.com")
+  ) return true;
+  
   return false;
 }
 
@@ -78,12 +89,17 @@ export default withAuth(
 
     // 2. Block disallowed origins
     if (!isAllowedOrigin(origin, req)) {
-      return NextResponse.json({ error: "Forbidden: Origin not allowed" }, { status: 403, headers: SECURITY_HEADERS });
+      console.warn(`[Middleware] Blocked unauthorized origin: ${origin}`);
+      return NextResponse.json(
+        { error: "Forbidden: Origin not allowed" }, 
+        { status: 403, headers: SECURITY_HEADERS }
+      );
     }
 
     // 3. Pass through with headers
     const response = NextResponse.next();
     Object.entries(SECURITY_HEADERS).forEach(([key, value]) => response.headers.set(key, value));
+    
     if (origin) {
       response.headers.set("Access-Control-Allow-Origin", origin);
       response.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -93,8 +109,6 @@ export default withAuth(
     return response;
   },
   {
-    // matcher controls which routes this runs on.
-    // Setting authorized to true always so our logic above handles the filtering.
     callbacks: {
       authorized: () => true,
     },
