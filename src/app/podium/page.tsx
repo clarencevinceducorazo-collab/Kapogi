@@ -734,15 +734,15 @@ function SummonDetailModal({
             <X size={24} strokeWidth={3} />
           </button>
 
-          <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r-4 border-black flex flex-col items-center justify-center p-4">
-            <div className="slide-up-delay-1 text-center z-20 mt-20">
+          <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r-4 border-black flex flex-col items-center justify-start pt-16 p-4">
+            <div className="slide-up-delay-1 text-center z-20">
               <span className="inline-flex items-center gap-1 bg-white/80 border-2 border-black text-[9px] font-black uppercase tracking-[0.18em] text-amber-600 px-3 py-1 rounded-full shadow-sm">
                 <iconify-icon icon="fluent-emoji:trophy" class="text-sm" />
                 Best MMR NFT
               </span>
             </div>
 
-            <div className="slide-up-delay-1 text-center z-20 mt-2">
+            <div className="slide-up-delay-1 text-center z-20 mt-4">
               <h2
                 className={cn(
                   "uppercase font-black tracking-wider flex items-center justify-center gap-1 drop-shadow-sm",
@@ -783,7 +783,7 @@ function SummonDetailModal({
               </div>
             </div>
 
-            <div className="text-center z-20 mb-20">
+            <div className="text-center z-20 mb-16">
               <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tighter uppercase italic leading-none mb-2">
                 {bestNft?.name ?? "—"}
               </h1>
@@ -1170,15 +1170,15 @@ function CharacterDetailModal({
             <X size={24} strokeWidth={3} />
           </button>
 
-          <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r-4 border-black flex flex-col items-center justify-center p-4">
-            <div className="slide-up-delay-1 text-center z-20 mb-12">
+          <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r-4 border-black flex flex-col items-center justify-start pt-16 p-4">
+            <div className="slide-up-delay-1 text-center z-20 mb-8">
               <h2
                 className={cn(
                   "uppercase font-black tracking-wider flex items-center justify-center gap-1 drop-shadow-sm",
                   rankInfo.style,
                 )}
               >
-                <iconify-icon icon={rankInfo.icon} />
+              
                 {user.attributes?.rank || "Spirit Seed"}
               </h2>
             </div>
@@ -1212,7 +1212,7 @@ function CharacterDetailModal({
                 </div>
               </div>
             </div>
-            <div className="text-center z-20 mt-8">
+            <div className="text-center z-20 mt-8 mb-12">
               <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tighter uppercase italic leading-none mb-2">
                 {user.nftName}
               </h1>
