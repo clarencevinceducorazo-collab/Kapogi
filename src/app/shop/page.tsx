@@ -18,7 +18,8 @@ import {
   LoaderCircle, 
   ShoppingBag,
   ImageIcon as LucideImageIcon,
-  Tag
+  Tag,
+  Palette
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/kapogian/page-header";
@@ -35,13 +36,10 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
-// --- Product Data using specific assets from screenshot ---
+// --- Product Data using specific assets ---
 const PRODUCTS = [
   {
     id: "shirt",
@@ -241,14 +239,12 @@ export default function KapogianShopPage() {
                 onClick={() => setSelectedProduct(product)}
               >
                 <div className="aspect-square relative rounded-[2rem] bg-slate-50 border-4 border-black mb-6 overflow-hidden shadow-inner group-hover:bg-blue-50 transition-colors">
-                  {/* Default static image */}
                   <Image 
                     src={product.displayImage} 
                     alt={product.name} 
                     fill 
                     className="object-contain p-6 group-hover:scale-110 transition-transform duration-500 group-hover:opacity-0" 
                   />
-                  {/* Hover GIF preview */}
                   <Image 
                     src={product.colors[0].gif} 
                     alt={product.name} 
@@ -296,7 +292,6 @@ export default function KapogianShopPage() {
                   />
                 )}
                 
-                {/* Custom Print Overlay Preview */}
                 {customPrintNft && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none mt-16 md:mt-20">
                     <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border-2 border-black/20 bg-white/40 backdrop-blur-sm shadow-xl animate-in zoom-in-75 duration-300">

@@ -43,7 +43,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning={true}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -57,7 +57,7 @@ export default function RootLayout({
         />
         <Script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js" strategy="afterInteractive" />
       </head>
-      <body className="font-body bg-slate-950" suppressHydrationWarning>
+      <body className="font-body bg-slate-950" suppressHydrationWarning={true}>
         <Providers>
           <StartingScreen />
           <div className="opacity-0 transition-opacity duration-500" id="main-content">
