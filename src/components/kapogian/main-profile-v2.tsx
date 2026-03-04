@@ -1394,10 +1394,17 @@ function OnChainAchievementCard({
         )}
         onClick={onClick}
       >
+        {/* Subtle Pattern */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+        
+        {earned && (
+          <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-gradient-to-br from-indigo-500 to-sky-500" />
+        )}
+
         <div className="relative w-14 h-14 flex items-center justify-center">
           <div
             className={cn(
-              "w-14 h-14 rounded-full flex items-center justify-center border-2 overflow-hidden",
+              "w-14 h-14 rounded-full flex items-center justify-center border-2 overflow-hidden relative z-10",
               earned
                 ? "bg-white shadow-md border-indigo-200"
                 : "bg-slate-100 border-slate-300",
@@ -1425,13 +1432,13 @@ function OnChainAchievementCard({
             )}
           </div>
           {earned && (
-            <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+            <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-white flex items-center justify-center shadow-sm z-20">
               <CheckCircle size={10} className="text-white" />
             </div>
           )}
         </div>
 
-        <div className="text-center space-y-1 w-full">
+        <div className="text-center space-y-1 w-full relative z-10">
           <p
             className={cn(
               "text-[10px] font-black uppercase tracking-tighter truncate w-full px-1",
@@ -1454,7 +1461,7 @@ function OnChainAchievementCard({
               onClaim();
             }}
             disabled={claiming}
-            className="w-full h-7 flex items-center justify-center gap-1 bg-indigo-500 text-white rounded-xl font-black text-[9px] uppercase tracking-wider border-2 border-indigo-700 shadow-[0_3px_0_0_#3730a3] active:translate-y-0.5 active:shadow-none disabled:opacity-50 transition-all"
+            className="w-full h-7 flex items-center justify-center gap-1 bg-indigo-500 text-white rounded-xl font-black text-[9px] uppercase tracking-wider border-2 border-indigo-700 shadow-[0_3px_0_0_#3730a3] active:translate-y-0.5 active:shadow-none disabled:opacity-50 transition-all relative z-10"
           >
             {claiming ? (
               <LoaderCircle size={10} className="animate-spin" />
@@ -1467,7 +1474,7 @@ function OnChainAchievementCard({
         )}
 
         {!earned && !eligible && ach.requirementType !== 3 && (
-          <div className="w-full text-center text-[8px] font-bold text-slate-400 uppercase">
+          <div className="w-full text-center text-[8px] font-bold text-slate-400 uppercase relative z-10">
             {playerVal.toLocaleString()} / {ach.threshold.toLocaleString()}
           </div>
         )}
@@ -1495,8 +1502,13 @@ function EarnedAchievementCard({
       className="kpg-badge-card relative overflow-visible cursor-pointer select-none"
       onClick={onClick}
     >
-      <div className="kpg-card-inner p-4 border-2 border-indigo-200 rounded-[2rem] flex flex-col items-center gap-3 bg-white shadow-[0_4px_0_0_rgba(199,210,254,1)]">
-        <div className="relative w-14 h-14">
+      <div className="kpg-card-inner p-4 border-2 border-indigo-200 rounded-[2rem] flex flex-col items-center gap-3 bg-white shadow-[0_4px_0_0_rgba(199,210,254,1)] relative overflow-hidden">
+        {/* Subtle Pattern */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+        {/* Subtle Underlay */}
+        <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-gradient-to-br from-indigo-500 to-sky-500" />
+
+        <div className="relative w-14 h-14 z-10">
           <div className="w-14 h-14 rounded-full bg-white border-2 border-indigo-200 shadow-md flex items-center justify-center overflow-hidden">
             {achDef?.badgeUrl ? (
               <img
@@ -1515,7 +1527,7 @@ function EarnedAchievementCard({
             <CheckCircle size={10} className="text-white" />
           </div>
         </div>
-        <div className="text-center space-y-1 w-full">
+        <div className="text-center space-y-1 w-full relative z-10">
           <p className="text-[10px] font-black uppercase tracking-tighter truncate w-full px-1 text-slate-800">
             {unlocked.achievementName}
           </p>
@@ -1561,7 +1573,7 @@ function BadgeCard({
     >
       <div
         className={cn(
-          "kpg-card-inner p-5 border-2 rounded-[2rem] flex flex-col items-center gap-3 relative overflow-hidden",
+          "kpg-card-inner p-5 border-2 rounded-[2rem] flex flex-col items-center gap-3 relative overflow-hidden h-full",
           isCurrent
             ? "bg-white border-transparent shadow-xl"
             : isUnlocked
@@ -1569,6 +1581,19 @@ function BadgeCard({
               : "bg-slate-50 border-dashed border-slate-200",
         )}
       >
+        {/* Themed Background Underlay */}
+        {isUnlocked && (
+          <div 
+            className="absolute inset-0 opacity-[0.1] pointer-events-none transition-opacity"
+            style={{ 
+              background: item.gradient || 'none',
+            }}
+          />
+        )}
+        
+        {/* Pattern overlay */}
+        <div className="absolute inset-0 opacity-[0.04] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+
         {isCurrent && (
           <>
             <div className="absolute inset-[-2px] rounded-[2rem] bg-gradient-to-r from-indigo-500 via-pink-500 to-amber-500 kpg-conic-spin z-[-1]" />
@@ -1578,7 +1603,8 @@ function BadgeCard({
             />
           </>
         )}
-        <div className="relative w-16 h-16 flex items-center justify-center">
+        
+        <div className="relative w-16 h-16 flex items-center justify-center z-10">
           <div
             className={cn(
               "w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all",
@@ -1599,7 +1625,7 @@ function BadgeCard({
             </div>
           )}
         </div>
-        <div className="text-center space-y-1">
+        <div className="text-center space-y-1 relative z-10">
           <p
             className={cn(
               "text-[10px] font-black uppercase tracking-tighter truncate w-24",
