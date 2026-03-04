@@ -347,7 +347,6 @@ export function MainProfileV2({
   const [unbinding, setUnbinding] = useState(false);
   const [selectedBadge, setSelectedBadge] = useState<any | null>(null);
   const [showGallery, setShowGallery] = useState(false);
-  const [galleryFilter, setGalleryFilter] = "all";
 
   // Initialise PlayerStats
   const [initializing, setInitializing] = useState(false);
@@ -475,14 +474,6 @@ export function MainProfileV2({
       setUnbinding(false);
     }
   };
-
-  const filteredGallery = useMemo(() => {
-    const filter = "all"; // Stub for gallery filter state
-    return allAchievements.filter((ach) => {
-      // Logic for filtering can be restored if showGallery state is fully integrated
-      return true;
-    });
-  }, [allAchievements]);
 
   const navItems = [
     {
@@ -740,7 +731,6 @@ export function MainProfileV2({
                   return (
                     <OnChainAchievementCard
                       key={ach.objectId}
-                      ach={ach}
                       earned={earned}
                       eligible={eligible}
                       playerVal={playerVal}
@@ -1241,38 +1231,56 @@ export function MainProfileV2({
                   {characters.length})
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {characters.map((c, i) => (
-                    <div
-                      key={c.objectId}
-                      onClick={() => {
-                        setIndex(i);
-                        setActiveTab("Stats");
-                      }}
-                      className={cn(
-                        "group bg-slate-50 border-4 rounded-3xl p-2 cursor-pointer transition-all hover:scale-105",
-                        index === i
-                          ? "border-sky-400 bg-sky-50"
-                          : "border-slate-100 hover:border-slate-200",
-                      )}
-                    >
-                      <div className="aspect-square relative rounded-2xl overflow-hidden bg-white border-2 border-slate-100 mb-2">
-                        <Image
-                          src={c.imageUrl}
-                          alt={c.name}
-                          fill
-                          className="object-contain p-2"
-                        />
+                  {characters.map((c, i) => {
+                    const rank = c.attributes?.rank || "Spirit Seed";
+                    const isAscendant = rank === "Kapogian Ascendant";
+                    const isSelected = index === i;
+
+                    return (
+                      <div
+                        key={c.objectId}
+                        onClick={() => {
+                          setIndex(i);
+                          setActiveTab("Stats");
+                        }}
+                        className={cn(
+                          "group relative rounded-[2rem] p-1 cursor-pointer transition-all hover:scale-105 overflow-hidden border-4",
+                          isSelected 
+                            ? isAscendant ? "border-transparent bg-white shadow-xl scale-105 z-10" : "border-sky-400 bg-sky-50 shadow-lg scale-105 z-10"
+                            : isAscendant ? "border-transparent bg-white shadow-md" : "border-slate-100 bg-slate-50 hover:border-slate-200"
+                        )}
+                      >
+                        {isAscendant && (
+                          <div className="absolute inset-[-100%] bg-gradient-to-r from-indigo-500 via-pink-500 to-amber-500 kpg-conic-spin z-0" />
+                        )}
+                        
+                        <div className="relative z-10 bg-white rounded-[1.7rem] p-2 h-full flex flex-col">
+                          <div className={cn(
+                            "aspect-square relative rounded-2xl overflow-hidden bg-white mb-2 transition-colors",
+                            isSelected ? "border-2 border-sky-100" : "border-2 border-slate-50"
+                          )}>
+                            <Image
+                              src={c.imageUrl}
+                              alt={c.name}
+                              fill
+                              className="object-contain p-2"
+                            />
+                          </div>
+                          <div className="text-center flex-grow flex flex-col justify-center">
+                            <p className={cn(
+                              "text-xs font-black truncate uppercase px-1 leading-tight",
+                              isAscendant ? "kpg-fx-aurora" : "text-slate-700"
+                            )}>
+                              {c.name}
+                            </p>
+                            <p className="text-[9px] font-black text-slate-400 mt-0.5">
+                              MMR: {c.mmr}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-center">
-                        <p className="text-xs font-bold truncate text-slate-700 uppercase px-1">
-                          {c.name}
-                        </p>
-                        <p className="text-[10px] font-bold text-slate-400">
-                          MMR: {c.mmr}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
