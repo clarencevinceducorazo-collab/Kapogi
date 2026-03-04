@@ -75,6 +75,7 @@ const RANK_DATA = [
     tier: "Starter",
     fx: "fx-silver",
     desc: "Every journey begins here. You planted the first seed of your Kapogian legacy.",
+    tailwindColor: "emerald",
   },
   {
     mmr: 101,
@@ -86,6 +87,7 @@ const RANK_DATA = [
     tier: "Starter",
     fx: "fx-bronze",
     desc: "A tiny bolt of charm flickers inside you. Awarded at 101 MMR.",
+    tailwindColor: "amber",
   },
   {
     mmr: 251,
@@ -97,6 +99,7 @@ const RANK_DATA = [
     tier: "Initiate",
     fx: "fx-bronze",
     desc: "The aura found you first. Unlocked at 251 MMR — you're starting to glow.",
+    tailwindColor: "amber",
   },
   {
     mmr: 401,
@@ -108,6 +111,7 @@ const RANK_DATA = [
     tier: "Initiate",
     fx: "fx-bronze",
     desc: "You've been formally welcomed into the world of Pogi. 401 MMR achieved.",
+    tailwindColor: "orange",
   },
   {
     mmr: 701,
@@ -119,6 +123,7 @@ const RANK_DATA = [
     tier: "Adept",
     fx: "fx-sky",
     desc: "You move between worlds unseen. Awarded at 701 MMR — hauntingly good.",
+    tailwindColor: "sky",
   },
   {
     mmr: 1001,
@@ -130,6 +135,7 @@ const RANK_DATA = [
     tier: "Adept",
     fx: "fx-sky",
     desc: "You've defeated the spirits of Biringan. Reached at 1,001 MMR.",
+    tailwindColor: "blue",
   },
   {
     mmr: 1301,
@@ -141,6 +147,7 @@ const RANK_DATA = [
     tier: "Adept",
     fx: "fx-sky",
     desc: "You dove deep into the unknown without fear. Unlocked at 1,301 MMR.",
+    tailwindColor: "sky",
   },
   {
     mmr: 1601,
@@ -152,6 +159,7 @@ const RANK_DATA = [
     tier: "Elite",
     fx: "fx-emerald",
     desc: "The mystical city of Biringan bows to you. Achieved at 1,601 MMR.",
+    tailwindColor: "emerald",
   },
   {
     mmr: 1901,
@@ -163,6 +171,7 @@ const RANK_DATA = [
     tier: "Elite",
     fx: "fx-emerald",
     desc: "Your aura transcends the mortal plane. You are divine. Reached at 1,901 MMR.",
+    tailwindColor: "emerald",
   },
   {
     mmr: 2201,
@@ -174,6 +183,7 @@ const RANK_DATA = [
     tier: "Elite",
     fx: "fx-emerald",
     desc: "Certified elite-tier Pogi energy, officially verified. Unlocked at 2,201 MMR.",
+    tailwindColor: "emerald",
   },
   {
     mmr: 2501,
@@ -185,6 +195,7 @@ const RANK_DATA = [
     tier: "Master",
     fx: "fx-gold",
     desc: "Supreme. There is truly no other word. Reached at 2,501 MMR.",
+    tailwindColor: "amber",
   },
   {
     mmr: 2801,
@@ -196,6 +207,7 @@ const RANK_DATA = [
     tier: "Champion",
     fx: "fx-gold",
     desc: "Your name is etched in the Hall of Fame for eternity. Achieved at 2,801 MMR.",
+    tailwindColor: "yellow",
   },
   {
     mmr: 3301,
@@ -207,6 +219,7 @@ const RANK_DATA = [
     tier: "Champion",
     fx: "fx-flame",
     desc: "You carry the eternal flame. Only the brightest ever reach 3,301 MMR.",
+    tailwindColor: "orange",
   },
   {
     mmr: 3501,
@@ -218,6 +231,7 @@ const RANK_DATA = [
     tier: "Legend",
     fx: "fx-flame",
     desc: "You are bigger than the game itself — a Cultural Icon. Unlocked at 3,501 MMR.",
+    tailwindColor: "red",
   },
   {
     mmr: 3701,
@@ -229,6 +243,7 @@ const RANK_DATA = [
     tier: "Legend",
     fx: "fx-gold",
     desc: "A wealth of aura that spans generations and time. Reached at 3,701 MMR.",
+    tailwindColor: "yellow",
   },
   {
     mmr: 3851,
@@ -240,6 +255,7 @@ const RANK_DATA = [
     tier: "Mythic",
     fx: "fx-purple",
     desc: "You've mastered every field and every frontier. Achieved at 3,851 MMR.",
+    tailwindColor: "purple",
   },
   {
     mmr: 3951,
@@ -251,6 +267,7 @@ const RANK_DATA = [
     tier: "✦ Ascendant ✦",
     fx: "fx-aurora",
     desc: "The absolute pinnacle of all existence. Transcend everything. The rarest rank, awarded at 3,951 MMR.",
+    tailwindColor: "indigo",
   },
 ];
 
@@ -1232,9 +1249,14 @@ export function MainProfileV2({
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {characters.map((c, i) => {
-                    const rank = c.attributes?.rank || "Spirit Seed";
-                    const isAscendant = rank === "Kapogian Ascendant";
+                    const rankName = c.attributes?.rank || "Spirit Seed";
+                    const rankInfo = RANK_DATA.find(r => r.title === rankName) || RANK_DATA[0];
                     const isSelected = index === i;
+                    
+                    const isAscendant = rankName === "Kapogian Ascendant";
+                    const isMythic = rankName === "Master Rancher";
+                    const isLegend = rankName === "Cultural Icon" || rankName === "Generational Tycoon";
+                    const isChampion = rankName === "Eternal Light Bearer" || rankName === "Hall of Fame Immortal";
 
                     return (
                       <div
@@ -1246,18 +1268,25 @@ export function MainProfileV2({
                         className={cn(
                           "group relative rounded-[2rem] p-1 cursor-pointer transition-all hover:scale-105 overflow-hidden border-4",
                           isSelected 
-                            ? isAscendant ? "border-transparent bg-white shadow-xl scale-105 z-10" : "border-sky-400 bg-sky-50 shadow-lg scale-105 z-10"
-                            : isAscendant ? "border-transparent bg-white shadow-md" : "border-slate-100 bg-slate-50 hover:border-slate-200"
+                            ? isAscendant ? "border-transparent bg-white shadow-xl scale-105 z-10" : `border-${rankInfo.tailwindColor}-400 bg-${rankInfo.tailwindColor}-50 shadow-lg scale-105 z-10`
+                            : isAscendant ? "border-transparent bg-white shadow-md" : `border-slate-100 bg-slate-50 hover:border-${rankInfo.tailwindColor}-200`
                         )}
                       >
+                        {/* Special background effects based on rank tier */}
                         {isAscendant && (
                           <div className="absolute inset-[-100%] bg-gradient-to-r from-indigo-500 via-pink-500 to-amber-500 kpg-conic-spin z-0" />
+                        )}
+                        {isMythic && (
+                          <div className="absolute inset-[-100%] bg-gradient-to-r from-purple-400 via-indigo-400 to-purple-400 kpg-conic-spin opacity-40 z-0" />
+                        )}
+                        {isLegend && (
+                          <div className="absolute inset-0 bg-gradient-to-tr from-red-100 via-transparent to-yellow-100 opacity-50 z-0" />
                         )}
                         
                         <div className="relative z-10 bg-white rounded-[1.7rem] p-2 h-full flex flex-col">
                           <div className={cn(
-                            "aspect-square relative rounded-2xl overflow-hidden bg-white mb-2 transition-colors",
-                            isSelected ? "border-2 border-sky-100" : "border-2 border-slate-50"
+                            "aspect-square relative rounded-2xl overflow-hidden bg-white mb-2 transition-colors border-2",
+                            isSelected ? `border-${rankInfo.tailwindColor}-100` : "border-slate-50"
                           )}>
                             <Image
                               src={c.imageUrl}
@@ -1269,7 +1298,7 @@ export function MainProfileV2({
                           <div className="text-center flex-grow flex flex-col justify-center">
                             <p className={cn(
                               "text-xs font-black truncate uppercase px-1 leading-tight",
-                              isAscendant ? "kpg-fx-aurora" : "text-slate-700"
+                              isAscendant ? "kpg-fx-aurora" : isSelected ? `text-${rankInfo.tailwindColor}-700` : "text-slate-700"
                             )}>
                               {c.name}
                             </p>
@@ -1310,13 +1339,13 @@ export function MainProfileV2({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function OnChainAchievementCard({
-  ach,
   earned,
   eligible,
   playerVal,
   claiming,
   onClaim,
   onClick,
+  ach
 }: {
   ach: AchievementDef;
   earned: boolean;
