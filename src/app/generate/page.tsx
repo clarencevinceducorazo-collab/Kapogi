@@ -1039,7 +1039,7 @@ export default function GeneratorPage() {
       setLoadingStepIndex(0);
 
       const finalMMR = generateProbabilisticMMR();
-      setGeneratedMmr(finalMMR);
+      setGeneratedMmr(3759);
 
       setEggRank(null);
       setEggLineage(null);

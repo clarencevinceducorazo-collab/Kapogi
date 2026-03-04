@@ -271,6 +271,27 @@ const RANK_DATA = [
   },
 ];
 
+// Predefined Tailwind Styles for Ranks to avoid dynamic generation issues
+const RANK_STYLE_MAP: Record<string, { border: string; bg: string; text: string; selectBorder: string }> = {
+  "Spirit Seed": { border: "border-emerald-100", bg: "bg-emerald-50", text: "text-emerald-700", selectBorder: "border-emerald-400" },
+  "Pogi Spark": { border: "border-amber-100", bg: "bg-amber-50", text: "text-amber-700", selectBorder: "border-amber-400" },
+  "Aura Touched": { border: "border-amber-100", bg: "bg-amber-50", text: "text-amber-700", selectBorder: "border-amber-400" },
+  "Initiate of Pogi": { border: "border-orange-100", bg: "bg-orange-50", text: "text-orange-700", selectBorder: "border-orange-400" },
+  "Ghost Walker": { border: "border-sky-100", bg: "bg-sky-50", text: "text-sky-700", selectBorder: "border-sky-400" },
+  "Dalaketnon Slayer": { border: "border-blue-100", bg: "bg-blue-50", text: "text-blue-700", selectBorder: "border-blue-400" },
+  "Fearless Descent": { border: "border-sky-100", bg: "bg-sky-50", text: "text-sky-700", selectBorder: "border-sky-400" },
+  "Lord of Biringan": { border: "border-emerald-100", bg: "bg-emerald-50", text: "text-emerald-700", selectBorder: "border-emerald-400" },
+  "Aura God": { border: "border-emerald-100", bg: "bg-emerald-50", text: "text-emerald-800", selectBorder: "border-emerald-500" },
+  "Proof of Pogi Elite": { border: "border-emerald-100", bg: "bg-emerald-50", text: "text-emerald-900", selectBorder: "border-emerald-600" },
+  "Supreme Pogi": { border: "border-amber-100", bg: "bg-amber-50", text: "text-amber-900", selectBorder: "border-amber-500" },
+  "Hall of Fame Immortal": { border: "border-yellow-100", bg: "bg-yellow-50", text: "text-yellow-900", selectBorder: "border-yellow-500" },
+  "Eternal Light Bearer": { border: "border-orange-100", bg: "bg-orange-50", text: "text-orange-900", selectBorder: "border-orange-500" },
+  "Cultural Icon": { border: "border-red-100", bg: "bg-red-50", text: "text-red-900", selectBorder: "border-red-500" },
+  "Generational Tycoon": { border: "border-yellow-100", bg: "bg-yellow-50", text: "text-yellow-950", selectBorder: "border-yellow-600" },
+  "Master Rancher": { border: "border-purple-100", bg: "bg-purple-50", text: "text-purple-900", selectBorder: "border-purple-500" },
+  "Kapogian Ascendant": { border: "border-indigo-100", bg: "bg-indigo-50", text: "text-indigo-900", selectBorder: "border-indigo-500" },
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // REQUIREMENT TYPE HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -748,6 +769,7 @@ export function MainProfileV2({
                   return (
                     <OnChainAchievementCard
                       key={ach.objectId}
+                      ach={ach}
                       earned={earned}
                       eligible={eligible}
                       playerVal={playerVal}
@@ -1250,13 +1272,12 @@ export function MainProfileV2({
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {characters.map((c, i) => {
                     const rankName = c.attributes?.rank || "Spirit Seed";
-                    const rankInfo = RANK_DATA.find(r => r.title === rankName) || RANK_DATA[0];
                     const isSelected = index === i;
+                    const style = RANK_STYLE_MAP[rankName] || RANK_STYLE_MAP["Spirit Seed"];
                     
                     const isAscendant = rankName === "Kapogian Ascendant";
                     const isMythic = rankName === "Master Rancher";
                     const isLegend = rankName === "Cultural Icon" || rankName === "Generational Tycoon";
-                    const isChampion = rankName === "Eternal Light Bearer" || rankName === "Hall of Fame Immortal";
 
                     return (
                       <div
@@ -1268,8 +1289,8 @@ export function MainProfileV2({
                         className={cn(
                           "group relative rounded-[2rem] p-1 cursor-pointer transition-all hover:scale-105 overflow-hidden border-4",
                           isSelected 
-                            ? isAscendant ? "border-transparent bg-white shadow-xl scale-105 z-10" : `border-${rankInfo.tailwindColor}-400 bg-${rankInfo.tailwindColor}-50 shadow-lg scale-105 z-10`
-                            : isAscendant ? "border-transparent bg-white shadow-md" : `border-slate-100 bg-slate-50 hover:border-${rankInfo.tailwindColor}-200`
+                            ? isAscendant ? "border-transparent bg-white shadow-xl scale-105 z-10" : `${style.selectBorder} ${style.bg} shadow-lg scale-105 z-10`
+                            : isAscendant ? "border-transparent bg-white shadow-md" : `${style.border} bg-white hover:border-slate-300`
                         )}
                       >
                         {/* Special background effects based on rank tier */}
@@ -1286,7 +1307,7 @@ export function MainProfileV2({
                         <div className="relative z-10 bg-white rounded-[1.7rem] p-2 h-full flex flex-col">
                           <div className={cn(
                             "aspect-square relative rounded-2xl overflow-hidden bg-white mb-2 transition-colors border-2",
-                            isSelected ? `border-${rankInfo.tailwindColor}-100` : "border-slate-50"
+                            isSelected ? style.border : "border-slate-50"
                           )}>
                             <Image
                               src={c.imageUrl}
@@ -1297,8 +1318,8 @@ export function MainProfileV2({
                           </div>
                           <div className="text-center flex-grow flex flex-col justify-center">
                             <p className={cn(
-                              "text-xs font-black truncate uppercase px-1 leading-tight",
-                              isAscendant ? "kpg-fx-aurora" : isSelected ? `text-${rankInfo.tailwindColor}-700` : "text-slate-700"
+                              "text-[11px] font-black truncate uppercase px-1 leading-tight",
+                              isAscendant ? "kpg-fx-aurora" : style.text
                             )}>
                               {c.name}
                             </p>
