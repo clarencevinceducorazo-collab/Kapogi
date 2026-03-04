@@ -57,7 +57,7 @@ export default function RootLayout({
         />
         <Script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js" strategy="afterInteractive" />
       </head>
-      <body className="font-body bg-slate-950">
+      <body className="font-body bg-slate-950" suppressHydrationWarning>
         <Providers>
           <StartingScreen />
           <div className="opacity-0 transition-opacity duration-500" id="main-content">

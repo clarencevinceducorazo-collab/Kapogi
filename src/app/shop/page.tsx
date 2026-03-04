@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { 
   useCurrentAccount, 
   useSignAndExecuteTransaction 
@@ -28,18 +29,17 @@ import {
   mintCharacterNFT, 
   getTreasuryConfigInfo 
 } from "@/lib/sui";
-import { mistToSui } from "@/lib/constants";
+import { mistToSui, ENCRYPTION_CONFIG } from "@/lib/constants";
 import { 
-  encryptShippingInfo, 
-  validateShippingInfo 
+  encryptShippingInfo
 } from "@/lib/encryption";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
 // --- Product Data ---
@@ -106,6 +106,7 @@ export default function KapogianShopPage() {
   useEffect(() => {
     getTreasuryConfigInfo().then(setPricing);
     if (account?.address) {
+      setLoading(true);
       getOwnedCharacters(account.address).then(chars => {
         const parsed = chars.map((obj: any) => ({
           id: obj.data.objectId,
@@ -113,6 +114,10 @@ export default function KapogianShopPage() {
           imageUrl: obj.data.display?.data?.image_url || ""
         }));
         setOwnedNfts(parsed);
+        setLoading(false);
+      }).catch(err => {
+        console.error("Failed to load NFTs", err);
+        setLoading(false);
       });
     }
   }, [account?.address]);
@@ -147,7 +152,10 @@ export default function KapogianShopPage() {
         item_type: selectedProduct.type,
         color: selectedProduct.color,
         size: selectedSize || "N/A",
-        custom_print: customPrintNft ? customPrintNft.name : "None"
+        custom_print: customPrintNft ? customPrintNft.name : "None",
+        mmr: 0,
+        lineage: "Ancient",
+        rank: "Spirit Seed"
       });
 
       const result = await mintCharacterNFT({
@@ -158,7 +166,7 @@ export default function KapogianShopPage() {
         mmr: 0,
         itemsSelected,
         encryptedShippingInfo: encryptedShipping,
-        encryptionPubkey: process.env.NEXT_PUBLIC_ADMIN_PUBLIC_KEY!,
+        encryptionPubkey: ENCRYPTION_CONFIG.adminPublicKey,
         walletAddress: account.address,
         totalPrice: pricing.baseMintPrice,
         signAndExecute
@@ -235,15 +243,17 @@ export default function KapogianShopPage() {
               <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]"></div>
               
               <div className="relative w-64 h-64 md:w-80 md:h-80 z-10 group">
-                <Image 
-                  src={selectedProduct?.image || ""} 
-                  alt="preview" 
-                  fill 
-                  className="object-contain drop-shadow-2xl" 
-                />
+                {selectedProduct && (
+                  <Image 
+                    src={selectedProduct.image} 
+                    alt="preview" 
+                    fill 
+                    className="object-contain drop-shadow-2xl" 
+                  />
+                )}
                 {customPrintNft && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-black/20 opacity-60 mix-blend-multiply mt-4">
+                    <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-black/20 bg-white/40 backdrop-blur-sm mt-4 shadow-xl">
                       <Image src={customPrintNft.imageUrl} alt="print" width={96} height={96} className="object-cover" />
                     </div>
                   </div>
@@ -283,7 +293,7 @@ export default function KapogianShopPage() {
                             key={size}
                             onClick={() => setSelectedSize(size)}
                             className={cn(
-                              "w-12 h-12 rounded-xl border-2 font-black transition-all flex items-center justify-center shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5",
+                              "w-12 h-12 rounded-xl border-2 font-black transition-all flex items-center justify-center shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none",
                               selectedSize === size 
                                 ? "bg-yellow-400 border-black text-black scale-105" 
                                 : "bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300"
@@ -323,8 +333,11 @@ export default function KapogianShopPage() {
                         </button>
                       ))}
                     </div>
-                    {ownedNfts.length === 0 && (
+                    {!loading && ownedNfts.length === 0 && (
                       <p className="text-[10px] font-bold text-slate-400 italic">No owned NFTs found for custom printing.</p>
+                    )}
+                    {loading && (
+                      <LoaderCircle size={16} className="animate-spin text-slate-300 mx-auto" />
                     )}
                   </div>
                 </div>
@@ -379,7 +392,7 @@ export default function KapogianShopPage() {
                   <button 
                     onClick={handlePurchase}
                     disabled={minting}
-                    className="w-full py-4 bg-blue-500 text-white border-4 border-black rounded-2xl font-black uppercase italic tracking-widest text-lg shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                    className="w-full py-4 bg-blue-500 text-white border-4 border-black rounded-2xl font-black uppercase italic tracking-widest text-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                   >
                     {minting ? <LoaderCircle className="animate-spin" /> : <ShoppingBag />}
                     {minting ? "Authorizing..." : "Mint & Order Now"}
@@ -400,7 +413,7 @@ export default function KapogianShopPage() {
           <h2 className="text-3xl font-black uppercase italic tracking-tighter mb-2">Order Secured!</h2>
           <p className="text-slate-500 font-bold mb-8">Your digital collectible is minted and your physical gear is now in production.</p>
           <div className="flex flex-col gap-3">
-            <Link href="/profile" className="w-full py-4 bg-black text-white rounded-xl font-black uppercase tracking-widest text-sm">
+            <Link href="/profile" className="w-full py-4 bg-black text-white rounded-xl font-black uppercase tracking-widest text-sm flex items-center justify-center">
               View My Assets
             </Link>
             <button onClick={() => setSuccess(false)} className="w-full py-4 bg-slate-100 text-slate-600 rounded-xl font-black uppercase tracking-widest text-sm">
