@@ -1179,7 +1179,7 @@ function CharacterDetailModal({
                 )}
               >
               
-                {user.attributes?.rank || "Spirit Seed"}
+                {user.attributes?.rank || "Spirit Seed."}
               </h2>
             </div>
             <div className="relative w-full flex-1 flex flex-col items-center justify-center">
