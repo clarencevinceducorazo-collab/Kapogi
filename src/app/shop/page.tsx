@@ -149,8 +149,8 @@ const PRODUCTS: Product[] = [
     icon: "solar:hoodie-bold-duotone",
     iconColor: "text-indigo-100",
     badge: "⚔️ EPIC",
-    staticImage: "/images/Shop/static/conquest.png",
-    animatedImage: "/images/Shop/dynamic/conquest.gif",
+    staticImage: "/images/Shop/static/conquesthoodie.png",
+    animatedImage: "/images/Shop/dynamic/conquesthoodie.gif",
   },
   {
     id: "h-farm",
@@ -161,8 +161,8 @@ const PRODUCTS: Product[] = [
     icon: "solar:hoodie-bold-duotone",
     iconColor: "text-emerald-100",
     badge: "🌿 FARM",
-    staticImage: "/images/Shop/static/farm.png",
-    animatedImage: "/images/Shop/dynamic/farm.gif",
+    staticImage: "/images/Shop/static/farmhoodie.png",
+    animatedImage: "/images/Shop/dynamic/farmhoodie.gif",
   },
   {
     id: "h-greyaura2",
@@ -172,8 +172,8 @@ const PRODUCTS: Product[] = [
     colorClass: "bg-gradient-to-br from-slate-300 to-slate-500",
     icon: "solar:hoodie-bold-duotone",
     iconColor: "text-slate-100",
-    staticImage: "/images/Shop/static/greyaura2.png",
-    animatedImage: "/images/Shop/dynamic/greyaura2.gif",
+    staticImage: "/images/Shop/static/grey2hoodie.png",
+    animatedImage: "/images/Shop/dynamic/grey2hoodie.gif",
   },
   {
     id: "h-greykapo",
@@ -183,8 +183,8 @@ const PRODUCTS: Product[] = [
     colorClass: "bg-gradient-to-br from-slate-400 to-slate-600",
     icon: "solar:hoodie-bold-duotone",
     iconColor: "text-slate-200",
-    staticImage: "/images/Shop/static/greykapo.png",
-    animatedImage: "/images/Shop/dynamic/greykapo.gif",
+    staticImage: "/images/Shop/static/greykapogian.png",
+    animatedImage: "/images/Shop/dynamic/greykapogian.gif",
   },
   // MUGS
   {
