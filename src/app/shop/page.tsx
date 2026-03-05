@@ -1,31 +1,34 @@
 "use client";
 
+// Main shop page for Kapogian merch
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { PageHeader } from "@/components/kapogian/page-header";
-import { PageFooter } from "@/components/kapogian/page-footer";
-import { cn } from "@/lib/utils";
-import { useCurrentAccount } from "@mysten/dapp-kit";
-import { getOwnedCharacters } from "@/lib/sui";
-import { getIPFSGatewayUrl } from "@/lib/pinata";
-import { LoaderCircle, Wallet, Sparkles } from "lucide-react";
-import { CustomConnectButton } from "@/components/kapogian/CustomConnectButton";
+import { PageHeader } from "@/components/kapogian/page-header"; // Page header component
+import { PageFooter } from "@/components/kapogian/page-footer"; // Page footer component
+import { cn } from "@/lib/utils"; // Utility for conditional classNames
+import { useCurrentAccount } from "@mysten/dapp-kit"; // SUI wallet hook
+import { getOwnedCharacters } from "@/lib/sui"; // Fetch owned NFTs
+import { getIPFSGatewayUrl } from "@/lib/pinata"; // IPFS image gateway
+import { LoaderCircle, Wallet, Sparkles } from "lucide-react"; // Icon components
+import { CustomConnectButton } from "@/components/kapogian/CustomConnectButton"; // Wallet connect button
 
 // Product interface for shop items
+// Represents a single merch product
 interface Product {
-  id: string;
-  type: "shirt" | "hoodie" | "mug" | "mousepad";
-  name: string;
-  price: number;
-  colorClass: string;
-  icon: string;
-  iconColor: string;
-  badge?: string;
-  staticImage: string;
-  animatedImage: string;
+  id: string; // Unique product ID
+  type: "shirt" | "hoodie" | "mug" | "mousepad"; // Product category
+  name: string; // Display name
+  price: number; // Price in SUI
+  colorClass: string; // Tailwind color classes for card
+  icon: string; // Iconify icon name
+  iconColor: string; // Icon color class
+  badge?: string; // Optional badge (e.g. NEW, HOT)
+  staticImage: string; // Static image path
+  animatedImage: string; // Animated image path (GIF)
 }
 
 // List of all products available in the shop
+// Each product is rendered in the grid below
 const PRODUCTS: Product[] = [
   // SHIRTS
   {
@@ -202,38 +205,40 @@ const PRODUCTS: Product[] = [
 ];
 
 // Main shop component
+// Handles product display, modal flow, and NFT integration
 export default function KapogianShop() {
-  // Get current wallet/account
+  // Current connected wallet/account
   const account = useCurrentAccount();
-  // State for active filter pill
+  // UI state: active filter pill (all, shirt, hoodie, etc)
   const [activeFilter, setActiveFilter] = useState("all");
-  // State for selected product in modal
+  // UI state: selected product for modal
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  // State for current step in modal
+  // UI state: current step in modal (1: config, 2: logistics, 3: payment)
   const [currentStep, setCurrentStep] = useState(1);
-  // State for quantity selection
+  // UI state: selected quantity
   const [currentQty, setCurrentQty] = useState(1);
-  // State for selected size (shirts/hoodies)
+  // UI state: selected size (for shirts/hoodies)
   const [selectedSize, setSelectedSize] = useState("");
-  // State for selected NFT print
+  // UI state: selected NFT print ID
   const [selectedPrintId, setSelectedPrintId] = useState("none");
-  // State for owned NFTs
+  // NFT state: owned NFTs fetched from SUI
   const [ownedNfts, setOwnedNfts] = useState<any[]>([]);
-  // State for NFT loading
+  // NFT state: loading indicator
   const [loadingNfts, setLoadingNfts] = useState(false);
 
-  // Load owned NFTs when account changes
+  // Load owned NFTs from SUI when account changes
   useEffect(() => {
     if (account?.address) {
       setLoadingNfts(true);
       getOwnedCharacters(account.address)
         .then((chars) => {
+          // Parse NFT objects to display info
           const parsed = chars.map((obj: any) => {
             const display = obj.data?.display?.data || {};
             return {
-              id: obj.data?.objectId,
-              name: display.name || "Unnamed Spirit",
-              imageUrl: getIPFSGatewayUrl(display.image_url || ""),
+              id: obj.data?.objectId, // NFT object ID
+              name: display.name || "Unnamed Spirit", // NFT name
+              imageUrl: getIPFSGatewayUrl(display.image_url || ""), // NFT image
             };
           });
           setOwnedNfts(parsed);
@@ -241,45 +246,47 @@ export default function KapogianShop() {
         .catch((err) => console.error("Failed to load NFTs", err))
         .finally(() => setLoadingNfts(false));
     } else {
-      setOwnedNfts([]);
+      setOwnedNfts([]); // Reset if wallet disconnected
     }
   }, [account?.address]);
 
-  // Filter products by active filter
+  // Filter products by active filter pill
   const filteredProducts = PRODUCTS.filter(
     (p) => activeFilter === "all" || p.type === activeFilter,
   );
 
-  // Open modal for product
+  // Open modal for product purchase
   const openModal = (product: Product) => {
     setSelectedProduct(product);
-    setCurrentStep(1);
-    setCurrentQty(1);
+    setCurrentStep(1); // Start at step 1
+    setCurrentQty(1); // Default quantity
     setSelectedSize(
       product.type === "mug" || product.type === "mousepad" ? "N/A" : "",
-    );
-    setSelectedPrintId("none");
-    document.body.style.overflow = "hidden";
+    ); // Only shirts/hoodies have size
+    setSelectedPrintId("none"); // No NFT print by default
+    document.body.style.overflow = "hidden"; // Prevent background scroll
   };
 
-  // Close modal
+  // Close modal and reset state
   const closeModal = () => {
     setSelectedProduct(null);
     document.body.style.overflow = "";
   };
 
-  // Go to next step in modal
+  // Go to next step in modal (max 3)
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 3));
-  // Go to previous step in modal
+  // Go to previous step in modal (min 1)
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
-  // Find selected NFT for print
+  // Find selected NFT for print (if any)
   const selectedNft = ownedNfts.find((n) => n.id === selectedPrintId);
-  // Get print label for selected NFT
+  // Get print label for selected NFT (or fallback)
   const printLabel = selectedNft ? selectedNft.name : "No Print";
 
+  // Render shop UI
   return (
     <div className="bg-gradient-to-b from-sky-200 via-indigo-50 to-white text-slate-700 min-h-screen overflow-x-hidden selection:bg-pink-300 selection:text-white font-sans">
+      {/* Global styles and keyframes for shop UI animations */}
       <style jsx global>{`
         @keyframes float {
           0%,
@@ -435,9 +442,12 @@ export default function KapogianShop() {
         }
       `}</style>
 
-      <PageHeader />
+      {/* Page header */}
+      <div style={{ fontFamily: "Fredoka, sans-serif" }}>
+        <PageHeader />
+      </div>
 
-      {/* Floating BG */}
+      {/* Floating background blobs and clouds for visual effect */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute top-10 left-10 w-64 h-64 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
         <div
@@ -458,7 +468,7 @@ export default function KapogianShop() {
         ></iconify-icon>
       </div>
 
-      {/* Hero Section */}
+      {/* Hero section: shop title and description */}
       <section className="relative z-10 pt-32 pb-8 px-4 text-center">
         <div className="flex justify-center gap-3 mb-5 animate-float">
           <div className="bg-pink-300 text-pink-900 px-4 py-1.5 rounded-full font-extrabold text-xs tracking-wide transform -rotate-2 border-2 border-white shadow-md">
@@ -480,7 +490,7 @@ export default function KapogianShop() {
         </p>
       </section>
 
-      {/* Filter Pills */}
+      {/* Filter pills for product categories */}
       <div className="relative z-10 px-4 mb-10">
         <div className="max-w-6xl mx-auto flex gap-3 flex-wrap justify-center">
           {[
@@ -506,7 +516,7 @@ export default function KapogianShop() {
         </div>
       </div>
 
-      {/* Products Grid */}
+      {/* Products grid: displays all filtered products */}
       <section className="relative z-10 pb-24 px-4">
         <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {filteredProducts.map((product) => (
@@ -582,7 +592,7 @@ export default function KapogianShop() {
         </div>
       </section>
 
-      {/* Modal */}
+      {/* Modal: purchase flow for selected product */}
       {selectedProduct && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
           <div
@@ -593,7 +603,7 @@ export default function KapogianShop() {
             className="relative z-10 w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl border-4 border-black flex flex-col md:flex-row overflow-hidden animate-pop-in"
             style={{ maxHeight: "90vh" }}
           >
-            {/* LEFT: Item Preview */}
+            {/* LEFT: Item preview and details */}
             <div
               className={cn(
                 "w-full md:w-64 flex-shrink-0 flex flex-col items-center justify-center p-8 relative overflow-hidden",
@@ -601,7 +611,7 @@ export default function KapogianShop() {
               )}
             >
               <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]"></div>
-              <div className="relative z-10 w-44 h-44 bg-white rounded-3xl flex items-center justify-center shadow-xl border-4 border-black mb-5 animate-float overflow-hidden">
+              <div className="relative z-10 w-60 h-54 bg-white rounded-3xl flex items-center justify-center shadow-xl border-4 border-black mb-5 animate-float overflow-hidden">
                 <Image
                   src={selectedProduct.animatedImage}
                   alt="preview"
@@ -614,8 +624,15 @@ export default function KapogianShop() {
               <div className="relative z-10 bg-black text-white text-[10px] font-black px-4 py-1.5 rounded-full mb-3 uppercase tracking-widest shadow-lg">
                 {selectedProduct.type}
               </div>
-              <h2 className="relative z-10 text-xl font-headline text-black tracking-tight text-center leading-tight mb-3 uppercase">
-                {selectedProduct.name}
+              <h2 className="relative z-10 text-xl font-headline text-white tracking-tight text-center leading-tight mb-3 uppercase">
+                <span
+                  style={{
+                    textShadow:
+                      "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000",
+                  }}
+                >
+                  {selectedProduct.name}
+                </span>
               </h2>
               <div className="relative z-10 bg-sky-50 border-2 border-black rounded-xl p-3 flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                 <iconify-icon
@@ -628,7 +645,7 @@ export default function KapogianShop() {
               </div>
             </div>
 
-            {/* RIGHT: Form Panel */}
+            {/* RIGHT: Form panel for purchase steps */}
             <div className="flex-1 flex flex-col overflow-hidden border-l-4 border-black bg-slate-50">
               <div className="px-7 pt-6 pb-4 border-b-4 border-black bg-white flex items-center justify-between flex-shrink-0">
                 <div className="flex gap-2 items-center">
@@ -694,15 +711,16 @@ export default function KapogianShop() {
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto fancy-scrollbar">
-                {/* STEP 1: Details */}
+              <div className="flex-1 overflow-y-auto ">
+                {/* STEP 1: Product configuration (size, NFT print, quantity) */}
                 {currentStep === 1 && (
-                  <div className="px-7 py-6 space-y-8">
+                  <div className="px-7 py-2 space-y-8">
+                    {/* Size selection for shirts/hoodies only */}
                     {(selectedProduct.type === "shirt" ||
                       selectedProduct.type === "hoodie") && (
                       <div>
-                        <p className="font-black text-black mb-3 text-xs tracking-widest uppercase flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 bg-sky-400 rounded-full"></span>{" "}
+                        <p className="font-black text-black mb-2 text-xs tracking-widest uppercase flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 bg-sky-400 rounded-4"></span>{" "}
                           Select Fit
                         </p>
                         <div className="flex gap-2.5 flex-wrap">
@@ -711,7 +729,7 @@ export default function KapogianShop() {
                               key={size}
                               onClick={() => setSelectedSize(size)}
                               className={cn(
-                                "size-btn h-12 min-w-12 px-4 rounded-xl font-black text-sm border-2 transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none",
+                                "size-btn h-9 min-w-9 px-2 rounded-[0.75rem] font-black text-xs border-2 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none",
                                 selectedSize === size
                                   ? "bg-sky-400 border-black text-white"
                                   : "bg-white border-slate-200 text-slate-600 hover:border-black",
@@ -725,7 +743,7 @@ export default function KapogianShop() {
                     )}
 
                     <div>
-                      <div className="flex items-center gap-2 mb-3">
+                      <div className="flex items-center gap-1 mb-2 ">
                         <p className="font-black text-black text-xs tracking-widest uppercase flex items-center gap-2">
                           <span className="w-1.5 h-1.5 bg-pink-400 rounded-full"></span>{" "}
                           Custom Print
@@ -735,6 +753,7 @@ export default function KapogianShop() {
                         </span>
                       </div>
 
+                      {/* NFT print selection (shows wallet connect, loader, or NFT grid) */}
                       <div className="bg-white border-4 border-black rounded-[2rem] p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.05)]">
                         {!account ? (
                           <div className="text-center py-8">
@@ -753,7 +772,7 @@ export default function KapogianShop() {
                           </div>
                         ) : (
                           <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
-                            {/* None Option */}
+                            {/* None option for no NFT print */}
                             <button
                               onClick={() => setSelectedPrintId("none")}
                               className={cn(
@@ -772,7 +791,7 @@ export default function KapogianShop() {
                               </span>
                             </button>
 
-                            {/* Owned NFTs */}
+                            {/* Owned NFTs for custom print selection */}
                             {ownedNfts.map((nft) => (
                               <button
                                 key={nft.id}
@@ -803,6 +822,7 @@ export default function KapogianShop() {
                               </button>
                             ))}
 
+                            {/* Message if no NFTs owned */}
                             {ownedNfts.length === 0 && (
                               <div className="col-span-full py-10 text-center">
                                 <Sparkles className="w-10 h-10 mx-auto text-amber-200 mb-3" />
@@ -818,7 +838,8 @@ export default function KapogianShop() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between bg-white border-4 border-black p-5 rounded-3xl">
+                    {/* Quantity selection */}
+                    <div className="flex items-center justify-between bg-white border-4 border-black p-2 rounded-3xl">
                       <p className="font-black text-black text-xs tracking-widest uppercase">
                         Copies
                       </p>
@@ -827,27 +848,28 @@ export default function KapogianShop() {
                           onClick={() =>
                             setCurrentQty(Math.max(1, currentQty - 1))
                           }
-                          className="w-10 h-10 bg-slate-100 border-2 border-black rounded-xl font-black text-xl text-black hover:bg-slate-200 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 flex items-center justify-center"
+                          className="w-7 h-7 bg-slate-100 border-2 border-black rounded-[0.75rem] font-black text-base text-black hover:bg-slate-200 transition-colors shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 flex items-center justify-center"
                         >
                           −
                         </button>
-                        <span className="text-3xl font-black text-black w-8 text-center">
+                        <span className="text-2xl font-black text-black w-7 text-center">
                           {currentQty}
                         </span>
                         <button
                           onClick={() =>
                             setCurrentQty(Math.min(10, currentQty + 1))
                           }
-                          className="w-10 h-10 bg-slate-100 border-2 border-black rounded-xl font-black text-xl text-black hover:bg-slate-200 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 flex items-center justify-center"
+                          className="w-7 h-7 bg-slate-100 border-2 border-black rounded-[0.75rem] font-black text-base text-black hover:bg-slate-200 transition-colors shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 flex items-center justify-center relative"
                         >
                           +
                         </button>
                       </div>
                     </div>
 
+                    {/* Button to proceed to logistics step */}
                     <button
                       onClick={nextStep}
-                      className="w-full bg-black text-white font-black py-5 rounded-3xl hover:bg-slate-800 transition-all squishy-btn flex items-center justify-center gap-3 shine-effect text-base uppercase tracking-[0.2em] shadow-[6px_6px_0px_0px_rgba(59,130,246,0.5)]"
+                      className="w-full bg-black text-white font-black py-5 rounded-3xl hover:bg-slate-800 transition-all squishy-btn flex items-center justify-center gap-3 shine-effect text-sm uppercase tracking-[0.2em] shadow-[6px_6px_0px_0px_rgba(59,130,246,0.5)] ml-auto -mt-5"
                     >
                       <iconify-icon
                         icon="solar:rocket-2-bold"
@@ -858,7 +880,7 @@ export default function KapogianShop() {
                   </div>
                 )}
 
-                {/* STEP 2: Shipping */}
+                {/* STEP 2: Logistics/shipping form */}
                 {currentStep === 2 && (
                   <div className="px-7 py-6 space-y-5">
                     <div className="bg-white border-4 border-black rounded-[2rem] p-6 mb-2">
@@ -870,6 +892,7 @@ export default function KapogianShop() {
                       </p>
                     </div>
 
+                    {/* Shipping address and contact fields */}
                     <div className="space-y-4">
                       <div className="space-y-1.5">
                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">
@@ -925,6 +948,7 @@ export default function KapogianShop() {
                       </div>
                     </div>
 
+                    {/* Navigation buttons for modal steps */}
                     <div className="flex gap-4 mt-8">
                       <button
                         onClick={prevStep}
@@ -949,7 +973,7 @@ export default function KapogianShop() {
                   </div>
                 )}
 
-                {/* STEP 3: Payment */}
+                {/* STEP 3: Payment/checkout summary */}
                 {currentStep === 3 && (
                   <div className="px-7 py-6 space-y-6">
                     <div className="bg-white border-4 border-black rounded-[2rem] p-6 mb-2">
@@ -961,6 +985,7 @@ export default function KapogianShop() {
                       </p>
                     </div>
 
+                    {/* Final receipt and summary of order */}
                     <div className="bg-white border-4 border-black rounded-[2rem] p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.05)]">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">
                         Final Receipt
@@ -1021,6 +1046,7 @@ export default function KapogianShop() {
                       </div>
                     </div>
 
+                    {/* Authorize and pay button (SUI network) */}
                     <button className="w-full bg-black text-white font-black py-6 rounded-[2rem] hover:bg-slate-900 transition-all squishy-btn flex items-center justify-center gap-4 text-xl shine-effect shadow-[8px_8px_0px_0px_rgba(59,130,246,0.6)] border-4 border-black">
                       <iconify-icon
                         icon="token-branded:sui"
@@ -1029,6 +1055,7 @@ export default function KapogianShop() {
                       Authorize & Pay
                     </button>
 
+                    {/* Security info and navigation back to logistics */}
                     <div className="text-center pt-2">
                       <div className="flex items-center justify-center gap-2 text-slate-400 text-[10px] font-black mb-6 uppercase tracking-[0.2em]">
                         <iconify-icon
@@ -1052,7 +1079,10 @@ export default function KapogianShop() {
         </div>
       )}
 
-      <PageFooter />
+      {/* Page footer */}
+      <div style={{ fontFamily: "Fredoka, sans-serif" }}>
+        <PageFooter />
+      </div>
     </div>
   );
 }
