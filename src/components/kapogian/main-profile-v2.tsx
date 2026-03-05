@@ -1,6 +1,10 @@
+// Main Kapogian Profile V2 component
+// Handles display of user stats, achievements, collections, and orders
+// Uses custom UI, achievement logic, and dynamic data from blockchain
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+// ...other imports for icons, UI, hooks, and data
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -61,9 +65,12 @@ import {
 import { toast } from "@/hooks/use-toast";
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
 // DATA STRUCTURES (High-fidelity game badge style icons)
+// ──────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────────────────
 
+// RANK_DATA: Defines all possible player ranks, their icons, colors, and requirements
 const RANK_DATA = [
   {
     mmr: 0,
@@ -272,30 +279,120 @@ const RANK_DATA = [
 ];
 
 // Predefined Tailwind Styles for Ranks to avoid dynamic generation issues
-const RANK_STYLE_MAP: Record<string, { border: string; bg: string; text: string; selectBorder: string }> = {
-  "Spirit Seed": { border: "border-emerald-100", bg: "bg-emerald-50", text: "text-emerald-700", selectBorder: "border-emerald-400" },
-  "Pogi Spark": { border: "border-amber-100", bg: "bg-amber-50", text: "text-amber-700", selectBorder: "border-amber-400" },
-  "Aura Touched": { border: "border-amber-100", bg: "bg-amber-50", text: "text-amber-700", selectBorder: "border-amber-400" },
-  "Initiate of Pogi": { border: "border-orange-100", bg: "bg-orange-50", text: "text-orange-700", selectBorder: "border-orange-400" },
-  "Ghost Walker": { border: "border-sky-100", bg: "bg-sky-50", text: "text-sky-700", selectBorder: "border-sky-400" },
-  "Dalaketnon Slayer": { border: "border-blue-100", bg: "bg-blue-50", text: "text-blue-700", selectBorder: "border-blue-400" },
-  "Fearless Descent": { border: "border-sky-100", bg: "bg-sky-50", text: "text-sky-700", selectBorder: "border-sky-400" },
-  "Lord of Biringan": { border: "border-emerald-100", bg: "bg-emerald-50", text: "text-emerald-700", selectBorder: "border-emerald-400" },
-  "Aura God": { border: "border-emerald-100", bg: "bg-emerald-50", text: "text-emerald-800", selectBorder: "border-emerald-500" },
-  "Proof of Pogi Elite": { border: "border-emerald-100", bg: "bg-emerald-50", text: "text-emerald-900", selectBorder: "border-emerald-600" },
-  "Supreme Pogi": { border: "border-amber-100", bg: "bg-amber-50", text: "text-amber-900", selectBorder: "border-amber-500" },
-  "Hall of Fame Immortal": { border: "border-yellow-100", bg: "bg-yellow-50", text: "text-yellow-900", selectBorder: "border-yellow-500" },
-  "Eternal Light Bearer": { border: "border-orange-100", bg: "bg-orange-50", text: "text-orange-900", selectBorder: "border-orange-500" },
-  "Cultural Icon": { border: "border-red-100", bg: "bg-red-50", text: "text-red-900", selectBorder: "border-red-500" },
-  "Generational Tycoon": { border: "border-yellow-100", bg: "bg-yellow-50", text: "text-yellow-950", selectBorder: "border-yellow-600" },
-  "Master Rancher": { border: "border-purple-100", bg: "bg-purple-50", text: "text-purple-900", selectBorder: "border-purple-500" },
-  "Kapogian Ascendant": { border: "border-indigo-100", bg: "bg-indigo-50", text: "text-indigo-900", selectBorder: "border-indigo-500" },
+// RANK_STYLE_MAP: Maps rank names to Tailwind style classes for consistent UI
+const RANK_STYLE_MAP: Record<
+  string,
+  { border: string; bg: string; text: string; selectBorder: string }
+> = {
+  "Spirit Seed": {
+    border: "border-emerald-100",
+    bg: "bg-emerald-50",
+    text: "text-emerald-700",
+    selectBorder: "border-emerald-400",
+  },
+  "Pogi Spark": {
+    border: "border-amber-100",
+    bg: "bg-amber-50",
+    text: "text-amber-700",
+    selectBorder: "border-amber-400",
+  },
+  "Aura Touched": {
+    border: "border-amber-100",
+    bg: "bg-amber-50",
+    text: "text-amber-700",
+    selectBorder: "border-amber-400",
+  },
+  "Initiate of Pogi": {
+    border: "border-orange-100",
+    bg: "bg-orange-50",
+    text: "text-orange-700",
+    selectBorder: "border-orange-400",
+  },
+  "Ghost Walker": {
+    border: "border-sky-100",
+    bg: "bg-sky-50",
+    text: "text-sky-700",
+    selectBorder: "border-sky-400",
+  },
+  "Dalaketnon Slayer": {
+    border: "border-blue-100",
+    bg: "bg-blue-50",
+    text: "text-blue-700",
+    selectBorder: "border-blue-400",
+  },
+  "Fearless Descent": {
+    border: "border-sky-100",
+    bg: "bg-sky-50",
+    text: "text-sky-700",
+    selectBorder: "border-sky-400",
+  },
+  "Lord of Biringan": {
+    border: "border-emerald-100",
+    bg: "bg-emerald-50",
+    text: "text-emerald-700",
+    selectBorder: "border-emerald-400",
+  },
+  "Aura God": {
+    border: "border-emerald-100",
+    bg: "bg-emerald-50",
+    text: "text-emerald-800",
+    selectBorder: "border-emerald-500",
+  },
+  "Proof of Pogi Elite": {
+    border: "border-emerald-100",
+    bg: "bg-emerald-50",
+    text: "text-emerald-900",
+    selectBorder: "border-emerald-600",
+  },
+  "Supreme Pogi": {
+    border: "border-amber-100",
+    bg: "bg-amber-50",
+    text: "text-amber-900",
+    selectBorder: "border-amber-500",
+  },
+  "Hall of Fame Immortal": {
+    border: "border-yellow-100",
+    bg: "bg-yellow-50",
+    text: "text-yellow-900",
+    selectBorder: "border-yellow-500",
+  },
+  "Eternal Light Bearer": {
+    border: "border-orange-100",
+    bg: "bg-orange-50",
+    text: "text-orange-900",
+    selectBorder: "border-orange-500",
+  },
+  "Cultural Icon": {
+    border: "border-red-100",
+    bg: "bg-red-50",
+    text: "text-red-900",
+    selectBorder: "border-red-500",
+  },
+  "Generational Tycoon": {
+    border: "border-yellow-100",
+    bg: "bg-yellow-50",
+    text: "text-yellow-950",
+    selectBorder: "border-yellow-600",
+  },
+  "Master Rancher": {
+    border: "border-purple-100",
+    bg: "bg-purple-50",
+    text: "text-purple-900",
+    selectBorder: "border-purple-500",
+  },
+  "Kapogian Ascendant": {
+    border: "border-indigo-100",
+    bg: "bg-indigo-50",
+    text: "text-indigo-900",
+    selectBorder: "border-indigo-500",
+  },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // REQUIREMENT TYPE HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 
+// REQ_TYPE_LABEL: Maps achievement requirement types to human-readable labels
 const REQ_TYPE_LABEL: Record<number, string> = {
   0: "Total MMR",
   1: "Best MMR",
@@ -303,6 +400,7 @@ const REQ_TYPE_LABEL: Record<number, string> = {
   3: "Admin Grant",
 };
 
+// getPlayerValueForReq: Returns the player's value for a given achievement requirement type
 function getPlayerValueForReq(
   reqType: number,
   totalMmr: number,
@@ -315,6 +413,7 @@ function getPlayerValueForReq(
   return 0;
 }
 
+// isAchievementEligible: Checks if a player is eligible for an achievement based on stats
 function isAchievementEligible(
   ach: AchievementDef,
   totalMmr: number,
@@ -335,6 +434,7 @@ function isAchievementEligible(
 // PROPS
 // ─────────────────────────────────────────────────────────────────────────────
 
+// MainProfileV2Props: Props for the main profile component
 interface MainProfileV2Props {
   characters: any[];
   account: any;
@@ -358,6 +458,7 @@ interface MainProfileV2Props {
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
+// MainProfileV2: Main profile component rendering stats, achievements, collections, and orders
 export function MainProfileV2({
   characters,
   account,
@@ -375,8 +476,10 @@ export function MainProfileV2({
   achievementsLoading,
   onAchievementsRefresh,
 }: MainProfileV2Props) {
+  // Blockchain transaction hook
   const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
 
+  // Social identity binding state
   const [bindingStatus, setBindingStatus] = useState<{
     bound: boolean;
     x_username?: string;
@@ -387,19 +490,24 @@ export function MainProfileV2({
   const [showGallery, setShowGallery] = useState(false);
 
   // Initialise PlayerStats
+  // Achievement profile initialization state
   const [initializing, setInitializing] = useState(false);
   const [initError, setInitError] = useState("");
 
   // Claim state
+  // Achievement claim state
   const [claimingId, setClaimingId] = useState<string | null>(null);
 
+  // Current selected character
   const currentCharacter = characters[index];
   const attrs = currentCharacter?.attributes ?? {};
   const shortAddr = account?.address ? formatAddress(account.address) : "0x...";
-  
+
+  // Description text for current character
   const descriptionText =
     currentCharacter?.description ??
     "This spirit's origin is shrouded in mystery...";
+  // Split description into sentences for scrollable display
   const sentences = useMemo(() => {
     if (!descriptionText) return [] as string[];
     const m = descriptionText.match(/[^.!?]+[.!?]+[\])'"`’”]*|.+$/g);
@@ -407,17 +515,20 @@ export function MainProfileV2({
   }, [descriptionText]);
   const showScrollableDescription = sentences.length > 5;
 
+  // Total MMR across all owned characters
   const totalMmr = useMemo(
     () => characters.reduce((acc, c) => acc + c.mmr, 0),
     [characters],
   );
 
+  // Set of unlocked achievement IDs
   const unlockedIds = useMemo(() => {
     const s = new Set<string>();
     playerStats?.unlocked.forEach((u) => s.add(u.achievementId));
     return s;
   }, [playerStats]);
 
+  // Set of owned rank titles
   const ownedRankTitles = useMemo(() => {
     const titles = new Set<string>();
     characters.forEach((c) => {
@@ -426,6 +537,7 @@ export function MainProfileV2({
     return titles;
   }, [characters]);
 
+  // Fetch social identity binding status on account change
   useEffect(() => {
     if (account?.address) {
       setLoadingBinding(true);
@@ -436,6 +548,7 @@ export function MainProfileV2({
     }
   }, [account?.address]);
 
+  // Initialize achievement profile on-chain
   const handleInitialize = async () => {
     setInitializing(true);
     setInitError("");
@@ -453,6 +566,7 @@ export function MainProfileV2({
     }
   };
 
+  // Claim an achievement on-chain
   const handleClaim = async (ach: AchievementDef) => {
     if (!playerStats) return;
     setClaimingId(ach.objectId);
@@ -477,6 +591,7 @@ export function MainProfileV2({
     }
   };
 
+  // Claim a granted achievement on-chain
   const handleClaimGrant = async (grant: AchievementGrant) => {
     if (!playerStats) return;
     setClaimingId(grant.objectId);
@@ -495,24 +610,33 @@ export function MainProfileV2({
     }
   };
 
+  // Unbind social identity from account
   const handleUnbind = async () => {
     if (!account?.address) return;
     setUnbinding(true);
     try {
       const res = await unbind(account.address);
       if (res.success) {
-        toast({ title: "Account Unlinked", description: "Binding has been removed." });
+        toast({
+          title: "Account Unlinked",
+          description: "Binding has been removed.",
+        });
         setBindingStatus({ bound: false });
       } else {
-        throw new Error('Unbind failed');
+        throw new Error("Unbind failed");
       }
     } catch (e) {
-      toast({ variant: "destructive", title: "Error", description: "Failed to unlink account." });
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to unlink account.",
+      });
     } finally {
       setUnbinding(false);
     }
   };
 
+  // Navigation items for profile tabs
   const navItems = [
     {
       id: "Stats",
@@ -544,6 +668,7 @@ export function MainProfileV2({
     },
   ];
 
+  // Character visual traits for display
   const traits = [
     {
       label: "Style",
@@ -568,6 +693,7 @@ export function MainProfileV2({
     { label: "Held", value: attrs.heldItem, icon: "solar:cup-linear" },
   ].filter((t) => t.value);
 
+  // Render the Badges tab (achievements, gallery, grants)
   const renderBadgesTab = () => {
     if (achievementsLoading) {
       return (
@@ -738,16 +864,15 @@ export function MainProfileV2({
 
             <section>
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1 flex items-center gap-2">
-                <iconify-icon
-                  icon="fluent-emoji:trophy"
-                  class="text-sm"
-                />{" "}
+                <iconify-icon icon="fluent-emoji:trophy" class="text-sm" />{" "}
                 On-Chain Achievements
               </h4>
               <div
                 className={cn(
                   "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4",
-                  allAchievements.length > 4 ? "max-h-96 overflow-auto p-2" : "",
+                  allAchievements.length > 4
+                    ? "max-h-96 overflow-auto p-2"
+                    : "",
                 )}
               >
                 {allAchievements.map((ach) => {
@@ -798,11 +923,8 @@ export function MainProfileV2({
             {ownedRankTitles.size > 0 && (
               <section className="mb-8">
                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
-                  <iconify-icon
-                    icon="fluent-emoji:star"
-                    class="text-sm"
-                  />{" "}
-                  Rank Badges
+                  <iconify-icon icon="fluent-emoji:star" class="text-sm" /> Rank
+                  Badges
                 </h4>
                 <div
                   className={cn(
@@ -834,10 +956,7 @@ export function MainProfileV2({
 
             <section>
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
-                <iconify-icon
-                  icon="fluent-emoji:magic-wand"
-                  class="text-sm"
-                />{" "}
+                <iconify-icon icon="fluent-emoji:magic-wand" class="text-sm" />{" "}
                 Claimed Achievements
               </h4>
               {playerStats.unlocked.length === 0 &&
@@ -892,8 +1011,9 @@ export function MainProfileV2({
     );
   };
 
+  // Main render: profile layout, tabs, and modal
   return (
-    <div className="w-full max-w-6xl mx-auto font-body">
+    <div className="w-full max-w-6xl mx-auto font-body relative z-20">
       <style jsx global>{`
         .kpg-fx-aurora {
           background: linear-gradient(
@@ -962,13 +1082,13 @@ export function MainProfileV2({
         }
       `}</style>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start z-30">
         <div className="lg:col-span-4 flex flex-col gap-6">
           <div className="bg-white rounded-[2.5rem] p-6 border-4 border-slate-100 shadow-[0_12px_0_0_rgba(226,232,240,1)] text-center relative overflow-hidden">
-            <div className="absolute -top-16 -left-16 w-32 aspect-square bg-pink-50 rounded-full"></div>
+            <div className="absolute -top-16 -left-16 w-32 aspect-square bg-pink-50 rounded-full z-10"></div>
             <div className="relative">
               <div className="mb-4">
-                <h2 className="text-3xl tracking-tight font-semibold text-slate-800 uppercase font-headline">
+                <h2 className="text-3xl tracking-tight font-semibold text-slate-800 uppercase font-headline z-30">
                   {currentCharacter?.name || "Kapogian"}
                 </h2>
                 <div className="inline-flex items-center justify-center gap-2 bg-slate-50 border-2 border-slate-100 px-4 py-1.5 rounded-full text-slate-500 text-sm font-semibold mt-2 shadow-sm">
@@ -976,7 +1096,7 @@ export function MainProfileV2({
                   {shortAddr}
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-sky-100 to-indigo-50 rounded-[2rem] aspect-square flex items-center justify-center border-4 border-sky-200 mb-2 shadow-inner relative overflow-hidden">
+              <div className="bg-gradient-to-br from-sky-100 to-indigo-50 rounded-[2rem] aspect-square flex items-center justify-center border-4 border-sky-200 mb-2 shadow-inner relative overflow-hidden z-30">
                 {currentCharacter?.imageUrl ? (
                   <Image
                     src={currentCharacter.imageUrl}
@@ -995,7 +1115,7 @@ export function MainProfileV2({
           </div>
 
           <div className="bg-white rounded-[2rem] p-5 border-4 border-slate-100 shadow-[0_8px_0_0_rgba(226,232,240,1)]">
-            <h3 className="text-sm tracking-wide font-semibold text-slate-400 uppercase mb-4 px-2 flex items-center gap-2">
+            <h3 className="text-sm tracking-wide font-semibold text-slate-400 uppercase mb-4 px-2 flex items-center gap-2 z-20">
               <Twitter size={14} className="text-blue-400" /> Social Identity
             </h3>
             {loadingBinding ? (
@@ -1013,16 +1133,21 @@ export function MainProfileV2({
                       @{bindingStatus.x_username}
                     </p>
                     <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-1">
-                      X Account Linked <CheckCircle size={10} className="text-green-500" />
+                      X Account Linked{" "}
+                      <CheckCircle size={10} className="text-green-500" />
                     </p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={handleUnbind}
                   disabled={unbinding}
                   className="w-full flex items-center justify-center gap-2 py-2.5 bg-white border-2 border-red-100 rounded-xl text-xs font-black text-red-500 uppercase tracking-widest hover:bg-red-50 hover:border-red-200 transition-all shadow-sm active:translate-y-0.5 disabled:opacity-50"
                 >
-                  {unbinding ? <LoaderCircle size={14} className="animate-spin" /> : <Unlink size={14} />}
+                  {unbinding ? (
+                    <LoaderCircle size={14} className="animate-spin" />
+                  ) : (
+                    <Unlink size={14} />
+                  )}
                   Unbind
                 </button>
               </div>
@@ -1047,7 +1172,7 @@ export function MainProfileV2({
           </div>
 
           <div className="bg-white rounded-[2rem] p-5 border-4 border-slate-100 shadow-[0_8px_0_0_rgba(226,232,240,1)]">
-            <h3 className="text-sm tracking-wide font-semibold text-slate-400 uppercase mb-4 px-2 flex items-center gap-2">
+            <h3 className="text-sm tracking-wide font-semibold text-slate-400 uppercase mb-4 px-2 flex items-center gap-2 z-20">
               <iconify-icon icon="solar:user-id-linear" /> Profile Actions
             </h3>
             <div className="flex flex-col gap-3">
@@ -1074,7 +1199,7 @@ export function MainProfileV2({
         </div>
 
         <div className="lg:col-span-8 flex flex-col gap-6">
-          <div>
+          <div className="relative z-20">
             <h3 className="text-lg tracking-wide font-semibold text-slate-600 mb-3 px-2 flex items-center gap-2 uppercase">
               <iconify-icon
                 icon="solar:gamepad-linear"
@@ -1112,7 +1237,7 @@ export function MainProfileV2({
 
           <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border-4 border-slate-100 shadow-[0_12px_0_0_rgba(226,232,240,1)] flex-grow min-h-[600px]">
             {activeTab === "Stats" && (
-              <div className="animate-in fade-in duration-500 space-y-6">
+              <div className="animate-in fade-in duration-500 space-y-6 relative z-20">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1 pb-1 border-b border-slate-100 border-dashed">
                   <div>
                     <h3 className="text-lg tracking-tight font-semibold text-slate-800 flex items-center gap-2">
@@ -1273,11 +1398,14 @@ export function MainProfileV2({
                   {characters.map((c, i) => {
                     const rankName = c.attributes?.rank || "Spirit Seed";
                     const isSelected = index === i;
-                    const style = RANK_STYLE_MAP[rankName] || RANK_STYLE_MAP["Spirit Seed"];
-                    
+                    const style =
+                      RANK_STYLE_MAP[rankName] || RANK_STYLE_MAP["Spirit Seed"];
+
                     const isAscendant = rankName === "Kapogian Ascendant";
                     const isMythic = rankName === "Master Rancher";
-                    const isLegend = rankName === "Cultural Icon" || rankName === "Generational Tycoon";
+                    const isLegend =
+                      rankName === "Cultural Icon" ||
+                      rankName === "Generational Tycoon";
 
                     return (
                       <div
@@ -1288,9 +1416,13 @@ export function MainProfileV2({
                         }}
                         className={cn(
                           "group relative rounded-[2rem] p-1 cursor-pointer transition-all hover:scale-105 overflow-hidden border-4",
-                          isSelected 
-                            ? isAscendant ? "border-transparent bg-white shadow-xl scale-105 z-10" : `${style.selectBorder} ${style.bg} shadow-lg scale-105 z-10`
-                            : isAscendant ? "border-transparent bg-white shadow-md" : `${style.border} bg-white hover:border-slate-300`
+                          isSelected
+                            ? isAscendant
+                              ? "border-transparent bg-white shadow-xl scale-105 z-10"
+                              : `${style.selectBorder} ${style.bg} shadow-lg scale-105 z-10`
+                            : isAscendant
+                              ? "border-transparent bg-white shadow-md"
+                              : `${style.border} bg-white hover:border-slate-300`,
                         )}
                       >
                         {/* Special background effects based on rank tier */}
@@ -1303,12 +1435,14 @@ export function MainProfileV2({
                         {isLegend && (
                           <div className="absolute inset-0 bg-gradient-to-tr from-red-100 via-transparent to-yellow-100 opacity-50 z-0" />
                         )}
-                        
+
                         <div className="relative z-10 bg-white rounded-[1.7rem] p-2 h-full flex flex-col">
-                          <div className={cn(
-                            "aspect-square relative rounded-2xl overflow-hidden bg-white mb-2 transition-colors border-2",
-                            isSelected ? style.border : "border-slate-50"
-                          )}>
+                          <div
+                            className={cn(
+                              "aspect-square relative rounded-2xl overflow-hidden bg-white mb-2 transition-colors border-2",
+                              isSelected ? style.border : "border-slate-50",
+                            )}
+                          >
                             <Image
                               src={c.imageUrl}
                               alt={c.name}
@@ -1317,10 +1451,12 @@ export function MainProfileV2({
                             />
                           </div>
                           <div className="text-center flex-grow flex flex-col justify-center">
-                            <p className={cn(
-                              "text-[11px] font-black truncate uppercase px-1 leading-tight",
-                              isAscendant ? "kpg-fx-aurora" : style.text
-                            )}>
+                            <p
+                              className={cn(
+                                "text-[11px] font-black truncate uppercase px-1 leading-tight",
+                                isAscendant ? "kpg-fx-aurora" : style.text,
+                              )}
+                            >
                               {c.name}
                             </p>
                             <p className="text-[9px] font-black text-slate-400 mt-0.5">
@@ -1366,7 +1502,7 @@ function OnChainAchievementCard({
   claiming,
   onClaim,
   onClick,
-  ach
+  ach,
 }: {
   ach: AchievementDef;
   earned: boolean;
@@ -1396,7 +1532,7 @@ function OnChainAchievementCard({
       >
         {/* Subtle Pattern */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
-        
+
         {earned && (
           <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-gradient-to-br from-indigo-500 to-sky-500" />
         )}
@@ -1583,14 +1719,14 @@ function BadgeCard({
       >
         {/* Themed Background Underlay */}
         {isUnlocked && (
-          <div 
+          <div
             className="absolute inset-0 opacity-[0.1] pointer-events-none transition-opacity"
-            style={{ 
-              background: item.gradient || 'none',
+            style={{
+              background: item.gradient || "none",
             }}
           />
         )}
-        
+
         {/* Pattern overlay */}
         <div className="absolute inset-0 opacity-[0.04] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
 
@@ -1603,7 +1739,7 @@ function BadgeCard({
             />
           </>
         )}
-        
+
         <div className="relative w-16 h-16 flex items-center justify-center z-10">
           <div
             className={cn(
@@ -1614,10 +1750,7 @@ function BadgeCard({
             )}
             style={isUnlocked ? { borderColor: `${item.color}44` } : {}}
           >
-            <iconify-icon
-              icon={item.icon}
-              style={{ fontSize: "28px" }}
-            />
+            <iconify-icon icon={item.icon} style={{ fontSize: "28px" }} />
           </div>
           {isCurrent && (
             <div className="absolute -top-1 -right-1 bg-yellow-400 text-black text-[8px] font-black px-2 py-0.5 rounded-full border-2 border-white shadow-sm uppercase">
