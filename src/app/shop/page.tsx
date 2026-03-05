@@ -1,529 +1,701 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { 
-  useCurrentAccount, 
-  useSignAndExecuteTransaction 
-} from "@mysten/dapp-kit";
-import { 
-  Package, 
-  Shirt, 
-  Coffee, 
-  User, 
-  ChevronRight, 
-  X, 
-  Check, 
-  LoaderCircle, 
-  ShoppingBag,
-  ImageIcon as LucideImageIcon,
-  Tag,
-  Palette
-} from "lucide-react";
-import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/kapogian/page-header";
 import { PageFooter } from "@/components/kapogian/page-footer";
-import { 
-  getOwnedCharacters, 
-  mintCharacterNFT, 
-  getTreasuryConfigInfo 
-} from "@/lib/sui";
-import { mistToSui, ENCRYPTION_CONFIG } from "@/lib/constants";
-import { 
-  encryptShippingInfo
-} from "@/lib/encryption";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { useCurrentAccount } from "@mysten/dapp-kit";
+import { getOwnedCharacters } from "@/lib/sui";
+import { getIPFSGatewayUrl } from "@/lib/pinata";
+import { LoaderCircle, Wallet, Sparkles } from "lucide-react";
+import { CustomConnectButton } from "@/components/kapogian/CustomConnectButton";
 
-// --- Product Data using specific assets ---
-const PRODUCTS = [
+interface Product {
+  id: string;
+  type: "shirt" | "hoodie" | "mug" | "mousepad";
+  name: string;
+  price: number;
+  colorClass: string;
+  icon: string;
+  iconColor: string;
+  badge?: string;
+  staticImage: string;
+  animatedImage: string;
+}
+
+const PRODUCTS: Product[] = [
+  // SHIRTS
   {
-    id: "shirt",
-    name: "Kapogian Premium Tee",
-    type: "Shirt",
-    pricePeso: 499,
-    displayImage: "/images/merch-selection/shirts/whiteNoBG.png",
-    hasSize: true,
-    colors: [
-      { name: "White", hex: "#FFFFFF", static: "/images/merch-selection/shirts/whiteNoBG.png", gif: "/images/merch-selection/shirts/whiteshirt.gif" },
-      { name: "Black", hex: "#171717", static: "/images/merch-selection/shirts/whiteNoBG.png", gif: "/images/merch-selection/shirts/blackshirt.gif" },
-      { name: "Blue", hex: "#3b82f6", static: "/images/merch-selection/shirts/whiteNoBG.png", gif: "/images/merch-selection/shirts/blueshirt.gif" },
-      { name: "Red", hex: "#ef4444", static: "/images/merch-selection/shirts/whiteNoBG.png", gif: "/images/merch-selection/shirts/redshirt.gif" },
-    ],
-    description: "Custom-cut heavyweight cotton tee. The definitive Kapogian fit."
+    id: "s1",
+    type: "shirt",
+    name: "KAPO White Tee",
+    price: 0.42,
+    colorClass: "bg-gradient-to-br from-slate-50 to-slate-100",
+    icon: "solar:t-shirt-bold-duotone",
+    iconColor: "text-slate-400",
+    badge: "✨ NEW",
+    staticImage: "/images/merch-selection/shirts/whiteNoBG.png",
+    animatedImage: "/images/merch-selection/shirts/whiteshirt.gif",
   },
   {
-    id: "mug",
-    name: "Spirit Vessel Mug",
-    type: "Mug",
-    pricePeso: 349,
-    displayImage: "/images/merch-selection/mug/staticMUG.png",
-    hasSize: false,
-    colors: [
-      { name: "White", hex: "#FFFFFF", static: "/images/merch-selection/mug/staticMUG.png", gif: "/images/merch-selection/mug/gifWhiteMug.gif" },
-      { name: "Black", hex: "#171717", static: "/images/merch-selection/mug/staticBlackMUG.png", gif: "/images/merch-selection/mug/gifBlackMug.gif" },
-      { name: "Blue", hex: "#3b82f6", static: "/images/merch-selection/mug/staticMUG.png", gif: "/images/merch-selection/mug/gifBlueMug.gif" },
-      { name: "Red", hex: "#ef4444", static: "/images/merch-selection/mug/staticMUG.png", gif: "/images/merch-selection/mug/gifRedMug.gif" },
-    ],
-    description: "High-grade ceramic with reinforced coating. Built for the daily grind."
+    id: "s2",
+    type: "shirt",
+    name: "KAPO Black Tee",
+    price: 0.42,
+    colorClass: "bg-gradient-to-br from-slate-800 to-slate-900",
+    icon: "solar:t-shirt-bold-duotone",
+    iconColor: "text-white",
+    staticImage: "/images/merch-selection/shirts/whiteNoBG.png",
+    animatedImage: "/images/merch-selection/shirts/blackshirt.gif",
   },
   {
-    id: "hoodie",
-    name: "Aura Guard Hoodie",
-    type: "Hoodie",
-    pricePeso: 999,
-    displayImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
-    hasSize: true,
-    colors: [
-      { name: "Grey", hex: "#94a3b8", static: "/images/merch-selection/hoodies/greyhoodiestatic.png", gif: "/images/merch-selection/hoodies/greyhoodie.gif" },
-      { name: "Black", hex: "#171717", static: "/images/merch-selection/hoodies/greyhoodiestatic.png", gif: "/images/merch-selection/hoodies/blackhoodie.gif" },
-      { name: "Blue", hex: "#3b82f6", static: "/images/merch-selection/hoodies/greyhoodiestatic.png", gif: "/images/merch-selection/hoodies/bluehoodie.gif" },
-      { name: "Red", hex: "#ef4444", static: "/images/merch-selection/hoodies/greyhoodiestatic.png", gif: "/images/merch-selection/hoodies/redhoodie.gif" },
-      { name: "Cyan", hex: "#22d3ee", static: "/images/merch-selection/hoodies/greyhoodiestatic.png", gif: "/images/merch-selection/hoodies/cyanhoodie.gif" },
-      { name: "Beige", hex: "#f5f5dc", static: "/images/merch-selection/hoodies/greyhoodiestatic.png", gif: "/images/merch-selection/hoodies/biegehoodie.gif" },
-    ],
-    description: "Premium fleece lining with ribbed cuffs. Maximum comfort, maximum presence."
-  }
+    id: "s3",
+    type: "shirt",
+    name: "KAPO Blue Tee",
+    price: 0.42,
+    colorClass: "bg-gradient-to-br from-blue-400 to-blue-600",
+    icon: "solar:t-shirt-bold-duotone",
+    iconColor: "text-blue-100",
+    staticImage: "/images/merch-selection/shirts/whiteNoBG.png",
+    animatedImage: "/images/merch-selection/shirts/blueshirt.gif",
+  },
+  {
+    id: "s4",
+    type: "shirt",
+    name: "KAPO Red Tee",
+    price: 0.42,
+    colorClass: "bg-gradient-to-br from-red-400 to-red-600",
+    icon: "solar:t-shirt-bold-duotone",
+    iconColor: "text-red-100",
+    staticImage: "/images/merch-selection/shirts/whiteNoBG.png",
+    animatedImage: "/images/merch-selection/shirts/redshirt.gif",
+  },
+  // HOODIES
+  {
+    id: "h1",
+    type: "hoodie",
+    name: "Grey Aura Hoodie",
+    price: 0.85,
+    colorClass: "bg-gradient-to-br from-slate-200 to-slate-300",
+    icon: "solar:hoodie-bold-duotone",
+    iconColor: "text-slate-500",
+    badge: "🔥 HOT",
+    staticImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
+    animatedImage: "/images/merch-selection/hoodies/greyhoodie.gif",
+  },
+  {
+    id: "h2",
+    type: "hoodie",
+    name: "Black Aura Hoodie",
+    price: 0.85,
+    colorClass: "bg-gradient-to-br from-slate-800 to-slate-950",
+    icon: "solar:hoodie-bold-duotone",
+    iconColor: "text-white",
+    staticImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
+    animatedImage: "/images/merch-selection/hoodies/blackhoodie.gif",
+  },
+  {
+    id: "h3",
+    type: "hoodie",
+    name: "Blue Aura Hoodie",
+    price: 0.85,
+    colorClass: "bg-gradient-to-br from-blue-500 to-blue-700",
+    icon: "solar:hoodie-bold-duotone",
+    iconColor: "text-blue-100",
+    staticImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
+    animatedImage: "/images/merch-selection/hoodies/bluehoodie.gif",
+  },
+  {
+    id: "h4",
+    type: "hoodie",
+    name: "Red Aura Hoodie",
+    price: 0.85,
+    colorClass: "bg-gradient-to-br from-red-500 to-red-700",
+    icon: "solar:hoodie-bold-duotone",
+    iconColor: "text-red-100",
+    staticImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
+    animatedImage: "/images/merch-selection/hoodies/redhoodie.gif",
+  },
+  {
+    id: "h5",
+    type: "hoodie",
+    name: "Beige Aura Hoodie",
+    price: 0.85,
+    colorClass: "bg-gradient-to-br from-stone-100 to-stone-200",
+    icon: "solar:hoodie-bold-duotone",
+    iconColor: "text-stone-500",
+    staticImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
+    animatedImage: "/images/merch-selection/hoodies/biegehoodie.gif",
+  },
+  {
+    id: "h6",
+    type: "hoodie",
+    name: "Cyan Aura Hoodie",
+    price: 0.85,
+    colorClass: "bg-gradient-to-br from-cyan-300 to-cyan-500",
+    icon: "solar:hoodie-bold-duotone",
+    iconColor: "text-cyan-900",
+    staticImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
+    animatedImage: "/images/merch-selection/hoodies/cyanhoodie.gif",
+  },
+  // MUGS
+  {
+    id: "m1",
+    type: "mug",
+    name: "White Spirit Mug",
+    price: 0.22,
+    colorClass: "bg-gradient-to-br from-slate-50 to-slate-100",
+    icon: "solar:cup-hot-bold-duotone",
+    iconColor: "text-slate-400",
+    staticImage: "/images/merch-selection/mug/staticMUG.png",
+    animatedImage: "/images/merch-selection/mug/gifWhiteMug.gif",
+  },
+  {
+    id: "m2",
+    type: "mug",
+    name: "Black Spirit Mug",
+    price: 0.22,
+    colorClass: "bg-gradient-to-br from-slate-800 to-slate-900",
+    icon: "solar:cup-hot-bold-duotone",
+    iconColor: "text-white",
+    staticImage: "/images/merch-selection/mug/staticBlackMUG.png",
+    animatedImage: "/images/merch-selection/mug/gifBlackMug.gif",
+  },
+  {
+    id: "m3",
+    type: "mug",
+    name: "Blue Spirit Mug",
+    price: 0.22,
+    colorClass: "bg-gradient-to-br from-blue-400 to-blue-600",
+    icon: "solar:cup-hot-bold-duotone",
+    iconColor: "text-blue-100",
+    staticImage: "/images/merch-selection/mug/staticMUG.png",
+    animatedImage: "/images/merch-selection/mug/gifBlueMug.gif",
+  },
+  {
+    id: "m4",
+    type: "mug",
+    name: "Red Spirit Mug",
+    price: 0.22,
+    colorClass: "bg-gradient-to-br from-red-400 to-red-600",
+    icon: "solar:cup-hot-bold-duotone",
+    iconColor: "text-red-100",
+    staticImage: "/images/merch-selection/mug/staticMUG.png",
+    animatedImage: "/images/merch-selection/mug/gifRedMug.gif",
+  },
+  // MOUSEPADS
+  {
+    id: "p1",
+    type: "mousepad",
+    name: "KAPO XL Desk Mat",
+    price: 0.35,
+    colorClass: "bg-gradient-to-br from-violet-100 to-fuchsia-100",
+    icon: "solar:mouse-bold-duotone",
+    iconColor: "text-violet-500",
+    badge: "🖱️ XL SIZE",
+    staticImage: "/images/merch-selection/pads/mousePad.png",
+    animatedImage: "/images/merch-selection/pads/spinPad3.gif",
+  },
 ];
 
-const SIZES = ["S", "M", "L", "XL", "XXL"];
-
-export default function KapogianShopPage() {
+export default function KapogianShop() {
   const account = useCurrentAccount();
-  const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
-
-  // Selection State
-  const [selectedProduct, setSelectedProduct] = useState<typeof PRODUCTS[0] | null>(null);
-  const [selectedColor, setSelectedColor] = useState<any>(null);
-  const [selectedSize, setSelectedSize] = useState<string>("");
-  const [customPrintNft, setCustomPrintNft] = useState<any | null>(null);
-  
-  // Shipping State
-  const [shipping, setShipping] = useState({
-    name: "",
-    email: "",
-    contact: "",
-    address: ""
-  });
-
-  // Data State
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [currentQty, setCurrentQty] = useState(1);
+  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedPrintId, setSelectedPrintId] = useState("none");
   const [ownedNfts, setOwnedNfts] = useState<any[]>([]);
-  const [pricing, setPricing] = useState<any>(null);
   const [loadingNfts, setLoadingNfts] = useState(false);
-  const [minting, setMinting] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-
-  // Initialize modal data when product changes
-  useEffect(() => {
-    if (selectedProduct) {
-      setSelectedColor(selectedProduct.colors[0]);
-      setSelectedSize(selectedProduct.hasSize ? "M" : "");
-    }
-  }, [selectedProduct]);
 
   useEffect(() => {
-    getTreasuryConfigInfo().then(setPricing);
     if (account?.address) {
       setLoadingNfts(true);
-      getOwnedCharacters(account.address).then(chars => {
-        const parsed = chars.map((obj: any) => ({
-          id: obj.data.objectId,
-          name: obj.data.display?.data?.name || "Unnamed NFT",
-          imageUrl: obj.data.display?.data?.image_url || ""
-        }));
-        setOwnedNfts(parsed);
-        setLoadingNfts(false);
-      }).catch(err => {
-        console.error("Failed to load NFTs", err);
-        setLoadingNfts(false);
-      });
+      getOwnedCharacters(account.address)
+        .then((chars) => {
+          const parsed = chars.map((obj: any) => {
+            const display = obj.data?.display?.data || {};
+            return {
+              id: obj.data?.objectId,
+              name: display.name || "Unnamed Spirit",
+              imageUrl: getIPFSGatewayUrl(display.image_url || ""),
+            };
+          });
+          setOwnedNfts(parsed);
+        })
+        .catch((err) => console.error("Failed to load NFTs", err))
+        .finally(() => setLoadingNfts(false));
+    } else {
+      setOwnedNfts([]);
     }
   }, [account?.address]);
 
-  const handlePurchase = async () => {
-    if (!account || !selectedProduct || !pricing || !selectedColor) return;
-    
-    // Validation
-    if (selectedProduct.hasSize && !selectedSize) {
-      setError("Please select a size.");
-      return;
-    }
-    if (!shipping.name || !shipping.email || !shipping.contact || !shipping.address) {
-      setError("Please fill in all shipping details.");
-      return;
-    }
+  const filteredProducts = PRODUCTS.filter(
+    (p) => activeFilter === "all" || p.type === activeFilter,
+  );
 
-    setMinting(true);
-    setError("");
-
-    try {
-      const encryptedShipping = await encryptShippingInfo({
-        full_name: shipping.name,
-        email: shipping.email,
-        contact_number: shipping.contact,
-        address: shipping.address
-      });
-
-      const itemsSelected = `${selectedProduct.type.toUpperCase()}-${selectedColor.name.toUpperCase()}${selectedSize ? `-${selectedSize}` : ""}${customPrintNft ? `+PRINT-${customPrintNft.id.slice(0,8)}` : ""}`;
-
-      const attributes = JSON.stringify({
-        item_type: selectedProduct.type,
-        color: selectedColor.name,
-        size: selectedSize || "N/A",
-        custom_print: customPrintNft ? customPrintNft.name : "None",
-        mmr: 0,
-        lineage: "None",
-        rank: "Spirit Seed"
-      });
-
-      const result = await mintCharacterNFT({
-        name: `Kapogian ${selectedProduct.type}`,
-        description: `Physical ${selectedProduct.name} in ${selectedColor.name} ${customPrintNft ? `with custom print of ${customPrintNft.name}` : ""}`,
-        imageUrl: selectedColor.gif || selectedColor.static,
-        attributes,
-        mmr: 0,
-        itemsSelected,
-        encryptedShippingInfo: encryptedShipping,
-        encryptionPubkey: ENCRYPTION_CONFIG.adminPublicKey,
-        walletAddress: account.address,
-        totalPrice: pricing.baseMintPrice,
-        signAndExecute
-      });
-
-      if (result) {
-        setSuccess(true);
-        setSelectedProduct(null);
-      }
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Transaction failed.");
-    } finally {
-      setMinting(false);
-    }
+  const openModal = (product: Product) => {
+    setSelectedProduct(product);
+    setCurrentStep(1);
+    setCurrentQty(1);
+    setSelectedSize(product.type === "mug" || product.type === "mousepad" ? "N/A" : "");
+    setSelectedPrintId("none");
+    document.body.style.overflow = "hidden";
   };
 
+  const closeModal = () => {
+    setSelectedProduct(null);
+    document.body.style.overflow = "";
+  };
+
+  const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 3));
+  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
+
+  const selectedNft = ownedNfts.find(n => n.id === selectedPrintId);
+  const printLabel = selectedNft ? selectedNft.name : "No Print";
+
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 relative font-body selection:bg-yellow-200">
-      <div className="fixed inset-0 -z-10">
-        <Image src="/images/kapogian_background.png" alt="bg" fill className="object-cover" priority />
-      </div>
-      
+    <div className="bg-gradient-to-b from-sky-200 via-indigo-50 to-white text-slate-700 min-h-screen overflow-x-hidden selection:bg-pink-300 selection:text-white font-sans">
+      <style jsx global>{`
+        @keyframes float { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-15px)} }
+        @keyframes float-delayed { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-10px)} }
+        @keyframes shine-sweep { 0%{left:-100%} 100%{left:200%} }
+        @keyframes blob-pulse { 0%,100%{transform:scale(1);opacity:0.6} 50%{transform:scale(1.1);opacity:0.8} }
+        @keyframes pop-in { 0%{transform:scale(0.7) translateY(40px);opacity:0} 70%{transform:scale(1.04) translateY(-4px)} 100%{transform:scale(1) translateY(0);opacity:1} }
+        @keyframes fade-in { from{opacity:0} to{opacity:1} }
+        @keyframes glow-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(99,220,248,0.4)} 50%{box-shadow:0 0 0 10px rgba(99,220,248,0)} }
+
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-float-delayed { animation: float-delayed 7s ease-in-out infinite 1s; }
+        .animate-blob { animation: blob-pulse 8s infinite; }
+        .animate-pop-in { animation: pop-in 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+        .animate-fade-in { animation: fade-in 0.3s ease forwards; }
+
+        .poster-card {
+            background: #ffffff;
+            border: 4px solid #000000;
+            box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+            transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .poster-card:hover {
+            transform: translate(-4px, -4px);
+            box-shadow: 12px 12px 0px 0px rgba(0,0,0,1);
+        }
+
+        .squishy-btn { transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1); }
+        .squishy-btn:active { transform: scale(0.93); }
+
+        .shine-effect { position:relative; overflow:hidden; }
+        .shine-effect::after {
+            content:''; position:absolute; top:0; left:-100%; width:50%; height:100%;
+            background:linear-gradient(to right,transparent,rgba(255,255,255,0.6),transparent);
+            transform:skewX(-20deg); animation:shine-sweep 3s infinite;
+        }
+
+        .size-btn.selected {
+            background: linear-gradient(135deg,#67e8f9,#3b82f6);
+            color: white;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.3), 0 4px 12px rgba(59,130,246,0.3);
+            animation: glow-pulse 2s infinite;
+        }
+
+        .print-btn.selected-print {
+            border-color: #67e8f9;
+            background: #ecfeff;
+            box-shadow: 0 0 0 3px rgba(103,232,249,0.25), 0 4px 12px rgba(103,232,249,0.2);
+        }
+        .print-btn.selected-print > div:first-child {
+            border-color: #67e8f9;
+            background: white;
+        }
+        .print-btn.selected-print span {
+            color: #0891b2;
+        }
+
+        .step-indicator.active {
+            background: linear-gradient(135deg, #67e8f9, #3b82f6);
+            color: white;
+        }
+      `}</style>
+
       <PageHeader />
 
-      <main className="flex-grow pt-32 pb-20 px-6">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="mb-12 text-center md:text-left animate-in slide-in-from-top duration-700">
-            <h1 className="text-6xl md:text-8xl font-black uppercase italic tracking-tighter text-black" style={{ textShadow: "6px 6px 0px #fff, 10px 10px 0px #000" }}>
-              The Shop
-            </h1>
-            <p className="text-xl font-bold text-slate-600 mt-4 uppercase tracking-widest">
-              Direct-to-Spirit Physical Gear
-            </p>
-          </div>
+      {/* Floating BG */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute top-10 left-10 w-64 h-64 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+        <div className="absolute top-10 right-10 w-64 h-64 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" style={{ animationDelay: "2s" }}></div>
+        <div className="absolute bottom-32 left-20 w-80 h-80 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-25 animate-blob" style={{ animationDelay: "4s" }}></div>
+        <iconify-icon icon="solar:cloud-bold" class="absolute top-20 left-[10%] text-white opacity-40 text-9xl animate-float-delayed"></iconify-icon>
+        <iconify-icon icon="solar:cloud-bold" class="absolute top-40 right-[15%] text-white opacity-30 text-8xl animate-float"></iconify-icon>
+      </div>
 
-          {/* Product Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {PRODUCTS.map((product, i) => (
-              <div 
-                key={product.id}
-                className={cn(
-                  "bg-white border-4 border-black rounded-[2.5rem] p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-pointer group flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500",
-                  `delay-${i * 100}`
-                )}
-                onClick={() => setSelectedProduct(product)}
-              >
-                <div className="aspect-square relative rounded-[2rem] bg-slate-50 border-4 border-black mb-6 overflow-hidden shadow-inner group-hover:bg-blue-50 transition-colors">
-                  <Image 
-                    src={product.displayImage} 
-                    alt={product.name} 
-                    fill 
-                    className="object-contain p-6 group-hover:scale-110 transition-transform duration-500 group-hover:opacity-0" 
-                  />
-                  <Image 
-                    src={product.colors[0].gif} 
-                    alt={product.name} 
-                    fill 
-                    className="object-contain p-6 group-hover:scale-110 transition-transform duration-500 absolute inset-0 opacity-0 group-hover:opacity-100" 
-                    unoptimized
-                  />
-                  <div className="absolute top-4 right-4 bg-yellow-400 border-2 border-black px-3 py-1 rounded-full font-black text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                    ₱{product.pricePeso}
-                  </div>
-                </div>
-                <div className="flex-grow">
-                  <h3 className="text-2xl font-black uppercase tracking-tight leading-none mb-2">{product.name}</h3>
-                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">{product.type}</p>
-                  <p className="text-slate-500 text-sm leading-relaxed mb-6">{product.description}</p>
-                </div>
-                <button className="w-full py-4 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 group-hover:bg-blue-600 transition-colors">
-                  Select Item <ChevronRight size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
+      {/* Hero Section */}
+      <section className="relative z-10 pt-32 pb-8 px-4 text-center">
+        <div className="flex justify-center gap-3 mb-5 animate-float">
+          <div className="bg-pink-300 text-pink-900 px-4 py-1.5 rounded-full font-extrabold text-xs tracking-wide transform -rotate-2 border-2 border-white shadow-md">🛍️ MERCH DROP</div>
+          <div className="bg-cyan-300 text-cyan-900 px-4 py-1.5 rounded-full font-extrabold text-xs tracking-wide transform rotate(1deg) border-2 border-white shadow-md">💫 LIMITED STOCK</div>
         </div>
-      </main>
+        <h1 className="text-5xl md:text-7xl font-black text-white mb-4 tracking-tight leading-none drop-shadow-xl" style={{ textShadow: "2px 2px 0px #3b82f6,-1px -1px 0 #fff" }}>
+          KAPO SHOP
+        </h1>
+        <p className="text-lg font-bold text-slate-500 max-w-xl mx-auto">Official phygital merch for true Kapogian collectors. Pay with <span className="text-cyan-500">SUI</span> only.</p>
+      </section>
 
-      <PageFooter />
+      {/* Filter Pills */}
+      <div className="relative z-10 px-4 mb-10">
+        <div className="max-w-6xl mx-auto flex gap-3 flex-wrap justify-center">
+          {[
+            { id: "all", label: "All Items", icon: "" },
+            { id: "shirt", label: "Shirts", icon: "👕" },
+            { id: "hoodie", label: "Hoodies", icon: "🧥" },
+            { id: "mug", label: "Mugs", icon: "☕" },
+            { id: "mousepad", label: "Mouse Pads", icon: "🖱️" },
+          ].map((filter) => (
+            <button
+              key={filter.id}
+              onClick={() => setActiveFilter(filter.id)}
+              className={cn(
+                "px-5 py-2 rounded-full font-bold text-sm squishy-btn border-2 transition-all flex items-center gap-2",
+                activeFilter === filter.id
+                  ? "bg-slate-900 text-white border-slate-900"
+                  : "bg-white text-slate-600 border-slate-100 hover:border-cyan-300",
+              )}
+            >
+              {filter.icon && <span>{filter.icon}</span>} {filter.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      {/* Configurator Modal */}
-      <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
-        <DialogContent className="max-w-5xl w-full p-0 bg-transparent border-none shadow-none !rounded-[2.5rem]">
-          <div className="bg-white border-4 border-black rounded-[2.5rem] shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
-            
-            {/* Left Panel: Live Preview */}
-            <div className="w-full md:w-[45%] bg-blue-500 border-b-4 md:border-b-0 md:border-r-4 border-black p-8 flex flex-col items-center justify-center relative overflow-hidden">
-              <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]"></div>
-              
-              <div className="relative w-64 h-64 md:w-80 md:h-80 z-10 group">
-                {selectedColor && (
-                  <Image 
-                    src={selectedColor.gif || selectedColor.static} 
-                    alt="preview" 
-                    fill 
-                    className="object-contain drop-shadow-2xl scale-110" 
-                    unoptimized
-                  />
-                )}
+      {/* Products Grid */}
+      <section className="relative z-10 pb-24 px-4">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          {filteredProducts.map((product) => (
+            <div
+              key={product.id}
+              className="product-card poster-card rounded-[2.5rem] overflow-hidden cursor-pointer flex flex-col h-full group"
+              onClick={() => openModal(product)}
+            >
+              <div className={cn("relative h-64 flex items-center justify-center overflow-hidden m-2 rounded-[2rem] border-2 border-black", product.colorClass)}>
+                <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]"></div>
                 
-                {customPrintNft && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none mt-16 md:mt-20">
-                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border-2 border-black/20 bg-white/40 backdrop-blur-sm shadow-xl animate-in zoom-in-75 duration-300">
-                      <Image src={customPrintNft.imageUrl} alt="print" width={96} height={96} className="object-cover" />
-                    </div>
+                {/* Images with hover animation */}
+                <div className="relative z-10 w-40 h-40 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
+                  <Image 
+                    src={product.staticImage} 
+                    alt={product.name} 
+                    width={160} 
+                    height={160} 
+                    className="object-contain drop-shadow-2xl transition-opacity duration-300 group-hover:opacity-0" 
+                  />
+                  <Image 
+                    src={product.animatedImage} 
+                    alt={product.name} 
+                    width={160} 
+                    height={160} 
+                    unoptimized
+                    className="absolute inset-0 object-contain drop-shadow-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" 
+                  />
+                </div>
+
+                {product.badge && (
+                  <div className="absolute top-4 right-4 bg-yellow-300 text-black text-[10px] font-black px-3 py-1 rounded-full border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    {product.badge}
                   </div>
                 )}
               </div>
-
-              <div className="mt-12 text-center z-10">
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <div className="bg-white/20 backdrop-blur-md border border-white/30 px-4 py-1 rounded-full text-white text-xs font-black uppercase">
-                    ₱{selectedProduct?.pricePeso}
+              <div className="p-6 bg-white flex-grow flex flex-col items-center text-center">
+                <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-3 py-1 rounded-full w-fit uppercase tracking-widest border border-slate-200">
+                  {product.type}
+                </span>
+                <h3 className="font-headline text-2xl text-black mt-3 mb-2 tracking-tight uppercase leading-none">
+                  {product.name}
+                </h3>
+                
+                <div className="flex items-center gap-2 mt-auto pt-4 w-full">
+                  <div className="flex-1 bg-sky-50 border-2 border-black rounded-xl p-3 flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                    <iconify-icon icon="token-branded:sui" class="text-blue-500 text-2xl"></iconify-icon>
+                    <span className="font-black text-black text-xl">{product.price} SUI</span>
                   </div>
-                  <div className="bg-yellow-400 border-2 border-black px-4 py-1 rounded-full text-black text-xs font-black uppercase">
-                    {pricing ? `${mistToSui(pricing.baseMintPrice)} SUI` : "..."}
-                  </div>
-                </div>
-                <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter drop-shadow-md">
-                  {selectedProduct?.name}
-                </h2>
-                <div className="flex items-center justify-center gap-2 mt-4">
-                  <div className="bg-black text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">
-                    {selectedColor?.name}
-                  </div>
-                  {selectedSize && (
-                    <div className="bg-white text-black px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border border-black">
-                      SIZE: {selectedSize}
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
+          ))}
+        </div>
+      </section>
 
-            {/* Right Panel: Configuration */}
-            <div className="w-full md:w-[55%] flex flex-col h-full overflow-hidden">
-              <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
-                
-                {/* 1. Color Selection */}
-                <div className="space-y-4">
-                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                    <Palette size={14} className="text-blue-500" /> 01. Select Shade
-                  </h3>
-                  <div className="flex flex-wrap gap-3">
-                    {selectedProduct?.colors.map(color => (
-                      <button
-                        key={color.name}
-                        onClick={() => setSelectedColor(color)}
-                        className={cn(
-                          "group relative w-12 h-12 rounded-2xl border-4 transition-all active:scale-95",
-                          selectedColor?.name === color.name 
-                            ? "border-blue-500 scale-110 shadow-lg" 
-                            : "border-slate-100 hover:border-slate-300"
-                        )}
-                        title={color.name}
-                      >
-                        <div 
-                          className="absolute inset-1 rounded-xl shadow-inner" 
-                          style={{ backgroundColor: color.hex }}
-                        />
-                        {selectedColor?.name === color.name && (
-                          <div className="absolute -top-2 -right-2 bg-blue-500 text-white p-0.5 rounded-full border-2 border-white shadow-sm">
-                            <Check size={10} strokeWidth={4} />
+      {/* Modal */}
+      {selectedProduct && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closeModal}></div>
+          <div className="relative z-10 w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl border-4 border-black flex flex-col md:flex-row overflow-hidden animate-pop-in" style={{ maxHeight: "90vh" }}>
+            
+            {/* LEFT: Item Preview */}
+            <div className={cn("w-full md:w-64 flex-shrink-0 flex flex-col items-center justify-center p-8 relative overflow-hidden", selectedProduct.colorClass)}>
+              <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]"></div>
+              <div className="relative z-10 w-44 h-44 bg-white rounded-3xl flex items-center justify-center shadow-xl border-4 border-black mb-5 animate-float overflow-hidden">
+                <Image 
+                  src={selectedProduct.animatedImage} 
+                  alt="preview" 
+                  width={160} 
+                  height={160} 
+                  unoptimized
+                  className="object-contain" 
+                />
+              </div>
+              <div className="relative z-10 bg-black text-white text-[10px] font-black px-4 py-1.5 rounded-full mb-3 uppercase tracking-widest shadow-lg">
+                {selectedProduct.type}
+              </div>
+              <h2 className="relative z-10 text-xl font-headline text-black tracking-tight text-center leading-tight mb-3 uppercase">
+                {selectedProduct.name}
+              </h2>
+              <div className="relative z-10 bg-white border-4 border-black px-5 py-2 rounded-2xl flex items-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                <iconify-icon icon="token-branded:sui" class="text-blue-500 text-2xl"></iconify-icon>
+                <span className="text-2xl font-black text-black">{selectedProduct.price}</span>
+              </div>
+            </div>
+
+            {/* RIGHT: Form Panel */}
+            <div className="flex-1 flex flex-col overflow-hidden border-l-4 border-black bg-slate-50">
+              <div className="px-7 pt-6 pb-4 border-b-4 border-black bg-white flex items-center justify-between flex-shrink-0">
+                <div className="flex gap-2 items-center">
+                  <div className={cn("step-indicator w-8 h-8 rounded-full border-2 border-black flex items-center justify-center font-black text-sm transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]", currentStep >= 1 ? "active" : "text-slate-400 bg-slate-100")}>1</div>
+                  <div className="h-1.5 w-10 bg-slate-200 rounded-full border border-black/10 overflow-hidden">
+                    <div className={cn("h-full bg-sky-400 transition-all duration-500", currentStep >= 2 ? "w-full" : "w-0")}></div>
+                  </div>
+                  <div className={cn("step-indicator w-8 h-8 rounded-full border-2 border-black flex items-center justify-center font-black text-sm transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]", currentStep >= 2 ? "active" : "text-slate-400 bg-slate-100")}>2</div>
+                  <div className="h-1.5 w-10 bg-slate-200 rounded-full border border-black/10 overflow-hidden">
+                    <div className={cn("h-full bg-sky-400 transition-all duration-500", currentStep >= 3 ? "w-full" : "w-0")}></div>
+                  </div>
+                  <div className={cn("step-indicator w-8 h-8 rounded-full border-2 border-black flex items-center justify-center font-black text-sm transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]", currentStep >= 3 ? "active" : "text-slate-400 bg-slate-100")}>3</div>
+                  <span className="text-[10px] font-black text-slate-400 ml-2 uppercase tracking-[0.2em]">
+                    {currentStep === 1 ? "Configuration" : currentStep === 2 ? "Logistics" : "Authorized Pay"}
+                  </span>
+                </div>
+                <button onClick={closeModal} className="w-9 h-9 bg-red-500 text-white border-2 border-black rounded-full flex items-center justify-center hover:bg-red-600 transition-colors font-black text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5">✕</button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto fancy-scrollbar">
+                {/* STEP 1: Details */}
+                {currentStep === 1 && (
+                  <div className="px-7 py-6 space-y-8">
+                    {(selectedProduct.type === "shirt" || selectedProduct.type === "hoodie") && (
+                      <div>
+                        <p className="font-black text-black mb-3 text-xs tracking-widest uppercase flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 bg-sky-400 rounded-full"></span> Select Fit
+                        </p>
+                        <div className="flex gap-2.5 flex-wrap">
+                          {["XS", "S", "M", "L", "XL", "XXL"].map((size) => (
+                            <button
+                              key={size}
+                              onClick={() => setSelectedSize(size)}
+                              className={cn(
+                                "size-btn h-12 min-w-12 px-4 rounded-xl font-black text-sm border-2 transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none",
+                                selectedSize === size
+                                  ? "bg-sky-400 border-black text-white"
+                                  : "bg-white border-slate-200 text-slate-600 hover:border-black"
+                              )}
+                            >
+                              {size}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <p className="font-black text-black text-xs tracking-widest uppercase flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 bg-pink-400 rounded-full"></span> Custom Print
+                        </p>
+                        <span className="bg-pink-100 text-pink-600 text-[10px] font-black px-2.5 py-0.5 rounded-full border-2 border-pink-200">EXCLUSIVE</span>
+                      </div>
+                      
+                      <div className="bg-white border-4 border-black rounded-[2rem] p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.05)]">
+                        {!account ? (
+                          <div className="text-center py-8">
+                            <Wallet className="w-12 h-12 mx-auto text-slate-200 mb-4" />
+                            <p className="text-[10px] font-black uppercase text-slate-400 mb-5 tracking-widest">Authorize wallet to view squad</p>
+                            <CustomConnectButton className="!text-xs !px-6 !py-3" />
+                          </div>
+                        ) : loadingNfts ? (
+                          <div className="text-center py-10">
+                            <LoaderCircle className="w-10 h-10 animate-spin mx-auto text-sky-400" />
+                            <p className="text-[10px] font-black uppercase text-slate-400 mt-3 tracking-[0.2em]">Decrypting Assets...</p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
+                            {/* None Option */}
+                            <button
+                              onClick={() => setSelectedPrintId("none")}
+                              className={cn(
+                                "aspect-square rounded-2xl border-4 flex flex-col items-center justify-center transition-all",
+                                selectedPrintId === "none" 
+                                  ? "bg-black border-black text-white shadow-lg scale-105 z-10" 
+                                  : "bg-slate-50 border-slate-100 text-slate-300 hover:border-slate-300"
+                              )}
+                            >
+                              <iconify-icon icon="solar:forbidden-circle-bold-duotone" class="text-2xl"></iconify-icon>
+                              <span className="text-[8px] font-black uppercase mt-1 tracking-tighter">NONE</span>
+                            </button>
+
+                            {/* Owned NFTs */}
+                            {ownedNfts.map((nft) => (
+                              <button
+                                key={nft.id}
+                                onClick={() => setSelectedPrintId(nft.id)}
+                                className={cn(
+                                  "aspect-square rounded-2xl border-4 overflow-hidden relative transition-all bg-white",
+                                  selectedPrintId === nft.id ? "border-sky-400 shadow-lg scale-105 z-10" : "border-slate-100 opacity-70 hover:opacity-100 hover:border-slate-300"
+                                )}
+                              >
+                                <Image src={nft.imageUrl} alt={nft.name} fill className="object-cover" />
+                                {selectedPrintId === nft.id && (
+                                  <div className="absolute inset-0 bg-sky-400/20 flex items-center justify-center">
+                                    <div className="bg-white rounded-full p-1 border-2 border-black">
+                                      <iconify-icon icon="solar:check-circle-bold" class="text-xs text-sky-500"></iconify-icon>
+                                    </div>
+                                  </div>
+                                )}
+                              </button>
+                            ))}
+
+                            {ownedNfts.length === 0 && (
+                              <div className="col-span-full py-10 text-center">
+                                <Sparkles className="w-10 h-10 mx-auto text-amber-200 mb-3" />
+                                <p className="text-[10px] font-black uppercase text-slate-400 leading-relaxed tracking-widest">No spirits detected in this wallet.<br/>Summon one to unlock custom gear.</p>
+                              </div>
+                            )}
                           </div>
                         )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                      </div>
+                    </div>
 
-                {/* 2. Size Selection */}
-                {selectedProduct?.hasSize && (
-                  <div className="space-y-4">
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                      <Tag size={14} className="text-amber-500" /> 02. Select Size
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {SIZES.map(size => (
-                        <button
-                          key={size}
-                          onClick={() => setSelectedSize(size)}
-                          className={cn(
-                            "w-14 h-12 rounded-2xl border-4 font-black transition-all flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none",
-                            selectedSize === size 
-                              ? "bg-yellow-400 border-black text-black scale-105" 
-                              : "bg-white border-slate-100 text-slate-400 hover:border-slate-200"
-                          )}
-                        >
-                          {size}
-                        </button>
-                      ))}
+                    <div className="flex items-center justify-between bg-white border-4 border-black p-5 rounded-3xl">
+                      <p className="font-black text-black text-xs tracking-widest uppercase">Copies</p>
+                      <div className="flex items-center gap-4">
+                        <button onClick={() => setCurrentQty(Math.max(1, currentQty - 1))} className="w-10 h-10 bg-slate-100 border-2 border-black rounded-xl font-black text-xl text-black hover:bg-slate-200 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 flex items-center justify-center">−</button>
+                        <span className="text-3xl font-black text-black w-8 text-center">{currentQty}</span>
+                        <button onClick={() => setCurrentQty(Math.min(10, currentQty + 1))} className="w-10 h-10 bg-slate-100 border-2 border-black rounded-xl font-black text-xl text-black hover:bg-slate-200 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 flex items-center justify-center">+</button>
+                      </div>
+                    </div>
+
+                    <button onClick={nextStep} className="w-full bg-black text-white font-black py-5 rounded-3xl hover:bg-slate-800 transition-all squishy-btn flex items-center justify-center gap-3 shine-effect text-base uppercase tracking-[0.2em] shadow-[6px_6px_0px_0px_rgba(59,130,246,0.5)]">
+                      <iconify-icon icon="solar:rocket-2-bold" width="22"></iconify-icon>
+                      Initialize Manifest
+                    </button>
+                  </div>
+                )}
+
+                {/* STEP 2: Shipping */}
+                {currentStep === 2 && (
+                  <div className="px-7 py-6 space-y-5">
+                    <div className="bg-white border-4 border-black rounded-[2rem] p-6 mb-2">
+                      <h3 className="text-2xl font-headline text-black mb-1 uppercase tracking-tight">Logistics Form</h3>
+                      <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Encrypted end-to-end</p>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Receiver Name</label>
+                        <input type="text" placeholder="e.g. Satoshi Pogi" className="w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 transition-all text-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.05)] focus:shadow-[4px_4px_0px_0px_rgba(59,130,246,0.3)]" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Province</label>
+                          <input type="text" placeholder="Metro Manila" className="w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 transition-all text-sm" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">City</label>
+                          <input type="text" placeholder="Quezon City" className="w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 transition-all text-sm" />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Street & Vault Address</label>
+                        <input type="text" placeholder="Lot, Block, Street Name..." className="w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 transition-all text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Secure Contact (Mobile)</label>
+                        <input type="tel" placeholder="+63 9XX XXX XXXX" className="w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 transition-all text-sm" />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4 mt-8">
+                      <button onClick={prevStep} className="w-14 h-14 bg-white border-4 border-black rounded-2xl font-black text-slate-800 hover:bg-slate-50 transition-colors squishy-btn flex items-center justify-center flex-shrink-0 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5">
+                        <iconify-icon icon="solar:arrow-left-bold" width="24"></iconify-icon>
+                      </button>
+                      <button onClick={nextStep} className="flex-1 bg-sky-400 text-white border-4 border-black font-black py-4 rounded-2xl hover:bg-sky-500 transition-all squishy-btn flex items-center justify-center gap-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] uppercase tracking-widest text-sm">
+                        Confirm Order
+                        <iconify-icon icon="solar:check-circle-bold" width="20"></iconify-icon>
+                      </button>
                     </div>
                   </div>
                 )}
 
-                {/* 3. Custom Print Selection */}
-                <div className="space-y-4">
-                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                    <LucideImageIcon size={14} className="text-pink-500" /> 03. Custom Image Print (Optional)
-                  </h3>
-                  <div className="bg-slate-50 border-4 border-slate-100 border-dashed rounded-3xl p-4">
-                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
-                      <button
-                        onClick={() => setCustomPrintNft(null)}
-                        className={cn(
-                          "aspect-square rounded-2xl border-2 flex flex-col items-center justify-center transition-all active:scale-95 shadow-sm",
-                          !customPrintNft ? "bg-black border-black text-white" : "bg-white border-slate-200 text-slate-400 hover:border-slate-300"
-                        )}
-                      >
-                        <X size={20} strokeWidth={3} />
-                        <span className="text-[8px] font-black mt-1 uppercase tracking-tighter">NONE</span>
-                      </button>
-                      
-                      {ownedNfts.map(nft => (
-                        <button
-                          key={nft.id}
-                          onClick={() => setCustomPrintNft(nft)}
-                          className={cn(
-                            "aspect-square rounded-2xl border-4 overflow-hidden relative transition-all active:scale-95 shadow-sm",
-                            customPrintNft?.id === nft.id ? "border-blue-500 scale-105 z-10 shadow-lg" : "border-white hover:border-slate-200 opacity-70 hover:opacity-100"
-                          )}
-                        >
-                          <Image src={nft.imageUrl} alt={nft.name} fill className="object-cover" />
-                          {customPrintNft?.id === nft.id && (
-                            <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                              <Check className="text-white drop-shadow-md" size={24} strokeWidth={4} />
-                            </div>
-                          )}
-                        </button>
-                      ))}
+                {/* STEP 3: Payment */}
+                {currentStep === 3 && (
+                  <div className="px-7 py-6 space-y-6">
+                    <div className="bg-white border-4 border-black rounded-[2rem] p-6 mb-2">
+                      <h3 className="text-2xl font-headline text-black mb-1 uppercase tracking-tight">Checkout Manifest</h3>
+                      <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Network: SUI Mainnet</p>
                     </div>
-                    
-                    {!loadingNfts && ownedNfts.length === 0 && (
-                      <div className="text-center py-4">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No NFTs found in your wallet</p>
-                        <Link href="/generate" className="text-[9px] font-black text-blue-500 hover:underline uppercase tracking-widest mt-1 inline-block">Summon one now →</Link>
-                      </div>
-                    )}
-                    
-                    {loadingNfts && (
-                      <div className="flex justify-center py-4">
-                        <LoaderCircle size={20} className="animate-spin text-slate-300" />
-                      </div>
-                    )}
-                  </div>
-                </div>
 
-                {/* 4. Delivery Form */}
-                <div className="space-y-4 pt-4 border-t-4 border-slate-50 border-dashed">
-                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                    <Package size={14} className="text-indigo-500" /> 04. Delivery Manifest
-                  </h3>
-                  <div className="grid grid-cols-1 gap-3">
-                    <Input 
-                      placeholder="Receiver Full Name" 
-                      className="h-14 border-4 border-slate-100 rounded-2xl font-bold bg-slate-50 focus:bg-white focus:border-blue-200 transition-all !h-auto" 
-                      value={shipping.name}
-                      onChange={e => setShipping({...shipping, name: e.target.value})}
-                    />
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <Input 
-                        placeholder="Email Address" 
-                        className="h-14 border-4 border-slate-100 rounded-2xl font-bold bg-slate-50 focus:bg-white focus:border-blue-200 transition-all !h-auto" 
-                        value={shipping.email}
-                        onChange={e => setShipping({...shipping, email: e.target.value})}
-                      />
-                      <Input 
-                        placeholder="Contact Number" 
-                        className="h-14 border-4 border-slate-100 rounded-2xl font-bold bg-slate-50 focus:bg-white focus:border-blue-200 transition-all !h-auto" 
-                        value={shipping.contact}
-                        onChange={e => setShipping({...shipping, contact: e.target.value})}
-                      />
+                    <div className="bg-white border-4 border-black rounded-[2rem] p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.05)]">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Final Receipt</p>
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 bg-slate-50 border-2 border-black rounded-2xl flex items-center justify-center shadow-md flex-shrink-0 overflow-hidden relative">
+                          {selectedPrintId !== "none" && selectedNft ? (
+                            <Image src={selectedNft.imageUrl} alt="sum" fill className="object-cover" />
+                          ) : (
+                            <Image src={selectedProduct.animatedImage} alt="sum" width={50} height={50} unoptimized className="object-contain" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-black text-black text-lg truncate uppercase italic tracking-tighter">{selectedProduct.name}</p>
+                          <p className="text-slate-400 font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
+                            Qty: {currentQty} {selectedSize && <><span className="w-1 h-1 bg-slate-200 rounded-full"></span> Size: {selectedSize}</>}
+                          </p>
+                          {selectedPrintId !== "none" && (
+                            <p className="text-sky-500 font-black text-[9px] mt-1 uppercase tracking-tighter border-t border-sky-100 pt-1">🎨 Print: {printLabel}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="mt-6 pt-5 border-t-4 border-black flex justify-between items-center">
+                        <span className="font-black text-slate-400 text-xs uppercase tracking-widest">Total SUI</span>
+                        <div className="flex items-center gap-2">
+                          <iconify-icon icon="token-branded:sui" class="text-blue-500 text-2xl"></iconify-icon>
+                          <span className="text-3xl font-black text-black tracking-tighter">{(selectedProduct.price * currentQty).toFixed(2)}</span>
+                        </div>
+                      </div>
                     </div>
-                    <Input 
-                      placeholder="Complete Address (Street, Barangay, City, Zip)" 
-                      className="h-14 border-4 border-slate-100 rounded-2xl font-bold bg-slate-50 focus:bg-white focus:border-blue-200 transition-all !h-auto" 
-                      value={shipping.address}
-                      onChange={e => setShipping({...shipping, address: e.target.value})}
-                    />
-                  </div>
-                </div>
-              </div>
 
-              {/* Modal Footer */}
-              <div className="p-8 bg-slate-50 border-t-4 border-black">
-                {error && <p className="text-red-500 text-[10px] font-black uppercase mb-4 text-center bg-red-50 border-2 border-red-100 py-2 rounded-xl">{error}</p>}
-                {!account ? (
-                  <div className="text-center">
-                    <p className="text-xs font-bold text-slate-400 mb-4 uppercase tracking-widest">Connect wallet to authorize payment</p>
-                    <button className="w-full py-5 bg-slate-200 text-slate-400 border-4 border-slate-300 rounded-3xl font-black uppercase cursor-not-allowed">
-                      Wallet Disconnected
+                    <button className="w-full bg-black text-white font-black py-6 rounded-[2rem] hover:bg-slate-900 transition-all squishy-btn flex items-center justify-center gap-4 text-xl shine-effect shadow-[8px_8px_0px_0px_rgba(59,130,246,0.6)] border-4 border-black">
+                      <iconify-icon icon="token-branded:sui" width="32"></iconify-icon>
+                      Authorize & Pay
                     </button>
+                    
+                    <div className="text-center pt-2">
+                      <div className="flex items-center justify-center gap-2 text-slate-400 text-[10px] font-black mb-6 uppercase tracking-[0.2em]">
+                        <iconify-icon icon="solar:shield-check-bold-duotone" class="text-green-500 text-sm"></iconify-icon>
+                        Secured on SUI Network
+                      </div>
+                      <button onClick={prevStep} className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-black transition-colors underline decoration-2 underline-offset-4">
+                        ← Modify Logistics
+                      </button>
+                    </div>
                   </div>
-                ) : (
-                  <button 
-                    onClick={handlePurchase}
-                    disabled={minting || !selectedColor}
-                    className="w-full py-5 bg-blue-500 text-white border-4 border-black rounded-3xl font-black uppercase italic tracking-widest text-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-                  >
-                    {minting ? <LoaderCircle className="animate-spin" /> : <ShoppingBag />}
-                    {minting ? "Authorizing..." : "Mint & Secure Order"}
-                  </button>
                 )}
               </div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
-      {/* Success View */}
-      <Dialog open={success} onOpenChange={setSuccess}>
-        <DialogContent className="max-w-md w-full p-8 bg-white border-4 border-black rounded-[3rem] shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] text-center">
-          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center border-4 border-black mx-auto mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <Check className="text-green-600 w-12 h-12" strokeWidth={4} />
-          </div>
-          <h2 className="text-4xl font-black uppercase italic tracking-tighter mb-2">Order Secured!</h2>
-          <p className="text-slate-500 font-bold mb-10 leading-relaxed">Your digital collectible has been minted and your physical gear manifest has been logged for production.</p>
-          <div className="flex flex-col gap-4">
-            <Link href="/profile">
-              <button className="w-full py-5 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-sm flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]">
-                Manage My Assets
-              </button>
-            </Link>
-            <button 
-              onClick={() => setSuccess(false)} 
-              className="w-full py-5 bg-slate-50 text-slate-400 border-2 border-slate-100 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-100 transition-all"
-            >
-              Back to Catalog
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <PageFooter />
     </div>
   );
 }
