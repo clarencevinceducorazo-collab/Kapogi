@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -64,7 +63,6 @@ export const PageHeader = () => {
       ],
     },
     { name: "PODIUM", href: "/podium" },
-  
   ];
 
   const avatar = PlaceHolderImages.find((img) => img.id === "header-avatar");
