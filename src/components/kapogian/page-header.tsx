@@ -53,6 +53,7 @@ export const PageHeader = () => {
     { name: "HOME", href: "/" },
     { name: "SUMMON", href: "/generate" },
     { name: "SHOP", href: "/shop" },
+    { name: "SHOP V2", href: "/KapogianShopV2" },
     { name: "EARN", href: "/earn" },
     {
       name: "ABOUT US",
