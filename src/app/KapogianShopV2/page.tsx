@@ -51,7 +51,7 @@ const PRODUCTS: Product[] = [
     colorClass: "bg-gradient-to-br from-slate-50 to-slate-100",
     icon: "solar:t-shirt-bold-duotone",
     iconColor: "text-slate-400",
-    badge: "✨ NEW",
+    badge: "✨  NEW",
     staticImage: "/images/merch-selection/shirts/whiteNoBG.png",
     animatedImage: "/images/merch-selection/shirts/whiteshirt.gif",
   },
