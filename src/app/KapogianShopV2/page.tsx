@@ -32,68 +32,171 @@ interface Product {
   icon: string;
   iconColor: string;
   badge?: string;
+  staticImage: string;
+  animatedImage: string;
 }
 
 const PRODUCTS: Product[] = [
+  // SHIRTS
   {
     id: "s1",
     type: "shirt",
-    name: "KAPO Classic Tee",
+    name: "KAPO White Tee",
     price: 0.42,
-    colorClass: "bg-gradient-to-br from-cyan-100 to-blue-100",
+    colorClass: "bg-gradient-to-br from-slate-50 to-slate-100",
     icon: "solar:t-shirt-bold-duotone",
-    iconColor: "text-cyan-500",
+    iconColor: "text-slate-400",
     badge: "✨ NEW",
+    staticImage: "/images/merch-selection/shirts/whiteNoBG.png",
+    animatedImage: "/images/merch-selection/shirts/whiteshirt.gif",
   },
   {
     id: "s2",
     type: "shirt",
-    name: "Biringan Battle Shirt",
-    price: 0.48,
-    colorClass: "bg-gradient-to-br from-indigo-100 to-purple-100",
+    name: "KAPO Black Tee",
+    price: 0.42,
+    colorClass: "bg-gradient-to-br from-slate-800 to-slate-900",
     icon: "solar:t-shirt-bold-duotone",
-    iconColor: "text-indigo-500",
-    badge: "⚔️ LIMITED",
+    iconColor: "text-white",
+    staticImage: "/images/merch-selection/shirts/whiteNoBG.png",
+    animatedImage: "/images/merch-selection/shirts/blackshirt.gif",
   },
+  {
+    id: "s3",
+    type: "shirt",
+    name: "KAPO Blue Tee",
+    price: 0.42,
+    colorClass: "bg-gradient-to-br from-blue-400 to-blue-600",
+    icon: "solar:t-shirt-bold-duotone",
+    iconColor: "text-blue-100",
+    staticImage: "/images/merch-selection/shirts/whiteNoBG.png",
+    animatedImage: "/images/merch-selection/shirts/blueshirt.gif",
+  },
+  {
+    id: "s4",
+    type: "shirt",
+    name: "KAPO Red Tee",
+    price: 0.42,
+    colorClass: "bg-gradient-to-br from-red-400 to-red-600",
+    icon: "solar:t-shirt-bold-duotone",
+    iconColor: "text-red-100",
+    staticImage: "/images/merch-selection/shirts/whiteNoBG.png",
+    animatedImage: "/images/merch-selection/shirts/redshirt.gif",
+  },
+  // HOODIES
   {
     id: "h1",
     type: "hoodie",
-    name: "KAPO Cozy Hoodie",
+    name: "Grey Aura Hoodie",
     price: 0.85,
-    colorClass: "bg-gradient-to-br from-pink-100 to-rose-100",
+    colorClass: "bg-gradient-to-br from-slate-200 to-slate-300",
     icon: "solar:hoodie-bold-duotone",
-    iconColor: "text-pink-500",
+    iconColor: "text-slate-500",
     badge: "🔥 HOT",
+    staticImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
+    animatedImage: "/images/merch-selection/hoodies/greyhoodie.gif",
   },
   {
     id: "h2",
     type: "hoodie",
-    name: "$POGI Pullover",
-    price: 0.9,
-    colorClass: "bg-gradient-to-br from-yellow-100 to-amber-100",
+    name: "Black Aura Hoodie",
+    price: 0.85,
+    colorClass: "bg-gradient-to-br from-slate-800 to-slate-950",
     icon: "solar:hoodie-bold-duotone",
-    iconColor: "text-amber-500",
-    badge: "💰 $POGI",
+    iconColor: "text-white",
+    staticImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
+    animatedImage: "/images/merch-selection/hoodies/blackhoodie.gif",
   },
+  {
+    id: "h3",
+    type: "hoodie",
+    name: "Blue Aura Hoodie",
+    price: 0.85,
+    colorClass: "bg-gradient-to-br from-blue-500 to-blue-700",
+    icon: "solar:hoodie-bold-duotone",
+    iconColor: "text-blue-100",
+    staticImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
+    animatedImage: "/images/merch-selection/hoodies/bluehoodie.gif",
+  },
+  {
+    id: "h4",
+    type: "hoodie",
+    name: "Red Aura Hoodie",
+    price: 0.85,
+    colorClass: "bg-gradient-to-br from-red-500 to-red-700",
+    icon: "solar:hoodie-bold-duotone",
+    iconColor: "text-red-100",
+    staticImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
+    animatedImage: "/images/merch-selection/hoodies/redhoodie.gif",
+  },
+  {
+    id: "h5",
+    type: "hoodie",
+    name: "Beige Aura Hoodie",
+    price: 0.85,
+    colorClass: "bg-gradient-to-br from-stone-100 to-stone-200",
+    icon: "solar:hoodie-bold-duotone",
+    iconColor: "text-stone-500",
+    staticImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
+    animatedImage: "/images/merch-selection/hoodies/biegehoodie.gif",
+  },
+  {
+    id: "h6",
+    type: "hoodie",
+    name: "Cyan Aura Hoodie",
+    price: 0.85,
+    colorClass: "bg-gradient-to-br from-cyan-300 to-cyan-500",
+    icon: "solar:hoodie-bold-duotone",
+    iconColor: "text-cyan-900",
+    staticImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
+    animatedImage: "/images/merch-selection/hoodies/cyanhoodie.gif",
+  },
+  // MUGS
   {
     id: "m1",
     type: "mug",
-    name: "KAPO Morning Mug",
+    name: "White Spirit Mug",
     price: 0.22,
-    colorClass: "bg-gradient-to-br from-emerald-100 to-teal-100",
+    colorClass: "bg-gradient-to-br from-slate-50 to-slate-100",
     icon: "solar:cup-hot-bold-duotone",
-    iconColor: "text-emerald-500",
+    iconColor: "text-slate-400",
+    staticImage: "/images/merch-selection/mug/staticMUG.png",
+    animatedImage: "/images/merch-selection/mug/gifWhiteMug.gif",
   },
   {
     id: "m2",
     type: "mug",
-    name: "Biringan War Mug",
-    price: 0.25,
-    colorClass: "bg-gradient-to-br from-slate-100 to-zinc-100",
+    name: "Black Spirit Mug",
+    price: 0.22,
+    colorClass: "bg-gradient-to-br from-slate-800 to-slate-900",
     icon: "solar:cup-hot-bold-duotone",
-    iconColor: "text-slate-500",
-    badge: "🛡️ EPIC",
+    iconColor: "text-white",
+    staticImage: "/images/merch-selection/mug/staticBlackMUG.png",
+    animatedImage: "/images/merch-selection/mug/gifBlackMug.gif",
   },
+  {
+    id: "m3",
+    type: "mug",
+    name: "Blue Spirit Mug",
+    price: 0.22,
+    colorClass: "bg-gradient-to-br from-blue-400 to-blue-600",
+    icon: "solar:cup-hot-bold-duotone",
+    iconColor: "text-blue-100",
+    staticImage: "/images/merch-selection/mug/staticMUG.png",
+    animatedImage: "/images/merch-selection/mug/gifBlueMug.gif",
+  },
+  {
+    id: "m4",
+    type: "mug",
+    name: "Red Spirit Mug",
+    price: 0.22,
+    colorClass: "bg-gradient-to-br from-red-400 to-red-600",
+    icon: "solar:cup-hot-bold-duotone",
+    iconColor: "text-red-100",
+    staticImage: "/images/merch-selection/mug/staticMUG.png",
+    animatedImage: "/images/merch-selection/mug/gifRedMug.gif",
+  },
+  // MOUSEPADS
   {
     id: "p1",
     type: "mousepad",
@@ -103,16 +206,8 @@ const PRODUCTS: Product[] = [
     icon: "solar:mouse-bold-duotone",
     iconColor: "text-violet-500",
     badge: "🖱️ XL SIZE",
-  },
-  {
-    id: "p2",
-    type: "mousepad",
-    name: "Biringan Battle Mat",
-    price: 0.38,
-    colorClass: "bg-gradient-to-br from-orange-100 to-red-100",
-    icon: "solar:mouse-bold-duotone",
-    iconColor: "text-orange-500",
-    badge: "⚔️ BATTLE",
+    staticImage: "/images/merch-selection/pads/mousePad.png",
+    animatedImage: "/images/merch-selection/pads/spinPad3.gif",
   },
 ];
 
@@ -143,7 +238,7 @@ export default function KapogianShopV2() {
     setSelectedProduct(product);
     setCurrentStep(1);
     setCurrentQty(1);
-    setSelectedSize("");
+    setSelectedSize(product.type === "mug" || product.type === "mousepad" ? "N/A" : "");
     setSelectedPrint("none");
     document.body.style.overflow = "hidden";
   };
@@ -277,14 +372,31 @@ export default function KapogianShopV2() {
           {filteredProducts.map((product) => (
             <div
               key={product.id}
-              className="product-card toy-card rounded-[2rem] overflow-hidden border-2 border-slate-50 cursor-pointer flex flex-col h-full"
+              className="product-card toy-card rounded-[2rem] overflow-hidden border-2 border-slate-50 cursor-pointer flex flex-col h-full group"
               onClick={() => openModal(product)}
             >
               <div className={cn("relative h-56 flex items-center justify-center overflow-hidden", product.colorClass)}>
                 <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#bae6fd_1px,transparent_1px)] [background-size:16px_16px]"></div>
-                <div className="relative z-10 w-28 h-28 bg-white/80 rounded-3xl flex items-center justify-center shadow-lg border-2 border-white">
-                  <iconify-icon icon={product.icon} class={cn("text-6xl", product.iconColor)}></iconify-icon>
+                
+                {/* Images with hover animation */}
+                <div className="relative z-10 w-32 h-32 flex items-center justify-center">
+                  <Image 
+                    src={product.staticImage} 
+                    alt={product.name} 
+                    width={128} 
+                    height={128} 
+                    className="object-contain drop-shadow-xl transition-opacity duration-300 group-hover:opacity-0" 
+                  />
+                  <Image 
+                    src={product.animatedImage} 
+                    alt={product.name} 
+                    width={128} 
+                    height={128} 
+                    unoptimized
+                    className="absolute inset-0 object-contain drop-shadow-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" 
+                  />
                 </div>
+
                 {product.badge && (
                   <div className="absolute top-3 right-3 bg-yellow-300 text-yellow-900 text-[10px] font-extrabold px-2 py-1 rounded-full border border-white shadow">
                     {product.badge}
@@ -299,7 +411,7 @@ export default function KapogianShopV2() {
                   {product.name}
                 </h3>
                 <p className="text-slate-400 text-sm font-semibold mb-4">
-                  Everyday vibes, Kapogian style
+                  Collector-grade phygital gear.
                 </p>
                 <div className="flex items-center justify-between mt-auto">
                   <div className="flex items-center gap-1">
@@ -325,8 +437,15 @@ export default function KapogianShopV2() {
             {/* LEFT: Item Preview */}
             <div className={cn("w-full md:w-64 flex-shrink-0 flex flex-col items-center justify-center p-8 relative overflow-hidden", selectedProduct.colorClass)}>
               <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#bae6fd_1px,transparent_1px)] [background-size:16px_16px]"></div>
-              <div className="relative z-10 w-36 h-36 bg-white/90 rounded-3xl flex items-center justify-center shadow-xl border-4 border-white mb-5 animate-float">
-                <iconify-icon icon={selectedProduct.icon} class={cn("text-7xl", selectedProduct.iconColor)}></iconify-icon>
+              <div className="relative z-10 w-40 h-40 bg-white/90 rounded-3xl flex items-center justify-center shadow-xl border-4 border-white mb-5 animate-float">
+                <Image 
+                  src={selectedProduct.animatedImage} 
+                  alt="preview" 
+                  width={140} 
+                  height={140} 
+                  unoptimized
+                  className="object-contain" 
+                />
               </div>
               <div className="relative z-10 bg-white/80 text-cyan-600 text-xs font-extrabold px-3 py-1 rounded-full mb-2 backdrop-blur-sm border border-white shadow-sm capitalize">
                 {selectedProduct.type}
@@ -488,7 +607,7 @@ export default function KapogianShopV2() {
                       <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-3">Order Summary</p>
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-md flex-shrink-0">
-                          <iconify-icon icon={selectedProduct.icon} class={cn("text-2xl", selectedProduct.iconColor)}></iconify-icon>
+                          <Image src={selectedProduct.animatedImage} alt="sum" width={40} height={40} unoptimized className="object-contain" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-extrabold text-slate-800 text-sm truncate">{selectedProduct.name}</p>
