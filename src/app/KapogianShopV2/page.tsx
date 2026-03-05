@@ -6,6 +6,11 @@ import Image from "next/image";
 import { PageHeader } from "@/components/kapogian/page-header";
 import { PageFooter } from "@/components/kapogian/page-footer";
 import { cn } from "@/lib/utils";
+import { useCurrentAccount } from "@mysten/dapp-kit";
+import { getOwnedCharacters } from "@/lib/sui";
+import { getIPFSGatewayUrl } from "@/lib/pinata";
+import { LoaderCircle, Wallet, Sparkles } from "lucide-react";
+import { CustomConnectButton } from "@/components/kapogian/CustomConnectButton";
 
 // I have to define IconifyIcon for typescript since it's not a standard element
 declare global {
@@ -211,24 +216,38 @@ const PRODUCTS: Product[] = [
   },
 ];
 
-const PRINT_OPTIONS = [
-  { id: "none", label: "No Print", icon: "solar:forbidden-circle-bold-duotone", color: "text-slate-300" },
-  { id: "kapo-logo", label: "KAPO Logo", icon: "solar:shield-star-bold-duotone", color: "text-cyan-400" },
-  { id: "chibi", label: "Chibi Kapo", icon: "solar:user-rounded-bold-duotone", color: "text-purple-400" },
-  { id: "biringan", label: "Biringan", icon: "solar:castle-bold-duotone", color: "text-indigo-400" },
-  { id: "pogi-coin", label: "$POGI Coin", icon: "solar:dollar-minimalistic-bold-duotone", color: "text-yellow-400" },
-  { id: "battle", label: "Battle Art", icon: "solar:swords-bold-duotone", color: "text-pink-400" },
-  { id: "farm", label: "Farm Scene", icon: "solar:leaf-bold-duotone", color: "text-emerald-400" },
-  { id: "galaxy", label: "Galaxy", icon: "solar:stars-bold-duotone", color: "text-violet-400" },
-];
-
 export default function KapogianShopV2() {
+  const account = useCurrentAccount();
   const [activeFilter, setActiveFilter] = useState("all");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [currentQty, setCurrentQty] = useState(1);
   const [selectedSize, setSelectedSize] = useState("");
-  const [selectedPrint, setSelectedPrint] = useState("none");
+  const [selectedPrintId, setSelectedPrintId] = useState("none");
+  const [ownedNfts, setOwnedNfts] = useState<any[]>([]);
+  const [loadingNfts, setLoadingNfts] = useState(false);
+
+  useEffect(() => {
+    if (account?.address) {
+      setLoadingNfts(true);
+      getOwnedCharacters(account.address)
+        .then((chars) => {
+          const parsed = chars.map((obj: any) => {
+            const display = obj.data?.display?.data || {};
+            return {
+              id: obj.data?.objectId,
+              name: display.name || "Unnamed Spirit",
+              imageUrl: getIPFSGatewayUrl(display.image_url || ""),
+            };
+          });
+          setOwnedNfts(parsed);
+        })
+        .catch((err) => console.error("Failed to load NFTs", err))
+        .finally(() => setLoadingNfts(false));
+    } else {
+      setOwnedNfts([]);
+    }
+  }, [account?.address]);
 
   const filteredProducts = PRODUCTS.filter(
     (p) => activeFilter === "all" || p.type === activeFilter,
@@ -239,7 +258,7 @@ export default function KapogianShopV2() {
     setCurrentStep(1);
     setCurrentQty(1);
     setSelectedSize(product.type === "mug" || product.type === "mousepad" ? "N/A" : "");
-    setSelectedPrint("none");
+    setSelectedPrintId("none");
     document.body.style.overflow = "hidden";
   };
 
@@ -251,7 +270,8 @@ export default function KapogianShopV2() {
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 3));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
-  const printLabel = PRINT_OPTIONS.find(o => o.id === selectedPrint)?.label || "No Print";
+  const selectedNft = ownedNfts.find(n => n.id === selectedPrintId);
+  const printLabel = selectedNft ? selectedNft.name : "No Print";
 
   return (
     <div className="bg-gradient-to-b from-sky-200 via-indigo-50 to-white text-slate-700 min-h-screen overflow-x-hidden selection:bg-pink-300 selection:text-white font-sans">
@@ -508,26 +528,64 @@ export default function KapogianShopV2() {
                     <div className="mb-5">
                       <div className="flex items-center gap-2 mb-2.5">
                         <p className="font-extrabold text-slate-600 text-xs tracking-widest uppercase">Custom Image Print</p>
-                        <span className="bg-pink-100 text-pink-500 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-pink-200">Optional</span>
+                        <span className="bg-pink-100 text-pink-500 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-pink-200">Exclusive</span>
                       </div>
-                      <div className="grid grid-cols-4 gap-2">
-                        {PRINT_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.id}
-                            onClick={() => setSelectedPrint(opt.id)}
-                            className={cn(
-                              "print-btn group flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 transition-all",
-                              selectedPrint === opt.id
-                                ? "selected-print"
-                                : "border-slate-200 bg-slate-50 hover:border-cyan-300 hover:bg-cyan-50"
+                      
+                      <div className="bg-slate-50 border-2 border-slate-100 rounded-3xl p-4">
+                        {!account ? (
+                          <div className="text-center py-6">
+                            <Wallet className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+                            <p className="text-[10px] font-black uppercase text-slate-400 mb-4">Connect wallet to print your NFT</p>
+                            <CustomConnectButton className="!text-xs !px-4 !py-2" />
+                          </div>
+                        ) : loadingNfts ? (
+                          <div className="text-center py-8">
+                            <LoaderCircle className="w-8 h-8 animate-spin mx-auto text-cyan-400" />
+                            <p className="text-[10px] font-black uppercase text-slate-400 mt-2">Scanning Collection...</p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                            {/* None Option */}
+                            <button
+                              onClick={() => setSelectedPrintId("none")}
+                              className={cn(
+                                "aspect-square rounded-xl border-2 flex flex-col items-center justify-center transition-all bg-white",
+                                selectedPrintId === "none" ? "border-cyan-400 shadow-md scale-105 z-10" : "border-slate-100 opacity-60 hover:opacity-100"
+                              )}
+                            >
+                              <iconify-icon icon="solar:forbidden-circle-bold-duotone" class="text-xl text-slate-300"></iconify-icon>
+                              <span className="text-[8px] font-black uppercase mt-1">NONE</span>
+                            </button>
+
+                            {/* Owned NFTs */}
+                            {ownedNfts.map((nft) => (
+                              <button
+                                key={nft.id}
+                                onClick={() => setSelectedPrintId(nft.id)}
+                                className={cn(
+                                  "aspect-square rounded-xl border-2 overflow-hidden relative transition-all bg-white",
+                                  selectedPrintId === nft.id ? "border-cyan-400 shadow-md scale-105 z-10" : "border-slate-100 opacity-70 hover:opacity-100"
+                                )}
+                              >
+                                <Image src={nft.imageUrl} alt={nft.name} fill className="object-cover" />
+                                {selectedPrintId === nft.id && (
+                                  <div className="absolute inset-0 bg-cyan-400/10 flex items-center justify-center">
+                                    <div className="bg-white rounded-full p-0.5 border border-cyan-400">
+                                      <iconify-icon icon="solar:check-circle-bold" class="text-xs text-cyan-500"></iconify-icon>
+                                    </div>
+                                  </div>
+                                )}
+                              </button>
+                            ))}
+
+                            {ownedNfts.length === 0 && (
+                              <div className="col-span-full py-6 text-center">
+                                <Sparkles className="w-8 h-8 mx-auto text-amber-200 mb-2" />
+                                <p className="text-[10px] font-black uppercase text-slate-400 leading-tight">No Kapogians found in this wallet.<br/>Summon one to unlock custom prints.</p>
+                              </div>
                             )}
-                          >
-                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-100 group-hover:border-cyan-200 transition-all">
-                              <iconify-icon icon={opt.icon} class={cn("text-2xl", opt.color)}></iconify-icon>
-                            </div>
-                            <span className="text-[10px] font-extrabold text-slate-400 text-center leading-tight">{opt.label}</span>
-                          </button>
-                        ))}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -606,15 +664,19 @@ export default function KapogianShopV2() {
                     <div className="bg-sky-50 rounded-3xl p-5 border-2 border-sky-100">
                       <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-3">Order Summary</p>
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-md flex-shrink-0">
-                          <Image src={selectedProduct.animatedImage} alt="sum" width={40} height={40} unoptimized className="object-contain" />
+                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-md flex-shrink-0 overflow-hidden relative">
+                          {selectedPrintId !== "none" && selectedNft ? (
+                            <Image src={selectedNft.imageUrl} alt="sum" fill className="object-cover" />
+                          ) : (
+                            <Image src={selectedProduct.animatedImage} alt="sum" width={40} height={40} unoptimized className="object-contain" />
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-extrabold text-slate-800 text-sm truncate">{selectedProduct.name}</p>
                           <p className="text-slate-400 font-bold text-xs uppercase tracking-tight">
                             Qty: {currentQty} {selectedSize && `· Size: ${selectedSize}`}
                           </p>
-                          {selectedPrint !== "none" && (
+                          {selectedPrintId !== "none" && (
                             <p className="text-cyan-500 font-bold text-xs mt-0.5 uppercase tracking-tighter">🎨 Print: {printLabel}</p>
                           )}
                         </div>
