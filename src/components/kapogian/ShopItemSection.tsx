@@ -666,12 +666,9 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                           <span className="flex items-center gap-1"><DollarSign size={10} />{item.priceSui.toFixed(2)}</span>
                           <span className="flex items-center gap-1"><Layers size={10} />{item.stock} Units</span>
                         </div>
-                        {/* Delete hint when live */}
-                        {item.available && (
-                          <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-1">
-                            Hide item to enable deletion
-                          </p>
-                        )}
+                        <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-1">
+                          {item.available ? "PAUSE TO ENABLE BURN" : "READY FOR BURN"}
+                        </p>
                       </div>
 
                       {/* Actions */}
@@ -679,7 +676,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                         {/* Visibility Toggle */}
                         <button onClick={() => handleToggleStatus(item)} disabled={isToggling}
                           title={item.available ? "Hide from Shop" : "Show in Shop"}
-                          className={cn("w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center transition-all shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none disabled:opacity-40",
+                          className={cn("w-10 h-10 rounded-xl border-4 border-black flex items-center justify-center transition-all shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none disabled:opacity-40",
                             item.available ? "bg-green-400 hover:bg-green-500" : "bg-white hover:bg-slate-50")}>
                           {isToggling
                             ? <LoaderCircle size={16} className="animate-spin" />
@@ -687,16 +684,15 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                         </button>
                         {/* Edit */}
                         <button onClick={() => openEdit(item)}
-                          className="w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center bg-white hover:bg-slate-50 transition-all shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none">
+                          className="w-10 h-10 rounded-xl border-4 border-black flex items-center justify-center bg-white hover:bg-slate-50 transition-all shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none">
                           <Pencil size={16} />
                         </button>
-                        {/* Delete — only visible when paused */}
-                        {!item.available && (
-                          <button onClick={() => handleDeleteItem(item)} disabled={isDeleting} title="Delete item (permanent)"
-                            className="w-10 h-10 rounded-xl border-2 border-red-400 bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-all shadow-[2px_2px_0_0_rgba(239,68,68,0.3)] active:translate-y-0.5 active:shadow-none disabled:opacity-40">
-                            {isDeleting ? <LoaderCircle size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                          </button>
-                        )}
+                        {/* Delete */}
+                        <button onClick={() => handleDeleteItem(item)} disabled={isDeleting || item.available} title="Delete item (permanent)"
+                          className={cn("w-10 h-10 rounded-xl border-4 border-black flex items-center justify-center transition-all shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none disabled:opacity-20 disabled:shadow-none disabled:active:translate-y-0",
+                            item.available ? "bg-slate-100 text-slate-300" : "bg-red-500 text-white hover:bg-red-600 shadow-[2px_2px_0_0_rgba(239,68,68,0.4)]")}>
+                          {isDeleting ? <LoaderCircle size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                        </button>
                       </div>
                     </div>
                   </div>
