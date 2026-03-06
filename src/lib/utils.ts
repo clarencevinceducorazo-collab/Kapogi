@@ -1,5 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { Transaction } from '@mysten/sui/transactions';
+import { CONTRACT_ADDRESSES, MODULES } from '@/lib/constants';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -45,4 +47,44 @@ export function timeAgo(timestamp: number | string): string {
     return `${minutes}m ago`;
   }
   return `${Math.floor(seconds)}s ago`;
+}
+
+export async function burnShopItem(params: {
+  superAdminCapId: string;
+  shopItemId: string;
+  signAndExecute: any;
+}) {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::burn_shop_item`,
+    arguments: [
+      tx.object(params.superAdminCapId),
+      tx.object(CONTRACT_ADDRESSES.SHOP_REGISTRY_ID),
+      tx.object(params.shopItemId),
+      tx.object('0x6'),
+    ],
+  });
+  return params.signAndExecute({ transaction: tx }, { showEffects: true });
+}
+
+/**
+ * Whitelisted Admin: Permanently burn a delivered ShopReceipt.
+ * Receipt MUST have status === 2 (delivered) before calling.
+ * Removes receipt from ShopReceiptRegistry on-chain.
+ */
+export async function burnShopReceipt(params: {
+  shopReceiptId: string;
+  signAndExecute: any;
+}) {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::burn_shop_receipt`,
+    arguments: [
+      tx.object(CONTRACT_ADDRESSES.ADMIN_REGISTRY_ID),
+      tx.object(CONTRACT_ADDRESSES.SHOP_RECEIPT_REGISTRY_ID),
+      tx.object(params.shopReceiptId),
+      tx.object('0x6'),
+    ],
+  });
+  return params.signAndExecute({ transaction: tx }, { showEffects: true });
 }

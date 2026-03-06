@@ -13,6 +13,40 @@ export const AboutSection = () => {
 
   return (
     <section className="relative w-full swirl-bg text-slate-300 flex items-center justify-center pt-24 pb-80 lg:py-32 overflow-hidden">
+      {/* top grass SVG */}
+      <div className="absolute top-0 left-0 w-full overflow-hidden leading-[0] z-0 pointer-events-none">
+        <svg
+          className="relative block w-[calc(100%+1.3px)] h-24"
+          xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="none"
+          viewBox="0 0 1200 120"
+        >
+          <defs>
+            <linearGradient id="grassGradTop" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="80%" stopColor="#27ae60" />
+              <stop offset="50%" stopColor="#2ecc71" />
+              <stop offset="0%" stopColor="#34eb7a" />
+            </linearGradient>
+          </defs>
+          <g transform="scale(1,-1) translate(0,-120)">
+            <path
+              d="M0,90 C200,60 400,120 600,80 C800,40 1000,90 1200,50 L1200,120 L0,120 Z"
+              fill="url(#grassGradTop)"
+            />
+            <path
+              d="M0,90 C200,75 400,135 600,95 C800,55 1000,105 1200,65 L1200,120 L0,120 Z"
+              fill="rgba(0,0,0,0.12)"
+            />
+            <path
+              d="M0,90 C200,60 400,120 600,80 C800,40 1000,90 1200,50"
+              fill="none"
+              stroke="#88ffb0"
+              strokeWidth="5"
+              opacity="0.5"
+            />
+          </g>
+        </svg>
+      </div>
       <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
           {/* Left Column: Character Visual (Desktop) */}
@@ -79,7 +113,6 @@ export const AboutSection = () => {
                 Explore Collection
                 <ArrowRight className="h-4 w-4 stroke-[2] transition-transform group-hover:translate-x-1" />
               </Link>
-           
             </div>
 
             {/* Secondary Small Character (Absolute positioned for flair) */}

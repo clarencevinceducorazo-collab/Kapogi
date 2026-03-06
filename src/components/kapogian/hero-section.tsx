@@ -96,6 +96,42 @@ export const HeroSection = () => {
           className="object-contain object-top"
         />
       </div>
+
+      {/* Grass SVG at bottom of section */}
+      <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] z-5 pointer-events-none">
+        <svg
+          className="relative block w-[calc(100%+1.3px)] h-28"
+          xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="none"
+          viewBox="0 0 1200 120"
+        >
+          <defs>
+            <linearGradient id="grassGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#34eb7a" />
+              <stop offset="50%" stopColor="#2ecc71" />
+              <stop offset="100%" stopColor="#27ae60" />
+            </linearGradient>
+          </defs>
+          {/* primary turf */}
+          <path
+            d="M0,120 C100,80 200,100 300,70 C400,40 500,80 600,50 C700,20 800,60 900,30 C1000,0 1100,40 1200,30 L1200,120 L0,120 Z"
+            fill="url(#grassGrad)"
+          />
+          {/* shadow blades for depth */}
+          <path
+            d="M0,120 C120,90 240,110 360,80 C480,50 600,90 720,60 C840,30 960,70 1080,50 1200,30 L1200,120 L0,120 Z"
+            fill="rgba(0,0,0,0.1)"
+          />
+          {/* light highlight stroke along blade tops */}
+          <path
+            d="M0,120 C100,80 200,100 300,70 C400,40 500,80 600,50 C700,20 800,60 900,30 C1000,0 1100,40 1200,30"
+            fill="none"
+            stroke="#7bef8a"
+            strokeWidth="4"
+            opacity="0.6"
+          />
+        </svg>
+      </div>
     </section>
   );
 };
