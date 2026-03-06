@@ -4,7 +4,7 @@
  * ShopItemSection.tsx
  * Overhauled Admin UI for managing Shop items on-chain.
  * Features a high-fidelity landscape modal with live preview, dropdown multi-selects,
- * Pinata asset library integration, receipts tab, and burn mechanics.
+ * Pinata asset library integration, receipts tab, and deletion mechanics.
  */
 
 import React, { useState, useRef, useEffect } from "react";
@@ -12,7 +12,7 @@ import {
   ShoppingBag, Plus, RefreshCw, LoaderCircle, Pencil, X,
   Package, DollarSign, Layers, ToggleLeft, ToggleRight,
   Image as ImageIcon, Tag, Palette, CheckCircle,
-  ChevronDown, List, Flame, AlertTriangle, AlertCircle
+  ChevronDown, List, Trash2, AlertTriangle, AlertCircle
 } from "lucide-react";
 import { Transaction } from "@mysten/sui/transactions";
 import {
@@ -225,7 +225,7 @@ function DropdownAssetSelect({ label, value, onChange, onToast, required, files,
           <ChevronDown size={14} className={cn("ml-auto text-slate-300 transition-transform", open && "rotate-180")} />
         </div>
         {open && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-slate-100 rounded-2xl shadow-2xl z-[60] overflow-hidden flex flex-col animate-in slide-in-from-top-2 duration-200">
+          <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-slate-100 rounded-2xl shadow-xl z-[60] overflow-hidden flex flex-col animate-in slide-in-from-top-2 duration-200">
             <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadStatus === 'loading'}
               className="p-4 border-b-2 border-slate-50 hover:bg-sky-50 flex items-center gap-3 transition-colors text-sky-600">
               <div className="w-8 h-8 rounded-xl bg-sky-100 flex items-center justify-center">
@@ -319,9 +319,9 @@ function DropdownAssetSelect({ label, value, onChange, onToast, required, files,
   );
 }
 
-// ─── Burn Confirm Modal ───────────────────────────────────────────────────────
+// ─── Delete Confirm Modal ───────────────────────────────────────────────────────
 
-function BurnConfirmModal({ label, warning, onConfirm, onCancel, loading }: {
+function DeleteConfirmModal({ label, warning, onConfirm, onCancel, loading }: {
   label: string; warning: string;
   onConfirm: () => void; onCancel: () => void; loading: boolean;
 }) {
@@ -330,10 +330,10 @@ function BurnConfirmModal({ label, warning, onConfirm, onCancel, loading }: {
       <div className="bg-white border-4 border-red-500 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 rounded-xl bg-red-100 border-2 border-red-300 flex items-center justify-center flex-shrink-0">
-            <Flame size={18} className="text-red-500" />
+            <Trash2 size={18} className="text-red-500" />
           </div>
           <div>
-            <p className="font-black text-sm text-slate-800">Confirm Burn</p>
+            <p className="font-black text-sm text-slate-800">Confirm Deletion</p>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">This cannot be undone</p>
           </div>
         </div>
@@ -353,7 +353,7 @@ function BurnConfirmModal({ label, warning, onConfirm, onCancel, loading }: {
           </button>
           <button onClick={onConfirm} disabled={loading}
             className="flex-1 h-10 bg-red-500 text-white rounded-xl font-black text-sm border-2 border-red-300 disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-red-600">
-            {loading ? <LoaderCircle size={14} className="animate-spin" /> : <><Flame size={14} /> Burn</>}
+            {loading ? <LoaderCircle size={14} className="animate-spin" /> : <><Trash2 size={14} /> Delete</>}
           </button>
         </div>
       </div>
@@ -394,11 +394,11 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
   // ── Toggle state ───────────────────────────────────────────────────────────
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  // ── Burn state ─────────────────────────────────────────────────────────────
-  const [burnItemConfirm, setBurnItemConfirm]       = useState<ShopItem | null>(null);
-  const [burningItemId, setBurningItemId]           = useState<string | null>(null);
-  const [burnReceiptConfirm, setBurnReceiptConfirm] = useState<ShopReceipt | null>(null);
-  const [burningReceiptId, setBurningReceiptId]     = useState<string | null>(null);
+  // ── Delete state ─────────────────────────────────────────────────────────────
+  const [deleteItemConfirm, setDeleteItemConfirm]       = useState<ShopItem | null>(null);
+  const [deletingItemId, setDeletingItemId]           = useState<string | null>(null);
+  const [deleteReceiptConfirm, setDeleteReceiptConfirm] = useState<ShopReceipt | null>(null);
+  const [deletingReceiptId, setDeletingReceiptId]     = useState<string | null>(null);
 
   // ── Receipt filter ─────────────────────────────────────────────────────────
   const [receiptFilter, setReceiptFilter] = useState<"all" | "delivered">("all");
@@ -508,14 +508,14 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
     }
   };
 
-  // ── Burn ShopItem (Super Admin, must be paused) ────────────────────────────
-  const handleBurnItem = (item: ShopItem) => {
-    if (item.available) { onToast("Pause the item before burning.", "error"); return; }
-    setBurnItemConfirm(item);
+  // ── Delete ShopItem (Super Admin, must be paused) ────────────────────────────
+  const handleDeleteItem = (item: ShopItem) => {
+    if (item.available) { onToast("Pause the item before deleting.", "error"); return; }
+    setDeleteItemConfirm(item);
   };
-  const confirmBurnItem = async () => {
-    if (!burnItemConfirm) return;
-    setBurningItemId(burnItemConfirm.id);
+  const confirmDeleteItem = async () => {
+    if (!deleteItemConfirm) return;
+    setDeletingItemId(deleteItemConfirm.id);
     try {
       const tx = new Transaction();
       tx.moveCall({
@@ -523,29 +523,29 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
         arguments: [
           tx.object(superCapId),
           tx.object(CONTRACT_ADDRESSES.SHOP_REGISTRY_ID),
-          tx.object(burnItemConfirm.id),
+          tx.object(deleteItemConfirm.id),
           tx.object("0x6"),
         ],
       });
       await signAndExecute({ transaction: tx }, { showEffects: true });
-      onToast(`"${burnItemConfirm.name}" permanently burned.`, "success");
-      setBurnItemConfirm(null);
+      onToast(`"${deleteItemConfirm.name}" permanently deleted.`, "success");
+      setDeleteItemConfirm(null);
       invalidate();
     } catch (err: any) {
-      onToast(err?.message?.slice(0, 80) ?? "Burn failed.", "error");
+      onToast(err?.message?.slice(0, 80) ?? "Deletion failed.", "error");
     } finally {
-      setBurningItemId(null);
+      setDeletingItemId(null);
     }
   };
 
-  // ── Burn ShopReceipt (Whitelisted Admin, must be delivered) ───────────────
-  const handleBurnReceipt = (receipt: ShopReceipt) => {
-    if (receipt.status !== 2) { onToast("Only delivered receipts can be burned.", "error"); return; }
-    setBurnReceiptConfirm(receipt);
+  // ── Delete ShopReceipt (Whitelisted Admin, must be delivered) ───────────────
+  const handleDeleteReceipt = (receipt: ShopReceipt) => {
+    if (receipt.status !== 2) { onToast("Only delivered receipts can be deleted.", "error"); return; }
+    setDeleteReceiptConfirm(receipt);
   };
-  const confirmBurnReceipt = async () => {
-    if (!burnReceiptConfirm) return;
-    setBurningReceiptId(burnReceiptConfirm.id);
+  const confirmDeleteReceipt = async () => {
+    if (!deleteReceiptConfirm) return;
+    setDeletingReceiptId(deleteReceiptConfirm.id);
     const registryId = adminRegistryId ?? CONTRACT_ADDRESSES.ADMIN_REGISTRY_ID;
     try {
       const tx = new Transaction();
@@ -554,18 +554,18 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
         arguments: [
           tx.object(registryId),
           tx.object(CONTRACT_ADDRESSES.SHOP_RECEIPT_REGISTRY_ID),
-          tx.object(burnReceiptConfirm.id),
+          tx.object(deleteReceiptConfirm.id),
           tx.object("0x6"),
         ],
       });
       await signAndExecute({ transaction: tx }, { showEffects: true });
-      onToast(`Receipt ${shortAddr(burnReceiptConfirm.id)} burned.`, "success");
-      setBurnReceiptConfirm(null);
+      onToast(`Receipt ${shortAddr(deleteReceiptConfirm.id)} deleted.`, "success");
+      setDeleteReceiptConfirm(null);
       invalidate();
     } catch (err: any) {
-      onToast(err?.message?.slice(0, 80) ?? "Burn failed.", "error");
+      onToast(err?.message?.slice(0, 80) ?? "Deletion failed.", "error");
     } finally {
-      setBurningReceiptId(null);
+      setDeletingReceiptId(null);
     }
   };
 
@@ -573,23 +573,23 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
 
   return (
     <>
-      {/* Burn confirm modals — z-[300] so they sit above the item modal z-[200] */}
-      {burnItemConfirm && (
-        <BurnConfirmModal
-          label={`Burn "${burnItemConfirm.name}"`}
+      {/* Delete confirm modals — z-[300] so they sit above the item modal z-[200] */}
+      {deleteItemConfirm && (
+        <DeleteConfirmModal
+          label={`Delete "${deleteItemConfirm.name}"`}
           warning="Permanently deletes the ShopItem from the blockchain and removes it from the registry. Existing receipts are unaffected."
-          onConfirm={confirmBurnItem}
-          onCancel={() => setBurnItemConfirm(null)}
-          loading={!!burningItemId}
+          onConfirm={confirmDeleteItem}
+          onCancel={() => setDeleteItemConfirm(null)}
+          loading={!!deletingItemId}
         />
       )}
-      {burnReceiptConfirm && (
-        <BurnConfirmModal
-          label={`Burn receipt ${shortAddr(burnReceiptConfirm.id)}`}
+      {deleteReceiptConfirm && (
+        <DeleteConfirmModal
+          label={`Delete receipt ${shortAddr(deleteReceiptConfirm.id)}`}
           warning="Permanently deletes the ShopReceipt from the blockchain. Only do this for delivered orders after archiving shipping details."
-          onConfirm={confirmBurnReceipt}
-          onCancel={() => setBurnReceiptConfirm(null)}
-          loading={!!burningReceiptId}
+          onConfirm={confirmDeleteReceipt}
+          onCancel={() => setDeleteReceiptConfirm(null)}
+          loading={!!deletingReceiptId}
         />
       )}
 
@@ -635,7 +635,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
             ) : (
               items.map((item) => {
                 const isToggling = togglingId === item.id;
-                const isBurning  = burningItemId === item.id;
+                const isDeleting  = deletingItemId === item.id;
                 return (
                   <div key={item.id} className="p-4 bg-white hover:bg-slate-50 transition-colors">
                     <div className="flex items-start gap-4">
@@ -666,10 +666,10 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                           <span className="flex items-center gap-1"><DollarSign size={10} />{item.priceSui.toFixed(2)}</span>
                           <span className="flex items-center gap-1"><Layers size={10} />{item.stock} Units</span>
                         </div>
-                        {/* Burn hint when live */}
+                        {/* Delete hint when live */}
                         {item.available && (
                           <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-1">
-                            Pause to enable burn
+                            Pause to enable deletion
                           </p>
                         )}
                       </div>
@@ -688,11 +688,11 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                           className="w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center bg-white hover:bg-slate-50 transition-all shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none">
                           <Pencil size={16} />
                         </button>
-                        {/* Burn — only visible when paused */}
+                        {/* Delete — only visible when paused */}
                         {!item.available && (
-                          <button onClick={() => handleBurnItem(item)} disabled={isBurning} title="Burn item (permanent)"
+                          <button onClick={() => handleDeleteItem(item)} disabled={isDeleting} title="Delete item (permanent)"
                             className="w-10 h-10 rounded-xl border-2 border-red-400 bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-all shadow-[2px_2px_0_0_rgba(239,68,68,0.3)] active:translate-y-0.5 active:shadow-none disabled:opacity-40">
-                            {isBurning ? <LoaderCircle size={16} className="animate-spin" /> : <Flame size={16} />}
+                            {isDeleting ? <LoaderCircle size={16} className="animate-spin" /> : <Trash2 size={16} />}
                           </button>
                         )}
                       </div>
@@ -733,8 +733,8 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
               ) : (
                 filteredReceipts.map((receipt) => {
                   const statusInfo = STATUS_LABELS[receipt.status] ?? STATUS_LABELS[0];
-                  const isBurning  = burningReceiptId === receipt.id;
-                  const canBurn    = receipt.status === 2;
+                  const isDeleting  = deletingReceiptId === receipt.id;
+                  const canDelete    = receipt.status === 2;
                   return (
                     <div key={receipt.id} className="p-4 bg-white hover:bg-slate-50 transition-colors flex items-start gap-3">
                       <div className="flex-1 min-w-0">
@@ -756,17 +756,17 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                           {receipt.chosenColor && <span>{receipt.chosenColor}</span>}
                         </div>
                         <p className="text-[9px] font-mono text-slate-300 mt-0.5">{shortAddr(receipt.id)}</p>
-                        {!canBurn && (
+                        {!canDelete && (
                           <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-0.5">
-                            Mark as delivered to enable burn
+                            Mark as delivered to enable deletion
                           </p>
                         )}
                       </div>
-                      {/* Burn — only for delivered */}
-                      {canBurn && (
-                        <button onClick={() => handleBurnReceipt(receipt)} disabled={isBurning} title="Burn receipt (permanent)"
+                      {/* Delete — only for delivered */}
+                      {canDelete && (
+                        <button onClick={() => handleDeleteReceipt(receipt)} disabled={isDeleting} title="Delete receipt (permanent)"
                           className="w-8 h-8 rounded-lg border-2 border-red-400 bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 disabled:opacity-40 flex-shrink-0">
-                          {isBurning ? <LoaderCircle size={13} className="animate-spin" /> : <Flame size={13} />}
+                          {isDeleting ? <LoaderCircle size={13} className="animate-spin" /> : <Trash2 size={13} />}
                         </button>
                       )}
                     </div>
