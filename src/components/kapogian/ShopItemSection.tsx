@@ -519,7 +519,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
     try {
       const tx = new Transaction();
       tx.moveCall({
-        target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::delete_shop_item`,
+        target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::destroy_test_item`,
         arguments: [
           tx.object(superCapId),
           tx.object(CONTRACT_ADDRESSES.SHOP_REGISTRY_ID),
