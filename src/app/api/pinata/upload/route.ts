@@ -19,8 +19,8 @@ export async function POST(req: NextRequest) {
   try {
     // 1. Proactive size check from headers
     const contentLength = parseInt(req.headers.get("content-length") || "0");
-    if (contentLength > 50 * 1024 * 1024) {
-      return NextResponse.json({ error: "File too large. Max 50MB." }, { status: 413 });
+    if (contentLength > 200 * 1024 * 1024) {
+      return NextResponse.json({ error: "File too large. Max 200MB." }, { status: 413 });
     }
 
     const formData = await req.formData();

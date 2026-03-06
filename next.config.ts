@@ -22,6 +22,12 @@ const nextConfig: NextConfig = {
   // Output configuration for different hosts
   output: 'standalone', // Good for Docker, self-hosting, and some platforms
   
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '200mb',
+    },
+  },
+
   images: {
     unoptimized: true,  // Required for: Cloudflare, Netlify, static exports, and IPFS images
     remotePatterns: [

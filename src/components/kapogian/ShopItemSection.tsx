@@ -33,7 +33,7 @@ import {
 
 const STANDARD_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 const STANDARD_COLORS = ["White", "Black", "Blue", "Red", "Grey", "Beige", "Cyan", "Pink", "Green", "Yellow", "Purple"];
-const MAX_UPLOAD_SIZE = 50 * 1024 * 1024; // 50MB limit for high-res GIFs
+const MAX_UPLOAD_SIZE = 200 * 1024 * 1024; // 200MB limit for high-res GIFs
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -189,7 +189,7 @@ function DropdownAssetSelect({
     if (!file) return;
 
     if (file.size > MAX_UPLOAD_SIZE) {
-      setUploadErrorMsg(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max limit is 50MB.`);
+      setUploadErrorMsg("File is too heavy (Max 200MB). Please optimize the asset.");
       setUploadStatus('error');
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
@@ -202,7 +202,6 @@ function DropdownAssetSelect({
       formData.append("file", file);
       formData.append("name", `shop-asset-${Date.now()}`);
       
-      // Use standard fetch with a longer timeout if needed, but the server handles the heavy lifting
       const res = await fetch("/api/pinata/upload", { 
         method: "POST", 
         body: formData
@@ -286,7 +285,7 @@ function DropdownAssetSelect({
                    "Upload New File"}
                 </p>
                 <p className="text-[10px] font-bold opacity-60">
-                  {uploadStatus === 'loading' ? "Please wait a moment..." : "Add fresh asset up to 50MB"}
+                  {uploadStatus === 'loading' ? "Please wait a moment..." : "Add fresh asset up to 200MB"}
                 </p>
               </div>
               <input type="file" ref={fileInputRef} className="hidden" onChange={handleUpload} accept="image/*" />
