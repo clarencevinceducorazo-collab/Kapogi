@@ -51,7 +51,7 @@ export function useShopRegistry() {
       const fields = obj.data.content.fields as unknown as RawShopRegistryFields;
       return {
         id:           CONTRACT_ADDRESSES.SHOP_REGISTRY_ID,
-        itemIds:      fields.item_ids.map((x) => x.id),
+        itemIds:      fields.item_ids as string[],   // ← no .map(x => x.id)
         totalCreated: Number(fields.total_created),
       };
     },
@@ -130,7 +130,7 @@ export function useShopReceiptRegistry() {
       return {
         id:            CONTRACT_ADDRESSES.SHOP_RECEIPT_REGISTRY_ID,
         totalReceipts: Number(fields.total_receipts),
-        receiptIds:    fields.receipt_ids.map((x) => x.id),
+        receiptIds:    fields.receipt_ids as string[],
       };
     },
     staleTime: 30_000,

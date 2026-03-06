@@ -49,7 +49,7 @@ export interface ShopItem {
 // ─── ShopRegistry (mirrors shop_item::ShopRegistry) ─────────────────────────
 
 export interface RawShopRegistryFields {
-  item_ids:      Array<{ id: string }>;
+  item_ids:      string[];
   total_created: string;
 }
 
@@ -111,7 +111,7 @@ export interface ShopReceipt {
 
 export interface RawShopReceiptRegistryFields {
   total_receipts: string;
-  receipt_ids:    Array<{ id: string }>;
+  receipt_ids:    string[];
 }
 
 export interface ShopReceiptRegistry {
