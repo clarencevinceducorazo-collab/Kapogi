@@ -2,22 +2,25 @@
 
 /**
  * ShopItemSection.tsx
- * Admin UI for managing Shop items on-chain.
- * Added support for direct image uploads to IPFS via Pinata.
+ * Overhauled Admin UI for managing Shop items on-chain.
+ * Features a high-fidelity landscape modal with live preview and tag-based inputs.
  */
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   ShoppingBag, Plus, RefreshCw, LoaderCircle, Pencil, X,
-  Package, DollarSign, Layers,
-  ToggleLeft, ToggleRight, Upload, Image as ImageIcon
+  Package, DollarSign, Layers, ToggleLeft, ToggleRight,
+  Upload, Image as ImageIcon, Tag, Palette, CheckCircle,
+  AlertCircle
 } from "lucide-react";
 import { Transaction } from "@mysten/sui/transactions";
-import { CONTRACT_ADDRESSES, MODULES, SHOP_ITEM_TYPES, SHOP_ITEM_TYPE_LABELS, mistToSui, suiToMist } from "@/lib/constants";
+import { CONTRACT_ADDRESSES, MODULES, SHOP_ITEM_TYPES, SHOP_ITEM_TYPE_LABELS, SHOP_ITEM_TYPE_ICONS, mistToSui, suiToMist } from "@/lib/constants";
 import { useShopItems } from "@/lib/useShopQueries";
 import { useQueryClient } from "@tanstack/react-query";
 import { shopQueryKeys } from "@/lib/useShopQueries";
 import type { ShopItem } from "@/lib/shopTypes";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,142 +33,150 @@ interface Props {
   adminRegistryId?: string;
 }
 
-// ─── Form defaults ────────────────────────────────────────────────────────────
-
 const BLANK_FORM = {
   name: "",
   itemType: SHOP_ITEM_TYPES.SHIRT as number,
   priceSui: "",
   initialStock: "",
-  availableSizes: "",
-  availableColors: "",
+  sizes: [] as string[],
+  colors: [] as string[],
   imageStatic: "",
   imageAnimated: "",
   imageBack: "",
-  colorBg: "",
+  colorBg: "from-cyan-100 to-blue-100",
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helper Components ────────────────────────────────────────────────────────
 
-const ITEM_TYPE_ICONS: Record<number, string> = {
-  [SHOP_ITEM_TYPES.SHIRT]:    "👕",
-  [SHOP_ITEM_TYPES.HOODIE]:   "🧥",
-  [SHOP_ITEM_TYPES.MUG]:      "☕",
-  [SHOP_ITEM_TYPES.MOUSEPAD]: "🖱️",
-  [SHOP_ITEM_TYPES.OTHER]:    "📦",
-};
-
-const shortAddr = (addr: string) =>
-  addr.length > 10 ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : addr;
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function FieldLabel({ children }: { children: React.ReactNode }) {
+function SectionLabel({ icon: Icon, children, required }: { icon: any, children: React.ReactNode, required?: boolean }) {
   return (
-    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-      {children}
-    </label>
+    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+      <Icon size={12} className="opacity-70" />
+      {children} {required && <span className="text-rose-500">*</span>}
+    </div>
   );
 }
 
-function Input({
-  value, onChange, placeholder, type = "text", disabled = false,
-}: {
-  value: string; onChange: (v: string) => void;
-  placeholder?: string; type?: string; disabled?: boolean;
-}) {
-  return (
-    <input
-      type={type}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      disabled={disabled}
-      className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400"
-    />
-  );
-}
-
-/**
- * Reusable Upload Button for Shop Assets
- */
-function ShopImageUploadButton({ 
-  onUploaded, 
-  onToast, 
-  label, 
-  currentUrl 
+function TagInput({ 
+  tags, 
+  onTagsChange, 
+  placeholder 
 }: { 
-  onUploaded: (url: string) => void; 
-  onToast: (msg: string, type: "success" | "error") => void;
-  label: string;
-  currentUrl: string;
+  tags: string[], 
+  onTagsChange: (newTags: string[]) => void,
+  placeholder: string 
 }) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
+  const [input, setInput] = useState("");
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const addTag = (val: string) => {
+    const clean = val.trim().replace(/,/g, '');
+    if (clean && !tags.includes(clean)) {
+      onTagsChange([...tags, clean]);
+    }
+    setInput("");
+  };
+
+  const removeTag = (idx: number) => {
+    onTagsChange(tags.filter((_, i) => i !== idx));
+  };
+
+  return (
+    <div className="flex gap-2 items-center flex-wrap bg-sky-50 border-2 border-sky-100 rounded-2xl px-3 py-2 min-h-[46px] focus-within:border-cyan-300 focus-within:bg-white transition-all">
+      {tags.map((tag, i) => (
+        <span key={i} className="inline-flex items-center gap-1.5 bg-sky-100 text-sky-700 px-2.5 py-1 rounded-full text-[10px] font-black uppercase border border-sky-200 animate-in zoom-in-90 duration-200">
+          {tag}
+          <button type="button" onClick={() => removeTag(i)} className="hover:text-rose-500"><X size={10} strokeWidth={3} /></button>
+        </span>
+      ))}
+      <input
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            addTag(input);
+          } else if (e.key === 'Backspace' && !input && tags.length > 0) {
+            removeTag(tags.length - 1);
+          }
+        }}
+        placeholder={tags.length === 0 ? placeholder : ""}
+        className="bg-transparent border-none outline-none font-bold text-slate-700 text-sm placeholder-slate-300 flex-1 min-w-[80px]"
+      />
+    </div>
+  );
+}
+
+function UploadZone({ 
+  label, 
+  value, 
+  onChange, 
+  onToast,
+  required
+}: { 
+  label: string, 
+  value: string, 
+  onChange: (url: string) => void,
+  onToast: any,
+  required?: boolean
+}) {
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (file.size > 10 * 1024 * 1024) {
-      onToast("File too large (max 10MB)", "error");
-      return;
-    }
+    if (file.size > 10 * 1024 * 1024) return onToast("File too large (max 10MB)", "error");
 
     setUploading(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("name", `shop-asset-${Date.now()}`);
-
-      const res = await fetch("/api/pinata/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Upload failed");
-      }
-
+      const res = await fetch("/api/pinata/upload", { method: "POST", body: formData });
+      if (!res.ok) throw new Error("Upload failed");
       const { imageUrl } = await res.json();
-      onUploaded(imageUrl);
-      onToast(`${label} uploaded!`, "success");
-    } catch (err: any) {
-      onToast(err.message || "Upload failed", "error");
+      onChange(imageUrl);
+      onToast(`${label} Uploaded!`, "success");
+    } catch {
+      onToast("Upload failed.", "error");
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
   return (
-    <div className="flex items-center gap-2 mt-1">
-      <input 
-        ref={fileInputRef} 
-        type="file" 
-        className="hidden" 
-        onChange={handleFileChange}
-        accept="image/*"
-      />
-      <button
-        type="button"
-        disabled={uploading}
-        onClick={() => fileInputRef.current?.click()}
-        className="flex-1 h-9 flex items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-xl font-bold text-[10px] uppercase text-slate-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
-      >
-        {uploading ? (
-          <LoaderCircle size={14} className="animate-spin" />
-        ) : (
-          <Upload size={14} />
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <SectionLabel icon={Upload} required={required}>{label}</SectionLabel>
+      </div>
+      <div 
+        onClick={() => inputRef.current?.click()}
+        className={cn(
+          "h-24 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-1 cursor-pointer transition-all relative overflow-hidden group",
+          value ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300"
         )}
-        {uploading ? "Uploading..." : `Upload ${label}`}
-      </button>
-      {currentUrl && (
-        <div className="w-9 h-9 rounded-lg border-2 border-black overflow-hidden flex-shrink-0 bg-slate-100">
-          <img src={currentUrl} alt="preview" className="w-full h-full object-contain" />
-        </div>
-      )}
+      >
+        <input ref={inputRef} type="file" className="hidden" onChange={handleFile} accept="image/*" />
+        
+        {uploading ? (
+          <div className="flex flex-col items-center">
+            <LoaderCircle className="animate-spin text-sky-400 mb-1" size={20} />
+            <span className="text-[10px] font-black uppercase text-slate-400">Uploading...</span>
+          </div>
+        ) : value ? (
+          <>
+            <img src={value} className="absolute inset-0 w-full h-full object-contain p-2 opacity-20 group-hover:opacity-10 transition-opacity" alt="preview" />
+            <CheckCircle className="text-emerald-500 mb-1" size={20} />
+            <span className="text-[10px] font-black uppercase text-emerald-600 truncate max-w-[80%]">Asset Ready</span>
+          </>
+        ) : (
+          <>
+            <Upload className="text-slate-300 mb-1" size={20} />
+            <span className="text-[10px] font-black uppercase text-slate-400">Click to Upload</span>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -176,29 +187,18 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
   const queryClient = useQueryClient();
   const { data: items = [], isLoading, refetch } = useShopItems(false);
 
-  const [showCreate, setShowCreate]   = useState(false);
-  const [form, setForm]               = useState(BLANK_FORM);
-  const [creating, setCreating]       = useState(false);
+  // Form State
+  const [isOpen, setIsOpen] = useState(false);
+  const [form, setForm] = useState(BLANK_FORM);
+  const [isEditing, setIsEditing] = useState(false);
+  const [targetId, setTargetId] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const [editingId, setEditingId]     = useState<string | null>(null);
-  const [editForm, setEditForm]       = useState(BLANK_FORM);
-  const [savingEdit, setSavingEdit]   = useState(false);
-
-  const [pricingId, setPricingId]     = useState<string | null>(null);
+  // Replenish/Price State
+  const [pricingId, setPricingId] = useState("");
   const [newPriceSui, setNewPriceSui] = useState("");
-  const [savingPrice, setSavingPrice] = useState(false);
-
-  const [stockId, setStockId]         = useState<string | null>(null);
-  const [addStock, setAddStock]       = useState("");
-  const [savingStock, setSavingStock] = useState(false);
-
-  const [togglingId, setTogglingId]   = useState<string | null>(null);
-
-  const setField = (key: keyof typeof BLANK_FORM) => (v: string) =>
-    setForm((f) => ({ ...f, [key]: v }));
-
-  const setEditField = (key: keyof typeof BLANK_FORM) => (v: string) =>
-    setEditForm((f) => ({ ...f, [key]: v }));
+  const [stockId, setStockId] = useState("");
+  const [addStock, setAddStock] = useState("");
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: shopQueryKeys.items });
@@ -206,467 +206,377 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
     refetch();
   };
 
-  const handleCreate = async () => {
-    if (!form.name.trim()) { onToast("Name is required.", "error"); return; }
-    const price = parseFloat(form.priceSui);
-    const stock = parseInt(form.initialStock, 10);
-    if (isNaN(price) || price <= 0) { onToast("Enter a valid price.", "error"); return; }
-    if (isNaN(stock) || stock <= 0) { onToast("Enter a valid stock amount.", "error"); return; }
-
-    setCreating(true);
-    try {
-      const tx = new Transaction();
-      tx.moveCall({
-        target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::create_shop_item`,
-        arguments: [
-          tx.object(superCapId),
-          tx.object(CONTRACT_ADDRESSES.SHOP_REGISTRY_ID),
-          tx.pure.string(form.name.trim()),
-          tx.pure.u8(form.itemType),
-          tx.pure.u64(suiToMist(price)),
-          tx.pure.u64(stock),
-          tx.pure.string(form.availableSizes.trim()),
-          tx.pure.string(form.availableColors.trim()),
-          tx.pure.string(form.imageStatic.trim()),
-          tx.pure.string(form.imageAnimated.trim()),
-          tx.pure.string(form.imageBack.trim()),
-          tx.pure.string(form.colorBg.trim()),
-          tx.object("0x6"),
-        ],
-      });
-      await signAndExecute({ transaction: tx }, { showEffects: true });
-      onToast(`"${form.name}" created!`, "success");
-      setForm(BLANK_FORM);
-      setShowCreate(false);
-      invalidate();
-    } catch (err: any) {
-      console.error(err);
-      onToast(err?.message?.slice(0, 80) ?? "Failed to create item.", "error");
-    } finally {
-      setCreating(false);
-    }
+  const openCreate = () => {
+    setForm(BLANK_FORM);
+    setIsEditing(false);
+    setIsOpen(true);
   };
 
   const openEdit = (item: ShopItem) => {
-    setEditingId(item.id);
-    setEditForm({
+    setForm({
       name: item.name,
       itemType: item.itemType,
       priceSui: item.priceSui.toString(),
       initialStock: item.stock.toString(),
-      availableSizes: item.sizes.join(","),
-      availableColors: item.colors.join(","),
+      sizes: item.sizes,
+      colors: item.colors,
       imageStatic: item.imageStatic,
       imageAnimated: item.imageAnimated,
       imageBack: item.imageBack,
-      colorBg: item.colorBg,
+      colorBg: item.colorBg || "from-cyan-100 to-blue-100",
     });
-    setPricingId(null);
-    setStockId(null);
+    setTargetId(item.id);
+    setIsEditing(true);
+    setIsOpen(true);
   };
 
-  const handleSaveEdit = async (itemId: string) => {
-    if (!editForm.name.trim()) { onToast("Name is required.", "error"); return; }
-    setSavingEdit(true);
+  const handleSubmit = async () => {
+    if (!form.name.trim()) return onToast("Name is required.", "error");
+    if (!form.priceSui || parseFloat(form.priceSui) <= 0) return onToast("Valid price required.", "error");
+    if (!form.initialStock || parseInt(form.initialStock) <= 0) return onToast("Initial stock required.", "error");
+    if (!form.imageStatic || !form.imageAnimated) return onToast("Images required.", "error");
+
+    setSubmitting(true);
     try {
       const tx = new Transaction();
-      tx.moveCall({
-        target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::update_shop_item_display`,
-        arguments: [
-          tx.object(superCapId),
-          tx.object(itemId),
-          tx.pure.string(editForm.name.trim()),
-          tx.pure.string(editForm.availableSizes.trim()),
-          tx.pure.string(editForm.availableColors.trim()),
-          tx.pure.string(editForm.imageStatic.trim()),
-          tx.pure.string(editForm.imageAnimated.trim()),
-          tx.pure.string(editForm.imageBack.trim()),
-          tx.pure.string(editForm.colorBg.trim()),
-          tx.object("0x6"),
-        ],
-      });
-      await signAndExecute({ transaction: tx }, { showEffects: true });
-      onToast("Item updated!", "success");
-      setEditingId(null);
+      if (isEditing) {
+        tx.moveCall({
+          target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::update_shop_item_display`,
+          arguments: [
+            tx.object(superCapId),
+            tx.object(targetId),
+            tx.pure.string(form.name.trim()),
+            tx.pure.string(form.sizes.join(",")),
+            tx.pure.string(form.colors.join(",")),
+            tx.pure.string(form.imageStatic.trim()),
+            tx.pure.string(form.imageAnimated.trim()),
+            tx.pure.string(form.imageBack.trim()),
+            tx.pure.string(form.colorBg.trim()),
+            tx.object("0x6"),
+          ],
+        });
+      } else {
+        tx.moveCall({
+          target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::create_shop_item`,
+          arguments: [
+            tx.object(superCapId),
+            tx.object(CONTRACT_ADDRESSES.SHOP_REGISTRY_ID),
+            tx.pure.string(form.name.trim()),
+            tx.pure.u8(form.itemType),
+            tx.pure.u64(suiToMist(parseFloat(form.priceSui))),
+            tx.pure.u64(parseInt(form.initialStock)),
+            tx.pure.string(form.sizes.join(",")),
+            tx.pure.string(form.colors.join(",")),
+            tx.pure.string(form.imageStatic.trim()),
+            tx.pure.string(form.imageAnimated.trim()),
+            tx.pure.string(form.imageBack.trim()),
+            tx.pure.string(form.colorBg.trim()),
+            tx.object("0x6"),
+          ],
+        });
+      }
+      await signAndExecute({ transaction: tx });
+      onToast(isEditing ? "Item updated!" : "Item created!", "success");
+      setIsOpen(false);
       invalidate();
-    } catch (err: any) {
-      onToast(err?.message?.slice(0, 80) ?? "Update failed.", "error");
+    } catch (e: any) {
+      onToast(e.message || "Action failed.", "error");
     } finally {
-      setSavingEdit(false);
+      setSubmitting(false);
     }
   };
 
-  const handleSavePrice = async (itemId: string) => {
-    const sui = parseFloat(newPriceSui);
-    if (isNaN(sui) || sui <= 0) { onToast("Enter a valid price.", "error"); return; }
-    setSavingPrice(true);
-    try {
-      const tx = new Transaction();
-      tx.moveCall({
-        target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::update_shop_item_price`,
-        arguments: [
-          tx.object(superCapId),
-          tx.object(itemId),
-          tx.pure.u64(suiToMist(sui)),
-          tx.object("0x6"),
-        ],
-      });
-      await signAndExecute({ transaction: tx }, { showEffects: true });
-      onToast("Price updated!", "success");
-      setPricingId(null);
-      setNewPriceSui("");
-      invalidate();
-    } catch (err: any) {
-      onToast(err?.message?.slice(0, 80) ?? "Price update failed.", "error");
-    } finally {
-      setSavingPrice(false);
-    }
-  };
-
-  const handleReplenish = async (itemId: string) => {
-    const amount = parseInt(addStock, 10);
-    if (isNaN(amount) || amount <= 0) { onToast("Enter a valid stock amount.", "error"); return; }
+  const handleToggleStatus = async (item: ShopItem) => {
     const registryId = adminRegistryId || CONTRACT_ADDRESSES.ADMIN_REGISTRY_ID;
-    setSavingStock(true);
     try {
       const tx = new Transaction();
+      const func = item.available ? "pause_shop_item" : "unpause_shop_item";
       tx.moveCall({
-        target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::replenish_shop_stock`,
-        arguments: [
-          tx.object(registryId),
-          tx.object(itemId),
-          tx.pure.u64(amount),
-          tx.object("0x6"),
-        ],
+        target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::${func}`,
+        arguments: [tx.object(registryId), tx.object(item.id), tx.object("0x6")],
       });
-      await signAndExecute({ transaction: tx }, { showEffects: true });
-      onToast(`+${amount} stock added!`, "success");
-      setStockId(null);
-      setAddStock("");
+      await signAndExecute({ transaction: tx });
+      onToast(item.available ? "Item paused." : "Item live!", item.available ? "info" : "success");
       invalidate();
-    } catch (err: any) {
-      onToast(err?.message?.slice(0, 80) ?? "Replenish failed.", "error");
-    } finally {
-      setSavingStock(false);
+    } catch (e: any) {
+      onToast("Toggle failed.", "error");
     }
   };
 
-  const handleToggleAvailability = async (item: ShopItem) => {
-    const registryId = adminRegistryId || CONTRACT_ADDRESSES.ADMIN_REGISTRY_ID;
-    setTogglingId(item.id);
-    try {
-      const tx = new Transaction();
-      const fn = item.available ? "pause_shop_item" : "unpause_shop_item";
-      tx.moveCall({
-        target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::${fn}`,
-        arguments: [
-          tx.object(registryId),
-          tx.object(item.id),
-          tx.object("0x6"),
-        ],
-      });
-      await signAndExecute({ transaction: tx }, { showEffects: true });
-      onToast(item.available ? `"${item.name}" paused.` : `"${item.name}" live!`, item.available ? "info" : "success");
-      invalidate();
-    } catch (err: any) {
-      onToast(err?.message?.slice(0, 80) ?? "Toggle failed.", "error");
-    } finally {
-      setTogglingId(null);
-    }
-  };
+  const PRESET_BGS = [
+    "from-cyan-100 to-blue-100",
+    "from-pink-100 to-rose-100",
+    "from-emerald-100 to-teal-100",
+    "from-violet-100 to-fuchsia-100",
+    "from-yellow-100 to-amber-100",
+    "from-orange-100 to-red-100",
+    "from-slate-100 to-zinc-100",
+    "from-indigo-100 to-purple-100"
+  ];
 
   return (
-    <section className="border-4 border-black rounded-2xl overflow-hidden">
-      <div className="bg-black text-white px-5 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ShoppingBag size={16} className="text-cyan-400" />
-          <h3 className="font-black uppercase text-sm tracking-tight">Shop Items</h3>
+    <section className="border-4 border-black rounded-3xl overflow-hidden">
+      <div className="bg-black text-white px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <ShoppingBag size={20} className="text-cyan-400" />
+          <h3 className="font-black uppercase text-base tracking-tight">Shop Inventory</h3>
           <span className="ml-1 px-2 py-0.5 bg-white/10 rounded text-[10px] font-black">{items.length}</span>
         </div>
         <button
-          onClick={() => { setShowCreate((v) => !v); setEditingId(null); setPricingId(null); setStockId(null); }}
-          className="flex items-center gap-1.5 h-8 px-3 bg-cyan-400 text-black rounded-lg border-2 border-cyan-200 font-black text-xs uppercase hover:bg-cyan-300"
+          onClick={openCreate}
+          className="flex items-center gap-2 h-10 px-4 bg-cyan-400 text-black rounded-xl border-2 border-cyan-200 font-black text-xs uppercase hover:bg-cyan-300 shadow-[3px_3px_0_0_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none transition-all"
         >
-          <Plus size={13} /> New Item
+          <Plus size={16} /> New Item
         </button>
       </div>
 
-      {showCreate && (
-        <div className="p-5 border-b-2 border-black bg-cyan-50 space-y-3">
-          <p className="text-[10px] font-black uppercase tracking-widest text-cyan-700 mb-1">
-            Create New Shop Item
-          </p>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <FieldLabel>Item Name *</FieldLabel>
-              <Input value={form.name} onChange={setField("name")} placeholder="e.g. Kapogian Classic Tee" />
-            </div>
-
-            <div>
-              <FieldLabel>Item Type *</FieldLabel>
-              <select
-                value={form.itemType}
-                onChange={(e) => setForm((f) => ({ ...f, itemType: Number(e.target.value) }))}
-                className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-bold text-sm bg-white outline-none cursor-pointer"
-              >
-                {Object.entries(SHOP_ITEM_TYPE_LABELS).map(([val, label]) => (
-                  <option key={val} value={val}>
-                    {ITEM_TYPE_ICONS[Number(val)]} {label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <FieldLabel>Price (SUI) *</FieldLabel>
-              <Input value={form.priceSui} onChange={setField("priceSui")} placeholder="e.g. 15" type="number" />
-            </div>
-
-            <div>
-              <FieldLabel>Initial Stock *</FieldLabel>
-              <Input value={form.initialStock} onChange={setField("initialStock")} placeholder="e.g. 100" type="number" />
-            </div>
-
-            <div>
-              <FieldLabel>Sizes (comma-separated)</FieldLabel>
-              <Input value={form.availableSizes} onChange={setField("availableSizes")} placeholder="XS,S,M,L,XL,XXL" />
-            </div>
-
-            <div className="col-span-2">
-              <FieldLabel>Colors (comma-separated)</FieldLabel>
-              <Input value={form.availableColors} onChange={setField("availableColors")} placeholder="White,Black,Blue" />
-            </div>
-
-            <div className="col-span-2 space-y-1">
-              <FieldLabel>Static Image URL</FieldLabel>
-              <Input value={form.imageStatic} onChange={setField("imageStatic")} placeholder="ipfs://... or https://..." />
-              <ShopImageUploadButton 
-                label="Static Image" 
-                currentUrl={form.imageStatic} 
-                onUploaded={setField("imageStatic")} 
-                onToast={onToast as any} 
-              />
-            </div>
-
-            <div className="col-span-2 space-y-1">
-              <FieldLabel>Animated Image URL (GIF/WEBP)</FieldLabel>
-              <Input value={form.imageAnimated} onChange={setField("imageAnimated")} placeholder="ipfs://... or https://..." />
-              <ShopImageUploadButton 
-                label="Animated GIF" 
-                currentUrl={form.imageAnimated} 
-                onUploaded={setField("imageAnimated")} 
-                onToast={onToast as any} 
-              />
-            </div>
-
-            <div className="col-span-2 space-y-1">
-              <FieldLabel>Back Image URL (optional)</FieldLabel>
-              <Input value={form.imageBack} onChange={setField("imageBack")} placeholder="ipfs://..." />
-              <ShopImageUploadButton 
-                label="Back View" 
-                currentUrl={form.imageBack} 
-                onUploaded={setField("imageBack")} 
-                onToast={onToast as any} 
-              />
-            </div>
-
-            <div className="col-span-2">
-              <FieldLabel>Card BG Color (optional)</FieldLabel>
-              <Input value={form.colorBg} onChange={setField("colorBg")} placeholder="#f8fafc or bg-sky-100" />
-            </div>
-          </div>
-
-          <div className="flex gap-2 pt-1">
-            <button
-              onClick={() => setShowCreate(false)}
-              className="flex-1 h-10 border-2 border-slate-200 rounded-xl font-bold text-sm text-slate-500 hover:bg-slate-50"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleCreate}
-              disabled={creating}
-              className="flex-1 h-10 bg-black text-white rounded-xl font-black text-sm border-2 border-black disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {creating ? <LoaderCircle size={14} className="animate-spin" /> : <><Plus size={14} /> Create Item</>}
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="divide-y-2 divide-slate-100 max-h-[520px] overflow-y-auto">
+      <div className="divide-y-2 divide-slate-100 max-h-[600px] overflow-y-auto">
         {isLoading ? (
-          <div className="p-8 flex items-center justify-center gap-2 text-slate-400 font-black text-xs uppercase">
-            <LoaderCircle size={16} className="animate-spin" /> Loading items...
+          <div className="p-12 flex flex-col items-center gap-3 text-slate-400 font-black text-xs uppercase">
+            <LoaderCircle className="animate-spin" size={24} />
+            Loading Shop Objects...
           </div>
         ) : items.length === 0 ? (
-          <div className="p-8 text-center font-black text-slate-300 text-xs uppercase">
-            No shop items yet. Create one above.
+          <div className="p-12 text-center font-black text-slate-300 text-xs uppercase italic">
+            No items on-chain. Deploy your first merch.
           </div>
         ) : (
-          items.map((item) => {
-            const isEditing  = editingId === item.id;
-            const isPricing  = pricingId === item.id;
-            const isStocking = stockId === item.id;
-            const isToggling = togglingId === item.id;
+          items.map((item) => (
+            <div key={item.id} className="p-4 bg-white hover:bg-slate-50 transition-colors">
+              <div className="flex items-start gap-4">
+                <div className={cn("w-16 h-16 rounded-2xl border-4 border-black flex-shrink-0 overflow-hidden bg-gradient-to-br", item.colorBg || "from-slate-50 to-slate-100")}>
+                  {item.imageStatic ? (
+                    <img src={item.imageStatic} className="w-full h-full object-contain p-1" alt={item.name} />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-2xl">{SHOP_ITEM_TYPE_ICONS[item.itemType]}</div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <p className="font-black text-slate-800 text-sm">{item.name}</p>
+                    <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
+                      {SHOP_ITEM_TYPE_LABELS[item.itemType]}
+                    </span>
+                    <span className={cn("text-[9px] font-black uppercase px-2 py-0.5 rounded-full border", 
+                      item.available ? "bg-green-50 text-green-600 border-green-200" : "bg-red-50 text-red-600 border-red-200")}>
+                      {item.available ? "Live" : "Paused"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    <span className="flex items-center gap-1"><DollarSign size={10} />{item.priceSui.toFixed(2)}</span>
+                    <span className="flex items-center gap-1"><Layers size={10} />{item.stock} Units</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => handleToggleStatus(item)} className="w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center bg-white hover:bg-slate-50 transition-all shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none">
+                    {item.available ? <ToggleRight className="text-green-500" /> : <ToggleLeft className="text-slate-300" />}
+                  </button>
+                  <button onClick={() => openEdit(item)} className="w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center bg-white hover:bg-slate-50 transition-all shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none">
+                    <Pencil size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
 
-            return (
-              <div key={item.id} className="p-4 bg-white">
-                <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-xl border-2 border-black bg-slate-100 flex-shrink-0 overflow-hidden flex items-center justify-center text-xl">
-                    {item.imageStatic ? (
-                      <img src={item.imageStatic} alt={item.name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+      {/* ─── OVERHAULED MODAL ─── */}
+      {isOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setIsOpen(false)} />
+          
+          <div className="relative w-full max-w-5xl bg-white rounded-[3rem] border-4 border-black shadow-[12px_12px_0_0_rgba(0,0,0,1)] flex overflow-hidden animate-in zoom-in-95 duration-300" style={{ maxHeight: '92vh' }}>
+            
+            {/* LEFT: Live Preview */}
+            <div className={cn("w-72 flex-shrink-0 p-8 border-r-4 border-slate-50 relative overflow-hidden transition-all bg-gradient-to-br", form.colorBg)}>
+              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#000_1.5px,transparent_1.5px)] [background-size:16px_16px]" />
+              
+              <div className="relative z-10 flex flex-col h-full items-center">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6 flex items-center gap-2">
+                  <iconify-icon icon="solar:star-circle-bold" /> Live Preview
+                </span>
+
+                <div className="w-full bg-white rounded-[2.5rem] border-4 border-black p-4 shadow-xl mb-6 flex flex-col items-center">
+                  <div className={cn("w-full aspect-square rounded-[1.8rem] border-2 border-slate-50 flex items-center justify-center relative mb-4 transition-all bg-gradient-to-br", form.colorBg)}>
+                    {form.imageStatic ? (
+                      <img src={form.imageStatic} className="w-full h-full object-contain p-2" alt="p" />
                     ) : (
-                      <span>{ITEM_TYPE_ICONS[item.itemType]}</span>
+                      <div className="text-6xl opacity-20">{SHOP_ITEM_TYPE_ICONS[form.itemType as keyof typeof SHOP_ITEM_TYPE_ICONS]}</div>
                     )}
+                    <span className="absolute top-2 right-2 bg-yellow-300 text-black text-[8px] font-black px-2 py-0.5 rounded-full border-2 border-black">NEW</span>
                   </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-black text-sm text-slate-800 truncate">{item.name}</p>
-                      <span className="px-1.5 py-0.5 border rounded text-[9px] font-black uppercase bg-slate-100 text-slate-500 border-slate-200">
-                        {ITEM_TYPE_ICONS[item.itemType]} {SHOP_ITEM_TYPE_LABELS[item.itemType]}
-                      </span>
-                      <span className={`px-1.5 py-0.5 border rounded text-[9px] font-black uppercase ${item.available ? "bg-green-100 text-green-700 border-green-300" : "bg-red-100 text-red-600 border-red-300"}`}>
-                        {item.available ? "Live" : "Paused"}
-                      </span>
+                  <div className="text-center w-full px-2">
+                    <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest">{SHOP_ITEM_TYPE_LABELS[form.itemType as keyof typeof SHOP_ITEM_TYPE_LABELS]}</span>
+                    <h4 className="font-headline text-lg text-slate-800 leading-tight uppercase truncate">{form.name || "Product Name"}</h4>
+                    <div className="flex items-center justify-center gap-1.5 mt-2 bg-slate-50 rounded-xl py-1.5 border border-slate-100">
+                      <iconify-icon icon="token-branded:sui" class="text-blue-500 text-sm" />
+                      <span className="font-black text-sm">{form.priceSui || "0.00"}</span>
                     </div>
-                    <div className="flex items-center gap-3 mt-0.5 text-[10px] font-bold text-slate-400 flex-wrap">
-                      <span className="flex items-center gap-1"><DollarSign size={9} />{item.priceSui.toFixed(2)} SUI</span>
-                      <span className="flex items-center gap-1"><Layers size={9} />{item.stock} in stock</span>
-                    </div>
-                    <p className="text-[9px] font-mono text-slate-300 mt-0.5">{shortAddr(item.id)}</p>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
-                    <button
-                      onClick={() => handleToggleAvailability(item)}
-                      disabled={isToggling}
-                      title={item.available ? "Pause" : "Unpause"}
-                      className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors disabled:opacity-40 ${item.available ? "bg-green-400 hover:bg-green-500" : "bg-slate-200 hover:bg-slate-300"}`}
-                    >
-                      {isToggling ? <LoaderCircle size={13} className="animate-spin" /> : item.available ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
-                    </button>
-
-                    <button
-                      onClick={() => isEditing ? setEditingId(null) : openEdit(item)}
-                      title="Edit display"
-                      className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors ${isEditing ? "bg-blue-400 text-white" : "bg-white hover:bg-blue-50"}`}
-                    >
-                      <Pencil size={13} />
-                    </button>
-
-                    <button
-                      onClick={() => { setPricingId(isPricing ? null : item.id); setNewPriceSui(""); setEditingId(null); setStockId(null); }}
-                      title="Update price"
-                      className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors ${isPricing ? "bg-orange-400 text-white" : "bg-white hover:bg-orange-50"}`}
-                    >
-                      <DollarSign size={13} />
-                    </button>
-
-                    <button
-                      onClick={() => { setStockId(isStocking ? null : item.id); setAddStock(""); setEditingId(null); setPricingId(null); }}
-                      title="Replenish stock"
-                      className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors ${isStocking ? "bg-teal-400 text-white" : "bg-white hover:bg-teal-50"}`}
-                    >
-                      <Package size={13} />
-                    </button>
                   </div>
                 </div>
 
-                {isEditing && (
-                  <div className="mt-3 p-3 bg-blue-50 border-2 border-blue-200 rounded-xl space-y-2">
-                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Edit Display Fields</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="col-span-2">
-                        <FieldLabel>Name</FieldLabel>
-                        <Input value={editForm.name} onChange={setEditField("name")} placeholder="Item name" />
-                      </div>
-                      <div>
-                        <FieldLabel>Sizes (comma-separated)</FieldLabel>
-                        <Input value={editForm.availableSizes} onChange={setEditField("availableSizes")} placeholder="XS,S,M,L,XL" />
-                      </div>
-                      <div>
-                        <FieldLabel>Colors (comma-separated)</FieldLabel>
-                        <Input value={editForm.availableColors} onChange={setEditField("availableColors")} placeholder="White,Black" />
-                      </div>
-                      <div className="col-span-2 space-y-1">
-                        <FieldLabel>Static Image URL</FieldLabel>
-                        <Input value={editForm.imageStatic} onChange={setEditField("imageStatic")} placeholder="ipfs://..." />
-                        <ShopImageUploadButton 
-                          label="Static Image" 
-                          currentUrl={editForm.imageStatic} 
-                          onUploaded={setEditField("imageStatic")} 
-                          onToast={onToast as any} 
-                        />
-                      </div>
-                      <div className="col-span-2 space-y-1">
-                        <FieldLabel>Animated Image URL</FieldLabel>
-                        <Input value={editForm.imageAnimated} onChange={setEditField("imageAnimated")} placeholder="ipfs://..." />
-                        <ShopImageUploadButton 
-                          label="Animated GIF" 
-                          currentUrl={editForm.imageAnimated} 
-                          onUploaded={setEditField("imageAnimated")} 
-                          onToast={onToast as any} 
-                        />
-                      </div>
-                      <div className="col-span-2 space-y-1">
-                        <FieldLabel>Back Image URL</FieldLabel>
-                        <Input value={editForm.imageBack} onChange={setEditField("imageBack")} placeholder="ipfs://..." />
-                        <ShopImageUploadButton 
-                          label="Back View" 
-                          currentUrl={editForm.imageBack} 
-                          onUploaded={setEditField("imageBack")} 
-                          onToast={onToast as any} 
-                        />
-                      </div>
-                      <div>
-                        <FieldLabel>Card BG Color</FieldLabel>
-                        <Input value={editForm.colorBg} onChange={setEditField("colorBg")} placeholder="#f8fafc" />
-                      </div>
-                    </div>
-                    <div className="flex gap-2 pt-1">
-                      <button onClick={() => setEditingId(null)} className="flex-1 h-8 border-2 border-slate-200 rounded-lg font-bold text-xs text-slate-500 hover:bg-slate-50">Cancel</button>
-                      <button onClick={() => handleSaveEdit(item.id)} disabled={savingEdit} className="flex-1 h-8 bg-blue-500 text-white rounded-lg font-black text-xs border-2 border-blue-300 disabled:opacity-50 flex items-center justify-center gap-1">
-                        {savingEdit ? <LoaderCircle size={12} className="animate-spin" /> : "Save"}
-                      </button>
-                    </div>
+                <div className="w-full bg-white/80 border-2 border-white rounded-2xl p-4 shadow-sm backdrop-blur-sm mt-auto">
+                  <div className="flex justify-between items-end mb-2">
+                    <span className="text-[10px] font-black uppercase text-slate-400">Inventory</span>
+                    <span className="text-xs font-black text-slate-700">{form.initialStock || 0} PCS</span>
                   </div>
-                )}
-
-                {isPricing && (
-                  <div className="mt-3 p-3 bg-orange-50 border-2 border-orange-200 rounded-xl space-y-2">
-                    <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Update Price</p>
-                    <p className="text-xs font-bold text-slate-500">Current: {item.priceSui.toFixed(2)} SUI</p>
-                    <Input value={newPriceSui} onChange={setNewPriceSui} placeholder="New price in SUI" type="number" />
-                    <div className="flex gap-2 pt-1">
-                      <button onClick={() => setPricingId(null)} className="flex-1 h-8 border-2 border-slate-200 rounded-lg font-bold text-xs text-slate-500 hover:bg-slate-50">Cancel</button>
-                      <button onClick={() => handleSavePrice(item.id)} disabled={savingPrice || !newPriceSui} className="flex-1 h-8 bg-orange-500 text-white rounded-lg font-black text-xs border-2 border-orange-300 disabled:opacity-50 flex items-center justify-center gap-1">
-                        {savingPrice ? <LoaderCircle size={12} className="animate-spin" /> : "Set Price"}
-                      </button>
-                    </div>
+                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                    <div className="h-full bg-cyan-400 rounded-full" style={{ width: `${Math.min(100, (parseInt(form.initialStock) || 0))}%` }} />
                   </div>
-                )}
-
-                {isStocking && (
-                  <div className="mt-3 p-3 bg-teal-50 border-2 border-teal-200 rounded-xl space-y-2">
-                    <p className="text-[10px] font-black text-teal-600 uppercase tracking-widest">Replenish Stock</p>
-                    <p className="text-xs font-bold text-slate-500">Current stock: {item.stock}</p>
-                    <Input value={addStock} onChange={setAddStock} placeholder="Units to add" type="number" />
-                    <div className="flex gap-2 pt-1">
-                      <button onClick={() => setStockId(null)} className="flex-1 h-8 border-2 border-slate-200 rounded-lg font-bold text-xs text-slate-500 hover:bg-slate-50">Cancel</button>
-                      <button onClick={() => handleReplenish(item.id)} disabled={savingStock || !addStock} className="flex-1 h-8 bg-teal-500 text-white rounded-lg font-black text-xs border-2 border-teal-300 disabled:opacity-50 flex items-center justify-center gap-1">
-                        {savingStock ? <LoaderCircle size={12} className="animate-spin" /> : "+ Add Stock"}
-                      </button>
-                    </div>
-                  </div>
-                )}
+                </div>
               </div>
-            );
-          })
-        )}
-      </div>
+            </div>
+
+            {/* RIGHT: Form */}
+            <div className="flex-1 flex flex-col bg-white overflow-hidden">
+              <div className="px-10 pt-8 pb-6 border-b-4 border-slate-50 flex items-start justify-between shrink-0">
+                <div>
+                  <h2 className="text-3xl font-black text-slate-800 tracking-tighter uppercase italic flex items-center gap-3">
+                    <div className="w-10 h-10 bg-black rounded-2xl flex items-center justify-center text-white">
+                      <Plus size={24} />
+                    </div>
+                    {isEditing ? "Modify Shop Item" : "Deploy New Merch"}
+                  </h2>
+                  <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Metadata Configuration & Asset Deployment</p>
+                </div>
+                <button onClick={() => setIsOpen(false)} className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all font-bold">✕</button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar">
+                
+                {/* Section: Identity */}
+                <div className="space-y-6">
+                  <SectionLabel icon={Tag} required>Item Identity</SectionLabel>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="col-span-full">
+                      <input 
+                        type="text" 
+                        value={form.name} 
+                        onChange={(e) => setForm({...form, name: e.target.value})}
+                        className="w-full bg-slate-50 border-4 border-slate-100 rounded-2xl px-6 py-4 font-black text-slate-700 placeholder-slate-200 outline-none focus:border-cyan-300 focus:bg-white transition-all text-lg"
+                        placeholder="Product Name..."
+                      />
+                    </div>
+                    
+                    <div className="col-span-full grid grid-cols-5 gap-3">
+                      {Object.entries(SHOP_ITEM_TYPE_LABELS).map(([val, label]) => (
+                        <button
+                          key={val}
+                          onClick={() => setForm({...form, itemType: Number(val)})}
+                          className={cn(
+                            "flex flex-col items-center gap-2 p-4 rounded-2xl border-4 transition-all hover:scale-105",
+                            form.itemType === Number(val) 
+                              ? "bg-cyan-400 border-black text-white shadow-[4px_4px_0_0_rgba(0,0,0,1)]" 
+                              : "bg-slate-50 border-slate-100 text-slate-400"
+                          )}
+                        >
+                          <span className="text-2xl">{SHOP_ITEM_TYPE_ICONS[Number(val) as keyof typeof SHOP_ITEM_TYPE_ICONS]}</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: Pricing & Stock */}
+                <div className="grid grid-cols-2 gap-8">
+                  <div>
+                    <SectionLabel icon={DollarSign} required>Unit Price (SUI)</SectionLabel>
+                    <div className="relative group">
+                      <input 
+                        type="number" 
+                        value={form.priceSui}
+                        onChange={(e) => setForm({...form, priceSui: e.target.value})}
+                        className="w-full bg-slate-50 border-4 border-slate-100 rounded-2xl px-6 py-4 font-black text-slate-700 outline-none focus:border-blue-300 focus:bg-white transition-all"
+                        placeholder="0.00"
+                      />
+                      <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-black text-slate-300 group-focus-within:text-blue-400 transition-colors uppercase">SUI</span>
+                    </div>
+                  </div>
+                  <div>
+                    <SectionLabel icon={Package} required>Initial Supply</SectionLabel>
+                    <input 
+                      type="number" 
+                      value={form.initialStock}
+                      onChange={(e) => setForm({...form, initialStock: e.target.value})}
+                      className="w-full bg-slate-50 border-4 border-slate-100 rounded-2xl px-6 py-4 font-black text-slate-700 outline-none focus:border-amber-300 focus:bg-white transition-all"
+                      placeholder="Units to mint..."
+                    />
+                  </div>
+                </div>
+
+                {/* Section: Variations */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div>
+                    <SectionLabel icon={Palette}>Size Variations</SectionLabel>
+                    <TagInput tags={form.sizes} onTagsChange={(s) => setForm({...form, sizes: s})} placeholder="Add Size (Enter)..." />
+                  </div>
+                  <div>
+                    <SectionLabel icon={Palette}>Color Variations</SectionLabel>
+                    <TagInput tags={form.colors} onTagsChange={(c) => setForm({...form, colors: c})} placeholder="Add Color (Enter)..." />
+                  </div>
+                </div>
+
+                {/* Section: Media Assets */}
+                <div className="grid grid-cols-3 gap-6">
+                  <UploadZone label="Static PNG" value={form.imageStatic} onChange={(url) => setForm({...form, imageStatic: url})} onToast={onToast} required />
+                  <UploadZone label="Animated GIF" value={form.imageAnimated} onChange={(url) => setForm({...form, imageAnimated: url})} onToast={onToast} required />
+                  <UploadZone label="Back View" value={form.imageBack} onChange={(url) => setForm({...form, imageBack: url})} onToast={onToast} />
+                </div>
+
+                {/* Section: Theming */}
+                <div>
+                  <SectionLabel icon={Palette}>Card Background Theme</SectionLabel>
+                  <div className="bg-slate-50 border-4 border-slate-100 rounded-3xl p-6 flex flex-wrap gap-4 items-center">
+                    {PRESET_BGS.map((bg) => (
+                      <button
+                        key={bg}
+                        onClick={() => setForm({...form, colorBg: bg})}
+                        className={cn(
+                          "w-10 h-10 rounded-full border-4 transition-all hover:scale-110 bg-gradient-to-br",
+                          bg,
+                          form.colorBg === bg ? "border-black scale-110 shadow-lg" : "border-white shadow-sm"
+                        )}
+                      />
+                    ))}
+                    <div className="h-8 w-[2px] bg-slate-200 mx-2" />
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-black uppercase text-slate-400">Hex Code:</span>
+                      <input 
+                        type="text" 
+                        value={form.colorBg} 
+                        onChange={(e) => setForm({...form, colorBg: e.target.value})}
+                        className="w-32 bg-white border-2 border-slate-200 rounded-xl px-3 py-1.5 font-mono text-[10px] font-bold outline-none focus:border-cyan-400"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Footer */}
+              <div className="px-10 py-6 border-t-4 border-slate-50 bg-slate-50/50 flex gap-4 shrink-0">
+                <button 
+                  onClick={() => setIsOpen(false)}
+                  className="w-40 bg-white border-4 border-slate-100 text-slate-400 font-black py-4 rounded-2xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs"
+                >
+                  Discard
+                </button>
+                <button 
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="flex-1 bg-black text-white font-black py-4 rounded-2xl border-4 border-black hover:bg-slate-800 transition-all uppercase tracking-[0.2em] text-sm shadow-[6px_6px_0_0_rgba(59,130,246,0.5)] active:translate-y-1 active:shadow-none flex items-center justify-center gap-3 disabled:opacity-50"
+                >
+                  {submitting ? <LoaderCircle className="animate-spin" size={20} /> : <CheckCircle size={20} />}
+                  {submitting ? "Deploying Item..." : isEditing ? "Update Shop Object" : "Mint Shop Item"}
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       <div className="px-4 py-3 border-t-2 border-slate-100 bg-slate-50">
         <button onClick={() => refetch()} className="w-full h-8 flex items-center justify-center gap-2 text-slate-500 font-bold text-xs uppercase hover:text-black">
