@@ -2,35 +2,15 @@
 
 /**
  * ShopItemSection.tsx
- * Drop this component into SuperAdminPanel.
- *
- * Usage inside SuperAdminPanel (after the AchievementSection):
- *
- *   {superCapId && (
- *     <ShopItemSection superCapId={superCapId} signAndExecute={signAndExecute} onToast={onToast} />
- *   )}
- *
- * Also add to the admin/page.tsx imports:
- *   import { ShopItemSection } from "@/components/kapogian/ShopItemSection";
- *   (or wherever you place this file)
- *
- * Requires in constants.ts → MODULES:
- *   SHOP_ITEM: "shop_item",   ← already present
- *
- * Move calls used:
- *   admin::create_shop_item        (SuperAdminCap)
- *   admin::update_shop_item_display (SuperAdminCap)
- *   admin::update_shop_item_price   (SuperAdminCap)
- *   admin::replenish_shop_stock     (AdminRegistry — pass via prop or fetch)
- *   admin::pause_shop_item          (AdminRegistry)
- *   admin::unpause_shop_item        (AdminRegistry)
+ * Admin UI for managing Shop items on-chain.
+ * Added support for direct image uploads to IPFS via Pinata.
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import {
   ShoppingBag, Plus, RefreshCw, LoaderCircle, Pencil, X,
-  PauseCircle, PlayCircle, Package, DollarSign, Layers,
-  ToggleLeft, ToggleRight, Image as ImageIcon,
+  Package, DollarSign, Layers,
+  ToggleLeft, ToggleRight, Upload, Image as ImageIcon
 } from "lucide-react";
 import { Transaction } from "@mysten/sui/transactions";
 import { CONTRACT_ADDRESSES, MODULES, SHOP_ITEM_TYPES, SHOP_ITEM_TYPE_LABELS, mistToSui, suiToMist } from "@/lib/constants";
@@ -47,7 +27,6 @@ interface Props {
   superCapId: string;
   signAndExecute: any;
   onToast: (msg: string, type: Toast["type"]) => void;
-  /** Pass the AdminRegistry ID when calling replenish/pause (whitelisted admin fns) */
   adminRegistryId?: string;
 }
 
@@ -107,11 +86,95 @@ function Input({
   );
 }
 
+/**
+ * Reusable Upload Button for Shop Assets
+ */
+function ShopImageUploadButton({ 
+  onUploaded, 
+  onToast, 
+  label, 
+  currentUrl 
+}: { 
+  onUploaded: (url: string) => void; 
+  onToast: (msg: string, type: "success" | "error") => void;
+  label: string;
+  currentUrl: string;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      onToast("File too large (max 10MB)", "error");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("name", `shop-asset-${Date.now()}`);
+
+      const res = await fetch("/api/pinata/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Upload failed");
+      }
+
+      const { imageUrl } = await res.json();
+      onUploaded(imageUrl);
+      onToast(`${label} uploaded!`, "success");
+    } catch (err: any) {
+      onToast(err.message || "Upload failed", "error");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 mt-1">
+      <input 
+        ref={fileInputRef} 
+        type="file" 
+        className="hidden" 
+        onChange={handleFileChange}
+        accept="image/*"
+      />
+      <button
+        type="button"
+        disabled={uploading}
+        onClick={() => fileInputRef.current?.click()}
+        className="flex-1 h-9 flex items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-xl font-bold text-[10px] uppercase text-slate-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
+      >
+        {uploading ? (
+          <LoaderCircle size={14} className="animate-spin" />
+        ) : (
+          <Upload size={14} />
+        )}
+        {uploading ? "Uploading..." : `Upload ${label}`}
+      </button>
+      {currentUrl && (
+        <div className="w-9 h-9 rounded-lg border-2 border-black overflow-hidden flex-shrink-0 bg-slate-100">
+          <img src={currentUrl} alt="preview" className="w-full h-full object-contain" />
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegistryId }: Props) {
   const queryClient = useQueryClient();
-  const { data: items = [], isLoading, refetch } = useShopItems(false); // show all, including unavailable
+  const { data: items = [], isLoading, refetch } = useShopItems(false);
 
   const [showCreate, setShowCreate]   = useState(false);
   const [form, setForm]               = useState(BLANK_FORM);
@@ -131,8 +194,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
 
   const [togglingId, setTogglingId]   = useState<string | null>(null);
 
-  // ── field helpers ──────────────────────────────────────────────────────────
-
   const setField = (key: keyof typeof BLANK_FORM) => (v: string) =>
     setForm((f) => ({ ...f, [key]: v }));
 
@@ -144,8 +205,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
     queryClient.invalidateQueries({ queryKey: shopQueryKeys.registry });
     refetch();
   };
-
-  // ── Create ─────────────────────────────────────────────────────────────────
 
   const handleCreate = async () => {
     if (!form.name.trim()) { onToast("Name is required.", "error"); return; }
@@ -175,7 +234,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
           tx.object("0x6"),
         ],
       });
-      await signAndExecute({ transaction: tx }, { showEffects: true, showObjectChanges: true });
+      await signAndExecute({ transaction: tx }, { showEffects: true });
       onToast(`"${form.name}" created!`, "success");
       setForm(BLANK_FORM);
       setShowCreate(false);
@@ -187,8 +246,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
       setCreating(false);
     }
   };
-
-  // ── Edit display ───────────────────────────────────────────────────────────
 
   const openEdit = (item: ShopItem) => {
     setEditingId(item.id);
@@ -239,8 +296,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
     }
   };
 
-  // ── Price ──────────────────────────────────────────────────────────────────
-
   const handleSavePrice = async (itemId: string) => {
     const sui = parseFloat(newPriceSui);
     if (isNaN(sui) || sui <= 0) { onToast("Enter a valid price.", "error"); return; }
@@ -268,12 +323,10 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
     }
   };
 
-  // ── Replenish stock ────────────────────────────────────────────────────────
-
   const handleReplenish = async (itemId: string) => {
     const amount = parseInt(addStock, 10);
     if (isNaN(amount) || amount <= 0) { onToast("Enter a valid stock amount.", "error"); return; }
-    const registryId = adminRegistryId ?? CONTRACT_ADDRESSES.ADMIN_REGISTRY_ID;
+    const registryId = adminRegistryId || CONTRACT_ADDRESSES.ADMIN_REGISTRY_ID;
     setSavingStock(true);
     try {
       const tx = new Transaction();
@@ -298,10 +351,8 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
     }
   };
 
-  // ── Pause / Unpause ────────────────────────────────────────────────────────
-
   const handleToggleAvailability = async (item: ShopItem) => {
-    const registryId = adminRegistryId ?? CONTRACT_ADDRESSES.ADMIN_REGISTRY_ID;
+    const registryId = adminRegistryId || CONTRACT_ADDRESSES.ADMIN_REGISTRY_ID;
     setTogglingId(item.id);
     try {
       const tx = new Transaction();
@@ -324,11 +375,8 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
     }
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
-
   return (
     <section className="border-4 border-black rounded-2xl overflow-hidden">
-      {/* Header */}
       <div className="bg-black text-white px-5 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ShoppingBag size={16} className="text-cyan-400" />
@@ -343,7 +391,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
         </button>
       </div>
 
-      {/* Create Form */}
       {showCreate && (
         <div className="p-5 border-b-2 border-black bg-cyan-50 space-y-3">
           <p className="text-[10px] font-black uppercase tracking-widest text-cyan-700 mb-1">
@@ -351,13 +398,11 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
           </p>
 
           <div className="grid grid-cols-2 gap-3">
-            {/* Name */}
             <div className="col-span-2">
               <FieldLabel>Item Name *</FieldLabel>
               <Input value={form.name} onChange={setField("name")} placeholder="e.g. Kapogian Classic Tee" />
             </div>
 
-            {/* Type */}
             <div>
               <FieldLabel>Item Type *</FieldLabel>
               <select
@@ -373,44 +418,60 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
               </select>
             </div>
 
-            {/* Price */}
             <div>
               <FieldLabel>Price (SUI) *</FieldLabel>
               <Input value={form.priceSui} onChange={setField("priceSui")} placeholder="e.g. 15" type="number" />
             </div>
 
-            {/* Stock */}
             <div>
               <FieldLabel>Initial Stock *</FieldLabel>
               <Input value={form.initialStock} onChange={setField("initialStock")} placeholder="e.g. 100" type="number" />
             </div>
 
-            {/* Sizes */}
             <div>
               <FieldLabel>Sizes (comma-separated)</FieldLabel>
               <Input value={form.availableSizes} onChange={setField("availableSizes")} placeholder="XS,S,M,L,XL,XXL" />
             </div>
 
-            {/* Colors */}
             <div className="col-span-2">
               <FieldLabel>Colors (comma-separated)</FieldLabel>
               <Input value={form.availableColors} onChange={setField("availableColors")} placeholder="White,Black,Blue" />
             </div>
 
-            {/* Images */}
-            <div className="col-span-2">
+            <div className="col-span-2 space-y-1">
               <FieldLabel>Static Image URL</FieldLabel>
               <Input value={form.imageStatic} onChange={setField("imageStatic")} placeholder="ipfs://... or https://..." />
+              <ShopImageUploadButton 
+                label="Static Image" 
+                currentUrl={form.imageStatic} 
+                onUploaded={setField("imageStatic")} 
+                onToast={onToast as any} 
+              />
             </div>
-            <div className="col-span-2">
+
+            <div className="col-span-2 space-y-1">
               <FieldLabel>Animated Image URL (GIF/WEBP)</FieldLabel>
               <Input value={form.imageAnimated} onChange={setField("imageAnimated")} placeholder="ipfs://... or https://..." />
+              <ShopImageUploadButton 
+                label="Animated GIF" 
+                currentUrl={form.imageAnimated} 
+                onUploaded={setField("imageAnimated")} 
+                onToast={onToast as any} 
+              />
             </div>
-            <div>
+
+            <div className="col-span-2 space-y-1">
               <FieldLabel>Back Image URL (optional)</FieldLabel>
               <Input value={form.imageBack} onChange={setField("imageBack")} placeholder="ipfs://..." />
+              <ShopImageUploadButton 
+                label="Back View" 
+                currentUrl={form.imageBack} 
+                onUploaded={setField("imageBack")} 
+                onToast={onToast as any} 
+              />
             </div>
-            <div>
+
+            <div className="col-span-2">
               <FieldLabel>Card BG Color (optional)</FieldLabel>
               <Input value={form.colorBg} onChange={setField("colorBg")} placeholder="#f8fafc or bg-sky-100" />
             </div>
@@ -434,7 +495,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
         </div>
       )}
 
-      {/* Item List */}
       <div className="divide-y-2 divide-slate-100 max-h-[520px] overflow-y-auto">
         {isLoading ? (
           <div className="p-8 flex items-center justify-center gap-2 text-slate-400 font-black text-xs uppercase">
@@ -453,9 +513,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
 
             return (
               <div key={item.id} className="p-4 bg-white">
-                {/* Item Row */}
                 <div className="flex items-start gap-3">
-                  {/* Image preview */}
                   <div className="w-12 h-12 rounded-xl border-2 border-black bg-slate-100 flex-shrink-0 overflow-hidden flex items-center justify-center text-xl">
                     {item.imageStatic ? (
                       <img src={item.imageStatic} alt={item.name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
@@ -464,7 +522,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                     )}
                   </div>
 
-                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-black text-sm text-slate-800 truncate">{item.name}</p>
@@ -478,14 +535,11 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                     <div className="flex items-center gap-3 mt-0.5 text-[10px] font-bold text-slate-400 flex-wrap">
                       <span className="flex items-center gap-1"><DollarSign size={9} />{item.priceSui.toFixed(2)} SUI</span>
                       <span className="flex items-center gap-1"><Layers size={9} />{item.stock} in stock</span>
-                      {item.sizes.length > 0 && <span>{item.sizes.join(", ")}</span>}
                     </div>
                     <p className="text-[9px] font-mono text-slate-300 mt-0.5">{shortAddr(item.id)}</p>
                   </div>
 
-                  {/* Action buttons */}
                   <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
-                    {/* Pause / Unpause */}
                     <button
                       onClick={() => handleToggleAvailability(item)}
                       disabled={isToggling}
@@ -495,7 +549,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                       {isToggling ? <LoaderCircle size={13} className="animate-spin" /> : item.available ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
                     </button>
 
-                    {/* Edit display */}
                     <button
                       onClick={() => isEditing ? setEditingId(null) : openEdit(item)}
                       title="Edit display"
@@ -504,7 +557,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                       <Pencil size={13} />
                     </button>
 
-                    {/* Edit price */}
                     <button
                       onClick={() => { setPricingId(isPricing ? null : item.id); setNewPriceSui(""); setEditingId(null); setStockId(null); }}
                       title="Update price"
@@ -513,7 +565,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                       <DollarSign size={13} />
                     </button>
 
-                    {/* Replenish stock */}
                     <button
                       onClick={() => { setStockId(isStocking ? null : item.id); setAddStock(""); setEditingId(null); setPricingId(null); }}
                       title="Replenish stock"
@@ -524,7 +575,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                   </div>
                 </div>
 
-                {/* Edit Display Form */}
                 {isEditing && (
                   <div className="mt-3 p-3 bg-blue-50 border-2 border-blue-200 rounded-xl space-y-2">
                     <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Edit Display Fields</p>
@@ -541,17 +591,35 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                         <FieldLabel>Colors (comma-separated)</FieldLabel>
                         <Input value={editForm.availableColors} onChange={setEditField("availableColors")} placeholder="White,Black" />
                       </div>
-                      <div className="col-span-2">
+                      <div className="col-span-2 space-y-1">
                         <FieldLabel>Static Image URL</FieldLabel>
                         <Input value={editForm.imageStatic} onChange={setEditField("imageStatic")} placeholder="ipfs://..." />
+                        <ShopImageUploadButton 
+                          label="Static Image" 
+                          currentUrl={editForm.imageStatic} 
+                          onUploaded={setEditField("imageStatic")} 
+                          onToast={onToast as any} 
+                        />
                       </div>
-                      <div className="col-span-2">
+                      <div className="col-span-2 space-y-1">
                         <FieldLabel>Animated Image URL</FieldLabel>
                         <Input value={editForm.imageAnimated} onChange={setEditField("imageAnimated")} placeholder="ipfs://..." />
+                        <ShopImageUploadButton 
+                          label="Animated GIF" 
+                          currentUrl={editForm.imageAnimated} 
+                          onUploaded={setEditField("imageAnimated")} 
+                          onToast={onToast as any} 
+                        />
                       </div>
-                      <div>
+                      <div className="col-span-2 space-y-1">
                         <FieldLabel>Back Image URL</FieldLabel>
                         <Input value={editForm.imageBack} onChange={setEditField("imageBack")} placeholder="ipfs://..." />
+                        <ShopImageUploadButton 
+                          label="Back View" 
+                          currentUrl={editForm.imageBack} 
+                          onUploaded={setEditField("imageBack")} 
+                          onToast={onToast as any} 
+                        />
                       </div>
                       <div>
                         <FieldLabel>Card BG Color</FieldLabel>
@@ -567,7 +635,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                   </div>
                 )}
 
-                {/* Price Form */}
                 {isPricing && (
                   <div className="mt-3 p-3 bg-orange-50 border-2 border-orange-200 rounded-xl space-y-2">
                     <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Update Price</p>
@@ -582,7 +649,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                   </div>
                 )}
 
-                {/* Stock Form */}
                 {isStocking && (
                   <div className="mt-3 p-3 bg-teal-50 border-2 border-teal-200 rounded-xl space-y-2">
                     <p className="text-[10px] font-black text-teal-600 uppercase tracking-widest">Replenish Stock</p>
@@ -602,7 +668,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
         )}
       </div>
 
-      {/* Footer */}
       <div className="px-4 py-3 border-t-2 border-slate-100 bg-slate-50">
         <button onClick={() => refetch()} className="w-full h-8 flex items-center justify-center gap-2 text-slate-500 font-bold text-xs uppercase hover:text-black">
           <RefreshCw size={12} /> Refresh
