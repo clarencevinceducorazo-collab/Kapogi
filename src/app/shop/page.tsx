@@ -8,254 +8,93 @@ import { cn } from "@/lib/utils";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { getOwnedCharacters } from "@/lib/sui";
 import { getIPFSGatewayUrl } from "@/lib/pinata";
-import { LoaderCircle, Wallet, Sparkles } from "lucide-react";
+import { LoaderCircle, Wallet, Sparkles, CheckCircle, XCircle } from "lucide-react";
 import { CustomConnectButton } from "@/components/kapogian/CustomConnectButton";
+import { useShopItems } from "@/lib/useShopQueries";
+import { useShopPurchase } from "@/lib/useShopTransactions";
+import type { ShopItem } from "@/lib/shopTypes";
+import type { ShippingInfo } from "@/lib/shopTypes";
+import { mistToSui } from "@/lib/constants";
 
-interface Product {
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface OwnedNft {
   id: string;
-  type: "shirt" | "hoodie" | "mug" | "mousepad";
   name: string;
-  price: number;
-  colorClass: string;
-  icon: string;
-  iconColor: string;
-  badge?: string;
-  staticImage: string;
-  animatedImage: string;
+  imageUrl: string;
 }
 
-const PRODUCTS: Product[] = [
-  // SHIRTS
-  {
-    id: "s1",
-    type: "shirt",
-    name: "KAPO White Tee",
-    price: 0.42,
-    colorClass: "bg-gradient-to-br from-slate-50 to-slate-100",
-    icon: "solar:t-shirt-bold-duotone",
-    iconColor: "text-slate-400",
-    badge: "✨ NEW",
-    staticImage: "/images/merch-selection/shirts/whiteNoBG.png",
-    animatedImage: "/images/merch-selection/shirts/whiteshirt.gif",
-  },
-  {
-    id: "s2",
-    type: "shirt",
-    name: "KAPO Black Tee",
-    price: 0.42,
-    colorClass: "bg-gradient-to-br from-slate-800 to-slate-900",
-    icon: "solar:t-shirt-bold-duotone",
-    iconColor: "text-white",
-    staticImage: "/images/merch-selection/shirts/whiteNoBG.png",
-    animatedImage: "/images/merch-selection/shirts/blackshirt.gif",
-  },
-  {
-    id: "s3",
-    type: "shirt",
-    name: "KAPO Blue Tee",
-    price: 0.42,
-    colorClass: "bg-gradient-to-br from-blue-400 to-blue-600",
-    icon: "solar:t-shirt-bold-duotone",
-    iconColor: "text-blue-100",
-    staticImage: "/images/merch-selection/shirts/whiteNoBG.png",
-    animatedImage: "/images/merch-selection/shirts/blueshirt.gif",
-  },
-  {
-    id: "s4",
-    type: "shirt",
-    name: "KAPO Red Tee",
-    price: 0.42,
-    colorClass: "bg-gradient-to-br from-red-400 to-red-600",
-    icon: "solar:t-shirt-bold-duotone",
-    iconColor: "text-red-100",
-    staticImage: "/images/merch-selection/shirts/whiteNoBG.png",
-    animatedImage: "/images/merch-selection/shirts/redshirt.gif",
-  },
-  // HOODIES
-  {
-    id: "h1",
-    type: "hoodie",
-    name: "Grey Aura Hoodie",
-    price: 0.85,
-    colorClass: "bg-gradient-to-br from-slate-200 to-slate-300",
-    icon: "solar:hoodie-bold-duotone",
-    iconColor: "text-slate-500",
-    badge: "🔥 HOT",
-    staticImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
-    animatedImage: "/images/merch-selection/hoodies/greyhoodie.gif",
-  },
-  {
-    id: "h2",
-    type: "hoodie",
-    name: "Black Aura Hoodie",
-    price: 0.85,
-    colorClass: "bg-gradient-to-br from-slate-800 to-slate-950",
-    icon: "solar:hoodie-bold-duotone",
-    iconColor: "text-white",
-    staticImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
-    animatedImage: "/images/merch-selection/hoodies/blackhoodie.gif",
-  },
-  {
-    id: "h3",
-    type: "hoodie",
-    name: "Blue Aura Hoodie",
-    price: 0.85,
-    colorClass: "bg-gradient-to-br from-blue-500 to-blue-700",
-    icon: "solar:hoodie-bold-duotone",
-    iconColor: "text-blue-100",
-    staticImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
-    animatedImage: "/images/merch-selection/hoodies/bluehoodie.gif",
-  },
-  {
-    id: "h4",
-    type: "hoodie",
-    name: "Red Aura Hoodie",
-    price: 0.85,
-    colorClass: "bg-gradient-to-br from-red-500 to-red-700",
-    icon: "solar:hoodie-bold-duotone",
-    iconColor: "text-red-100",
-    staticImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
-    animatedImage: "/images/merch-selection/hoodies/redhoodie.gif",
-  },
-  {
-    id: "h5",
-    type: "hoodie",
-    name: "Beige Aura Hoodie",
-    price: 0.85,
-    colorClass: "bg-gradient-to-br from-stone-100 to-stone-200",
-    icon: "solar:hoodie-bold-duotone",
-    iconColor: "text-stone-500",
-    staticImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
-    animatedImage: "/images/merch-selection/hoodies/biegehoodie.gif",
-  },
-  {
-    id: "h6",
-    type: "hoodie",
-    name: "Cyan Aura Hoodie",
-    price: 0.85,
-    colorClass: "bg-gradient-to-br from-cyan-300 to-cyan-500",
-    icon: "solar:hoodie-bold-duotone",
-    iconColor: "text-cyan-900",
-    staticImage: "/images/merch-selection/hoodies/greyhoodiestatic.png",
-    animatedImage: "/images/merch-selection/hoodies/cyanhoodie.gif",
-  },
-  // Expanded Catalog Hoodies
-  {
-    id: "h-conquest",
-    type: "hoodie",
-    name: "Conquest Hoodie",
-    price: 0.95,
-    colorClass: "bg-gradient-to-br from-indigo-600 to-indigo-800",
-    icon: "solar:hoodie-bold-duotone",
-    iconColor: "text-indigo-100",
-    badge: "⚔️ EPIC",
-    staticImage: "/images/Shop/static/conquesthoodie.png",
-    animatedImage: "/images/Shop/dynamic/conquesthoodie.gif",
-  },
-  {
-    id: "h-farm",
-    type: "hoodie",
-    name: "Farm Hoodie",
-    price: 0.95,
-    colorClass: "bg-gradient-to-br from-emerald-500 to-emerald-700",
-    icon: "solar:hoodie-bold-duotone",
-    iconColor: "text-emerald-100",
-    badge: "🌿 FARM",
-    staticImage: "/images/Shop/static/farmhoodie.png",
-    animatedImage: "/images/Shop/dynamic/farmhoodie.gif",
-  },
-  {
-    id: "h-greyaura2",
-    type: "hoodie",
-    name: "Grey Aura 2.0",
-    price: 0.85,
-    colorClass: "bg-gradient-to-br from-slate-300 to-slate-500",
-    icon: "solar:hoodie-bold-duotone",
-    iconColor: "text-slate-100",
-    staticImage: "/images/Shop/static/grey2hoodie.png",
-    animatedImage: "/images/Shop/dynamic/grey2hoodie.gif",
-  },
-  {
-    id: "h-greykapo",
-    type: "hoodie",
-    name: "Grey Kapogian Hoodie",
-    price: 0.85,
-    colorClass: "bg-gradient-to-br from-slate-400 to-slate-600",
-    icon: "solar:hoodie-bold-duotone",
-    iconColor: "text-slate-200",
-    staticImage: "/images/Shop/static/greykapogian.png",
-    animatedImage: "/images/Shop/dynamic/greykapogian.gif",
-  },
-  // MUGS
-  {
-    id: "m1",
-    type: "mug",
-    name: "White Spirit Mug",
-    price: 0.22,
-    colorClass: "bg-gradient-to-br from-slate-50 to-slate-100",
-    icon: "solar:cup-hot-bold-duotone",
-    iconColor: "text-slate-400",
-    staticImage: "/images/merch-selection/mug/staticMUG.png",
-    animatedImage: "/images/merch-selection/mug/gifWhiteMug.gif",
-  },
-  {
-    id: "m2",
-    type: "mug",
-    name: "Black Spirit Mug",
-    price: 0.22,
-    colorClass: "bg-gradient-to-br from-slate-800 to-slate-900",
-    icon: "solar:cup-hot-bold-duotone",
-    iconColor: "text-white",
-    staticImage: "/images/merch-selection/mug/staticBlackMUG.png",
-    animatedImage: "/images/merch-selection/mug/gifBlackMug.gif",
-  },
-  {
-    id: "m3",
-    type: "mug",
-    name: "Blue Spirit Mug",
-    price: 0.22,
-    colorClass: "bg-gradient-to-br from-blue-400 to-blue-600",
-    icon: "solar:cup-hot-bold-duotone",
-    iconColor: "text-blue-100",
-    staticImage: "/images/merch-selection/mug/BLUE_MUG_noBG.png",
-    animatedImage: "/images/merch-selection/mug/gifBlueMug.gif",
-  },
-  {
-    id: "m4",
-    type: "mug",
-    name: "Red Spirit Mug",
-    price: 0.22,
-    colorClass: "bg-gradient-to-br from-red-400 to-red-600",
-    icon: "solar:cup-hot-bold-duotone",
-    iconColor: "text-red-100",
-    staticImage: "/images/merch-selection/mug/RED_MUG_noBG.png",
-    animatedImage: "/images/merch-selection/mug/gifRedMug.gif",
-  },
-  // MOUSEPADS
-  {
-    id: "p1",
-    type: "mousepad",
-    name: "KAPO XL Desk Mat",
-    price: 0.35,
-    colorClass: "bg-gradient-to-br from-violet-100 to-fuchsia-100",
-    icon: "solar:mouse-bold-duotone",
-    iconColor: "text-violet-500",
-    badge: "🖱️ XL SIZE",
-    staticImage: "/images/merch-selection/pads/mousePad.png",
-    animatedImage: "/images/merch-selection/pads/spinPad3.gif",
-  },
-];
+// ─── Toast ───────────────────────────────────────────────────────────────────
+
+function Toast({
+  message,
+  type,
+  onClose,
+}: {
+  message: string;
+  type: "success" | "error";
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const t = setTimeout(onClose, 4000);
+    return () => clearTimeout(t);
+  }, [onClose]);
+
+  return (
+    <div
+      className={cn(
+        "fixed bottom-6 right-6 z-[200] flex items-center gap-3 px-5 py-4 rounded-2xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] font-black text-sm uppercase tracking-tight animate-in slide-in-from-bottom-4 fade-in",
+        type === "success" ? "bg-green-400 text-black" : "bg-red-400 text-white",
+      )}
+    >
+      {type === "success" ? (
+        <CheckCircle size={18} />
+      ) : (
+        <XCircle size={18} />
+      )}
+      {message}
+      <button onClick={onClose} className="ml-2 opacity-60 hover:opacity-100 font-black text-lg">
+        ×
+      </button>
+    </div>
+  );
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function KapogianShop() {
   const account = useCurrentAccount();
+  const { purchase } = useShopPurchase();
+
+  // Fetch live items from chain
+  const { data: shopItems = [], isLoading: loadingItems } = useShopItems(true); // filterAvailable=true
+
   const [activeFilter, setActiveFilter] = useState("all");
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [currentQty, setCurrentQty] = useState(1);
   const [selectedSize, setSelectedSize] = useState("");
+  const [selectedColor, setSelectedColor] = useState("");
   const [selectedPrintId, setSelectedPrintId] = useState("none");
-  const [ownedNfts, setOwnedNfts] = useState<any[]>([]);
+  const [ownedNfts, setOwnedNfts] = useState<OwnedNft[]>([]);
   const [loadingNfts, setLoadingNfts] = useState(false);
+
+  // Shipping form state
+  const [shippingForm, setShippingForm] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    address: "",
+    city: "",
+    province: "",
+    postalCode: "",
+    country: "Philippines",
+    notes: "",
+  });
+
+  // Toast
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [purchasing, setPurchasing] = useState(false);
 
   useEffect(() => {
     if (account?.address) {
@@ -279,31 +118,97 @@ export default function KapogianShop() {
     }
   }, [account?.address]);
 
-  const filteredProducts = PRODUCTS.filter(
-    (p) => activeFilter === "all" || p.type === activeFilter,
-  );
+  const ITEM_TYPE_LABELS: Record<number, string> = {
+    0: "shirt", 1: "hoodie", 2: "mug", 3: "mousepad", 4: "other",
+  };
 
-  const openModal = (product: Product) => {
-    setSelectedProduct(product);
+  const filteredItems = shopItems.filter((item) => {
+    if (activeFilter === "all") return true;
+    return ITEM_TYPE_LABELS[item.itemType] === activeFilter;
+  });
+
+  const openModal = (item: ShopItem) => {
+    setSelectedItem(item);
     setCurrentStep(1);
     setCurrentQty(1);
-    setSelectedSize(
-      product.type === "mug" || product.type === "mousepad" ? "N/A" : "",
-    );
+    const noSize = item.itemType === 2 || item.itemType === 3; // mug or mousepad
+    setSelectedSize(noSize ? "N/A" : "");
+    setSelectedColor(item.colors[0] ?? "");
     setSelectedPrintId("none");
     document.body.style.overflow = "hidden";
   };
 
   const closeModal = () => {
-    setSelectedProduct(null);
+    setSelectedItem(null);
     document.body.style.overflow = "";
   };
 
-  const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 3));
-  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
+  const nextStep = () => setCurrentStep((p) => Math.min(p + 1, 3));
+  const prevStep = () => setCurrentStep((p) => Math.max(p - 1, 1));
+
+  const canProceedStep1 =
+    selectedItem &&
+    (selectedItem.itemType === 2 || selectedItem.itemType === 3
+      ? true // no size needed for mug/mousepad
+      : selectedSize !== "");
+
+  const canProceedStep2 =
+    shippingForm.fullName.trim() &&
+    shippingForm.phone.trim() &&
+    shippingForm.address.trim() &&
+    shippingForm.city.trim() &&
+    shippingForm.province.trim();
+
+  const handlePurchase = async () => {
+    if (!selectedItem || !account) return;
+    if (!canProceedStep2) {
+      setToast({ message: "Fill in all required shipping fields.", type: "error" });
+      return;
+    }
+
+    setPurchasing(true);
+    try {
+      const shippingInfo: ShippingInfo = {
+        fullName: shippingForm.fullName,
+        email: shippingForm.email,
+        phone: shippingForm.phone,
+        address: shippingForm.address,
+        city: shippingForm.city,
+        province: shippingForm.province,
+        postalCode: shippingForm.postalCode,
+        country: shippingForm.country,
+        notes: shippingForm.notes,
+      };
+
+      await purchase(
+        { id: selectedItem.id, priceMist: selectedItem.priceMist },
+        {
+          itemId: selectedItem.id,
+          quantity: currentQty,
+          chosenSize: selectedSize,
+          chosenColor: selectedColor,
+          customPrintNftId: selectedPrintId !== "none" ? selectedPrintId : null,
+          shippingInfo,
+        },
+      );
+
+      setToast({ message: "Order placed on-chain! 🎉", type: "success" });
+      closeModal();
+    } catch (err: any) {
+      console.error(err);
+      setToast({
+        message: err?.message?.includes("Insufficient") ? "Insufficient SUI balance." : "Transaction failed.",
+        type: "error",
+      });
+    } finally {
+      setPurchasing(false);
+    }
+  };
 
   const selectedNft = ownedNfts.find((n) => n.id === selectedPrintId);
-  const printLabel = selectedNft ? selectedNft.name : "No Print";
+  const totalSui = selectedItem
+    ? mistToSui(Number(selectedItem.priceMist) * currentQty)
+    : 0;
 
   return (
     <div className="bg-gradient-to-b from-sky-200 via-indigo-50 to-white text-slate-700 min-h-screen overflow-x-hidden selection:bg-pink-300 selection:text-white font-sans">
@@ -325,12 +230,12 @@ export default function KapogianShop() {
         .poster-card {
           background: #ffffff;
           border: 4px solid #000000;
-          box-shadow: 8px 8px 0px 0px rgba(0, 0, 0, 1);
+          box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
           transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
         }
         .poster-card:hover {
-          transform: translate(-4px, -4px);
-          box-shadow: 12px 12px 0px 0px rgba(0, 0, 0, 1);
+          transform: translate(-4px,-4px);
+          box-shadow: 12px 12px 0px 0px rgba(0,0,0,1);
         }
 
         .squishy-btn { transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1); }
@@ -338,35 +243,21 @@ export default function KapogianShop() {
 
         .shine-effect { position:relative; overflow:hidden; }
         .shine-effect::after {
-            content:''; position:absolute; top:0; left:-100%; width:50%; height:100%;
-            background:linear-gradient(to right,transparent,rgba(255,255,255,0.6),transparent);
-            transform:skewX(-20deg); animation:shine-sweep 3s infinite;
+          content:''; position:absolute; top:0; left:-100%; width:50%; height:100%;
+          background:linear-gradient(to right,transparent,rgba(255,255,255,0.6),transparent);
+          transform:skewX(-20deg); animation:shine-sweep 3s infinite;
         }
 
         .size-btn.selected {
-            background: linear-gradient(135deg,#67e8f9,#3b82f6);
-            color: white;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.3), 0 4px 12px rgba(59,130,246,0.3);
-            animation: glow-pulse 2s infinite;
-        }
-
-        .print-btn.selected-print {
-            border-color: #67e8f9;
-            background: #ecfeff;
-            box-shadow: 0 0 0 3px rgba(103,232,249,0.25), 0 4px 12px rgba(103,232,249,0.2);
-        }
-        .print-btn.selected-print > div:first-child {
-            border-color: #67e8f9;
-            background: white;
-        }
-        .print-btn.selected-print span {
-            color: #0891b2;
+          background: linear-gradient(135deg,#67e8f9,#3b82f6);
+          color:white; border-color:#3b82f6;
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.3),0 4px 12px rgba(59,130,246,0.3);
+          animation: glow-pulse 2s infinite;
         }
 
         .step-indicator.active {
-            background: linear-gradient(135deg, #67e8f9, #3b82f6);
-            color: white;
+          background: linear-gradient(135deg,#67e8f9,#3b82f6);
+          color: white;
         }
       `}</style>
 
@@ -375,32 +266,40 @@ export default function KapogianShop() {
       </div>
 
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-10 left-10 w-64 h-64 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-        <div className="absolute top-10 right-10 w-64 h-64 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" style={{ animationDelay: "2s" }}></div>
-        <div className="absolute bottom-32 left-20 w-80 h-80 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-25 animate-blob" style={{ animationDelay: "4s" }}></div>
-        <iconify-icon icon="solar:cloud-bold" class="absolute top-20 left-[10%] text-white opacity-40 text-9xl animate-float-delayed"></iconify-icon>
-        <iconify-icon icon="solar:cloud-bold" class="absolute top-40 right-[15%] text-white opacity-30 text-8xl animate-float"></iconify-icon>
+        <div className="absolute top-10 left-10 w-64 h-64 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" />
+        <div className="absolute top-10 right-10 w-64 h-64 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" style={{ animationDelay: "2s" }} />
+        <div className="absolute bottom-32 left-20 w-80 h-80 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-25 animate-blob" style={{ animationDelay: "4s" }} />
+        <iconify-icon icon="solar:cloud-bold" class="absolute top-20 left-[10%] text-white opacity-40 text-9xl animate-float-delayed" />
+        <iconify-icon icon="solar:cloud-bold" class="absolute top-40 right-[15%] text-white opacity-30 text-8xl animate-float" />
       </div>
 
+      {/* Hero */}
       <section className="relative z-10 pt-32 pb-8 px-4 text-center">
         <div className="flex justify-center gap-3 mb-5 animate-float">
           <div className="bg-pink-300 text-pink-900 px-4 py-1.5 rounded-full font-extrabold text-xs tracking-wide transform -rotate-2 border-2 border-white shadow-md">🛍️ MERCH DROP</div>
-          <div className="bg-cyan-300 text-cyan-900 px-4 py-1.5 rounded-full font-extrabold text-xs tracking-wide transform rotate(1deg) border-2 border-white shadow-md">💫 LIMITED STOCK</div>
+          <div className="bg-cyan-300 text-cyan-900 px-4 py-1.5 rounded-full font-extrabold text-xs tracking-wide border-2 border-white shadow-md">💫 LIMITED STOCK</div>
         </div>
-        <h1 className="text-5xl md:text-7xl font-black text-white mb-4 tracking-tight leading-none drop-shadow-xl" style={{ textShadow: "2px 2px 0px #3b82f6,-1px -1px 0 #fff" }}>
+        <h1
+          className="text-5xl md:text-7xl font-black text-white mb-4 tracking-tight leading-none drop-shadow-xl"
+          style={{ textShadow: "2px 2px 0px #3b82f6,-1px -1px 0 #fff" }}
+        >
           KAPO SHOP
         </h1>
-        <p className="text-lg font-bold text-slate-500 max-w-xl mx-auto">Official phygital merch for true Kapogian collectors. Pay with <span className="text-cyan-500">SUI</span> only.</p>
+        <p className="text-lg font-bold text-slate-500 max-w-xl mx-auto">
+          Official phygital merch for true Kapogian collectors. Pay with{" "}
+          <span className="text-cyan-500">SUI</span> only.
+        </p>
       </section>
 
+      {/* Filter Tabs */}
       <div className="relative z-10 px-4 mb-10">
         <div className="max-w-6xl mx-auto flex gap-3 flex-wrap justify-center">
           {[
-            { id: "all", label: "All Items", icon: "" },
-            { id: "shirt", label: "Shirts", icon: "👕" },
-            { id: "hoodie", label: "Hoodies", icon: "🧥" },
-            { id: "mug", label: "Mugs", icon: "☕" },
-            { id: "mousepad", label: "Mouse Pads", icon: "🖱️" },
+            { id: "all",       label: "All Items",   icon: "" },
+            { id: "shirt",     label: "Shirts",      icon: "👕" },
+            { id: "hoodie",    label: "Hoodies",     icon: "🧥" },
+            { id: "mug",       label: "Mugs",        icon: "☕" },
+            { id: "mousepad",  label: "Mouse Pads",  icon: "🖱️" },
           ].map((filter) => (
             <button
               key={filter.id}
@@ -418,133 +317,180 @@ export default function KapogianShop() {
         </div>
       </div>
 
+      {/* Product Grid */}
       <section className="relative z-10 pb-24 px-4">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {filteredProducts.map((product) => (
-            <div
-              key={product.id}
-              className="product-card poster-card rounded-[2.5rem] overflow-hidden flex flex-col h-full group"
-            >
-              <div className={cn("relative h-64 flex items-center justify-center overflow-hidden m-2 rounded-[2rem] border-2 border-black", product.colorClass)}>
-                <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]"></div>
-                
-                <div className="relative z-10 w-40 h-40 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
-                  <Image 
-                    src={product.staticImage} 
-                    alt={product.name} 
-                    width={160} 
-                    height={160} 
-                    className="object-contain drop-shadow-2xl transition-opacity duration-300 group-hover:opacity-0" 
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Image 
-                      src={product.animatedImage} 
-                      alt={product.name} 
-                      width={160} 
-                      height={160} 
-                      unoptimized
-                      className="object-contain drop-shadow-2xl opacity-0 transition-opacity duration-300 transform transition-transform duration-300 group-hover:opacity-100 group-hover:-translate-y-2" 
-                    />
-                  </div>
-                </div>
-
-                {product.badge && (
-                  <div className="absolute top-4 right-4 bg-yellow-300 text-black text-[10px] font-black px-3 py-1 rounded-full border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                    {product.badge}
-                  </div>
-                )}
-              </div>
-              <div className="p-6 bg-white flex-grow flex flex-col items-center text-center">
-                <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-3 py-1 rounded-full w-fit uppercase tracking-widest border border-slate-200">
-                  {product.type}
-                </span>
-                <h3 className="font-headline text-2xl text-black mt-3 mb-2 tracking-tight uppercase leading-none">
-                  {product.name}
-                </h3>
-                <div className="flex items-center gap-2 mt-auto w-full">
-                  <div className="bg-sky-50 border-2 border-black rounded-xl p-1 flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] min-w-[70px] max-w-[90px]">
-                    <iconify-icon icon="token-branded:sui" class="text-blue-500 text-xl"></iconify-icon>
-                    <span className="font-black text-black text-s pt-1 pb-1 pr-1">{product.price}</span>
-                  </div>
-                  <button 
-                    className="bg-black text-white font-black px-4 py-2 rounded-[1rem] hover:bg-slate-900 transition-all squishy-btn flex items-center justify-center gap-2 text-lg shine-effect shadow-[3px_3px_0px_0px_rgba(59,130,246,0.6)] border-2 border-black w-full max-w-[180px] text-center"
-                    onClick={() => openModal(product)}
-                  >
-                    Purchase
-                  </button>
-                </div>
-              </div>
+        <div className="max-w-6xl mx-auto">
+          {loadingItems ? (
+            <div className="flex items-center justify-center py-24 gap-3 text-slate-400 font-black uppercase text-sm">
+              <LoaderCircle className="animate-spin" size={28} /> Loading inventory from chain...
             </div>
-          ))}
+          ) : filteredItems.length === 0 ? (
+            <div className="text-center py-24 font-black text-slate-300 uppercase text-lg">
+              No items available in this category.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              {filteredItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="poster-card rounded-[2.5rem] overflow-hidden flex flex-col h-full group"
+                >
+                  <div
+                    className="relative h-64 flex items-center justify-center overflow-hidden m-2 rounded-[2rem] border-2 border-black"
+                    style={{ backgroundColor: item.colorBg || "#f8fafc" }}
+                  >
+                    <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
+                    <div className="relative z-10 w-40 h-40 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
+                      <Image
+                        src={item.imageStatic}
+                        alt={item.name}
+                        width={160}
+                        height={160}
+                        className="object-contain drop-shadow-2xl transition-opacity duration-300 group-hover:opacity-0"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Image
+                          src={item.imageAnimated}
+                          alt={item.name}
+                          width={160}
+                          height={160}
+                          unoptimized
+                          className="object-contain drop-shadow-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-hover:-translate-y-2"
+                        />
+                      </div>
+                    </div>
+                    {item.stock <= 5 && item.stock > 0 && (
+                      <div className="absolute top-4 right-4 bg-red-400 text-white text-[10px] font-black px-3 py-1 rounded-full border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                        ⚠️ LOW STOCK
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-6 bg-white flex-grow flex flex-col items-center text-center">
+                    <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-3 py-1 rounded-full w-fit uppercase tracking-widest border border-slate-200">
+                      {ITEM_TYPE_LABELS[item.itemType]}
+                    </span>
+                    <h3 className="font-headline text-2xl text-black mt-3 mb-2 tracking-tight uppercase leading-none">
+                      {item.name}
+                    </h3>
+                    <p className="text-xs text-slate-400 font-bold mb-3">
+                      {item.stock} in stock
+                    </p>
+                    <div className="flex items-center gap-2 mt-auto w-full">
+                      <div className="bg-sky-50 border-2 border-black rounded-xl p-1 flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] min-w-[70px]">
+                        <iconify-icon icon="token-branded:sui" class="text-blue-500 text-xl" />
+                        <span className="font-black text-black text-sm pt-1 pb-1 pr-1">
+                          {mistToSui(Number(item.priceMist)).toFixed(2)}
+                        </span>
+                      </div>
+                      <button
+                        className="bg-black text-white font-black px-4 py-2 rounded-[1rem] hover:bg-slate-900 transition-all squishy-btn flex items-center justify-center gap-2 text-lg shine-effect shadow-[3px_3px_0px_0px_rgba(59,130,246,0.6)] border-2 border-black w-full text-center"
+                        onClick={() => openModal(item)}
+                      >
+                        Purchase
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
-      {selectedProduct && (
+      {/* Purchase Modal */}
+      {selectedItem && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closeModal}></div>
-          <div className="relative z-10 w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl border-4 border-black flex flex-col md:flex-row overflow-hidden animate-pop-in" style={{ maxHeight: "90vh" }}>
-            
-            <div className={cn("w-full md:w-64 flex-shrink-0 flex flex-col items-center justify-center p-8 relative overflow-hidden", selectedProduct.colorClass)}>
-              <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]"></div>
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closeModal} />
+          <div
+            className="relative z-10 w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl border-4 border-black flex flex-col md:flex-row overflow-hidden animate-pop-in"
+            style={{ maxHeight: "90vh" }}
+          >
+            {/* Left panel — product preview */}
+            <div
+              className="w-full md:w-64 flex-shrink-0 flex flex-col items-center justify-center p-8 relative overflow-hidden"
+              style={{ backgroundColor: selectedItem.colorBg || "#f8fafc" }}
+            >
+              <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
               <div className="relative z-10 w-60 h-54 bg-white rounded-3xl flex items-center justify-center shadow-xl border-4 border-black mb-5 animate-float overflow-hidden">
-                <Image 
-                  src={selectedProduct.animatedImage} 
-                  alt="preview" 
-                  width={160} 
-                  height={160} 
+                <Image
+                  src={selectedItem.imageAnimated}
+                  alt="preview"
+                  width={160}
+                  height={160}
                   unoptimized
-                  className="object-contain" 
+                  className="object-contain"
                 />
               </div>
               <div className="relative z-10 bg-black text-white text-[10px] font-black px-4 py-1.5 rounded-full mb-3 uppercase tracking-widest shadow-lg">
-                {selectedProduct.type}
+                {ITEM_TYPE_LABELS[selectedItem.itemType]}
               </div>
               <h2 className="relative z-10 text-xl font-headline text-white tracking-tight text-center leading-tight mb-3 uppercase">
-                <span style={{ textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000" }}>{selectedProduct.name}</span>
+                <span style={{ textShadow: "-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000" }}>
+                  {selectedItem.name}
+                </span>
               </h2>
               <div className="relative z-10 bg-sky-50 border-2 border-black rounded-xl p-3 flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                <iconify-icon icon="token-branded:sui" class="text-blue-500 text-2xl"></iconify-icon>
-                <span className="font-black text-black text-xl">{selectedProduct.price}</span>
+                <iconify-icon icon="token-branded:sui" class="text-blue-500 text-2xl" />
+                <span className="font-black text-black text-xl">
+                  {mistToSui(Number(selectedItem.priceMist)).toFixed(2)}
+                </span>
               </div>
             </div>
 
+            {/* Right panel */}
             <div className="flex-1 flex flex-col overflow-hidden border-l-4 border-black bg-slate-50">
+              {/* Step header */}
               <div className="px-7 pt-6 pb-4 border-b-4 border-black bg-white flex items-center justify-between flex-shrink-0">
                 <div className="flex gap-2 items-center">
-                  <div className={cn("step-indicator w-8 h-8 rounded-full border-2 border-black flex items-center justify-center font-black text-sm transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]", currentStep >= 1 ? "active" : "text-slate-400 bg-slate-100")}>1</div>
-                  <div className="h-1.5 w-10 bg-slate-200 rounded-full border border-black/10 overflow-hidden">
-                    <div className={cn("h-full bg-sky-400 transition-all duration-500", currentStep >= 2 ? "w-full" : "w-0")}></div>
-                  </div>
-                  <div className={cn("step-indicator w-8 h-8 rounded-full border-2 border-black flex items-center justify-center font-black text-sm transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]", currentStep >= 2 ? "active" : "text-slate-400 bg-slate-100")}>2</div>
-                  <div className="h-1.5 w-10 bg-slate-200 rounded-full border border-black/10 overflow-hidden">
-                    <div className={cn("h-full bg-sky-400 transition-all duration-500", currentStep >= 3 ? "w-full" : "w-0")}></div>
-                  </div>
-                  <div className={cn("step-indicator w-8 h-8 rounded-full border-2 border-black flex items-center justify-center font-black text-sm transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]", currentStep >= 3 ? "active" : "text-slate-400 bg-slate-100")}>3</div>
+                  {[1, 2, 3].map((step, i) => (
+                    <React.Fragment key={step}>
+                      {i > 0 && (
+                        <div className="h-1.5 w-10 bg-slate-200 rounded-full border border-black/10 overflow-hidden">
+                          <div className={cn("h-full bg-sky-400 transition-all duration-500", currentStep > i ? "w-full" : "w-0")} />
+                        </div>
+                      )}
+                      <div
+                        className={cn(
+                          "step-indicator w-8 h-8 rounded-full border-2 border-black flex items-center justify-center font-black text-sm transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]",
+                          currentStep >= step ? "active" : "text-slate-400 bg-slate-100",
+                        )}
+                      >
+                        {step}
+                      </div>
+                    </React.Fragment>
+                  ))}
                   <span className="text-[10px] font-black text-slate-400 ml-2 uppercase tracking-[0.2em]">
-                    {currentStep === 1 ? "Configuration" : currentStep === 2 ? "Logistics" : "Authorized Pay"}
+                    {currentStep === 1 ? "Configuration" : currentStep === 2 ? "Logistics" : "Authorize Pay"}
                   </span>
                 </div>
-                <button onClick={closeModal} className="w-9 h-9 bg-red-500 text-white border-2 border-black rounded-full flex items-center justify-center hover:bg-red-600 transition-colors font-black text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5">✕</button>
+                <button
+                  onClick={closeModal}
+                  className="w-9 h-9 bg-red-500 text-white border-2 border-black rounded-full flex items-center justify-center hover:bg-red-600 font-black text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                >
+                  ✕
+                </button>
               </div>
 
               <div className="flex-1 overflow-y-auto">
+                {/* ── Step 1: Configuration ── */}
                 {currentStep === 1 && (
-                  <div className="px-7 py-2 space-y-8">
-                    {(selectedProduct.type === "shirt" || selectedProduct.type === "hoodie") && (
+                  <div className="px-7 py-6 space-y-8">
+                    {/* Size selector */}
+                    {selectedItem.sizes.length > 0 && (
                       <div>
                         <p className="font-black text-black mb-2 text-xs tracking-widest uppercase flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 bg-sky-400 rounded-full"></span> Select Fit
+                          <span className="w-1.5 h-1.5 bg-sky-400 rounded-full" /> Select Fit
                         </p>
                         <div className="flex gap-2.5 flex-wrap">
-                          {["XS", "S", "M", "L", "XL", "XXL"].map((size) => (
+                          {selectedItem.sizes.map((size) => (
                             <button
                               key={size}
                               onClick={() => setSelectedSize(size)}
                               className={cn(
-                                "size-btn h-9 min-w-9 px-2 rounded-[0.75rem] font-black text-xs border-2 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none",
+                                "size-btn h-9 min-w-9 px-2 rounded-[0.75rem] font-black text-xs border-2 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]",
                                 selectedSize === size
                                   ? "bg-sky-400 border-black text-white"
-                                  : "bg-white border-slate-200 text-slate-600 hover:border-black"
+                                  : "bg-white border-slate-200 text-slate-600 hover:border-black",
                               )}
                             >
                               {size}
@@ -554,25 +500,56 @@ export default function KapogianShop() {
                       </div>
                     )}
 
+                    {/* Color selector */}
+                    {selectedItem.colors.length > 0 && (
+                      <div>
+                        <p className="font-black text-black mb-2 text-xs tracking-widest uppercase flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 bg-pink-400 rounded-full" /> Select Color
+                        </p>
+                        <div className="flex gap-2.5 flex-wrap">
+                          {selectedItem.colors.map((color) => (
+                            <button
+                              key={color}
+                              onClick={() => setSelectedColor(color)}
+                              className={cn(
+                                "h-9 px-3 rounded-[0.75rem] font-black text-xs border-2 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]",
+                                selectedColor === color
+                                  ? "bg-sky-400 border-black text-white"
+                                  : "bg-white border-slate-200 text-slate-600 hover:border-black",
+                              )}
+                            >
+                              {color}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Custom print NFT selector */}
                     <div>
                       <div className="flex items-center gap-1 mb-2">
                         <p className="font-black text-black text-xs tracking-widest uppercase flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 bg-pink-400 rounded-full"></span> Custom Print
+                          <span className="w-1.5 h-1.5 bg-pink-400 rounded-full" /> Custom Print
                         </p>
-                        <span className="bg-pink-100 text-pink-600 text-[10px] font-black px-2.5 py-0.5 rounded-full border-2 border-pink-200">EXCLUSIVE</span>
+                        <span className="bg-pink-100 text-pink-600 text-[10px] font-black px-2.5 py-0.5 rounded-full border-2 border-pink-200">
+                          EXCLUSIVE
+                        </span>
                       </div>
-                      
                       <div className="bg-white border-4 border-black rounded-[2rem] p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.05)]">
                         {!account ? (
                           <div className="text-center py-8">
                             <Wallet className="w-12 h-12 mx-auto text-slate-200 mb-4" />
-                            <p className="text-[10px] font-black uppercase text-slate-400 mb-5 tracking-widest">Authorize wallet to view squad</p>
+                            <p className="text-[10px] font-black uppercase text-slate-400 mb-5 tracking-widest">
+                              Connect wallet to view your spirits
+                            </p>
                             <CustomConnectButton className="!text-xs !px-6 !py-3" />
                           </div>
                         ) : loadingNfts ? (
                           <div className="text-center py-10">
                             <LoaderCircle className="w-10 h-10 animate-spin mx-auto text-sky-400" />
-                            <p className="text-[10px] font-black uppercase text-slate-400 mt-3 tracking-[0.2em]">Decrypting Assets...</p>
+                            <p className="text-[10px] font-black uppercase text-slate-400 mt-3 tracking-[0.2em]">
+                              Loading your spirits...
+                            </p>
                           </div>
                         ) : (
                           <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
@@ -580,37 +557,41 @@ export default function KapogianShop() {
                               onClick={() => setSelectedPrintId("none")}
                               className={cn(
                                 "aspect-square rounded-2xl border-4 flex flex-col items-center justify-center transition-all",
-                                selectedPrintId === "none" ? "bg-black border-black text-white shadow-lg scale-105 z-10" : "bg-slate-50 border-slate-100 text-slate-300 hover:border-slate-300"
+                                selectedPrintId === "none"
+                                  ? "bg-black border-black text-white shadow-lg scale-105 z-10"
+                                  : "bg-slate-50 border-slate-100 text-slate-300 hover:border-slate-300",
                               )}
                             >
-                              <iconify-icon icon="solar:forbidden-circle-bold-duotone" class="text-2xl"></iconify-icon>
+                              <iconify-icon icon="solar:forbidden-circle-bold-duotone" class="text-2xl" />
                               <span className="text-[8px] font-black uppercase mt-1 tracking-tighter">NONE</span>
                             </button>
-
                             {ownedNfts.map((nft) => (
                               <button
                                 key={nft.id}
                                 onClick={() => setSelectedPrintId(nft.id)}
                                 className={cn(
                                   "aspect-square rounded-2xl border-4 overflow-hidden relative transition-all bg-white",
-                                  selectedPrintId === nft.id ? "border-sky-400 shadow-lg scale-105 z-10" : "border-slate-100 opacity-70 hover:opacity-100 hover:border-slate-300"
+                                  selectedPrintId === nft.id
+                                    ? "border-sky-400 shadow-lg scale-105 z-10"
+                                    : "border-slate-100 opacity-70 hover:opacity-100 hover:border-slate-300",
                                 )}
                               >
                                 <Image src={nft.imageUrl} alt={nft.name} fill className="object-cover" />
                                 {selectedPrintId === nft.id && (
                                   <div className="absolute inset-0 bg-sky-400/20 flex items-center justify-center">
                                     <div className="bg-white rounded-full p-1 border-2 border-black">
-                                      <iconify-icon icon="solar:check-circle-bold" class="text-xs text-sky-500"></iconify-icon>
+                                      <iconify-icon icon="solar:check-circle-bold" class="text-xs text-sky-500" />
                                     </div>
                                   </div>
                                 )}
                               </button>
                             ))}
-
                             {ownedNfts.length === 0 && (
                               <div className="col-span-full py-10 text-center">
                                 <Sparkles className="w-10 h-10 mx-auto text-amber-200 mb-3" />
-                                <p className="text-[10px] font-black uppercase text-slate-400 leading-relaxed tracking-widest">No spirits detected in this wallet.<br/>Summon one to unlock custom gear.</p>
+                                <p className="text-[10px] font-black uppercase text-slate-400 leading-relaxed tracking-widest">
+                                  No spirits detected.<br />Summon one to unlock custom gear.
+                                </p>
                               </div>
                             )}
                           </div>
@@ -618,111 +599,222 @@ export default function KapogianShop() {
                       </div>
                     </div>
 
+                    {/* Quantity */}
                     <div className="flex items-center justify-between bg-white border-4 border-black p-2 rounded-3xl">
                       <p className="font-black text-black text-xs tracking-widest uppercase ml-4">Copies</p>
                       <div className="flex items-center gap-4 mr-2">
-                        <button onClick={() => setCurrentQty(Math.max(1, currentQty - 1))} className="w-7 h-7 bg-slate-100 border-2 border-black rounded-[0.75rem] font-black text-base text-black hover:bg-slate-200 transition-colors shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 flex items-center justify-center">−</button>
+                        <button
+                          onClick={() => setCurrentQty(Math.max(1, currentQty - 1))}
+                          className="w-7 h-7 bg-slate-100 border-2 border-black rounded-[0.75rem] font-black text-base text-black hover:bg-slate-200 shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center"
+                        >
+                          −
+                        </button>
                         <span className="text-2xl font-black text-black w-7 text-center">{currentQty}</span>
-                        <button onClick={() => setCurrentQty(Math.min(10, currentQty + 1))} className="w-7 h-7 bg-slate-100 border-2 border-black rounded-[0.75rem] font-black text-base text-black hover:bg-slate-200 transition-colors shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 flex items-center justify-center">+</button>
+                        <button
+                          onClick={() => setCurrentQty(Math.min(selectedItem.stock, currentQty + 1))}
+                          className="w-7 h-7 bg-slate-100 border-2 border-black rounded-[0.75rem] font-black text-base text-black hover:bg-slate-200 shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center"
+                        >
+                          +
+                        </button>
                       </div>
                     </div>
 
-                    <button onClick={nextStep} className="w-full bg-black text-white font-black py-5 rounded-3xl hover:bg-slate-800 transition-all squishy-btn flex items-center justify-center gap-3 shine-effect text-sm uppercase tracking-[0.2em] shadow-[6px_6px_0px_0px_rgba(59,130,246,0.5)]">
-                      <iconify-icon icon="solar:rocket-2-bold" width="22"></iconify-icon>
+                    <button
+                      onClick={nextStep}
+                      disabled={!canProceedStep1}
+                      className="w-full bg-black text-white font-black py-5 rounded-3xl hover:bg-slate-800 transition-all squishy-btn flex items-center justify-center gap-3 shine-effect text-sm uppercase tracking-[0.2em] shadow-[6px_6px_0px_0px_rgba(59,130,246,0.5)] disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <iconify-icon icon="solar:rocket-2-bold" width="22" />
                       Initialize Manifest
                     </button>
                   </div>
                 )}
 
+                {/* ── Step 2: Logistics ── */}
                 {currentStep === 2 && (
-                  <div className="px-7 py-6 space-y-5">
+                  <div className="px-7 py-6 space-y-4">
                     <div className="bg-white border-4 border-black rounded-[2rem] p-6 mb-2">
-                      <h3 className="text-2xl font-headline text-black mb-1 uppercase tracking-tight">Logistics Form</h3>
-                      <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Encrypted end-to-end</p>
+                      <h3 className="text-2xl font-headline text-black mb-1 uppercase tracking-tight">
+                        Logistics Form
+                      </h3>
+                      <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">
+                        Encrypted end-to-end on-chain
+                      </p>
                     </div>
-                    <div className="space-y-4">
-                      <div className="space-y-1.5">
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Receiver Name</label>
-                        <input type="text" placeholder="e.g. Satoshi Pogi" className="w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 transition-all text-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.05)] focus:shadow-[4px_4px_0px_0px_rgba(59,130,246,0.3)]" />
+
+                    {[
+                      { key: "fullName",   label: "Receiver Name *",          placeholder: "e.g. Satoshi Pogi",    type: "text" },
+                      { key: "email",      label: "Email",                     placeholder: "your@email.com",       type: "email" },
+                      { key: "phone",      label: "Mobile Number *",           placeholder: "+63 9XX XXX XXXX",     type: "tel" },
+                      { key: "address",    label: "Street & Unit Address *",   placeholder: "Lot, Block, Street...", type: "text" },
+                    ].map(({ key, label, placeholder, type }) => (
+                      <div key={key} className="space-y-1.5">
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">
+                          {label}
+                        </label>
+                        <input
+                          type={type}
+                          value={(shippingForm as any)[key]}
+                          onChange={(e) => setShippingForm((f) => ({ ...f, [key]: e.target.value }))}
+                          placeholder={placeholder}
+                          className="w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300"
+                        />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Province</label>
-                          <input type="text" placeholder="Metro Manila" className="w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 transition-all text-sm" />
+                    ))}
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {[
+                        { key: "province",   label: "Province *",  placeholder: "Metro Manila" },
+                        { key: "city",       label: "City *",      placeholder: "Quezon City" },
+                        { key: "postalCode", label: "Postal Code", placeholder: "1100" },
+                        { key: "country",    label: "Country",     placeholder: "Philippines" },
+                      ].map(({ key, label, placeholder }) => (
+                        <div key={key} className="space-y-1.5">
+                          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">
+                            {label}
+                          </label>
+                          <input
+                            type="text"
+                            value={(shippingForm as any)[key]}
+                            onChange={(e) => setShippingForm((f) => ({ ...f, [key]: e.target.value }))}
+                            placeholder={placeholder}
+                            className="w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300"
+                          />
                         </div>
-                        <div className="space-y-1.5">
-                          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">City</label>
-                          <input type="text" placeholder="Quezon City" className="w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 transition-all text-sm" />
-                        </div>
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Street & Vault Address</label>
-                        <input type="text" placeholder="Lot, Block, Street Name..." className="w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 transition-all text-sm" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Secure Contact (Mobile)</label>
-                        <input type="tel" placeholder="+63 9XX XXX XXXX" className="w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 transition-all text-sm" />
-                      </div>
+                      ))}
                     </div>
+
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">
+                        Order Notes (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={shippingForm.notes}
+                        onChange={(e) => setShippingForm((f) => ({ ...f, notes: e.target.value }))}
+                        placeholder="Any special instructions..."
+                        className="w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300"
+                      />
+                    </div>
+
                     <div className="flex gap-4 mt-8">
-                      <button onClick={prevStep} className="w-14 h-14 bg-white border-4 border-black rounded-2xl font-black text-slate-800 hover:bg-slate-50 transition-colors squishy-btn flex items-center justify-center flex-shrink-0 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5">
-                        <iconify-icon icon="solar:arrow-left-bold" width="24"></iconify-icon>
+                      <button
+                        onClick={prevStep}
+                        className="w-14 h-14 bg-white border-4 border-black rounded-2xl font-black text-slate-800 hover:bg-slate-50 squishy-btn flex items-center justify-center flex-shrink-0 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                      >
+                        <iconify-icon icon="solar:arrow-left-bold" width="24" />
                       </button>
-                      <button onClick={nextStep} className="flex-1 bg-sky-400 text-white border-4 border-black font-black py-4 rounded-2xl hover:bg-sky-500 transition-all squishy-btn flex items-center justify-center gap-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] uppercase tracking-widest text-sm">
-                        Confirm Order
-                        <iconify-icon icon="solar:check-circle-bold" width="20"></iconify-icon>
+                      <button
+                        onClick={nextStep}
+                        disabled={!canProceedStep2}
+                        className="flex-1 bg-sky-400 text-white border-4 border-black font-black py-4 rounded-2xl hover:bg-sky-500 squishy-btn flex items-center justify-center gap-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] uppercase tracking-widest text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Confirm Logistics
+                        <iconify-icon icon="solar:check-circle-bold" width="20" />
                       </button>
                     </div>
                   </div>
                 )}
 
+                {/* ── Step 3: Checkout ── */}
                 {currentStep === 3 && (
                   <div className="px-7 py-6 space-y-6">
-                    <div className="bg-white border-4 border-black rounded-[2rem] p-6 mb-2">
-                      <h3 className="text-2xl font-headline text-black mb-1 uppercase tracking-tight">Checkout Manifest</h3>
+                    <div className="bg-white border-4 border-black rounded-[2rem] p-6">
+                      <h3 className="text-2xl font-headline text-black mb-1 uppercase tracking-tight">
+                        Checkout Manifest
+                      </h3>
                       <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Network: SUI Mainnet</p>
                     </div>
 
-                    <div className="bg-white border-4 border-black rounded-[2rem] p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.05)]">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Final Receipt</p>
+                    {/* Order summary */}
+                    <div className="bg-white border-4 border-black rounded-[2rem] p-6">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">
+                        Final Receipt
+                      </p>
                       <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 bg-slate-50 border-2 border-black rounded-2xl flex items-center justify-center shadow-md flex-shrink-0 overflow-hidden relative">
+                        <div className="w-16 h-16 bg-slate-50 border-2 border-black rounded-2xl flex items-center justify-center overflow-hidden relative flex-shrink-0">
                           {selectedPrintId !== "none" && selectedNft ? (
-                            <Image src={selectedNft.imageUrl} alt="sum" fill className="object-cover" />
+                            <Image src={selectedNft.imageUrl} alt="print" fill className="object-cover" />
                           ) : (
-                            <Image src={selectedProduct.animatedImage} alt="sum" width={50} height={50} unoptimized className="object-contain" />
+                            <Image
+                              src={selectedItem.imageAnimated}
+                              alt="item"
+                              width={50}
+                              height={50}
+                              unoptimized
+                              className="object-contain"
+                            />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-black text-black text-lg truncate uppercase italic tracking-tighter">{selectedProduct.name}</p>
+                          <p className="font-black text-black text-lg truncate uppercase italic tracking-tighter">
+                            {selectedItem.name}
+                          </p>
                           <p className="text-slate-400 font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
-                            Qty: {currentQty} {selectedSize && <><span className="w-1 h-1 bg-slate-200 rounded-full"></span> Size: {selectedSize}</>}
+                            Qty: {currentQty}
+                            {selectedSize && selectedSize !== "N/A" && (
+                              <><span className="w-1 h-1 bg-slate-200 rounded-full" /> Size: {selectedSize}</>
+                            )}
+                            {selectedColor && (
+                              <><span className="w-1 h-1 bg-slate-200 rounded-full" /> {selectedColor}</>
+                            )}
                           </p>
                           {selectedPrintId !== "none" && (
-                            <p className="text-sky-500 font-black text-[9px] mt-1 uppercase tracking-tighter border-t border-sky-100 pt-1">🎨 Print: {printLabel}</p>
+                            <p className="text-sky-500 font-black text-[9px] mt-1 uppercase tracking-tighter border-t border-sky-100 pt-1">
+                              🎨 Print: {selectedNft?.name}
+                            </p>
                           )}
                         </div>
                       </div>
+
+                      {/* Shipping summary */}
+                      <div className="mt-4 p-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-xs font-bold text-slate-600 space-y-1">
+                        <p>📦 {shippingForm.fullName} — {shippingForm.phone}</p>
+                        <p>📍 {shippingForm.address}, {shippingForm.city}, {shippingForm.province}</p>
+                      </div>
+
                       <div className="mt-6 pt-5 border-t-4 border-black flex justify-between items-center">
                         <span className="font-black text-slate-400 text-xs uppercase tracking-widest">Total SUI</span>
                         <div className="flex-1 bg-sky-50 border-2 border-black rounded-xl p-3 flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] ml-4">
-                          <iconify-icon icon="token-branded:sui" class="text-blue-500 text-2xl"></iconify-icon>
-                          <span className="font-black text-black text-xl">{(selectedProduct.price * currentQty).toFixed(2)}</span>
+                          <iconify-icon icon="token-branded:sui" class="text-blue-500 text-2xl" />
+                          <span className="font-black text-black text-xl">{totalSui.toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
 
-                    <button className="w-full bg-black text-white font-black py-6 rounded-[2rem] hover:bg-slate-900 transition-all squishy-btn flex items-center justify-center gap-4 text-xl shine-effect shadow-[8px_8px_0px_0px_rgba(59,130,246,0.6)] border-4 border-black">
-                      <iconify-icon icon="token-branded:sui" width="32"></iconify-icon>
-                      Authorize & Pay
-                    </button>
-                    
+                    {!account ? (
+                      <div className="text-center">
+                        <p className="text-xs font-black text-slate-400 uppercase mb-4">Connect wallet to purchase</p>
+                        <CustomConnectButton className="!text-sm !px-8 !py-4 !mx-auto" />
+                      </div>
+                    ) : (
+                      <button
+                        onClick={handlePurchase}
+                        disabled={purchasing}
+                        className="w-full bg-black text-white font-black py-6 rounded-[2rem] hover:bg-slate-900 transition-all squishy-btn flex items-center justify-center gap-4 text-xl shine-effect shadow-[8px_8px_0px_0px_rgba(59,130,246,0.6)] border-4 border-black disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {purchasing ? (
+                          <>
+                            <LoaderCircle className="animate-spin" size={28} /> Signing Transaction...
+                          </>
+                        ) : (
+                          <>
+                            <iconify-icon icon="token-branded:sui" width="32" />
+                            Authorize & Pay
+                          </>
+                        )}
+                      </button>
+                    )}
+
                     <div className="text-center pt-2">
                       <div className="flex items-center justify-center gap-2 text-slate-400 text-[10px] font-black mb-6 uppercase tracking-[0.2em]">
-                        <iconify-icon icon="solar:shield-check-bold-duotone" class="text-green-500 text-sm"></iconify-icon>
-                        Secured on SUI Network
+                        <iconify-icon icon="solar:shield-check-bold-duotone" class="text-green-500 text-sm" />
+                        Secured on SUI Network · Shipping info encrypted on-chain
                       </div>
-                      <button onClick={prevStep} className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-black transition-colors underline decoration-2 underline-offset-4">
+                      <button
+                        onClick={prevStep}
+                        className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-black transition-colors underline decoration-2 underline-offset-4"
+                      >
                         ← Modify Logistics
                       </button>
                     </div>
@@ -732,6 +824,11 @@ export default function KapogianShop() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
 
       <div style={{ fontFamily: "Fredoka, sans-serif" }}>

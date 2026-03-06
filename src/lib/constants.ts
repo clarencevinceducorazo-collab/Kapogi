@@ -9,16 +9,18 @@ export const CONTRACT_ADDRESSES = {
   RECEIPT_REGISTRY_ID: process.env.NEXT_PUBLIC_RECEIPT_REGISTRY_ID!,
   TRANSFER_POLICY_ID: process.env.NEXT_PUBLIC_TRANSFER_POLICY_ID!,
   COLLECTION_METADATA_ID: process.env.NEXT_PUBLIC_COLLECTION_METADATA_ID!,
-  // NEW: replaces ADMIN_CAP_ID
   ADMIN_REGISTRY_ID: process.env.NEXT_PUBLIC_ADMIN_REGISTRY_ID!,
   TREASURY_CONFIG_ID: process.env.NEXT_PUBLIC_TREASURY_CONFIG_ID!,
+  // Shop — set these after deploying the new package
+  SHOP_REGISTRY_ID: process.env.NEXT_PUBLIC_SHOP_REGISTRY_ID!,
+  SHOP_RECEIPT_REGISTRY_ID: process.env.NEXT_PUBLIC_SHOP_RECEIPT_REGISTRY_ID!,
 };
 
 // Pricing (in MIST: 1 SUI = 1,000,000,000 MIST)
 export const PRICING = {
-  BASE_MINT: 20_000_000_000, // 20 SUI
+  BASE_MINT: 20_000_000_000,      // 20 SUI
   BUNDLE_UPGRADE: 10_000_000_000, // 10 SUI
-  TOTAL_BUNDLE: 30_000_000_000, // 30 SUI
+  TOTAL_BUNDLE: 30_000_000_000,   // 30 SUI
 };
 
 // Module names
@@ -27,14 +29,17 @@ export const MODULES = {
   ORDER_RECEIPT: "order_receipt",
   ADMIN: "admin",
   TREASURY: "treasury",
+  // Shop modules (new)
+  SHOP_ITEM: "shop_item",
+  SHOP_RECEIPT: "shop_receipt",
 };
 
-// Merch Options
+// Merch Options (used by the NFT mint flow)
 export const MERCH_OPTIONS = [
-  { id: "SHIRT", name: "T-Shirt", icon: "👕" },
-  { id: "MUG", name: "Mug", icon: "☕" },
-  { id: "MOUSEPAD", name: "Mouse Pad", icon: "🖱️" },
-  { id: "HOODIE", name: "Hoodie", icon: "🧥" },
+  { id: "SHIRT",     name: "T-Shirt",    icon: "👕" },
+  { id: "MUG",       name: "Mug",        icon: "☕" },
+  { id: "MOUSEPAD",  name: "Mouse Pad",  icon: "🖱️" },
+  { id: "HOODIE",    name: "Hoodie",     icon: "🧥" },
 ] as const;
 
 export const BUNDLE_OPTION = {
@@ -44,35 +49,64 @@ export const BUNDLE_OPTION = {
   price: PRICING.BUNDLE_UPGRADE,
 } as const;
 
-// Order Status
+// ─── Shop Item Types (mirrors shop_item.move TYPE_* constants) ─────────────
+export const SHOP_ITEM_TYPES = {
+  SHIRT:    0,
+  HOODIE:   1,
+  MUG:      2,
+  MOUSEPAD: 3,
+  OTHER:    4,
+} as const;
+
+export type ShopItemTypeValue = typeof SHOP_ITEM_TYPES[keyof typeof SHOP_ITEM_TYPES];
+
+export const SHOP_ITEM_TYPE_LABELS: Record<ShopItemTypeValue, string> = {
+  [SHOP_ITEM_TYPES.SHIRT]:    "T-Shirt",
+  [SHOP_ITEM_TYPES.HOODIE]:   "Hoodie",
+  [SHOP_ITEM_TYPES.MUG]:      "Mug",
+  [SHOP_ITEM_TYPES.MOUSEPAD]: "Mouse Pad",
+  [SHOP_ITEM_TYPES.OTHER]:    "Other",
+};
+
+export const SHOP_ITEM_TYPE_ICONS: Record<ShopItemTypeValue, string> = {
+  [SHOP_ITEM_TYPES.SHIRT]:    "👕",
+  [SHOP_ITEM_TYPES.HOODIE]:   "🧥",
+  [SHOP_ITEM_TYPES.MUG]:      "☕",
+  [SHOP_ITEM_TYPES.MOUSEPAD]: "🖱️",
+  [SHOP_ITEM_TYPES.OTHER]:    "📦",
+};
+
+// ─── Shop / Order Status (shared between NFT receipts and shop receipts) ────
 export const ORDER_STATUS = {
-  PENDING: 0,
-  SHIPPED: 1,
+  PENDING:   0,
+  SHIPPED:   1,
   DELIVERED: 2,
 } as const;
 
-// Network Configuration
-export const NETWORK_CONFIG = {
-  network:
-    (process.env.NEXT_PUBLIC_SUI_NETWORK as "testnet" | "mainnet") ?? "testnet",
-  rpcUrl:
-    process.env.NEXT_PUBLIC_SUI_RPC_URL ||
-    "https://fullnode.testnet.sui.io:443",
+export type OrderStatusValue = typeof ORDER_STATUS[keyof typeof ORDER_STATUS];
+
+export const ORDER_STATUS_LABELS: Record<OrderStatusValue, string> = {
+  [ORDER_STATUS.PENDING]:   "Pending",
+  [ORDER_STATUS.SHIPPED]:   "Shipped",
+  [ORDER_STATUS.DELIVERED]: "Delivered",
 };
 
-// IPFS Configuration — public / display-only values.
-// ⚠️  Upload credentials (PINATA_JWT, PINATA_API_KEY, PINATA_API_SECRET) live
-//     server-side in src/lib/server/pinata.ts (no NEXT_PUBLIC_ prefix).
+export const ORDER_STATUS_COLORS: Record<OrderStatusValue, string> = {
+  [ORDER_STATUS.PENDING]:   "text-yellow-500",
+  [ORDER_STATUS.SHIPPED]:   "text-blue-500",
+  [ORDER_STATUS.DELIVERED]: "text-green-500",
+};
+
+// Network Configuration
+export const NETWORK_CONFIG = {
+  network: (process.env.NEXT_PUBLIC_SUI_NETWORK as "testnet" | "mainnet") ?? "testnet",
+  rpcUrl:  process.env.NEXT_PUBLIC_SUI_RPC_URL || "https://fullnode.testnet.sui.io:443",
+};
+
+// IPFS Configuration
 export const IPFS_CONFIG = {
-  /** Base public IPFS gateway URL (no auth token). */
-  gateway:
-    process.env.NEXT_PUBLIC_IPFS_GATEWAY || "https://nft.kapogian.xyz/ipfs/",
-  /** Custom Pinata gateway hostname — used to build /ipfs/<cid> URLs. */
-  gatewayUrl:
-    process.env.NEXT_PUBLIC_PINATA_GATEWAY_URL || "https://nft.kapogian.xyz",
-  // gatewayKey and groupId moved to server-only env vars (PINATA_GATEWAY_KEY,
-  // PINATA_GROUP_KAPOGIAN).  Image URLs are now generated via the
-  // /api/pinata/image-url proxy route so the token never reaches the browser.
+  gateway:    process.env.NEXT_PUBLIC_IPFS_GATEWAY    || "https://nft.kapogian.xyz/ipfs/",
+  gatewayUrl: process.env.NEXT_PUBLIC_PINATA_GATEWAY_URL || "https://nft.kapogian.xyz",
 };
 
 // Encryption
@@ -80,9 +114,7 @@ export const ENCRYPTION_CONFIG = {
   adminPublicKey: process.env.NEXT_PUBLIC_ADMIN_PUBLIC_KEY!,
 };
 
-// Gemini AI — API keys and endpoints are handled exclusively in
-// src/app/api/generate-image/route.ts and src/app/api/generate-text/route.ts
-// via the server-side GEMINI_API_KEY env var.  Nothing to export here.
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 export function suiToMist(sui: number): number {
   return sui * 1_000_000_000;
@@ -94,4 +126,10 @@ export function mistToSui(mist: number): number {
 
 export function formatSui(mist: number): string {
   return `${mistToSui(mist).toFixed(2)} SUI`;
+}
+
+/** Parse a comma-separated on-chain string into a trimmed string array. */
+export function parseOnChainList(raw: string): string[] {
+  if (!raw || raw.trim() === "") return [];
+  return raw.split(",").map((s) => s.trim()).filter(Boolean);
 }
