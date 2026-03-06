@@ -519,7 +519,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
     try {
       const tx = new Transaction();
       tx.moveCall({
-        target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::burn_shop_item`,
+        target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::delete_shop_item`,
         arguments: [
           tx.object(superCapId),
           tx.object(CONTRACT_ADDRESSES.SHOP_REGISTRY_ID),
@@ -667,7 +667,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                           <span className="flex items-center gap-1"><Layers size={10} />{item.stock} Units</span>
                         </div>
                         <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-1">
-                          {item.available ? "PAUSE TO ENABLE BURN" : "READY FOR BURN"}
+                          {item.available ? "PAUSE TO ENABLE DELETE" : "READY FOR DELETION"}
                         </p>
                       </div>
 

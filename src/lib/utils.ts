@@ -56,7 +56,7 @@ export async function burnShopItem(params: {
 }) {
   const tx = new Transaction();
   tx.moveCall({
-    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::burn_shop_item`,
+    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::delete_shop_item`,
     arguments: [
       tx.object(params.superAdminCapId),
       tx.object(CONTRACT_ADDRESSES.SHOP_REGISTRY_ID),
