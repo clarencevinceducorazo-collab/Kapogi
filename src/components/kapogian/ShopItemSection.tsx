@@ -322,6 +322,10 @@ function DropdownAssetSelect({
       {/* Global Status Modals for Upload */}
       <Dialog open={uploadStatus !== 'idle'} onOpenChange={() => { if(uploadStatus !== 'loading') setUploadStatus('idle') }}>
         <DialogContent className="max-w-sm w-full p-0 bg-transparent border-none shadow-none !rounded-[2.5rem]">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Pinata Upload Status</DialogTitle>
+            <DialogDescription>Shows progress and results of pinning the merchandise asset to IPFS.</DialogDescription>
+          </DialogHeader>
           <div className="bg-white border-4 border-black rounded-[2.5rem] p-8 shadow-[12px_12px_0_0_rgba(0,0,0,1)] text-center relative overflow-hidden">
             {uploadStatus === 'loading' && (
               <div className="animate-in zoom-in duration-300">

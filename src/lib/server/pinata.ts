@@ -1,3 +1,4 @@
+
 /**
  * Server-Only Pinata IPFS Utilities
  *
@@ -73,8 +74,8 @@ export async function uploadImageToIPFS(
   console.log("📤 [server] Uploading image to IPFS…");
 
   const formData = new FormData();
-  const file = new File([imageBlob], filename, { type: imageBlob.type });
-  formData.append("file", file);
+  // Node.js FormData handles Blobs directly with a filename parameter
+  formData.append("file", imageBlob, filename);
 
   const metadata: Record<string, unknown> = { name: filename };
   if (config.groupId) {
@@ -120,6 +121,34 @@ export async function uploadImageToIPFS(
 }
 
 // ---------------------------------------------------------------------------
+// High-level helper
+// ---------------------------------------------------------------------------
+
+function getExtension(mimeType: string): string {
+  if (mimeType.includes("gif")) return ".gif";
+  if (mimeType.includes("webp")) return ".webp";
+  if (mimeType.includes("jpeg") || mimeType.includes("jpg")) return ".jpg";
+  return ".png";
+}
+
+export async function uploadCharacterToIPFS(
+  imageBlob: Blob,
+  characterData: { name: string },
+): Promise<{ imageUrl: string; imageHash: string }> {
+  const config = getServerConfig();
+  const ext = getExtension(imageBlob.type);
+
+  const { ipfsHash } = await uploadImageToIPFS(
+    imageBlob,
+    `${characterData.name.replace(/\s/g, "_")}${ext}`,
+  );
+
+  const imageUrl = getIPFSGatewayUrl(`ipfs://${ipfsHash}`, config);
+
+  return { imageUrl, imageHash: ipfsHash };
+}
+
+// ---------------------------------------------------------------------------
 // Unpin
 // ---------------------------------------------------------------------------
 
@@ -147,26 +176,6 @@ export async function unpinFromIPFS(ipfsHash: string): Promise<void> {
   } else {
     console.log(`✅ Successfully unpinned ${ipfsHash}`);
   }
-}
-
-// ---------------------------------------------------------------------------
-// High-level helper
-// ---------------------------------------------------------------------------
-
-export async function uploadCharacterToIPFS(
-  imageBlob: Blob,
-  characterData: { name: string },
-): Promise<{ imageUrl: string; imageHash: string }> {
-  const config = getServerConfig();
-
-  const { ipfsHash } = await uploadImageToIPFS(
-    imageBlob,
-    `${characterData.name.replace(/\s/g, "_")}.png`,
-  );
-
-  const imageUrl = getIPFSGatewayUrl(`ipfs://${ipfsHash}`, config);
-
-  return { imageUrl, imageHash: ipfsHash };
 }
 
 // ---------------------------------------------------------------------------
