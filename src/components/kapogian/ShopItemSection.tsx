@@ -10,7 +10,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   ShoppingBag, Plus, RefreshCw, LoaderCircle, Pencil, X,
-  Package, DollarSign, Layers, ToggleLeft, ToggleRight,
+  Package, DollarSign, Layers, Eye, EyeOff,
   Image as ImageIcon, Tag, Palette, CheckCircle,
   ChevronDown, List, Trash2, AlertTriangle, AlertCircle
 } from "lucide-react";
@@ -657,9 +657,9 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                           <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
                             {SHOP_ITEM_TYPE_LABELS[item.itemType as keyof typeof SHOP_ITEM_TYPE_LABELS]}
                           </span>
-                          <span className={cn("text-[9px] font-black uppercase px-2 py-0.5 rounded-full border",
-                            item.available ? "bg-green-50 text-green-600 border-green-200" : "bg-red-50 text-red-600 border-red-200")}>
-                            {item.available ? "Live" : "Paused"}
+                          <span className={cn("text-[9px] font-black uppercase px-2 py-0.5 rounded-full border flex items-center gap-1",
+                            item.available ? "bg-green-50 text-green-600 border-green-200" : "bg-rose-50 text-rose-600 border-rose-200")}>
+                            {item.available ? <><Eye size={10} /> Visible</> : <><EyeOff size={10} /> Hidden</>}
                           </span>
                         </div>
                         <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -669,19 +669,21 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                         {/* Delete hint when live */}
                         {item.available && (
                           <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-1">
-                            Pause to enable deletion
+                            Hide item to enable deletion
                           </p>
                         )}
                       </div>
 
                       {/* Actions */}
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        {/* Toggle */}
+                        {/* Visibility Toggle */}
                         <button onClick={() => handleToggleStatus(item)} disabled={isToggling}
-                          className="w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center bg-white hover:bg-slate-50 transition-all shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none disabled:opacity-40">
+                          title={item.available ? "Hide from Shop" : "Show in Shop"}
+                          className={cn("w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center transition-all shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none disabled:opacity-40",
+                            item.available ? "bg-green-400 hover:bg-green-500" : "bg-white hover:bg-slate-50")}>
                           {isToggling
                             ? <LoaderCircle size={16} className="animate-spin" />
-                            : item.available ? <ToggleRight className="text-green-500" /> : <ToggleLeft className="text-slate-300" />}
+                            : item.available ? <EyeOff className="text-white" /> : <Eye className="text-slate-400" />}
                         </button>
                         {/* Edit */}
                         <button onClick={() => openEdit(item)}
