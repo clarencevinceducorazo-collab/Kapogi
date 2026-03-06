@@ -102,7 +102,7 @@ export async function uploadImageToIPFS(
       method: "POST", 
       headers, 
       body: formData,
-      // Increased timeout for large files to be processed by Pinata
+      // 2-minute timeout for large files
       signal: AbortSignal.timeout(120000) 
     },
   );

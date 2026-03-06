@@ -5,10 +5,6 @@
  * Overhauled Admin UI for managing Shop items on-chain.
  * Features a high-fidelity landscape modal with live preview, dropdown multi-selects,
  * Pinata asset library integration, receipts tab, and burn mechanics.
- *
- * Burn access rules:
- *   burn_shop_item    → Super Admin (SuperAdminCap) — item must be paused first
- *   burn_shop_receipt → Whitelisted Admin (AdminRegistry) — receipt must be delivered
  */
 
 import React, { useState, useRef, useEffect } from "react";
@@ -16,7 +12,7 @@ import {
   ShoppingBag, Plus, RefreshCw, LoaderCircle, Pencil, X,
   Package, DollarSign, Layers, ToggleLeft, ToggleRight,
   Image as ImageIcon, Tag, Palette, CheckCircle,
-  ChevronDown, List, Flame, AlertTriangle,
+  ChevronDown, List, Flame, AlertTriangle, AlertCircle
 } from "lucide-react";
 import { Transaction } from "@mysten/sui/transactions";
 import {
@@ -41,7 +37,7 @@ import {
 
 const STANDARD_SIZES  = ["XS", "S", "M", "L", "XL", "XXL"];
 const STANDARD_COLORS = ["White", "Black", "Blue", "Red", "Grey", "Beige", "Cyan", "Pink", "Green", "Yellow", "Purple"];
-const MAX_UPLOAD_SIZE = 200 * 1024 * 1024; // 200MB limit for high-res GIFs
+const MAX_UPLOAD_SIZE = 200 * 1024 * 1024; // 200MB limit
 
 const PRESET_BGS = [
   "from-cyan-100 to-blue-100",
@@ -153,14 +149,17 @@ function DropdownAssetSelect({ label, value, onChange, onToast, required, files,
   required?: boolean; files: PinataFile[]; loadingFiles: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [uploadErrorMsg, setUploadErrorMsg] = useState("");
   const ref = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -204,6 +203,7 @@ function DropdownAssetSelect({ label, value, onChange, onToast, required, files,
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
+
   return (
     <div className="flex flex-col gap-2" ref={ref}>
       <SectionLabel icon={ImageIcon} required={required}>{label}</SectionLabel>
@@ -226,10 +226,10 @@ function DropdownAssetSelect({ label, value, onChange, onToast, required, files,
         </div>
         {open && (
           <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-slate-100 rounded-2xl shadow-2xl z-[60] overflow-hidden flex flex-col animate-in slide-in-from-top-2 duration-200">
-            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
+            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadStatus === 'loading'}
               className="p-4 border-b-2 border-slate-50 hover:bg-sky-50 flex items-center gap-3 transition-colors text-sky-600">
               <div className="w-8 h-8 rounded-xl bg-sky-100 flex items-center justify-center">
-                {uploading ? <LoaderCircle className="animate-spin" size={16} /> : <Plus size={16} />}
+                {uploadStatus === 'loading' ? <LoaderCircle className="animate-spin" size={16} /> : <Plus size={16} />}
               </div>
               <div className="text-left">
                 <p className="text-xs font-black uppercase tracking-tight">
