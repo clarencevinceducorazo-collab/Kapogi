@@ -71,7 +71,7 @@ export async function uploadImageToIPFS(
 ): Promise<{ ipfsHash: string }> {
   const config = getServerConfig();
 
-  console.log("📤 [server] Uploading image to IPFS…");
+  console.log(`📤 [server] Uploading image to IPFS: ${filename} (${(imageBlob.size / 1024).toFixed(2)}KB)`);
 
   const formData = new FormData();
   // Node.js FormData handles Blobs directly with a filename parameter
@@ -88,11 +88,9 @@ export async function uploadImageToIPFS(
   const headers: Record<string, string> = {};
   if (config.jwt) {
     headers.Authorization = `Bearer ${config.jwt}`;
-    console.log("🔑 Using JWT authentication");
   } else if (config.apiKey && config.apiSecret) {
     headers.pinata_api_key = config.apiKey;
     headers.pinata_secret_api_key = config.apiSecret;
-    console.log("🔑 Using API Key authentication (fallback)");
   } else {
     throw new Error(
       "No Pinata credentials found. Set PINATA_JWT or PINATA_API_KEY + PINATA_API_SECRET in your server environment.",
@@ -101,7 +99,13 @@ export async function uploadImageToIPFS(
 
   const response = await fetch(
     "https://api.pinata.cloud/pinning/pinFileToIPFS",
-    { method: "POST", headers, body: formData },
+    { 
+      method: "POST", 
+      headers, 
+      body: formData,
+      // Important for large files
+      signal: AbortSignal.timeout(60000) 
+    },
   );
 
   if (!response.ok) {
@@ -136,7 +140,7 @@ export async function uploadCharacterToIPFS(
   characterData: { name: string },
 ): Promise<{ imageUrl: string; imageHash: string }> {
   const config = getServerConfig();
-  const ext = getExtension(imageBlob.type);
+  const ext = getExtension(imageBlob.type || "image/png");
 
   const { ipfsHash } = await uploadImageToIPFS(
     imageBlob,

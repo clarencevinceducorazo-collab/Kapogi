@@ -34,6 +34,7 @@ import {
 
 const STANDARD_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 const STANDARD_COLORS = ["White", "Black", "Blue", "Red", "Grey", "Beige", "Cyan", "Pink", "Green", "Yellow", "Purple"];
+const MAX_UPLOAD_SIZE = 15 * 1024 * 1024; // 15MB limit for GIFs/Images
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -172,6 +173,7 @@ function DropdownAssetSelect({
   
   // Local status state for upload feedback
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [uploadErrorMsg, setUploadErrorMsg] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -187,13 +189,28 @@ function DropdownAssetSelect({
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Check file size
+    if (file.size > MAX_UPLOAD_SIZE) {
+      setUploadErrorMsg("File is too heavy (Max 15MB). Please optimize the asset.");
+      setUploadStatus('error');
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     setUploadStatus('loading');
+    setUploadErrorMsg("");
     try {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("name", `shop-asset-${Date.now()}`);
       const res = await fetch("/api/pinata/upload", { method: "POST", body: formData });
-      if (!res.ok) throw new Error("Upload failed");
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Upload failed");
+      }
+
       const { imageUrl } = await res.json();
       onChange(imageUrl);
       setUploadStatus('success');
@@ -201,9 +218,9 @@ function DropdownAssetSelect({
         setUploadStatus('idle');
         setOpen(false);
       }, 1500);
-    } catch {
+    } catch (err: any) {
+      setUploadErrorMsg(err.message || "Failed to pin asset to IPFS.");
       setUploadStatus('error');
-      setTimeout(() => setUploadStatus('idle'), 3000);
     }
   };
 
@@ -271,14 +288,6 @@ function DropdownAssetSelect({
               <input type="file" ref={fileInputRef} className="hidden" onChange={handleUpload} accept="image/*" />
             </button>
 
-            {/* Status Feedback Overlays */}
-            {uploadStatus === 'loading' && (
-              <div className="p-12 flex flex-col items-center gap-3 bg-white/95">
-                <LoaderCircle className="animate-spin text-sky-400" size={32} />
-                <p className="font-black text-[10px] text-slate-400 uppercase tracking-widest">Pinning to IPFS Network...</p>
-              </div>
-            )}
-
             {/* List from Pinata */}
             {uploadStatus === 'idle' && (
               <div className="max-h-60 overflow-y-auto p-2 space-y-1 custom-scrollbar">
@@ -322,9 +331,9 @@ function DropdownAssetSelect({
       {/* Global Status Modals for Upload */}
       <Dialog open={uploadStatus !== 'idle'} onOpenChange={() => { if(uploadStatus !== 'loading') setUploadStatus('idle') }}>
         <DialogContent className="max-w-sm w-full p-0 bg-transparent border-none shadow-none !rounded-[2.5rem]">
-          <DialogHeader className="sr-only">
-            <DialogTitle>Pinata Upload Status</DialogTitle>
-            <DialogDescription>Shows progress and results of pinning the merchandise asset to IPFS.</DialogDescription>
+          <DialogHeader>
+            <DialogTitle className="sr-only">Pinata Upload Status</DialogTitle>
+            <DialogDescription className="sr-only">Shows progress and results of pinning the merchandise asset to IPFS.</DialogDescription>
           </DialogHeader>
           <div className="bg-white border-4 border-black rounded-[2.5rem] p-8 shadow-[12px_12px_0_0_rgba(0,0,0,1)] text-center relative overflow-hidden">
             {uploadStatus === 'loading' && (
@@ -353,7 +362,7 @@ function DropdownAssetSelect({
                   <AlertCircle className="text-rose-500" size={40} />
                 </div>
                 <h3 className="text-2xl font-black uppercase tracking-tight text-rose-600 mb-2 italic">Upload Severed</h3>
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest leading-relaxed">We couldn't reach Pinata.<br/>Please check your connection.</p>
+                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest leading-relaxed">{uploadErrorMsg || "We couldn't reach Pinata. Please check your connection."}</p>
                 <button onClick={() => setUploadStatus('idle')} className="mt-6 w-full py-3 bg-rose-500 text-white rounded-xl font-black uppercase tracking-widest text-xs shadow-[4px_4px_0_0_#9f1239]">Try Again</button>
               </div>
             )}

@@ -1,3 +1,4 @@
+
 /**
  * POST /api/pinata/upload
  *
@@ -13,6 +14,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadCharacterToIPFS } from "@/lib/server/pinata";
 
+export const maxDuration = 60; // Increase timeout for large GIF uploads
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
@@ -21,7 +24,13 @@ export async function POST(req: NextRequest) {
     const name = (formData.get("name") as string | null) ?? "character";
 
     if (!file) {
+      console.error("❌ /api/pinata/upload: No file provided in form data");
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+
+    if (file.size > 20 * 1024 * 1024) {
+      console.warn(`⚠️ /api/pinata/upload: File too large (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+      return NextResponse.json({ error: "File too large. Max 20MB." }, { status: 413 });
     }
 
     // Convert File → Blob so the server-side helper can consume it
@@ -33,7 +42,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ imageUrl, imageHash });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Upload failed";
-    console.error("❌ /api/pinata/upload error:", message);
+    console.error("❌ /api/pinata/upload error:", message, err);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
