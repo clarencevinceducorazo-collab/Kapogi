@@ -21,7 +21,7 @@ export const PageFooter = () => {
               />
             </Link>
           )}
-          
+
           <div className="space-y-2">
             <p className="text-xl font-bold tracking-tight">
               Collect Digital Magic, Get Real Rewards
@@ -32,27 +32,39 @@ export const PageFooter = () => {
           </div>
 
           <div className="flex gap-4 items-center">
-            <a 
-              href="https://x.com/kapogian63" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <Link
+              href="/policy"
+              className="w-auto px-4 h-12 rounded-2xl bg-white/10 hover:bg-white/20 border-2 border-white/20 flex items-center justify-center transition-all hover:-translate-y-1 active:scale-95 shadow-md"
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              href="/terms"
+              className="w-auto px-4 h-12 rounded-2xl bg-white/10 hover:bg-white/20 border-2 border-white/20 flex items-center justify-center transition-all hover:-translate-y-1 active:scale-95 shadow-md"
+            >
+              Terms of Use
+            </Link>
+            <a
+              href="https://x.com/kapogian63"
+              target="_blank"
+              rel="noopener noreferrer"
               className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-white/20 border-2 border-white/20 flex items-center justify-center transition-all hover:-translate-y-1 active:scale-95 shadow-md"
               aria-label="X (Twitter)"
             >
               <iconify-icon icon="ri:twitter-x-fill" class="text-2xl" />
             </a>
-            <a 
-              href="https://discord.gg/rtBhBccW" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://discord.gg/rtBhBccW"
+              target="_blank"
+              rel="noopener noreferrer"
               className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-white/20 border-2 border-white/20 flex items-center justify-center transition-all hover:-translate-y-1 active:scale-95 shadow-md"
               aria-label="Discord"
             >
               <iconify-icon icon="ri:discord-fill" class="text-2xl" />
             </a>
           </div>
-   
-          <div className="pt-4 border-t border-white/10 w-full max-w-xs">
+
+          <div className="pt-4 border-t border-white/50 w-full max-w-xs">
             <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">
               &copy; {new Date().getFullYear()} Kapogian. All Rights Reserved.
             </p>
