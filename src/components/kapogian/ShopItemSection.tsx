@@ -1,10 +1,11 @@
+
 "use client";
 
 /**
  * ShopItemSection.tsx
  * Overhauled Admin UI for managing Shop items on-chain.
  * Features a high-fidelity landscape modal with live preview, dropdown multi-selects, 
- * and Pinata asset library integration.
+ * Pinata asset library integration, and specialized upload status modals.
  */
 
 import React, { useState, useRef, useEffect } from "react";
@@ -12,7 +13,7 @@ import {
   ShoppingBag, Plus, RefreshCw, LoaderCircle, Pencil, X,
   Package, DollarSign, Layers, ToggleLeft, ToggleRight,
   Upload, Image as ImageIcon, Tag, Palette, CheckCircle,
-  AlertCircle, ChevronDown, List
+  AlertCircle, ChevronDown, List, Trash2, Eye, EyeOff
 } from "lucide-react";
 import { Transaction } from "@mysten/sui/transactions";
 import { CONTRACT_ADDRESSES, MODULES, SHOP_ITEM_TYPES, SHOP_ITEM_TYPE_LABELS, SHOP_ITEM_TYPE_ICONS, mistToSui, suiToMist } from "@/lib/constants";
@@ -20,8 +21,14 @@ import { useShopItems } from "@/lib/useShopQueries";
 import { useQueryClient } from "@tanstack/react-query";
 import { shopQueryKeys } from "@/lib/useShopQueries";
 import type { ShopItem } from "@/lib/shopTypes";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -71,7 +78,6 @@ function SectionLabel({ icon: Icon, children, required }: { icon: any, children:
 
 /**
  * DropdownMultiSelect
- * Used for Size and Color selection.
  */
 function DropdownMultiSelect({
   label,
@@ -143,7 +149,6 @@ function DropdownMultiSelect({
 
 /**
  * DropdownAssetSelect
- * Dropdown that fetches and lists assets from Pinata.
  */
 function DropdownAssetSelect({
   label,
@@ -164,7 +169,9 @@ function DropdownAssetSelect({
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [uploading, setUploading] = useState(false);
+  
+  // Local status state for upload feedback
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -180,7 +187,7 @@ function DropdownAssetSelect({
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploading(true);
+    setUploadStatus('loading');
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -189,12 +196,14 @@ function DropdownAssetSelect({
       if (!res.ok) throw new Error("Upload failed");
       const { imageUrl } = await res.json();
       onChange(imageUrl);
-      onToast(`${label} Uploaded!`, "success");
-      setOpen(false);
+      setUploadStatus('success');
+      setTimeout(() => {
+        setUploadStatus('idle');
+        setOpen(false);
+      }, 1500);
     } catch {
-      onToast("Upload failed.", "error");
-    } finally {
-      setUploading(false);
+      setUploadStatus('error');
+      setTimeout(() => setUploadStatus('idle'), 3000);
     }
   };
 
@@ -226,60 +235,127 @@ function DropdownAssetSelect({
 
         {open && (
           <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-slate-100 rounded-2xl shadow-2xl z-[60] overflow-hidden flex flex-col animate-in slide-in-from-top-2 duration-200">
-            {/* Direct Upload Option */}
+            {/* Upload Zone inside dropdown */}
             <button 
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="p-4 border-b-2 border-slate-50 hover:bg-sky-50 flex items-center gap-3 transition-colors text-sky-600"
+              disabled={uploadStatus === 'loading'}
+              className={cn(
+                "p-4 border-b-2 border-slate-50 flex items-center gap-3 transition-colors",
+                uploadStatus === 'loading' ? "bg-slate-50 text-slate-400" : "hover:bg-sky-50 text-sky-600"
+              )}
             >
-              <div className="w-8 h-8 rounded-xl bg-sky-100 flex items-center justify-center">
-                {uploading ? <LoaderCircle className="animate-spin" size={16} /> : <Plus size={16} />}
+              <div className={cn(
+                "w-8 h-8 rounded-xl flex items-center justify-center border-2",
+                uploadStatus === 'loading' ? "bg-white border-slate-200" : 
+                uploadStatus === 'success' ? "bg-emerald-100 border-emerald-300 text-emerald-600" :
+                uploadStatus === 'error' ? "bg-red-100 border-red-300 text-red-600" :
+                "bg-sky-100 border-sky-200 text-sky-600"
+              )}>
+                {uploadStatus === 'loading' ? <LoaderCircle className="animate-spin" size={16} /> : 
+                 uploadStatus === 'success' ? <CheckCircle size={16} /> :
+                 uploadStatus === 'error' ? <AlertCircle size={16} /> :
+                 <Plus size={16} />}
               </div>
               <div className="text-left">
-                <p className="text-xs font-black uppercase tracking-tight">Upload New File</p>
-                <p className="text-[10px] font-bold opacity-60">Add fresh asset to Pinata</p>
+                <p className="text-xs font-black uppercase tracking-tight">
+                  {uploadStatus === 'loading' ? "Uploading to IPFS..." : 
+                   uploadStatus === 'success' ? "Asset Pinned!" :
+                   uploadStatus === 'error' ? "Upload Failed" :
+                   "Upload New File"}
+                </p>
+                <p className="text-[10px] font-bold opacity-60">
+                  {uploadStatus === 'loading' ? "Please wait a moment..." : "Add fresh asset to Pinata"}
+                </p>
               </div>
               <input type="file" ref={fileInputRef} className="hidden" onChange={handleUpload} accept="image/*" />
             </button>
 
+            {/* Status Feedback Overlays */}
+            {uploadStatus === 'loading' && (
+              <div className="p-12 flex flex-col items-center gap-3 bg-white/95">
+                <LoaderCircle className="animate-spin text-sky-400" size={32} />
+                <p className="font-black text-[10px] text-slate-400 uppercase tracking-widest">Pinning to IPFS Network...</p>
+              </div>
+            )}
+
             {/* List from Pinata */}
-            <div className="max-h-60 overflow-y-auto p-2 space-y-1 custom-scrollbar">
-              <p className="px-2 py-1 text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <List size={10} /> Pinata Library
-              </p>
-              {loadingFiles ? (
-                <div className="p-4 flex items-center justify-center gap-2 text-slate-300 font-bold text-[10px]">
-                  <LoaderCircle className="animate-spin" size={12} /> Syncing Library...
-                </div>
-              ) : files.length === 0 ? (
-                <p className="p-4 text-center text-slate-300 font-bold text-[10px]">Library is empty.</p>
-              ) : (
-                files.map((file) => (
-                  <button
-                    key={file.ipfsHash}
-                    type="button"
-                    onClick={() => { onChange(file.url); setOpen(false); }}
-                    className={cn(
-                      "w-full flex items-center gap-3 p-2 rounded-xl transition-all border-2",
-                      value === file.url ? "bg-emerald-50 border-emerald-200" : "bg-white border-transparent hover:bg-slate-50"
-                    )}
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
-                      <img src={file.url} className="w-full h-full object-cover" alt="prev" />
-                    </div>
-                    <div className="text-left overflow-hidden flex-1">
-                      <p className="text-[10px] font-black text-slate-700 truncate">{file.name}</p>
-                      <p className="text-[8px] font-mono text-slate-400 truncate opacity-60">{file.ipfsHash}</p>
-                    </div>
-                    {value === file.url && <CheckCircle size={14} className="text-emerald-500" />}
-                  </button>
-                ))
-              )}
-            </div>
+            {uploadStatus === 'idle' && (
+              <div className="max-h-60 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+                <p className="px-2 py-1 text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <List size={10} /> Pinata Library
+                </p>
+                {loadingFiles ? (
+                  <div className="p-4 flex items-center justify-center gap-2 text-slate-300 font-bold text-[10px]">
+                    <LoaderCircle className="animate-spin" size={12} /> Syncing Library...
+                  </div>
+                ) : files.length === 0 ? (
+                  <p className="p-4 text-center text-slate-300 font-bold text-[10px]">Library is empty.</p>
+                ) : (
+                  files.map((file) => (
+                    <button
+                      key={file.ipfsHash}
+                      type="button"
+                      onClick={() => { onChange(file.url); setOpen(false); }}
+                      className={cn(
+                        "w-full flex items-center gap-3 p-2 rounded-xl transition-all border-2",
+                        value === file.url ? "bg-emerald-50 border-emerald-200" : "bg-white border-transparent hover:bg-slate-50"
+                      )}
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
+                        <img src={file.url} className="w-full h-full object-cover" alt="prev" />
+                      </div>
+                      <div className="text-left overflow-hidden flex-1">
+                        <p className="text-[10px] font-black text-slate-700 truncate">{file.name}</p>
+                        <p className="text-[8px] font-mono text-slate-400 truncate opacity-60">{file.ipfsHash}</p>
+                      </div>
+                      {value === file.url && <CheckCircle size={14} className="text-emerald-500" />}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {/* Global Status Modals for Upload */}
+      <Dialog open={uploadStatus !== 'idle'} onOpenChange={() => { if(uploadStatus !== 'loading') setUploadStatus('idle') }}>
+        <DialogContent className="max-w-sm w-full p-0 bg-transparent border-none shadow-none !rounded-[2.5rem]">
+          <div className="bg-white border-4 border-black rounded-[2.5rem] p-8 shadow-[12px_12px_0_0_rgba(0,0,0,1)] text-center relative overflow-hidden">
+            {uploadStatus === 'loading' && (
+              <div className="animate-in zoom-in duration-300">
+                <div className="w-20 h-20 bg-sky-50 rounded-[2rem] border-4 border-sky-400 flex items-center justify-center mx-auto mb-6 shadow-lg">
+                  <LoaderCircle className="animate-spin text-sky-500" size={40} />
+                </div>
+                <h3 className="text-2xl font-black uppercase tracking-tight text-slate-800 mb-2 italic">Summoning Asset...</h3>
+                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest leading-relaxed">Uploading "{label}"<br/>to the IPFS decentralized network.</p>
+              </div>
+            )}
+
+            {uploadStatus === 'success' && (
+              <div className="animate-in zoom-in duration-300">
+                <div className="w-20 h-20 bg-emerald-50 rounded-[2rem] border-4 border-emerald-400 flex items-center justify-center mx-auto mb-6 shadow-lg">
+                  <CheckCircle className="text-emerald-500" size={40} />
+                </div>
+                <h3 className="text-2xl font-black uppercase tracking-tight text-emerald-600 mb-2 italic">Ritual Complete!</h3>
+                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest leading-relaxed">Your image has been permanently pinned.<br/>Manifesting preview...</p>
+              </div>
+            )}
+
+            {uploadStatus === 'error' && (
+              <div className="animate-in zoom-in duration-300">
+                <div className="w-20 h-20 bg-rose-50 rounded-[2rem] border-4 border-rose-400 flex items-center justify-center mx-auto mb-6 shadow-lg">
+                  <AlertCircle className="text-rose-500" size={40} />
+                </div>
+                <h3 className="text-2xl font-black uppercase tracking-tight text-rose-600 mb-2 italic">Upload Severed</h3>
+                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest leading-relaxed">We couldn't reach Pinata.<br/>Please check your connection.</p>
+                <button onClick={() => setUploadStatus('idle')} className="mt-6 w-full py-3 bg-rose-500 text-white rounded-xl font-black uppercase tracking-widest text-xs shadow-[4px_4px_0_0_#9f1239]">Try Again</button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -423,10 +499,32 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
         arguments: [tx.object(registryId), tx.object(item.id), tx.object("0x6")],
       });
       await signAndExecute({ transaction: tx });
-      onToast(item.available ? "Item paused." : "Item live!", item.available ? "info" : "success");
+      onToast(item.available ? "Item hidden from shop." : "Item now visible!", item.available ? "info" : "success");
       invalidate();
     } catch (e: any) {
       onToast("Toggle failed.", "error");
+    }
+  };
+
+  const handleDeleteItem = async (item: ShopItem) => {
+    if (!confirm(`Are you sure you want to delete "${item.name}"? This action is irreversible on-chain.`)) return;
+    
+    try {
+      const tx = new Transaction();
+      tx.moveCall({
+        target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::delete_shop_item`,
+        arguments: [
+          tx.object(superCapId),
+          tx.object(CONTRACT_ADDRESSES.SHOP_REGISTRY_ID),
+          tx.object(item.id),
+          tx.object("0x6"),
+        ],
+      });
+      await signAndExecute({ transaction: tx });
+      onToast("Item deleted from registry.", "success");
+      invalidate();
+    } catch (e: any) {
+      onToast("Deletion failed.", "error");
     }
   };
 
@@ -486,7 +584,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                     </span>
                     <span className={cn("text-[9px] font-black uppercase px-2 py-0.5 rounded-full border", 
                       item.available ? "bg-green-50 text-green-600 border-green-200" : "bg-red-50 text-red-600 border-red-200")}>
-                      {item.available ? "Live" : "Paused"}
+                      {item.available ? "Visible" : "Hidden"}
                     </span>
                   </div>
                   <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -495,11 +593,21 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => handleToggleStatus(item)} className="w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center bg-white hover:bg-slate-50 transition-all shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none">
-                    {item.available ? <ToggleRight className="text-green-500" /> : <ToggleLeft className="text-slate-300" />}
+                  <button 
+                    onClick={() => handleToggleStatus(item)} 
+                    title={item.available ? "Hide from shop" : "Show in shop"}
+                    className="w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center bg-white hover:bg-slate-50 transition-all shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none"
+                  >
+                    {item.available ? <Eye size={16} className="text-emerald-500" /> : <EyeOff size={16} className="text-rose-400" />}
                   </button>
                   <button onClick={() => openEdit(item)} className="w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center bg-white hover:bg-slate-50 transition-all shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none">
                     <Pencil size={16} />
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteItem(item)} 
+                    className="w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center bg-white hover:bg-rose-50 text-rose-400 hover:text-rose-600 transition-all shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none"
+                  >
+                    <Trash2 size={16} />
                   </button>
                 </div>
               </div>
@@ -508,7 +616,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
         )}
       </div>
 
-      {/* ─── OVERHAULED MODAL ─── */}
       {isOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setIsOpen(false)} />
