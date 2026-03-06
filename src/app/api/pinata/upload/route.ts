@@ -28,9 +28,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    if (file.size > 20 * 1024 * 1024) {
+    // Increased limit to 50MB
+    if (file.size > 50 * 1024 * 1024) {
       console.warn(`⚠️ /api/pinata/upload: File too large (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
-      return NextResponse.json({ error: "File too large. Max 20MB." }, { status: 413 });
+      return NextResponse.json({ error: "File too large. Max 50MB." }, { status: 413 });
     }
 
     // Convert File → Blob so the server-side helper can consume it

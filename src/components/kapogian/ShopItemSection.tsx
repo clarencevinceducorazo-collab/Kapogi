@@ -1,4 +1,3 @@
-
 "use client";
 
 /**
@@ -34,7 +33,7 @@ import {
 
 const STANDARD_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 const STANDARD_COLORS = ["White", "Black", "Blue", "Red", "Grey", "Beige", "Cyan", "Pink", "Green", "Yellow", "Purple"];
-const MAX_UPLOAD_SIZE = 15 * 1024 * 1024; // 15MB limit for GIFs/Images
+const MAX_UPLOAD_SIZE = 50 * 1024 * 1024; // 50MB limit for high-res GIFs
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -171,7 +170,6 @@ function DropdownAssetSelect({
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Local status state for upload feedback
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [uploadErrorMsg, setUploadErrorMsg] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -190,9 +188,8 @@ function DropdownAssetSelect({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file size
     if (file.size > MAX_UPLOAD_SIZE) {
-      setUploadErrorMsg("File is too heavy (Max 15MB). Please optimize the asset.");
+      setUploadErrorMsg("File is too heavy (Max 50MB). Please optimize the asset.");
       setUploadStatus('error');
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
@@ -252,7 +249,6 @@ function DropdownAssetSelect({
 
         {open && (
           <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-slate-100 rounded-2xl shadow-2xl z-[60] overflow-hidden flex flex-col animate-in slide-in-from-top-2 duration-200">
-            {/* Upload Zone inside dropdown */}
             <button 
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -288,7 +284,6 @@ function DropdownAssetSelect({
               <input type="file" ref={fileInputRef} className="hidden" onChange={handleUpload} accept="image/*" />
             </button>
 
-            {/* List from Pinata */}
             {uploadStatus === 'idle' && (
               <div className="max-h-60 overflow-y-auto p-2 space-y-1 custom-scrollbar">
                 <p className="px-2 py-1 text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -328,12 +323,11 @@ function DropdownAssetSelect({
         )}
       </div>
 
-      {/* Global Status Modals for Upload */}
       <Dialog open={uploadStatus !== 'idle'} onOpenChange={() => { if(uploadStatus !== 'loading') setUploadStatus('idle') }}>
         <DialogContent className="max-w-sm w-full p-0 bg-transparent border-none shadow-none !rounded-[2.5rem]">
           <DialogHeader>
-            <DialogTitle className="sr-only">Pinata Upload Status</DialogTitle>
-            <DialogDescription className="sr-only">Shows progress and results of pinning the merchandise asset to IPFS.</DialogDescription>
+            <DialogTitle className="sr-only">Asset Upload Status</DialogTitle>
+            <DialogDescription className="sr-only">Provides feedback on the IPFS upload progress for shop merchandise images.</DialogDescription>
           </DialogHeader>
           <div className="bg-white border-4 border-black rounded-[2.5rem] p-8 shadow-[12px_12px_0_0_rgba(0,0,0,1)] text-center relative overflow-hidden">
             {uploadStatus === 'loading' && (
@@ -379,14 +373,12 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
   const queryClient = useQueryClient();
   const { data: items = [], isLoading, refetch } = useShopItems(false);
 
-  // Form State
   const [isOpen, setIsOpen] = useState(false);
   const [form, setForm] = useState(BLANK_FORM);
   const [isEditing, setIsEditing] = useState(false);
   const [targetId, setTargetId] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Library State
   const [pinataFiles, setPinataFiles] = useState<PinataFile[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
 
@@ -635,7 +627,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
           
           <div className="relative w-full max-w-5xl bg-white rounded-[3rem] border-4 border-black shadow-[12px_12px_0_0_rgba(0,0,0,1)] flex overflow-hidden animate-in zoom-in-95 duration-300" style={{ maxHeight: '92vh' }}>
             
-            {/* LEFT: Live Preview */}
             <div className={cn("w-72 flex-shrink-0 p-8 border-r-4 border-slate-50 relative overflow-hidden transition-all bg-gradient-to-br", form.colorBg)}>
               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#000_1.5px,transparent_1.5px)] [background-size:16px_16px]" />
               
@@ -675,7 +666,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
               </div>
             </div>
 
-            {/* RIGHT: Form */}
             <div className="flex-1 flex flex-col bg-white overflow-hidden">
               <div className="px-10 pt-8 pb-6 border-b-4 border-slate-50 flex items-start justify-between shrink-0">
                 <div>
@@ -692,7 +682,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
 
               <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar">
                 
-                {/* Section: Identity */}
                 <div className="space-y-6">
                   <SectionLabel icon={Tag} required>Item Identity</SectionLabel>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -726,7 +715,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                   </div>
                 </div>
 
-                {/* Section: Pricing & Stock */}
                 <div className="grid grid-cols-2 gap-8">
                   <div>
                     <SectionLabel icon={DollarSign} required>Unit Price (SUI)</SectionLabel>
@@ -753,7 +741,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                   </div>
                 </div>
 
-                {/* Section: Variations */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div>
                     <SectionLabel icon={Palette}>Size Variations</SectionLabel>
@@ -775,7 +762,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                   </div>
                 </div>
 
-                {/* Section: Media Assets */}
                 <div className="grid grid-cols-3 gap-6">
                   <DropdownAssetSelect 
                     label="Static View" 
@@ -804,7 +790,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                   />
                 </div>
 
-                {/* Section: Theming */}
                 <div>
                   <SectionLabel icon={Palette}>Card Background Theme</SectionLabel>
                   <div className="bg-slate-50 border-4 border-slate-100 rounded-3xl p-6 flex flex-wrap gap-4 items-center">
@@ -834,7 +819,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
 
               </div>
 
-              {/* Footer */}
               <div className="px-10 py-6 border-t-4 border-slate-50 bg-slate-50/50 flex gap-4 shrink-0">
                 <button 
                   onClick={() => setIsOpen(false)}
