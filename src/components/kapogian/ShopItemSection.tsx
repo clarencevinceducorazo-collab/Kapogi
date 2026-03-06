@@ -189,7 +189,7 @@ function DropdownAssetSelect({
     if (!file) return;
 
     if (file.size > MAX_UPLOAD_SIZE) {
-      setUploadErrorMsg("File is too heavy (Max 50MB). Please optimize the asset.");
+      setUploadErrorMsg(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max limit is 50MB.`);
       setUploadStatus('error');
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
@@ -201,23 +201,31 @@ function DropdownAssetSelect({
       const formData = new FormData();
       formData.append("file", file);
       formData.append("name", `shop-asset-${Date.now()}`);
-      const res = await fetch("/api/pinata/upload", { method: "POST", body: formData });
       
+      // Use standard fetch with a longer timeout if needed, but the server handles the heavy lifting
+      const res = await fetch("/api/pinata/upload", { 
+        method: "POST", 
+        body: formData
+      });
+      
+      const responseData = await res.json().catch(() => ({}));
+
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || "Upload failed");
+        throw new Error(responseData.error || `Upload failed with status ${res.status}`);
       }
 
-      const { imageUrl } = await res.json();
-      onChange(imageUrl);
+      onChange(responseData.imageUrl);
       setUploadStatus('success');
       setTimeout(() => {
         setUploadStatus('idle');
         setOpen(false);
       }, 1500);
     } catch (err: any) {
-      setUploadErrorMsg(err.message || "Failed to pin asset to IPFS.");
+      console.error("Upload error:", err);
+      setUploadErrorMsg(err.message || "Failed to process asset upload. Please check your network.");
       setUploadStatus('error');
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -278,7 +286,7 @@ function DropdownAssetSelect({
                    "Upload New File"}
                 </p>
                 <p className="text-[10px] font-bold opacity-60">
-                  {uploadStatus === 'loading' ? "Please wait a moment..." : "Add fresh asset to Pinata"}
+                  {uploadStatus === 'loading' ? "Please wait a moment..." : "Add fresh asset up to 50MB"}
                 </p>
               </div>
               <input type="file" ref={fileInputRef} className="hidden" onChange={handleUpload} accept="image/*" />
@@ -327,7 +335,7 @@ function DropdownAssetSelect({
         <DialogContent className="max-w-sm w-full p-0 bg-transparent border-none shadow-none !rounded-[2.5rem]">
           <DialogHeader>
             <DialogTitle className="sr-only">Asset Upload Status</DialogTitle>
-            <DialogDescription className="sr-only">Provides feedback on the IPFS upload progress for shop merchandise images.</DialogDescription>
+            <DialogDescription className="sr-only">Feedback on the IPFS upload progress for shop merchandise images.</DialogDescription>
           </DialogHeader>
           <div className="bg-white border-4 border-black rounded-[2.5rem] p-8 shadow-[12px_12px_0_0_rgba(0,0,0,1)] text-center relative overflow-hidden">
             {uploadStatus === 'loading' && (
@@ -356,7 +364,7 @@ function DropdownAssetSelect({
                   <AlertCircle className="text-rose-500" size={40} />
                 </div>
                 <h3 className="text-2xl font-black uppercase tracking-tight text-rose-600 mb-2 italic">Upload Severed</h3>
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest leading-relaxed">{uploadErrorMsg || "We couldn't reach Pinata. Please check your connection."}</p>
+                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest leading-relaxed">{uploadErrorMsg || "The file might be too large or the server connection was lost."}</p>
                 <button onClick={() => setUploadStatus('idle')} className="mt-6 w-full py-3 bg-rose-500 text-white rounded-xl font-black uppercase tracking-widest text-xs shadow-[4px_4px_0_0_#9f1239]">Try Again</button>
               </div>
             )}

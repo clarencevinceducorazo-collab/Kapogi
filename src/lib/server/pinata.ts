@@ -1,4 +1,3 @@
-
 /**
  * Server-Only Pinata IPFS Utilities
  *
@@ -103,15 +102,15 @@ export async function uploadImageToIPFS(
       method: "POST", 
       headers, 
       body: formData,
-      // Important for large files
-      signal: AbortSignal.timeout(60000) 
+      // Increased timeout for large files to be processed by Pinata
+      signal: AbortSignal.timeout(180000) 
     },
   );
 
   if (!response.ok) {
     const errorText = await response.text();
     console.error("❌ Pinata upload error:", response.status, errorText);
-    throw new Error(`Failed to upload to IPFS. Status: ${response.status}`);
+    throw new Error(`Pinata upstream error: ${response.status} ${errorText.slice(0, 100)}`);
   }
 
   const data = await response.json();

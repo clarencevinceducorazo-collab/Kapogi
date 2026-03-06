@@ -1,4 +1,3 @@
-
 /**
  * POST /api/pinata/upload
  *
@@ -14,12 +13,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadCharacterToIPFS } from "@/lib/server/pinata";
 
-export const maxDuration = 60; // Increase timeout for large GIF uploads
+export const maxDuration = 120; // 2 minutes for heavy GIF processing
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData();
+    // 1. Proactive size check from headers
+    const contentLength = parseInt(req.headers.get("content-length") || "0");
+    if (contentLength > 50 * 1024 * 1024) {
+      return NextResponse.json({ error: "File too large. Max 50MB." }, { status: 413 });
+    }
 
+    const formData = await req.formData();
     const file = formData.get("file") as File | null;
     const name = (formData.get("name") as string | null) ?? "character";
 
@@ -28,22 +32,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Increased limit to 50MB
-    if (file.size > 50 * 1024 * 1024) {
-      console.warn(`⚠️ /api/pinata/upload: File too large (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
-      return NextResponse.json({ error: "File too large. Max 50MB." }, { status: 413 });
-    }
+    console.log(`[API] Received upload: ${file.name}, size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
 
-    // Convert File → Blob so the server-side helper can consume it
-    const arrayBuffer = await file.arrayBuffer();
-    const blob = new Blob([arrayBuffer], { type: file.type || "image/png" });
-
-    const { imageUrl, imageHash } = await uploadCharacterToIPFS(blob, { name });
+    // 2. Optimization: File is already a Blob, no need to re-wrap or arrayBuffer
+    // This significantly reduces memory usage during the request lifecycle.
+    const { imageUrl, imageHash } = await uploadCharacterToIPFS(file, { name });
 
     return NextResponse.json({ imageUrl, imageHash });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Upload failed";
-    console.error("❌ /api/pinata/upload error:", message, err);
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch (err: any) {
+    console.error("❌ /api/pinata/upload error:", err.message || err);
+    
+    // Check for common large payload errors
+    if (err.message?.includes("fetch failed") || err.message?.includes("terminated")) {
+      return NextResponse.json({ error: "Upload connection timed out or was dropped. Please try a smaller or more optimized file." }, { status: 500 });
+    }
+
+    return NextResponse.json(
+      { error: err.message || "Internal server error during upload" },
+      { status: 500 }
+    );
   }
 }
