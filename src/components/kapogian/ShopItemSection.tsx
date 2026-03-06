@@ -3,7 +3,8 @@
 /**
  * ShopItemSection.tsx
  * Overhauled Admin UI for managing Shop items on-chain.
- * Features a high-fidelity landscape modal with live preview and tag-based inputs.
+ * Features a high-fidelity landscape modal with live preview, dropdown multi-selects, 
+ * and Pinata asset library integration.
  */
 
 import React, { useState, useRef, useEffect } from "react";
@@ -11,7 +12,7 @@ import {
   ShoppingBag, Plus, RefreshCw, LoaderCircle, Pencil, X,
   Package, DollarSign, Layers, ToggleLeft, ToggleRight,
   Upload, Image as ImageIcon, Tag, Palette, CheckCircle,
-  AlertCircle
+  AlertCircle, ChevronDown, List
 } from "lucide-react";
 import { Transaction } from "@mysten/sui/transactions";
 import { CONTRACT_ADDRESSES, MODULES, SHOP_ITEM_TYPES, SHOP_ITEM_TYPE_LABELS, SHOP_ITEM_TYPE_ICONS, mistToSui, suiToMist } from "@/lib/constants";
@@ -21,6 +22,11 @@ import { shopQueryKeys } from "@/lib/useShopQueries";
 import type { ShopItem } from "@/lib/shopTypes";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const STANDARD_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
+const STANDARD_COLORS = ["White", "Black", "Blue", "Red", "Grey", "Beige", "Cyan", "Pink", "Green", "Yellow", "Purple"];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -46,6 +52,12 @@ const BLANK_FORM = {
   colorBg: "from-cyan-100 to-blue-100",
 };
 
+interface PinataFile {
+  ipfsHash: string;
+  name: string;
+  url: string;
+}
+
 // ─── Helper Components ────────────────────────────────────────────────────────
 
 function SectionLabel({ icon: Icon, children, required }: { icon: any, children: React.ReactNode, required?: boolean }) {
@@ -57,77 +69,117 @@ function SectionLabel({ icon: Icon, children, required }: { icon: any, children:
   );
 }
 
-function TagInput({ 
-  tags, 
-  onTagsChange, 
-  placeholder 
-}: { 
-  tags: string[], 
-  onTagsChange: (newTags: string[]) => void,
-  placeholder: string 
+/**
+ * DropdownMultiSelect
+ * Used for Size and Color selection.
+ */
+function DropdownMultiSelect({
+  label,
+  options,
+  selected,
+  onToggle
+}: {
+  label: string,
+  options: string[],
+  selected: string[],
+  onToggle: (val: string) => void
 }) {
-  const [input, setInput] = useState("");
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const addTag = (val: string) => {
-    const clean = val.trim().replace(/,/g, '');
-    if (clean && !tags.includes(clean)) {
-      onTagsChange([...tags, clean]);
-    }
-    setInput("");
-  };
-
-  const removeTag = (idx: number) => {
-    onTagsChange(tags.filter((_, i) => i !== idx));
-  };
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
-    <div className="flex gap-2 items-center flex-wrap bg-sky-50 border-2 border-sky-100 rounded-2xl px-3 py-2 min-h-[46px] focus-within:border-cyan-300 focus-within:bg-white transition-all">
-      {tags.map((tag, i) => (
-        <span key={i} className="inline-flex items-center gap-1.5 bg-sky-100 text-sky-700 px-2.5 py-1 rounded-full text-[10px] font-black uppercase border border-sky-200 animate-in zoom-in-90 duration-200">
-          {tag}
-          <button type="button" onClick={() => removeTag(i)} className="hover:text-rose-500"><X size={10} strokeWidth={3} /></button>
-        </span>
-      ))}
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ',') {
-            e.preventDefault();
-            addTag(input);
-          } else if (e.key === 'Backspace' && !input && tags.length > 0) {
-            removeTag(tags.length - 1);
-          }
-        }}
-        placeholder={tags.length === 0 ? placeholder : ""}
-        className="bg-transparent border-none outline-none font-bold text-slate-700 text-sm placeholder-slate-300 flex-1 min-w-[80px]"
-      />
+    <div className="relative" ref={containerRef}>
+      <div 
+        onClick={() => setOpen(!open)}
+        className={cn(
+          "flex gap-2 items-center flex-wrap bg-sky-50 border-2 border-sky-100 rounded-2xl px-3 py-2 min-h-[46px] cursor-pointer hover:border-cyan-200 transition-all",
+          open && "border-cyan-300 bg-white"
+        )}
+      >
+        {selected.length === 0 ? (
+          <span className="text-slate-300 font-bold text-sm">Select {label}...</span>
+        ) : (
+          selected.map((val) => (
+            <span key={val} className="inline-flex items-center gap-1.5 bg-sky-100 text-sky-700 px-2.5 py-1 rounded-full text-[10px] font-black uppercase border border-sky-200">
+              {val}
+              <button type="button" onClick={(e) => { e.stopPropagation(); onToggle(val); }} className="hover:text-rose-500"><X size={10} strokeWidth={3} /></button>
+            </span>
+          ))
+        )}
+        <ChevronDown size={14} className={cn("ml-auto text-slate-300 transition-transform", open && "rotate-180")} />
+      </div>
+
+      {open && (
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-slate-100 rounded-2xl shadow-xl z-50 p-2 grid grid-cols-2 gap-1 animate-in zoom-in-95 duration-200">
+          {options.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => onToggle(opt)}
+              className={cn(
+                "flex items-center justify-between px-3 py-2 rounded-xl text-xs font-black uppercase transition-all",
+                selected.includes(opt) ? "bg-cyan-400 text-white shadow-sm" : "hover:bg-slate-50 text-slate-500"
+              )}
+            >
+              {opt}
+              {selected.includes(opt) && <CheckCircle size={12} />}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-function UploadZone({ 
-  label, 
-  value, 
-  onChange, 
+/**
+ * DropdownAssetSelect
+ * Dropdown that fetches and lists assets from Pinata.
+ */
+function DropdownAssetSelect({
+  label,
+  value,
+  onChange,
   onToast,
-  required
-}: { 
-  label: string, 
-  value: string, 
+  required,
+  files,
+  loadingFiles
+}: {
+  label: string,
+  value: string,
   onChange: (url: string) => void,
   onToast: any,
-  required?: boolean
+  required?: boolean,
+  files: PinataFile[],
+  loadingFiles: boolean
 }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [uploading, setUploading] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) return onToast("File too large (max 10MB)", "error");
-
     setUploading(true);
     try {
       const formData = new FormData();
@@ -138,6 +190,7 @@ function UploadZone({
       const { imageUrl } = await res.json();
       onChange(imageUrl);
       onToast(`${label} Uploaded!`, "success");
+      setOpen(false);
     } catch {
       onToast("Upload failed.", "error");
     } finally {
@@ -146,35 +199,85 @@ function UploadZone({
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <SectionLabel icon={Upload} required={required}>{label}</SectionLabel>
-      </div>
-      <div 
-        onClick={() => inputRef.current?.click()}
-        className={cn(
-          "h-24 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-1 cursor-pointer transition-all relative overflow-hidden group",
-          value ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300"
-        )}
-      >
-        <input ref={inputRef} type="file" className="hidden" onChange={handleFile} accept="image/*" />
-        
-        {uploading ? (
-          <div className="flex flex-col items-center">
-            <LoaderCircle className="animate-spin text-sky-400 mb-1" size={20} />
-            <span className="text-[10px] font-black uppercase text-slate-400">Uploading...</span>
+    <div className="flex flex-col gap-2" ref={containerRef}>
+      <SectionLabel icon={ImageIcon} required={required}>{label}</SectionLabel>
+      
+      <div className="relative">
+        <div 
+          onClick={() => setOpen(!open)}
+          className={cn(
+            "h-12 border-2 rounded-2xl flex items-center px-4 cursor-pointer transition-all",
+            value ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-slate-50 hover:bg-slate-100",
+            open && "border-cyan-300 bg-white"
+          )}
+        >
+          {value ? (
+            <div className="flex items-center gap-2 overflow-hidden">
+              <div className="w-6 h-6 rounded-md bg-white border border-slate-100 overflow-hidden flex-shrink-0">
+                <img src={value} className="w-full h-full object-contain" alt="p" />
+              </div>
+              <span className="text-xs font-black text-emerald-600 truncate uppercase tracking-tighter">Asset Selected</span>
+            </div>
+          ) : (
+            <span className="text-slate-300 font-bold text-xs">Pick or Upload {label}...</span>
+          )}
+          <ChevronDown size={14} className={cn("ml-auto text-slate-300 transition-transform", open && "rotate-180")} />
+        </div>
+
+        {open && (
+          <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-slate-100 rounded-2xl shadow-2xl z-[60] overflow-hidden flex flex-col animate-in slide-in-from-top-2 duration-200">
+            {/* Direct Upload Option */}
+            <button 
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="p-4 border-b-2 border-slate-50 hover:bg-sky-50 flex items-center gap-3 transition-colors text-sky-600"
+            >
+              <div className="w-8 h-8 rounded-xl bg-sky-100 flex items-center justify-center">
+                {uploading ? <LoaderCircle className="animate-spin" size={16} /> : <Plus size={16} />}
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-black uppercase tracking-tight">Upload New File</p>
+                <p className="text-[10px] font-bold opacity-60">Add fresh asset to Pinata</p>
+              </div>
+              <input type="file" ref={fileInputRef} className="hidden" onChange={handleUpload} accept="image/*" />
+            </button>
+
+            {/* List from Pinata */}
+            <div className="max-h-60 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+              <p className="px-2 py-1 text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <List size={10} /> Pinata Library
+              </p>
+              {loadingFiles ? (
+                <div className="p-4 flex items-center justify-center gap-2 text-slate-300 font-bold text-[10px]">
+                  <LoaderCircle className="animate-spin" size={12} /> Syncing Library...
+                </div>
+              ) : files.length === 0 ? (
+                <p className="p-4 text-center text-slate-300 font-bold text-[10px]">Library is empty.</p>
+              ) : (
+                files.map((file) => (
+                  <button
+                    key={file.ipfsHash}
+                    type="button"
+                    onClick={() => { onChange(file.url); setOpen(false); }}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-2 rounded-xl transition-all border-2",
+                      value === file.url ? "bg-emerald-50 border-emerald-200" : "bg-white border-transparent hover:bg-slate-50"
+                    )}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
+                      <img src={file.url} className="w-full h-full object-cover" alt="prev" />
+                    </div>
+                    <div className="text-left overflow-hidden flex-1">
+                      <p className="text-[10px] font-black text-slate-700 truncate">{file.name}</p>
+                      <p className="text-[8px] font-mono text-slate-400 truncate opacity-60">{file.ipfsHash}</p>
+                    </div>
+                    {value === file.url && <CheckCircle size={14} className="text-emerald-500" />}
+                  </button>
+                ))
+              )}
+            </div>
           </div>
-        ) : value ? (
-          <>
-            <img src={value} className="absolute inset-0 w-full h-full object-contain p-2 opacity-20 group-hover:opacity-10 transition-opacity" alt="preview" />
-            <CheckCircle className="text-emerald-500 mb-1" size={20} />
-            <span className="text-[10px] font-black uppercase text-emerald-600 truncate max-w-[80%]">Asset Ready</span>
-          </>
-        ) : (
-          <>
-            <Upload className="text-slate-300 mb-1" size={20} />
-            <span className="text-[10px] font-black uppercase text-slate-400">Click to Upload</span>
-          </>
         )}
       </div>
     </div>
@@ -194,11 +297,21 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
   const [targetId, setTargetId] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Replenish/Price State
-  const [pricingId, setPricingId] = useState("");
-  const [newPriceSui, setNewPriceSui] = useState("");
-  const [stockId, setStockId] = useState("");
-  const [addStock, setAddStock] = useState("");
+  // Library State
+  const [pinataFiles, setPinataFiles] = useState<PinataFile[]>([]);
+  const [loadingFiles, setLoadingFiles] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setLoadingFiles(true);
+      fetch("/api/pinata/list")
+        .then(res => res.json())
+        .then(data => {
+          if (data.files) setPinataFiles(data.files);
+        })
+        .finally(() => setLoadingFiles(false));
+    }
+  }, [isOpen]);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: shopQueryKeys.items });
@@ -230,11 +343,25 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
     setIsOpen(true);
   };
 
+  const toggleSize = (size: string) => {
+    setForm(f => ({
+      ...f,
+      sizes: f.sizes.includes(size) ? f.sizes.filter(s => s !== size) : [...f.sizes, size]
+    }));
+  };
+
+  const toggleColor = (color: string) => {
+    setForm(f => ({
+      ...f,
+      colors: f.colors.includes(color) ? f.colors.filter(c => c !== color) : [...f.colors, color]
+    }));
+  };
+
   const handleSubmit = async () => {
     if (!form.name.trim()) return onToast("Name is required.", "error");
     if (!form.priceSui || parseFloat(form.priceSui) <= 0) return onToast("Valid price required.", "error");
     if (!form.initialStock || parseInt(form.initialStock) <= 0) return onToast("Initial stock required.", "error");
-    if (!form.imageStatic || !form.imageAnimated) return onToast("Images required.", "error");
+    if (!form.imageStatic) return onToast("Static image is required.", "error");
 
     setSubmitting(true);
     try {
@@ -510,19 +637,51 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div>
                     <SectionLabel icon={Palette}>Size Variations</SectionLabel>
-                    <TagInput tags={form.sizes} onTagsChange={(s) => setForm({...form, sizes: s})} placeholder="Add Size (Enter)..." />
+                    <DropdownMultiSelect 
+                      label="Sizes" 
+                      options={STANDARD_SIZES} 
+                      selected={form.sizes} 
+                      onToggle={toggleSize} 
+                    />
                   </div>
                   <div>
                     <SectionLabel icon={Palette}>Color Variations</SectionLabel>
-                    <TagInput tags={form.colors} onTagsChange={(c) => setForm({...form, colors: c})} placeholder="Add Color (Enter)..." />
+                    <DropdownMultiSelect 
+                      label="Colors" 
+                      options={STANDARD_COLORS} 
+                      selected={form.colors} 
+                      onToggle={toggleColor} 
+                    />
                   </div>
                 </div>
 
                 {/* Section: Media Assets */}
                 <div className="grid grid-cols-3 gap-6">
-                  <UploadZone label="Static PNG" value={form.imageStatic} onChange={(url) => setForm({...form, imageStatic: url})} onToast={onToast} required />
-                  <UploadZone label="Animated GIF" value={form.imageAnimated} onChange={(url) => setForm({...form, imageAnimated: url})} onToast={onToast} required />
-                  <UploadZone label="Back View" value={form.imageBack} onChange={(url) => setForm({...form, imageBack: url})} onToast={onToast} />
+                  <DropdownAssetSelect 
+                    label="Static View" 
+                    value={form.imageStatic} 
+                    onChange={(url) => setForm({...form, imageStatic: url})} 
+                    onToast={onToast} 
+                    required 
+                    files={pinataFiles}
+                    loadingFiles={loadingFiles}
+                  />
+                  <DropdownAssetSelect 
+                    label="Animated GIF" 
+                    value={form.imageAnimated} 
+                    onChange={(url) => setForm({...form, imageAnimated: url})} 
+                    onToast={onToast} 
+                    files={pinataFiles}
+                    loadingFiles={loadingFiles}
+                  />
+                  <DropdownAssetSelect 
+                    label="Back View" 
+                    value={form.imageBack} 
+                    onChange={(url) => setForm({...form, imageBack: url})} 
+                    onToast={onToast} 
+                    files={pinataFiles}
+                    loadingFiles={loadingFiles}
+                  />
                 </div>
 
                 {/* Section: Theming */}

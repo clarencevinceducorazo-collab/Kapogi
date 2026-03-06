@@ -9,8 +9,6 @@ import "server-only";
 
 /**
  * Reads Pinata credentials exclusively from private server-side env vars.
- * These are NOT prefixed with NEXT_PUBLIC_ so Next.js never exposes them
- * to the client bundle.
  */
 function getServerConfig() {
   return {
@@ -21,11 +19,45 @@ function getServerConfig() {
       process.env.NEXT_PUBLIC_PINATA_GATEWAY_URL || "https://nft.kapogian.xyz",
     gateway:
       process.env.NEXT_PUBLIC_IPFS_GATEWAY || "https://nft.kapogian.xyz/ipfs/",
-    // Gateway key is also kept server-side; URLs with the token are
-    // computed here and returned as opaque strings to the client.
     gatewayKey: process.env.PINATA_GATEWAY_KEY || "",
     groupId: process.env.PINATA_GROUP_KAPOGIAN || "",
   };
+}
+
+// ---------------------------------------------------------------------------
+// List Pinned Files
+// ---------------------------------------------------------------------------
+
+export async function listPinnedFiles() {
+  const config = getServerConfig();
+  const headers: Record<string, string> = {};
+
+  if (config.jwt) {
+    headers.Authorization = `Bearer ${config.jwt}`;
+  } else if (config.apiKey && config.apiSecret) {
+    headers.pinata_api_key = config.apiKey;
+    headers.pinata_secret_api_key = config.apiSecret;
+  } else {
+    throw new Error("No Pinata credentials found.");
+  }
+
+  // Fetch pinned files from Pinata Data API
+  const response = await fetch(
+    "https://api.pinata.cloud/data/pinList?status=pinned&pageLimit=100",
+    { method: "GET", headers }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Pinata API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.rows.map((row: any) => ({
+    ipfsHash: row.ipfs_pin_hash,
+    name: row.metadata?.name || row.ipfs_pin_hash,
+    url: getIPFSGatewayUrl(`ipfs://${row.ipfs_pin_hash}`, config),
+    mimeType: row.mime_type
+  }));
 }
 
 // ---------------------------------------------------------------------------
