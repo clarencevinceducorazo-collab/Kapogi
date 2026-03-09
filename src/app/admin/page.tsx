@@ -90,7 +90,10 @@ import {
   useMarkShopOrderDelivered,
   useAddShopTracking,
 } from "@/lib/useShopTransactions";
-import type { ShopReceipt } from "@/lib/shopTypes";
+import type {
+  ShopReceipt,
+  ShippingInfo as ShopShippingInfo,
+} from "@/lib/shopTypes";
 import { ShopItemSection } from "@/components/kapogian/ShopItemSection";
 
 declare global {
@@ -935,13 +938,13 @@ function SuperAdminPanel({
       const tx = new Transaction();
       tx.moveCall({
         target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::admin::transfer_super_admin`,
-        arguments: [
-          tx.object(superCapId),
-          tx.pure.address(transferRecipient),
-        ],
+        arguments: [tx.object(superCapId), tx.pure.address(transferRecipient)],
       });
       await signAndExecute({ transaction: tx });
-      onToast("SuperAdminCap transferred! You no longer have super admin access.", "info");
+      onToast(
+        "SuperAdminCap transferred! You no longer have super admin access.",
+        "info",
+      );
       setSuperCapId("");
       setTransferRecipient("");
       setTransferArmed(false);
@@ -1145,61 +1148,63 @@ function SuperAdminPanel({
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-
             {/* ── Transfer SuperAdminCap ── */}
-              <section className="border-4 border-rose-400 rounded-2xl p-5 bg-rose-50">
-                <div className="flex items-center gap-2 mb-3">
-                  <ArrowRightLeft size={18} className="text-rose-600" />
-                  <h3 className="font-black uppercase tracking-tight text-sm text-rose-800">
-                    Transfer Super Admin Cap
-                  </h3>
-                  <span className="ml-auto px-2 py-0.5 bg-rose-500 text-white border-2 border-rose-700 rounded font-black text-[9px] uppercase tracking-wider">
-                    IRREVERSIBLE
-                  </span>
-                </div>
-                <div className="p-3 bg-rose-100 border-2 border-rose-300 rounded-xl mb-4 flex items-start gap-2">
-                  <AlertTriangle size={14} className="text-rose-700 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs font-bold text-rose-700 leading-tight">
-                    Permanently transfers SuperAdminCap to another wallet.
-                    You will <span className="underline">immediately</span> lose
-                    all super admin privileges. Cannot be undone.
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    placeholder="0x... recipient wallet address"
-                    value={transferRecipient}
-                    onChange={(e) => {
-                      setTransferRecipient(e.target.value);
-                      setTransferArmed(false);
-                    }}
-                    className="flex-1 h-10 border-2 border-rose-300 rounded-xl px-3 font-semibold text-xs bg-white outline-none focus:border-rose-500"
-                  />
-                  <button
-                    onClick={handleTransferSuperAdmin}
-                    disabled={transferring || !transferRecipient.startsWith("0x")}
-                    className={`h-10 px-4 rounded-xl font-black text-xs border-2 border-black disabled:opacity-50 flex items-center gap-2 shadow-[3px_3px_0_0_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none transition-all ${
-                      transferArmed
-                        ? "bg-rose-600 text-white animate-pulse"
-                        : "bg-rose-500 text-white hover:bg-rose-600"
-                    }`}
-                  >
-                    {transferring ? (
-                      <LoaderCircle size={14} className="animate-spin" />
-                    ) : (
-                      <>
-                        <ArrowRightLeft size={14} />
-                        {transferArmed ? "Confirm!" : "Transfer"}
-                      </>
-                    )}
-                  </button>
-                </div>
-                {transferArmed && (
-                  <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mt-2 text-center animate-pulse">
-                    ⚠ Click again within 5s to confirm transfer
-                  </p>
-                )}
-              </section>
+            <section className="border-4 border-rose-400 rounded-2xl p-5 bg-rose-50">
+              <div className="flex items-center gap-2 mb-3">
+                <ArrowRightLeft size={18} className="text-rose-600" />
+                <h3 className="font-black uppercase tracking-tight text-sm text-rose-800">
+                  Transfer Super Admin Cap
+                </h3>
+                <span className="ml-auto px-2 py-0.5 bg-rose-500 text-white border-2 border-rose-700 rounded font-black text-[9px] uppercase tracking-wider">
+                  IRREVERSIBLE
+                </span>
+              </div>
+              <div className="p-3 bg-rose-100 border-2 border-rose-300 rounded-xl mb-4 flex items-start gap-2">
+                <AlertTriangle
+                  size={14}
+                  className="text-rose-700 flex-shrink-0 mt-0.5"
+                />
+                <p className="text-xs font-bold text-rose-700 leading-tight">
+                  Permanently transfers SuperAdminCap to another wallet. You
+                  will <span className="underline">immediately</span> lose all
+                  super admin privileges. Cannot be undone.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  placeholder="0x... recipient wallet address"
+                  value={transferRecipient}
+                  onChange={(e) => {
+                    setTransferRecipient(e.target.value);
+                    setTransferArmed(false);
+                  }}
+                  className="flex-1 h-10 border-2 border-rose-300 rounded-xl px-3 font-semibold text-xs bg-white outline-none focus:border-rose-500"
+                />
+                <button
+                  onClick={handleTransferSuperAdmin}
+                  disabled={transferring || !transferRecipient.startsWith("0x")}
+                  className={`h-10 px-4 rounded-xl font-black text-xs border-2 border-black disabled:opacity-50 flex items-center gap-2 shadow-[3px_3px_0_0_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none transition-all ${
+                    transferArmed
+                      ? "bg-rose-600 text-white animate-pulse"
+                      : "bg-rose-500 text-white hover:bg-rose-600"
+                  }`}
+                >
+                  {transferring ? (
+                    <LoaderCircle size={14} className="animate-spin" />
+                  ) : (
+                    <>
+                      <ArrowRightLeft size={14} />
+                      {transferArmed ? "Confirm!" : "Transfer"}
+                    </>
+                  )}
+                </button>
+              </div>
+              {transferArmed && (
+                <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mt-2 text-center animate-pulse">
+                  ⚠ Click again within 5s to confirm transfer
+                </p>
+              )}
+            </section>
 
             {/* ── Mint Pause ── */}
             <section
@@ -1282,7 +1287,10 @@ function SuperAdminPanel({
                       key={addr}
                       className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"
                     >
-                      <User size={12} className="text-slate-400 flex-shrink-0" />
+                      <User
+                        size={12}
+                        className="text-slate-400 flex-shrink-0"
+                      />
                       <span
                         className="font-mono text-xs font-bold text-slate-600 flex-1 truncate"
                         title={addr}
@@ -1465,6 +1473,92 @@ function SuperAdminPanel({
   );
 }
 
+// ─── Shop shipping decryption (RSA-OAEP or base64 fallback) ─────────────────
+
+function shopHexToBytes(hex: string): Uint8Array {
+  const clean = hex.replace(/^0x/, "");
+  const bytes = new Uint8Array(clean.length / 2);
+  for (let i = 0; i < bytes.length; i++)
+    bytes[i] = parseInt(clean.slice(i * 2, i * 2 + 2), 16);
+  return bytes;
+}
+
+function pemToBytes(pem: string): Uint8Array {
+  const b64 = pem.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+async function decryptShopShippingInfo(
+  encryptedString: string,
+  adminPrivateKey: string,
+): Promise<ShopShippingInfo> {
+  // ── Strategy 1: base64 fallback (plain JSON, no key needed) ──────────────
+  try {
+    const decoded = JSON.parse(atob(encryptedString));
+    if (
+      decoded &&
+      typeof decoded === "object" &&
+      (decoded.fullName || decoded.full_name)
+    ) {
+      // normalise legacy snake_case just in case
+      if (!decoded.fullName && decoded.full_name) {
+        return {
+          fullName: decoded.full_name ?? "",
+          email: decoded.email ?? "",
+          phone: decoded.contact_number ?? "",
+          address:
+            typeof decoded.address === "object"
+              ? [
+                  decoded.address?.street_address,
+                  decoded.address?.barangay?.name,
+                  decoded.address?.city?.name,
+                  decoded.address?.province?.name,
+                ]
+                  .filter(Boolean)
+                  .join(", ")
+              : (decoded.address ?? ""),
+          city: decoded.address?.city?.name ?? "",
+          province: decoded.address?.province?.name ?? "",
+          postalCode: "",
+          country: "Philippines",
+          notes: decoded.notes ?? "",
+        };
+      }
+      return decoded as ShopShippingInfo;
+    }
+  } catch {
+    /* not base64 JSON, try RSA */
+  }
+
+  // ── Strategy 2: RSA-OAEP hex payload ─────────────────────────────────────
+  if (!adminPrivateKey.trim()) {
+    throw new Error(
+      "Admin private key required to decrypt RSA-encrypted payload.",
+    );
+  }
+  const keyBytes = adminPrivateKey.trim().startsWith("-----")
+    ? pemToBytes(adminPrivateKey.trim())
+    : shopHexToBytes(adminPrivateKey.trim());
+
+  const cryptoKey = await crypto.subtle.importKey(
+    "pkcs8",
+    keyBytes.buffer as ArrayBuffer,
+    { name: "RSA-OAEP", hash: "SHA-256" },
+    false,
+    ["decrypt"],
+  );
+  const encryptedBytes = shopHexToBytes(encryptedString);
+  const decrypted = await crypto.subtle.decrypt(
+    { name: "RSA-OAEP" },
+    cryptoKey,
+    encryptedBytes.buffer as ArrayBuffer,
+  );
+  return JSON.parse(new TextDecoder().decode(decrypted)) as ShopShippingInfo;
+}
+
 // ─── ShopOrdersTab ────────────────────────────────────────────────────────────
 
 function ShopOrdersTab({
@@ -1477,14 +1571,22 @@ function ShopOrdersTab({
   const { markDelivered } = useMarkShopOrderDelivered();
   const { addTracking } = useAddShopTracking();
 
-  const [activeTab, setActiveTab] = useState<"pending" | "shipped" | "delivered">("pending");
+  const [activeTab, setActiveTab] = useState<
+    "pending" | "shipped" | "delivered"
+  >("pending");
   const [searchQuery, searchQuerySet] = useState("");
   const [adminKey, setAdminKey] = useState("");
   const [decryptedId, setDecryptedId] = useState<string | null>(null);
-  const [decryptedInfo, setDecryptedInfo] = useState<(ShippingInfo & { id: string }) | null>(null);
+  const [decryptedInfo, setDecryptedInfo] = useState<
+    (ShopShippingInfo & { id: string }) | null
+  >(null);
+  const [selectedShopReceipt, setSelectedShopReceipt] =
+    useState<ShopReceipt | null>(null);
 
   const [trackingOpen, setTrackingOpen] = useState(false);
-  const [trackingReceipt, setTrackingReceipt] = useState<ShopReceipt | null>(null);
+  const [trackingReceipt, setTrackingReceipt] = useState<ShopReceipt | null>(
+    null,
+  );
   const [trackingNum, setTrackingNum] = useState("");
   const [carrier, setCarrier] = useState("");
   const [estDate, setEstDate] = useState("");
@@ -1537,18 +1639,23 @@ function ShopOrdersTab({
     if (decryptedId === receipt.id) {
       setDecryptedId(null);
       setDecryptedInfo(null);
-      return;
-    }
-    if (!adminKey) {
-      onToast("Enter Admin Private Key first.", "error");
+      setSelectedShopReceipt(null);
       return;
     }
     try {
-      const info = await decryptShippingInfo(receipt.encryptedShippingInfo, adminKey);
+      const info = await decryptShopShippingInfo(
+        receipt.encryptedShippingInfo,
+        adminKey,
+      );
       setDecryptedId(receipt.id);
       setDecryptedInfo({ ...info, id: receipt.id });
-    } catch {
-      onToast("Decryption failed. Check your key.", "error");
+      setSelectedShopReceipt(receipt);
+    } catch (e: any) {
+      const msg = e?.message ?? "Decryption failed.";
+      onToast(
+        msg.length > 80 ? "Decryption failed. Check key format." : msg,
+        "error",
+      );
     }
   };
 
@@ -1559,7 +1666,12 @@ function ShopOrdersTab({
     }
     setSavingTracking(true);
     try {
-      await addTracking(trackingReceipt.id, trackingNum, carrier, new Date(estDate).getTime());
+      await addTracking(
+        trackingReceipt.id,
+        trackingNum,
+        carrier,
+        new Date(estDate).getTime(),
+      );
       onToast("Tracking saved!", "success");
       setTrackingOpen(false);
     } catch {
@@ -1574,15 +1686,38 @@ function ShopOrdersTab({
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: "Pending", count: stats.pending, bg: "bg-yellow-400", icon: <Clock size={22} /> },
-          { label: "Shipped", count: stats.shipped, bg: "bg-blue-400 text-white", icon: <Truck size={22} /> },
-          { label: "Delivered", count: stats.delivered, bg: "bg-green-400 text-white", icon: <CheckCircle size={22} /> },
+          {
+            label: "Pending",
+            count: stats.pending,
+            bg: "bg-yellow-400",
+            icon: <Clock size={22} />,
+            iconStyle: { width: 40 },
+          },
+          {
+            label: "Shipped",
+            count: stats.shipped,
+            bg: "bg-blue-400 text-white",
+            icon: <Truck size={22} />,
+          },
+          {
+            label: "Delivered",
+            count: stats.delivered,
+            bg: "bg-green-400 text-white",
+            icon: <CheckCircle size={22} />,
+          },
         ].map(({ label, count, bg, icon }) => (
           <BrutalCard key={label}>
             <div className="flex items-center gap-3">
-              <div className={`${bg} p-2 rounded-xl border-2 border-black`}>{icon}</div>
+              <div
+                className={`${bg} p-2 rounded-xl border-2 border-black`}
+                style={typeof iconStyle !== "undefined" ? iconStyle : {}}
+              >
+                {icon}
+              </div>
               <div>
-                <p className="text-xs font-black uppercase text-slate-400">{label}</p>
+                <p className="text-xs font-black uppercase text-slate-400">
+                  {label}
+                </p>
                 <p className="text-3xl font-black">{count}</p>
               </div>
             </div>
@@ -1590,217 +1725,435 @@ function ShopOrdersTab({
         ))}
       </div>
 
-      {/* Key */}
-      <BrutalCard>
-        <div className="flex items-center gap-3 mb-3">
-          <LockKeyhole className="text-slate-400" size={18} />
-          <h3 className="font-black uppercase text-sm">Decrypt Shipping</h3>
-        </div>
-        <div className="relative">
-          <input
-            type="password"
-            placeholder="Admin private key..."
-            value={adminKey}
-            onChange={(e) => setAdminKey(e.target.value)}
-            className="w-full h-12 bg-slate-50 border-4 border-black rounded-2xl px-5 font-bold placeholder:text-slate-300 outline-none"
-          />
-          <Key className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-        </div>
-      </BrutalCard>
-
-      {/* Table */}
-      <BrutalCard noPadding className="shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-        <div className="p-5 border-b-4 border-black flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-3">
-            <h3 className="text-xl font-black uppercase tracking-tighter">Shop Orders</h3>
-            <Badge className="bg-yellow-400 border-2 border-black !text-xs !px-2.5 !py-0.5">
-              {receipts.length}
-            </Badge>
+      {/* Two-column layout: Shipping Payload (left) + Key/Table (right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 items-start">
+        {/* ── LEFT: Shipping Payload Card ── */}
+        <BrutalCard
+          noPadding
+          className="flex flex-col shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sticky top-4 mt-"
+          style={{ minHeight: "600px" }}
+        >
+          <div className="p-4 bg-slate-900 text-white flex justify-between items-center rounded-t-2xl">
+            <h3 className="font-black uppercase text-base tracking-widest flex items-center gap-2">
+              <FileText size={18} /> Shop Payload
+            </h3>
+            {decryptedInfo && (
+              <button
+                onClick={() => {
+                  setDecryptedId(null);
+                  setDecryptedInfo(null);
+                  setSelectedShopReceipt(null);
+                }}
+                className="w-7 h-7 bg-red-500 text-white border-2 border-white rounded-full flex items-center justify-center font-black text-xs shadow-[2px_2px_0px_0px_rgba(0,0,0,0.4)] hover:bg-red-400"
+                title="Clear"
+              >
+                <X size={13} />
+              </button>
+            )}
           </div>
-          <div className="flex items-center border-2 border-black rounded-xl overflow-hidden shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-            {(["pending", "shipped", "delivered"] as const).map((tab, i) => {
-              const cnt = tab === "pending" ? stats.pending : tab === "shipped" ? stats.shipped : stats.delivered;
-              const Icon = tab === "pending" ? Clock : tab === "shipped" ? Truck : CheckCircle;
-              const ac = tab === "pending" ? "bg-yellow-400 text-black" : tab === "shipped" ? "bg-blue-500 text-white" : "bg-green-500 text-white";
-              return (
-                <React.Fragment key={tab}>
-                  {i > 0 && <div className="w-0.5 h-6 bg-black" />}
-                  <button
-                    onClick={() => setActiveTab(tab)}
-                    className={`h-10 px-4 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 ${activeTab === tab ? `${ac} scale-105 z-10` : "bg-white text-slate-500 hover:bg-slate-50"}`}
-                  >
-                    <Icon size={12} /> {tab.charAt(0).toUpperCase() + tab.slice(1)}{" "}
-                    <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-black border border-current bg-black/10">{cnt}</span>
-                  </button>
-                </React.Fragment>
-              );
-            })}
-          </div>
-        </div>
-        <div className="px-5 py-3 border-b-2 border-slate-100 bg-slate-50 flex gap-3 items-center">
-          <div className="relative flex-1">
-            <input
-              placeholder="Search name, buyer, ID..."
-              value={searchQuery}
-              onChange={(e) => searchQuerySet(e.target.value)}
-              className="w-full bg-white border-2 border-black rounded-xl pl-10 h-10 font-bold text-sm outline-none"
-            />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
-          </div>
-          <span className="text-[10px] font-black text-slate-400">
-            {filtered.length} result{filtered.length !== 1 ? "s" : ""}
-          </span>
-        </div>
-
-        {isLoading ? (
-          <div className="p-16 flex justify-center items-center gap-3 text-slate-400 font-black text-sm uppercase">
-            <LoaderCircle className="animate-spin" size={24} /> Loading shop orders...
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="p-16 text-center font-black text-slate-400 uppercase text-sm">
-            No shop orders to display.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead className="bg-slate-50 border-b-4 border-black sticky top-0 z-20">
-                <tr>
-                  <th className="p-4 text-left text-[11px] font-black uppercase text-slate-400 tracking-widest pl-6">Item & Order</th>
-                  <th className="p-4 text-left text-[11px] font-black uppercase text-slate-400 tracking-widest">Buyer</th>
-                  <th className="p-4 text-center text-[11px] font-black uppercase text-slate-400 tracking-widest">Status</th>
-                  <th className="p-4 text-right text-[11px] font-black uppercase text-slate-400 tracking-widest pr-6">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y-2 divide-slate-100">
-                {filtered.map((receipt) => {
-                  const isDecrypted = decryptedId === receipt.id;
-                  return (
-                    <React.Fragment key={receipt.id}>
-                      <tr className={`hover:bg-slate-50 ${isDecrypted ? "bg-blue-50/50" : ""}`}>
-                        <td className="p-4 pl-6">
-                          <p className="font-black text-slate-900 text-sm">{receipt.itemName}</p>
-                          <p className="text-xs font-mono text-slate-400 mt-0.5">{shortAddr(receipt.id)}</p>
-                          <div className="flex gap-2 mt-1 flex-wrap">
-                            <Badge className="bg-white">Qty: {receipt.quantity}</Badge>
-                            {receipt.chosenSize && receipt.chosenSize !== "N/A" && (
-                              <Badge className="bg-slate-100">{receipt.chosenSize}</Badge>
-                            )}
-                            {receipt.chosenColor && (
-                              <Badge className="bg-slate-100">{receipt.chosenColor}</Badge>
-                            )}
-                            <Badge className="bg-sky-100 text-sky-700 border-sky-300">
-                              {mistToSui(Number(receipt.paymentAmount)).toFixed(3)} SUI
+          <div className="p-4 overflow-y-auto max-h-[100vh]">
+            {!decryptedInfo ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center border-2 border-slate-200">
+                  <LockOpen className="text-slate-300" size={36} />
+                </div>
+                <div>
+                  <p className="font-black text-slate-400 uppercase text-base tracking-tighter">
+                    Cipher Block Locked
+                  </p>
+                  <p className="text-sm font-bold text-slate-300 mt-1">
+                    Select an order and click Decrypt
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Order banner */}
+                {selectedShopReceipt && (
+                  <div className="flex gap-4 p-4 bg-blue-50 border-4 border-blue-200 rounded-2xl relative">
+                    <div className="absolute -top-2 -right-2 bg-black text-white px-2 py-0.5 text-[9px] font-black uppercase rounded border border-white">
+                      Decrypted
+                    </div>
+                    <div className="flex flex-col justify-center flex-1 min-w-0">
+                      <p className="text-xs font-black text-blue-500 uppercase leading-none mb-1">
+                        Order Details
+                      </p>
+                      <h4 className="font-black text-slate-900 text-xl leading-tight truncate">
+                        {selectedShopReceipt.itemName}
+                      </h4>
+                      <p
+                        className="text-xs font-mono font-bold text-slate-400 mt-1 uppercase"
+                        title={selectedShopReceipt.id}
+                      >
+                        {shortAddr(selectedShopReceipt.id)}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        <Badge className="bg-white">
+                          Qty: {selectedShopReceipt.quantity}
+                        </Badge>
+                        {selectedShopReceipt.chosenSize &&
+                          selectedShopReceipt.chosenSize !== "N/A" && (
+                            <Badge className="bg-slate-100">
+                              Size: {selectedShopReceipt.chosenSize}
                             </Badge>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <p className="text-xs font-mono font-bold text-slate-600" title={receipt.buyer}>
-                            {shortAddr(receipt.buyer)}
-                          </p>
-                          {receipt.trackingNumber && (
-                            <p className="text-[10px] font-bold text-teal-600 mt-0.5">
-                              📦 {receipt.carrier}: {receipt.trackingNumber}
-                            </p>
                           )}
-                        </td>
-                        <td className="p-4 text-center">
-                          {receipt.status === 0 ? (
-                            <Badge className="bg-yellow-300 border-yellow-500 !text-[11px] !px-2.5 !py-1">Pending</Badge>
-                          ) : receipt.status === 1 ? (
-                            <Badge className="bg-blue-400 text-white !text-[11px] !px-2.5 !py-1">Shipped</Badge>
-                          ) : (
-                            <Badge className="bg-green-500 text-white !text-[11px] !px-2.5 !py-1">Delivered</Badge>
-                          )}
-                        </td>
-                        <td className="p-4 pr-6">
-                          <div className="flex justify-end gap-2 flex-wrap">
-                            <BrutalButton
-                              onClick={() => handleDecrypt(receipt)}
-                              variant={isDecrypted ? "danger" : "purple"}
-                              title={isDecrypted ? "Hide" : "Decrypt PII"}
-                            >
-                              {isDecrypted ? <LockKeyhole size={15} /> : <LockOpen size={15} />}{" "}
-                              {isDecrypted ? "Hide" : "Decrypt"}
-                            </BrutalButton>
-                            <BrutalButton variant="primary" disabled={receipt.status !== 0} onClick={() => handleMarkShipped(receipt.id)}>
-                              <Truck size={15} /> Ship
-                            </BrutalButton>
-                            <BrutalButton variant="success" disabled={receipt.status !== 1} onClick={() => handleMarkDelivered(receipt.id)}>
-                              <CheckCircle size={15} /> Done
-                            </BrutalButton>
-                            <BrutalButton
-                              variant="teal"
-                              className="!px-3"
-                              disabled={receipt.status !== 1}
-                              onClick={() => {
-                                setTrackingReceipt(receipt);
-                                setTrackingNum(receipt.trackingNumber || "");
-                                setCarrier(receipt.carrier || "");
-                                setEstDate(receipt.estimatedDelivery ? new Date(receipt.estimatedDelivery).toISOString().split("T")[0] : "");
-                                setTrackingOpen(true);
-                              }}
-                              title="Add/Edit Tracking"
-                            >
-                              <ClipboardList size={15} />
-                            </BrutalButton>
-                          </div>
-                        </td>
-                      </tr>
-                      {isDecrypted && decryptedInfo && (
-                        <tr className="bg-blue-50">
-                          <td colSpan={4} className="px-6 py-4">
-                            <div className="bg-white border-4 border-blue-200 rounded-2xl p-4 relative">
-                              <div className="absolute -top-2 -right-2 bg-black text-white px-2 py-0.5 text-[9px] font-black uppercase rounded border border-white">
-                                Decrypted
-                              </div>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                                <div>
-                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                    <User size={9} /> Consignee
-                                  </p>
-                                  <p className="font-black text-slate-700">{decryptedInfo.fullName}</p>
-                                </div>
-                                <div>
-                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                    <Phone size={9} /> Contact
-                                  </p>
-                                  <p className="font-bold text-slate-700">{decryptedInfo.phone}</p>
-                                  {decryptedInfo.email && (
-                                    <p className="font-bold text-slate-500 text-[10px]">{decryptedInfo.email}</p>
-                                  )}
-                                </div>
-                                <div className="md:col-span-2">
-                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                    <MapPin size={9} /> Shipping Address
-                                  </p>
-                                  <p className="font-bold text-slate-700">
-                                    {decryptedInfo.address}, {decryptedInfo.city}, {decryptedInfo.province}{" "}
-                                    {decryptedInfo.postalCode}, {decryptedInfo.country}
-                                  </p>
-                                  {decryptedInfo.notes && (
-                                    <p className="text-slate-500 italic mt-1 text-[10px]">Note: {decryptedInfo.notes}</p>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
+                        {selectedShopReceipt.chosenColor && (
+                          <Badge className="bg-slate-100">
+                            {selectedShopReceipt.chosenColor}
+                          </Badge>
+                        )}
+                        <Badge className="bg-sky-100 text-sky-700 border-sky-300">
+                          {mistToSui(
+                            Number(selectedShopReceipt.paymentAmount),
+                          ).toFixed(3)}{" "}
+                          SUI
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Shipping fields */}
+                <div className="space-y-4">
+                  {[
+                    {
+                      label: "Consignee",
+                      icon: <User size={11} />,
+                      value: decryptedInfo.fullName,
+                    },
+                    {
+                      label: "Email",
+                      icon: <Mail size={11} />,
+                      value: decryptedInfo.email,
+                    },
+                  ].map(({ label, icon, value }) =>
+                    value ? (
+                      <div key={label} className="space-y-1.5">
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                          {icon} {label}
+                        </label>
+                        <div className="p-3 bg-slate-50 border-2 border-black rounded-xl font-black text-slate-700 text-sm">
+                          {value}
+                        </div>
+                      </div>
+                    ) : null,
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                      <Phone size={11} /> Contact
+                    </label>
+                    <p className="p-3 bg-slate-50 border-2 border-black rounded-xl font-black text-slate-700 text-sm">
+                      {decryptedInfo.phone}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                      <MapPin size={11} /> Shipping Destination
+                    </label>
+                    <div className="p-3 bg-slate-50 border-2 border-black rounded-xl font-black text-slate-700 text-sm">
+                      {[
+                        decryptedInfo.address,
+                        decryptedInfo.city,
+                        decryptedInfo.province,
+                        decryptedInfo.postalCode,
+                        decryptedInfo.country,
+                      ]
+                        .filter(Boolean)
+                        .join(", ")}
+                    </div>
+                  </div>
+
+                  {decryptedInfo.notes && (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                        <Package size={11} /> Order Notes
+                      </label>
+                      <div className="p-3 bg-slate-50 border-2 border-black rounded-xl font-bold text-slate-600 text-sm italic">
+                        {decryptedInfo.notes}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </BrutalCard>
+        </BrutalCard>
+
+        {/* ── RIGHT: Key + Table ── */}
+        <div className="space-y-6">
+          {/* Key */}
+          <BrutalCard>
+            <div className="flex items-center gap-2 mb-1">
+              <LockKeyhole className="text-slate-400" size={18} />
+              <div>
+                <h3 className="font-black uppercase text-sm">
+                  Decrypt Shipping
+                </h3>
+                <p className="text-[10px] font-bold text-slate-400 mt-0.5">
+                  Leave empty if orders used fallback encoding · Paste RSA
+                  private key (PEM or hex) otherwise
+                </p>
+              </div>
+            </div>
+            <div className="relative">
+              <input
+                type="password"
+                placeholder="Paste RSA PKCS8 private key (PEM or hex)… or leave empty for base64-encoded orders"
+                value={adminKey}
+                onChange={(e) => setAdminKey(e.target.value)}
+                className="w-full bg-slate-50 border-4 border-black rounded-2xl px-3 py-1 font-mono text-xs placeholder:text-slate-300 outline-none resize-none"
+              />
+              <Key
+                className="absolute right-3 top-1 text-slate-300"
+                size={18}
+              />
+            </div>
+          </BrutalCard>
+          {/* Table */}
+          <BrutalCard
+            noPadding
+            className="shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-visible"
+          >
+            <div className="p-5 border-b-4 border-black flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="flex items-center gap-3">
+                <h3 className="text-xl font-black uppercase tracking-tighter">
+                  Shop Orders
+                </h3>
+                <Badge className="bg-yellow-400 border-2 border-black !text-xs !px-2.5 !py-0.5">
+                  {receipts.length}
+                </Badge>
+              </div>
+              <div className="flex items-center border-2 border-black rounded-xl overflow-hidden shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                {(["pending", "shipped", "delivered"] as const).map(
+                  (tab, i) => {
+                    const cnt =
+                      tab === "pending"
+                        ? stats.pending
+                        : tab === "shipped"
+                          ? stats.shipped
+                          : stats.delivered;
+                    const Icon =
+                      tab === "pending"
+                        ? Clock
+                        : tab === "shipped"
+                          ? Truck
+                          : CheckCircle;
+                    const ac =
+                      tab === "pending"
+                        ? "bg-yellow-400 text-black"
+                        : tab === "shipped"
+                          ? "bg-blue-500 text-white"
+                          : "bg-green-500 text-white";
+                    return (
+                      <React.Fragment key={tab}>
+                        {i > 0 && <div className="w-0.5 h-6 bg-black" />}
+                        <button
+                          onClick={() => setActiveTab(tab)}
+                          className={`h-10 px-4 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 ${activeTab === tab ? `${ac} scale-105 z-10` : "bg-white text-slate-500 hover:bg-slate-50"}`}
+                        >
+                          <Icon size={12} />{" "}
+                          {tab.charAt(0).toUpperCase() + tab.slice(1)}{" "}
+                          <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-black border border-current bg-black/10">
+                            {cnt}
+                          </span>
+                        </button>
+                      </React.Fragment>
+                    );
+                  },
+                )}
+              </div>
+            </div>
+            <div className="px-5 py-3 border-b-2 border-slate-100 bg-slate-50 flex gap-3 items-center">
+              <div className="relative flex-1">
+                <input
+                  placeholder="Search name, buyer, ID..."
+                  value={searchQuery}
+                  onChange={(e) => searchQuerySet(e.target.value)}
+                  className="w-full bg-white border-2 border-black rounded-xl pl-10 h-10 font-bold text-sm outline-none"
+                />
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  size={15}
+                />
+              </div>
+              <span className="text-[10px] font-black text-slate-400">
+                {filtered.length} result{filtered.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+
+            {isLoading ? (
+              <div className="p-16 flex justify-center items-center gap-3 text-slate-400 font-black text-sm uppercase">
+                <LoaderCircle className="animate-spin" size={24} /> Loading shop
+                orders...
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="p-16 text-center font-black text-slate-400 uppercase text-sm">
+                No shop orders to display.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead className="bg-slate-50 border-b-4 border-black sticky top-0 z-20">
+                    <tr>
+                      <th className="p-4 text-left text-[11px] font-black uppercase text-slate-400 tracking-widest pl-6">
+                        Item & Order
+                      </th>
+                      <th className="p-4 text-left text-[11px] font-black uppercase text-slate-400 tracking-widest">
+                        Buyer
+                      </th>
+                      <th className="p-4 text-center text-[11px] font-black uppercase text-slate-400 tracking-widest">
+                        Status
+                      </th>
+                      <th className="p-4 text-right text-[11px] font-black uppercase text-slate-400 tracking-widest pr-6">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y-2 divide-slate-100">
+                    {filtered.map((receipt) => {
+                      const isDecrypted = decryptedId === receipt.id;
+                      return (
+                        <React.Fragment key={receipt.id}>
+                          <tr
+                            className={`hover:bg-slate-50 ${isDecrypted ? "bg-blue-50/50" : ""}`}
+                          >
+                            <td className="p-4 pl-6">
+                              <p className="font-black text-slate-900 text-sm">
+                                {receipt.itemName}
+                              </p>
+                              <p className="text-xs font-mono text-slate-400 mt-0.5">
+                                {shortAddr(receipt.id)}
+                              </p>
+                              <div className="flex gap-2 mt-1 flex-wrap">
+                                <Badge className="bg-white">
+                                  Qty: {receipt.quantity}
+                                </Badge>
+                                {receipt.chosenSize &&
+                                  receipt.chosenSize !== "N/A" && (
+                                    <Badge className="bg-slate-100">
+                                      {receipt.chosenSize}
+                                    </Badge>
+                                  )}
+                                {receipt.chosenColor && (
+                                  <Badge className="bg-slate-100">
+                                    {receipt.chosenColor}
+                                  </Badge>
+                                )}
+                                <Badge className="bg-sky-100 text-sky-700 border-sky-300">
+                                  {mistToSui(
+                                    Number(receipt.paymentAmount),
+                                  ).toFixed(3)}{" "}
+                                  SUI
+                                </Badge>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <p
+                                className="text-xs font-mono font-bold text-slate-600"
+                                title={receipt.buyer}
+                              >
+                                {shortAddr(receipt.buyer)}
+                              </p>
+                              {receipt.trackingNumber && (
+                                <p className="text-[10px] font-bold text-teal-600 mt-0.5">
+                                  📦 {receipt.carrier}: {receipt.trackingNumber}
+                                </p>
+                              )}
+                            </td>
+                            <td className="p-4 text-center">
+                              {receipt.status === 0 ? (
+                                <Badge className="bg-yellow-300 border-yellow-500 !text-[11px] !px-2.5 !py-1">
+                                  Pending
+                                </Badge>
+                              ) : receipt.status === 1 ? (
+                                <Badge className="bg-blue-400 text-white !text-[11px] !px-2.5 !py-1">
+                                  Shipped
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-green-500 text-white !text-[11px] !px-2.5 !py-1">
+                                  Delivered
+                                </Badge>
+                              )}
+                            </td>
+                            <td className="p-4 pr-6">
+                              <div className="flex justify-end gap-2 flex-wrap">
+                                <BrutalButton
+                                  onClick={() => handleDecrypt(receipt)}
+                                  variant={isDecrypted ? "danger" : "purple"}
+                                  title={isDecrypted ? "Hide" : "Decrypt PII"}
+                                >
+                                  {isDecrypted ? (
+                                    <LockKeyhole size={15} />
+                                  ) : (
+                                    <LockOpen size={15} />
+                                  )}{" "}
+                                  {isDecrypted ? "Hide" : "Decrypt"}
+                                </BrutalButton>
+                                <BrutalButton
+                                  variant="primary"
+                                  disabled={receipt.status !== 0}
+                                  onClick={() => handleMarkShipped(receipt.id)}
+                                >
+                                  <Truck size={15} /> Ship
+                                </BrutalButton>
+                                <BrutalButton
+                                  variant="success"
+                                  disabled={receipt.status !== 1}
+                                  onClick={() =>
+                                    handleMarkDelivered(receipt.id)
+                                  }
+                                >
+                                  <CheckCircle size={15} /> Done
+                                </BrutalButton>
+                                <BrutalButton
+                                  variant="teal"
+                                  className="!px-3"
+                                  disabled={receipt.status !== 1}
+                                  onClick={() => {
+                                    setTrackingReceipt(receipt);
+                                    setTrackingNum(
+                                      receipt.trackingNumber || "",
+                                    );
+                                    setCarrier(receipt.carrier || "");
+                                    setEstDate(
+                                      receipt.estimatedDelivery
+                                        ? new Date(receipt.estimatedDelivery)
+                                            .toISOString()
+                                            .split("T")[0]
+                                        : "",
+                                    );
+                                    setTrackingOpen(true);
+                                  }}
+                                  title="Add/Edit Tracking"
+                                >
+                                  <ClipboardList size={15} />
+                                </BrutalButton>
+                              </div>
+                            </td>
+                          </tr>
+                        </React.Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </BrutalCard>
+        </div>
+        {/* end right column */}
+      </div>
+      {/* end 2-col grid */}
 
       {/* Tracking Modal */}
       {trackingOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white border-4 border-black rounded-3xl w-full max-w-md shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-black uppercase italic">Shop Tracking</h2>
+              <h2 className="text-2xl font-black uppercase italic">
+                Shop Tracking
+              </h2>
               <button
                 onClick={() => setTrackingOpen(false)}
                 className="bg-red-500 text-white w-8 h-8 rounded-full border-2 border-black flex items-center justify-center font-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
@@ -1810,20 +2163,34 @@ function ShopOrdersTab({
             </div>
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Carrier</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Carrier
+                </label>
                 <select
                   value={carrier}
                   onChange={(e) => setCarrier(e.target.value)}
                   className="w-full h-12 border-2 border-black rounded-xl font-bold bg-slate-50 px-3 outline-none cursor-pointer"
                 >
                   <option value="">Select carrier…</option>
-                  {["UPS", "FedEx", "J&T Express", "LBC", "DHL", "SPX", "NINJA Van Philippines"].map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                  {[
+                    "UPS",
+                    "FedEx",
+                    "J&T Express",
+                    "LBC",
+                    "DHL",
+                    "SPX",
+                    "NINJA Van Philippines",
+                  ].map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
                   ))}
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tracking Number</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Tracking Number
+                </label>
                 <input
                   value={trackingNum}
                   onChange={(e) => setTrackingNum(e.target.value)}
@@ -1832,7 +2199,9 @@ function ShopOrdersTab({
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Est. Delivery Date</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Est. Delivery Date
+                </label>
                 <input
                   type="date"
                   value={estDate}
@@ -1841,14 +2210,23 @@ function ShopOrdersTab({
                 />
               </div>
               <div className="pt-4 flex gap-3">
-                <BrutalButton onClick={() => setTrackingOpen(false)} className="flex-1">Cancel</BrutalButton>
+                <BrutalButton
+                  onClick={() => setTrackingOpen(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </BrutalButton>
                 <BrutalButton
                   variant="black"
                   className="flex-1 shadow-[4px_4px_0px_0px_rgba(59,130,246,1)]"
                   onClick={handleSaveTracking}
                   disabled={savingTracking}
                 >
-                  {savingTracking ? <LoaderCircle size={16} className="animate-spin" /> : "Save Tracking"}
+                  {savingTracking ? (
+                    <LoaderCircle size={16} className="animate-spin" />
+                  ) : (
+                    "Save Tracking"
+                  )}
                 </BrutalButton>
               </div>
             </div>
@@ -1876,7 +2254,9 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterItem, setFilterItem] = useState<string>("all");
-  const [activeTab, setActiveTab] = useState<"pending" | "shipped" | "delivered">("pending");
+  const [activeTab, setActiveTab] = useState<
+    "pending" | "shipped" | "delivered"
+  >("pending");
   const [superAdminPanelOpen, setSuperAdminPanelOpen] = useState(false);
   const [mainTab, setMainTab] = useState<"nft" | "shop">("nft");
 
@@ -1892,9 +2272,13 @@ export default function AdminPage() {
   const showToast = (message: string, type: Toast["type"] = "info") => {
     const id = ++toastCounter.current;
     setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
+    setTimeout(
+      () => setToasts((prev) => prev.filter((t) => t.id !== id)),
+      3500,
+    );
   };
-  const removeToast = (id: number) => setToasts((prev) => prev.filter((t) => t.id !== id));
+  const removeToast = (id: number) =>
+    setToasts((prev) => prev.filter((t) => t.id !== id));
 
   useEffect(() => {
     if (!account?.address) {
@@ -1904,7 +2288,10 @@ export default function AdminPage() {
       return;
     }
     setRoleLoading(true);
-    Promise.all([checkIsAdmin(account.address), checkIsSuperAdmin(account.address)])
+    Promise.all([
+      checkIsAdmin(account.address),
+      checkIsSuperAdmin(account.address),
+    ])
       .then(([admin, superAdmin]) => {
         setIsAdmin(admin || superAdmin);
         setIsSuperAdmin(superAdmin);
@@ -1925,24 +2312,37 @@ export default function AdminPage() {
     () => ({
       pending: receipts.filter((r) => r.status === ORDER_STATUS.PENDING).length,
       shipped: receipts.filter((r) => r.status === ORDER_STATUS.SHIPPED).length,
-      delivered: receipts.filter((r) => r.status === ORDER_STATUS.DELIVERED).length,
+      delivered: receipts.filter((r) => r.status === ORDER_STATUS.DELIVERED)
+        .length,
     }),
     [receipts],
   );
 
   const allItems = useMemo(() => {
     const items = new Set<string>();
-    receipts.forEach((r) => r.itemsSelected.split(",").forEach((i) => items.add(i.trim())));
+    receipts.forEach((r) =>
+      r.itemsSelected.split(",").forEach((i) => items.add(i.trim())),
+    );
     return Array.from(items).sort();
   }, [receipts]);
 
   const filteredReceipts = useMemo(() => {
     const q = searchQuery.toLowerCase();
     return receipts.filter((r) => {
-      if (activeTab === "pending" && r.status !== ORDER_STATUS.PENDING) return false;
-      if (activeTab === "shipped" && r.status !== ORDER_STATUS.SHIPPED) return false;
-      if (activeTab === "delivered" && r.status !== ORDER_STATUS.DELIVERED) return false;
-      if (filterItem !== "all" && !r.itemsSelected.split(",").map((i) => i.trim()).includes(filterItem)) return false;
+      if (activeTab === "pending" && r.status !== ORDER_STATUS.PENDING)
+        return false;
+      if (activeTab === "shipped" && r.status !== ORDER_STATUS.SHIPPED)
+        return false;
+      if (activeTab === "delivered" && r.status !== ORDER_STATUS.DELIVERED)
+        return false;
+      if (
+        filterItem !== "all" &&
+        !r.itemsSelected
+          .split(",")
+          .map((i) => i.trim())
+          .includes(filterItem)
+      )
+        return false;
       if (q) {
         const matchName = r.character?.name?.toLowerCase().includes(q);
         const matchId = r.objectId.toLowerCase().includes(q);
@@ -1969,13 +2369,16 @@ export default function AdminPage() {
           nftId: obj.data.content.fields.nft_id,
           buyer: obj.data.content.fields.buyer,
           itemsSelected: obj.data.content.fields.items_selected,
-          encryptedShippingInfo: obj.data.content.fields.encrypted_shipping_info,
+          encryptedShippingInfo:
+            obj.data.content.fields.encrypted_shipping_info,
           status: Number(obj.data.content.fields.status),
           paymentAmount: Number(obj.data.content.fields.payment_amount),
           createdAt: Number(obj.data.content.fields.created_at),
           trackingNumber: obj.data.content.fields.tracking_number || "",
           carrier: obj.data.content.fields.carrier || "",
-          estimatedDelivery: Number(obj.data.content.fields.estimated_delivery || 0),
+          estimatedDelivery: Number(
+            obj.data.content.fields.estimated_delivery || 0,
+          ),
         }))
         .sort((a, b) => b.createdAt - a.createdAt);
       const nftObjects = await suiClient.multiGetObjects({
@@ -1988,12 +2391,16 @@ export default function AdminPage() {
           .map((obj) => [
             obj.data?.objectId,
             {
-              imageUrl: getIPFSGatewayUrl((obj.data?.display?.data as any)?.image_url),
+              imageUrl: getIPFSGatewayUrl(
+                (obj.data?.display?.data as any)?.image_url,
+              ),
               name: (obj.data?.display?.data as any)?.name,
             },
           ]),
       );
-      setReceipts(parsedReceipts.map((r) => ({ ...r, character: nftsMap.get(r.nftId) })));
+      setReceipts(
+        parsedReceipts.map((r) => ({ ...r, character: nftsMap.get(r.nftId) })),
+      );
     } catch (err) {
       console.error(err);
       setError("Failed to load orders. Please refresh.");
@@ -2012,10 +2419,33 @@ export default function AdminPage() {
       return;
     }
     try {
-      const decryptedInfo = await decryptShippingInfo(receipt.encryptedShippingInfo, adminPrivateKey);
-      setDecryptedCards([{ id: receipt.objectId, ...decryptedInfo, itemsSelected: receipt.itemsSelected, character: receipt.character }]);
-    } catch {
-      showToast("Decryption failed. Check your key.", "error");
+      // EthCrypto requires a 64-char hex key with no 0x prefix
+      const sanitizedKey = adminPrivateKey.trim().replace(/^0x/i, "");
+      const decryptedInfo = await decryptShippingInfo(
+        receipt.encryptedShippingInfo,
+        sanitizedKey,
+      );
+      setDecryptedCards([
+        {
+          id: receipt.objectId,
+          ...decryptedInfo,
+          itemsSelected: receipt.itemsSelected,
+          character: receipt.character,
+        },
+      ]);
+    } catch (e: any) {
+      const msg = e?.message ?? "";
+      if (
+        msg.toLowerCase().includes("bad private key") ||
+        msg.toLowerCase().includes("private key")
+      ) {
+        showToast(
+          "Bad key format. Paste the 64-char hex private key (no 0x prefix).",
+          "error",
+        );
+      } else {
+        showToast("Decryption failed. Check your key.", "error");
+      }
     }
   };
 
@@ -2063,7 +2493,10 @@ export default function AdminPage() {
     }
   };
 
-  const handleDownloadImage = async (imageUrl: string, characterName: string) => {
+  const handleDownloadImage = async (
+    imageUrl: string,
+    characterName: string,
+  ) => {
     try {
       const response = await fetch(imageUrl);
       const blob = await response.blob();
@@ -2084,12 +2517,17 @@ export default function AdminPage() {
     return (
       <div
         className="min-h-screen flex items-center justify-center bg-slate-50 p-4"
-        style={{ backgroundImage: "radial-gradient(#000 1px, transparent 1px)", backgroundSize: "24px 24px" }}
+        style={{
+          backgroundImage: "radial-gradient(#000 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+        }}
       >
         <BrutalCard className="max-w-md w-full text-center">
           <LockKeyhole size={48} className="mx-auto mb-4 text-slate-400" />
           <h2 className="font-black text-2xl uppercase mb-3">Admin Access</h2>
-          <p className="text-sm font-bold text-slate-500 mb-6">Connect your wallet to continue.</p>
+          <p className="text-sm font-bold text-slate-500 mb-6">
+            Connect your wallet to continue.
+          </p>
           <CustomConnectButton className="!bg-blue-500 !border-4 !border-black !text-white !font-black !px-6 !py-2 !rounded-xl !shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:!bg-blue-600" />
         </BrutalCard>
       </div>
@@ -2099,7 +2537,8 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
         <div className="flex items-center gap-3 font-bold text-slate-400 uppercase">
-          <LoaderCircle className="animate-spin" size={28} /> Verifying access...
+          <LoaderCircle className="animate-spin" size={28} /> Verifying
+          access...
         </div>
       </div>
     );
@@ -2108,12 +2547,19 @@ export default function AdminPage() {
     return (
       <div
         className="min-h-screen flex items-center justify-center bg-slate-50 p-4"
-        style={{ backgroundImage: "radial-gradient(#000 1px, transparent 1px)", backgroundSize: "24px 24px" }}
+        style={{
+          backgroundImage: "radial-gradient(#000 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+        }}
       >
         <BrutalCard className="max-w-md w-full text-center">
           <ShieldAlert size={48} className="mx-auto mb-4 text-red-500" />
-          <h2 className="font-black text-2xl uppercase mb-3">Access Denied...</h2>
-          <p className="mb-2 font-bold text-slate-600">This wallet is not in the admin whitelist.</p>
+          <h2 className="font-black text-2xl uppercase mb-3">
+            Access Denied...
+          </h2>
+          <p className="mb-2 font-bold text-slate-600">
+            This wallet is not in the admin whitelist.
+          </p>
           <p className="text-xs font-mono text-slate-400">{account.address}</p>
         </BrutalCard>
       </div>
@@ -2137,13 +2583,19 @@ export default function AdminPage() {
               <Box size={24} />
             </div>
             <div>
-              <h1 className="text-2xl font-black uppercase tracking-tight leading-none">Management</h1>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Kapogian Admin Console</p>
+              <h1 className="text-2xl font-black uppercase tracking-tight leading-none">
+                Management
+              </h1>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                Kapogian Admin Console
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/">
-              <BrutalButton className="!px-3"><Home size={20} /></BrutalButton>
+              <BrutalButton className="!px-3">
+                <Home size={20} />
+              </BrutalButton>
             </Link>
             {isSuperAdmin && (
               <BrutalButton
@@ -2187,37 +2639,55 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
               <BrutalCard>
                 <div className="flex items-center gap-4">
-                  <div className="bg-yellow-400 p-3 rounded-xl border-2 border-black"><Clock size={28} /></div>
+                  <div className="bg-yellow-400 p-3 rounded-xl border-2 border-black text-white">
+                    <Clock size={28} />
+                  </div>
                   <div>
-                    <p className="text-xs font-black uppercase text-slate-400">Pending</p>
+                    <p className="text-xs font-black uppercase text-slate-400">
+                      Pending
+                    </p>
                     <p className="text-4xl font-black">{stats.pending}</p>
                   </div>
                 </div>
               </BrutalCard>
               <BrutalCard>
                 <div className="flex items-center gap-4">
-                  <div className="bg-blue-400 p-3 rounded-xl border-2 border-black text-white"><Truck size={28} /></div>
+                  <div className="bg-blue-400 p-3 rounded-xl border-2 border-black text-white">
+                    <Truck size={28} />
+                  </div>
                   <div>
-                    <p className="text-xs font-black uppercase text-slate-400">Shipped</p>
+                    <p className="text-xs font-black uppercase text-slate-400">
+                      Shipped
+                    </p>
                     <p className="text-4xl font-black">{stats.shipped}</p>
                   </div>
                 </div>
               </BrutalCard>
               <BrutalCard>
                 <div className="flex items-center gap-4">
-                  <div className="bg-green-400 p-3 rounded-xl border-2 border-black text-white"><CheckCircle size={28} /></div>
+                  <div className="bg-green-400 p-3 rounded-xl border-2 border-black text-white">
+                    <CheckCircle size={28} />
+                  </div>
                   <div>
-                    <p className="text-xs font-black uppercase text-slate-400">Delivered</p>
+                    <p className="text-xs font-black uppercase text-slate-400">
+                      Delivered
+                    </p>
                     <p className="text-4xl font-black">{stats.delivered}</p>
                   </div>
                 </div>
               </BrutalCard>
               <BrutalCard className="bg-blue-500">
                 <div className="flex items-center gap-4">
-                  <div className="bg-black p-3 rounded-xl border-2 border-black text-white"><Package size={28} /></div>
+                  <div className="bg-black p-3 rounded-xl border-2 border-black text-white">
+                    <Package size={28} />
+                  </div>
                   <div>
-                    <p className="text-xs font-black uppercase text-blue-900/60">Total Orders</p>
-                    <p className="text-4xl font-black text-black">{receipts.length}</p>
+                    <p className="text-xs font-black uppercase text-blue-900/60">
+                      Total Orders
+                    </p>
+                    <p className="text-4xl font-black text-black">
+                      {receipts.length}
+                    </p>
                   </div>
                 </div>
               </BrutalCard>
@@ -2228,29 +2698,45 @@ export default function AdminPage() {
                 <BrutalCard>
                   <div className="flex items-center gap-3 mb-4">
                     <LockKeyhole className="text-slate-400" size={20} />
-                    <h3 className="font-black uppercase tracking-tight text-base">Security Credentials</h3>
+                    <h3 className="font-black uppercase tracking-tight text-base">
+                      Security Credentials
+                    </h3>
                   </div>
                   <p className="text-xs text-slate-500 font-bold mb-4 bg-slate-50 p-3 rounded-xl border-2 border-dashed border-slate-300 leading-tight">
-                    AES-256 decryption key. Only processed locally in memory.
+                    EthCrypto private key — 64-char hex, no{" "}
+                    <code className="bg-slate-200 px-1 rounded text-[10px]">
+                      0x
+                    </code>{" "}
+                    prefix. Processed locally only.
                   </p>
                   <div className="relative">
                     <input
                       type="password"
-                      placeholder="Enter Private Key..."
+                      placeholder="64-char hex private key (no 0x)…"
                       value={adminPrivateKey}
                       onChange={(e) => setAdminPrivateKey(e.target.value)}
-                      className="w-full h-14 bg-slate-50 border-4 border-black rounded-2xl px-5 text-lg font-bold placeholder:text-slate-300 focus:bg-white outline-none transition-all"
+                      className="w-full h-14 bg-slate-50 border-4 border-black rounded-2xl px-5 text-lg font-bold placeholder:text-slate-300 focus:bg-white outline-none transition-all font-mono"
                     />
-                    <Key className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
+                    <Key
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300"
+                      size={20}
+                    />
                   </div>
                   <div className="mt-4 flex items-start gap-3 bg-blue-50 border-2 border-dashed border-blue-200 rounded-xl p-3">
-                    <ShieldCheck size={18} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                    <ShieldCheck
+                      size={18}
+                      className="text-blue-500 flex-shrink-0 mt-0.5"
+                    />
                     <p className="text-xs font-bold text-blue-700 leading-tight">
-                      Your private key is never sent to any server. Local decryption only.
+                      Your private key is never sent to any server. Local
+                      decryption only.
                     </p>
                   </div>
                 </BrutalCard>
-                <BrutalCard noPadding className="flex-1 flex flex-col shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                <BrutalCard
+                  noPadding
+                  className="flex-1 flex flex-col shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+                >
                   <div className="p-5 bg-slate-900 text-white flex justify-between items-center">
                     <h3 className="font-black uppercase text-base tracking-widest flex items-center gap-2">
                       <FileText size={18} /> Shipping Payload
@@ -2263,8 +2749,12 @@ export default function AdminPage() {
                           <LockOpen className="text-slate-300" size={36} />
                         </div>
                         <div>
-                          <p className="font-black text-slate-400 uppercase text-base tracking-tighter">Cipher Block Locked</p>
-                          <p className="text-sm font-bold text-slate-300 mt-1">Select an order and click Decrypt</p>
+                          <p className="font-black text-slate-400 uppercase text-base tracking-tighter">
+                            Cipher Block Locked
+                          </p>
+                          <p className="text-sm font-bold text-slate-300 mt-1">
+                            Select an order and click Decrypt
+                          </p>
                         </div>
                       </div>
                     ) : (
@@ -2284,18 +2774,37 @@ export default function AdminPage() {
                               />
                             )}
                             <div className="flex flex-col justify-center">
-                              <p className="text-xs font-black text-blue-500 uppercase leading-none mb-1">Holder Identity</p>
-                              <h4 className="font-black text-slate-900 text-xl leading-tight">{card.character?.name}</h4>
-                              <p className="text-xs font-mono font-bold text-slate-400 mt-1 uppercase truncate w-40" title={card.id}>
+                              <p className="text-xs font-black text-blue-500 uppercase leading-none mb-1">
+                                Holder Identity
+                              </p>
+                              <h4 className="font-black text-slate-900 text-xl leading-tight">
+                                {card.character?.name}
+                              </h4>
+                              <p
+                                className="text-xs font-mono font-bold text-slate-400 mt-1 uppercase truncate w-40"
+                                title={card.id}
+                              >
                                 {shortAddr(card.id)}
                               </p>
                             </div>
                           </div>
                           <div className="space-y-4">
                             {[
-                              { label: "Consignee", icon: <User size={11} />, value: card.full_name },
-                              { label: "Email", icon: <Mail size={11} />, value: card.email },
-                              { label: "Shipping Destination", icon: <MapPin size={11} />, value: card.address },
+                              {
+                                label: "Consignee",
+                                icon: <User size={11} />,
+                                value: card.full_name,
+                              },
+                              {
+                                label: "Email",
+                                icon: <Mail size={11} />,
+                                value: card.email,
+                              },
+                              {
+                                label: "Shipping Destination",
+                                icon: <MapPin size={11} />,
+                                value: card.address,
+                              },
                             ].map(({ label, icon, value }) => (
                               <div key={label} className="space-y-1.5">
                                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
@@ -2320,7 +2829,12 @@ export default function AdminPage() {
                               </label>
                               <div className="flex flex-wrap gap-1.5 p-3 bg-slate-50 border-2 border-black rounded-xl">
                                 {card.itemsSelected.split(",").map((item) => (
-                                  <Badge key={item} className="bg-white !text-[10px]">{item.trim()}</Badge>
+                                  <Badge
+                                    key={item}
+                                    className="bg-white !text-[10px]"
+                                  >
+                                    {item.trim()}
+                                  </Badge>
                                 ))}
                               </div>
                             </div>
@@ -2328,7 +2842,12 @@ export default function AdminPage() {
                               <BrutalButton
                                 variant="black"
                                 className="w-full h-12 text-sm"
-                                onClick={() => handleDownloadImage(card.character!.imageUrl, card.character!.name)}
+                                onClick={() =>
+                                  handleDownloadImage(
+                                    card.character!.imageUrl,
+                                    card.character!.name,
+                                  )
+                                }
                               >
                                 <Download size={16} /> Download NFT Image
                               </BrutalButton>
@@ -2342,30 +2861,57 @@ export default function AdminPage() {
               </aside>
 
               <section className="lg:col-span-8 flex flex-col">
-                <BrutalCard noPadding className="shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col flex-1">
+                <BrutalCard
+                  noPadding
+                  className="shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col flex-1"
+                >
                   <div className="p-5 border-b-4 border-black flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="flex items-center gap-3">
-                      <h3 className="text-xl font-black uppercase tracking-tighter">NFT Order Registry</h3>
-                      <Badge className="bg-yellow-400 border-2 border-black !text-xs !px-2.5 !py-0.5">{receipts.length}</Badge>
+                      <h3 className="text-xl font-black uppercase tracking-tighter">
+                        NFT Order Registry
+                      </h3>
+                      <Badge className="bg-yellow-400 border-2 border-black !text-xs !px-2.5 !py-0.5">
+                        {receipts.length}
+                      </Badge>
                     </div>
                     <div className="flex items-center border-2 border-black rounded-xl overflow-hidden shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                      {(["pending", "shipped", "delivered"] as const).map((tab, i) => {
-                        const count = tab === "pending" ? stats.pending : tab === "shipped" ? stats.shipped : stats.delivered;
-                        const Icon = tab === "pending" ? Clock : tab === "shipped" ? Truck : CheckCircle;
-                        const activeColor = tab === "pending" ? "bg-yellow-400 text-black" : tab === "shipped" ? "bg-blue-500 text-white" : "bg-green-500 text-white";
-                        return (
-                          <React.Fragment key={tab}>
-                            {i > 0 && <div className="w-0.5 h-6 bg-black" />}
-                            <button
-                              onClick={() => setActiveTab(tab)}
-                              className={`h-10 px-4 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 ${activeTab === tab ? `${activeColor} scale-105 z-10` : "bg-white text-slate-500 hover:bg-slate-50"}`}
-                            >
-                              <Icon size={12} /> {tab.charAt(0).toUpperCase() + tab.slice(1)}{" "}
-                              <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-black border bg-black/10 border-current">{count}</span>
-                            </button>
-                          </React.Fragment>
-                        );
-                      })}
+                      {(["pending", "shipped", "delivered"] as const).map(
+                        (tab, i) => {
+                          const count =
+                            tab === "pending"
+                              ? stats.pending
+                              : tab === "shipped"
+                                ? stats.shipped
+                                : stats.delivered;
+                          const Icon =
+                            tab === "pending"
+                              ? Clock
+                              : tab === "shipped"
+                                ? Truck
+                                : CheckCircle;
+                          const activeColor =
+                            tab === "pending"
+                              ? "bg-yellow-400 text-black"
+                              : tab === "shipped"
+                                ? "bg-blue-500 text-white"
+                                : "bg-green-500 text-white";
+                          return (
+                            <React.Fragment key={tab}>
+                              {i > 0 && <div className="w-0.5 h-6 bg-black" />}
+                              <button
+                                onClick={() => setActiveTab(tab)}
+                                className={`h-10 px-4 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 ${activeTab === tab ? `${activeColor} scale-105 z-10` : "bg-white text-slate-500 hover:bg-slate-50"}`}
+                              >
+                                <Icon size={12} />{" "}
+                                {tab.charAt(0).toUpperCase() + tab.slice(1)}{" "}
+                                <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-black border bg-black/10 border-current">
+                                  {count}
+                                </span>
+                              </button>
+                            </React.Fragment>
+                          );
+                        },
+                      )}
                     </div>
                   </div>
                   <div className="px-5 py-3 border-b-2 border-slate-100 bg-slate-50 flex flex-wrap gap-3 items-center">
@@ -2376,50 +2922,79 @@ export default function AdminPage() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full bg-white border-2 border-black rounded-xl pl-10 h-10 font-bold text-sm outline-none"
                       />
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+                      <Search
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                        size={15}
+                      />
                       {searchQuery && (
-                        <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-black">
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-black"
+                        >
                           <X size={13} />
                         </button>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Item</span>
+                      <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                        Item
+                      </span>
                       <select
                         value={filterItem}
                         onChange={(e) => setFilterItem(e.target.value)}
                         className="h-10 bg-white border-2 border-black rounded-xl px-3 font-black text-xs uppercase outline-none cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                       >
                         <option value="all">All Items</option>
-                        {allItems.map((item) => <option key={item} value={item}>{item}</option>)}
+                        {allItems.map((item) => (
+                          <option key={item} value={item}>
+                            {item}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <span className="text-[10px] font-black text-slate-400 ml-auto">
-                      {filteredReceipts.length} result{filteredReceipts.length !== 1 ? "s" : ""}
+                      {filteredReceipts.length} result
+                      {filteredReceipts.length !== 1 ? "s" : ""}
                     </span>
                   </div>
                   {loading ? (
                     <div className="p-16 flex justify-center items-center gap-3 text-slate-400 font-black text-sm uppercase">
-                      <LoaderCircle className="animate-spin" size={24} /> Loading orders...
+                      <LoaderCircle className="animate-spin" size={24} />{" "}
+                      Loading orders...
                     </div>
                   ) : filteredReceipts.length === 0 ? (
-                    <div className="p-16 text-center font-black text-slate-400 uppercase text-sm">No orders to display.</div>
+                    <div className="p-16 text-center font-black text-slate-400 uppercase text-sm">
+                      No orders to display.
+                    </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full border-collapse">
                         <thead className="bg-slate-50 border-b-4 border-black sticky top-0 z-20">
                           <tr>
-                            <th className="p-4 text-left text-[11px] font-black uppercase text-slate-400 tracking-widest pl-6">Asset & ID</th>
-                            <th className="p-4 text-left text-[11px] font-black uppercase text-slate-400 tracking-widest">Cart</th>
-                            <th className="p-4 text-center text-[11px] font-black uppercase text-slate-400 tracking-widest">Status</th>
-                            <th className="p-4 text-right text-[11px] font-black uppercase text-slate-400 tracking-widest pr-6">Actions</th>
+                            <th className="p-4 text-left text-[11px] font-black uppercase text-slate-400 tracking-widest pl-6">
+                              Asset & ID
+                            </th>
+                            <th className="p-4 text-left text-[11px] font-black uppercase text-slate-400 tracking-widest">
+                              Cart
+                            </th>
+                            <th className="p-4 text-center text-[11px] font-black uppercase text-slate-400 tracking-widest">
+                              Status
+                            </th>
+                            <th className="p-4 text-right text-[11px] font-black uppercase text-slate-400 tracking-widest pr-6">
+                              Actions
+                            </th>
                           </tr>
                         </thead>
                         <tbody className="divide-y-2 divide-slate-100">
                           {filteredReceipts.map((receipt) => {
-                            const isDecrypted = decryptedCards.some((c) => c.id === receipt.objectId);
+                            const isDecrypted = decryptedCards.some(
+                              (c) => c.id === receipt.objectId,
+                            );
                             return (
-                              <tr key={receipt.objectId} className={`hover:bg-slate-50 ${isDecrypted ? "bg-blue-50/50" : ""}`}>
+                              <tr
+                                key={receipt.objectId}
+                                className={`hover:bg-slate-50 ${isDecrypted ? "bg-blue-50/50" : ""}`}
+                              >
                                 <td className="p-4 pl-6">
                                   <div className="flex items-center gap-3">
                                     {receipt.character?.imageUrl ? (
@@ -2437,9 +3012,13 @@ export default function AdminPage() {
                                     )}
                                     <div>
                                       <p className="font-black text-slate-900 text-sm leading-none">
-                                        {receipt.character?.name || shortAddr(receipt.nftId)}
+                                        {receipt.character?.name ||
+                                          shortAddr(receipt.nftId)}
                                       </p>
-                                      <p className="text-xs font-mono font-bold text-slate-400 mt-1.5 uppercase" title={receipt.objectId}>
+                                      <p
+                                        className="text-xs font-mono font-bold text-slate-400 mt-1.5 uppercase"
+                                        title={receipt.objectId}
+                                      >
                                         {shortAddr(receipt.objectId)}
                                       </p>
                                     </div>
@@ -2447,58 +3026,99 @@ export default function AdminPage() {
                                 </td>
                                 <td className="p-4">
                                   <div className="flex flex-wrap gap-1.5 max-w-[180px]">
-                                    {receipt.itemsSelected.split(",").map((item) => (
-                                      <Badge
-                                        key={item}
-                                        className={`!text-[10px] ${item.trim() === "ALL_BUNDLE" ? "bg-blue-500 text-white" : "bg-white"}`}
-                                      >
-                                        {item.trim()}
-                                      </Badge>
-                                    ))}
+                                    {receipt.itemsSelected
+                                      .split(",")
+                                      .map((item) => (
+                                        <Badge
+                                          key={item}
+                                          className={`!text-[10px] ${item.trim() === "ALL_BUNDLE" ? "bg-blue-500 text-white" : "bg-white"}`}
+                                        >
+                                          {item.trim()}
+                                        </Badge>
+                                      ))}
                                   </div>
                                 </td>
                                 <td className="p-4 text-center">
                                   {receipt.status === ORDER_STATUS.PENDING ? (
-                                    <Badge className="bg-yellow-300 border-yellow-500 !text-[11px] !px-2.5 !py-1">Pending</Badge>
-                                  ) : receipt.status === ORDER_STATUS.SHIPPED ? (
-                                    <Badge className="bg-blue-400 text-white !text-[11px] !px-2.5 !py-1">Shipped</Badge>
+                                    <Badge className="bg-yellow-300 border-yellow-500 !text-[11px] !px-2.5 !py-1">
+                                      Pending
+                                    </Badge>
+                                  ) : receipt.status ===
+                                    ORDER_STATUS.SHIPPED ? (
+                                    <Badge className="bg-blue-400 text-white !text-[11px] !px-2.5 !py-1">
+                                      Shipped
+                                    </Badge>
                                   ) : (
-                                    <Badge className="bg-green-500 text-white !text-[11px] !px-2.5 !py-1">Delivered</Badge>
+                                    <Badge className="bg-green-500 text-white !text-[11px] !px-2.5 !py-1">
+                                      Delivered
+                                    </Badge>
                                   )}
                                 </td>
                                 <td className="p-4 pr-6">
                                   <div className="flex justify-end gap-2 flex-wrap">
                                     <BrutalButton
-                                      onClick={() => handleToggleDecrypt(receipt)}
-                                      title={isDecrypted ? "Clear Data" : "Decrypt PII"}
-                                      variant={isDecrypted ? "danger" : "purple"}
+                                      onClick={() =>
+                                        handleToggleDecrypt(receipt)
+                                      }
+                                      title={
+                                        isDecrypted
+                                          ? "Clear Data"
+                                          : "Decrypt PII"
+                                      }
+                                      variant={
+                                        isDecrypted ? "danger" : "purple"
+                                      }
                                     >
-                                      {isDecrypted ? <LockKeyhole size={15} /> : <LockOpen size={15} />}
+                                      {isDecrypted ? (
+                                        <LockKeyhole size={15} />
+                                      ) : (
+                                        <LockOpen size={15} />
+                                      )}
                                       {isDecrypted ? "Hide" : "Decrypt"}
                                     </BrutalButton>
                                     <BrutalButton
                                       variant="primary"
-                                      disabled={receipt.status !== ORDER_STATUS.PENDING}
-                                      onClick={() => handleMarkShipped(receipt.objectId)}
+                                      disabled={
+                                        receipt.status !== ORDER_STATUS.PENDING
+                                      }
+                                      onClick={() =>
+                                        handleMarkShipped(receipt.objectId)
+                                      }
                                     >
                                       <Truck size={15} /> Ship
                                     </BrutalButton>
                                     <BrutalButton
                                       variant="success"
-                                      disabled={receipt.status !== ORDER_STATUS.SHIPPED}
-                                      onClick={() => handleMarkDelivered(receipt.objectId)}
+                                      disabled={
+                                        receipt.status !== ORDER_STATUS.SHIPPED
+                                      }
+                                      onClick={() =>
+                                        handleMarkDelivered(receipt.objectId)
+                                      }
                                     >
                                       <CheckCircle size={15} /> Done
                                     </BrutalButton>
                                     <BrutalButton
                                       variant="teal"
                                       className="!px-3"
-                                      disabled={receipt.status !== ORDER_STATUS.SHIPPED}
+                                      disabled={
+                                        receipt.status !== ORDER_STATUS.SHIPPED
+                                      }
                                       onClick={() => {
                                         setSelectedReceipt(receipt);
-                                        setTrackingNumber(receipt.trackingNumber || "");
+                                        setTrackingNumber(
+                                          receipt.trackingNumber || "",
+                                        );
                                         setCarrier(receipt.carrier || "");
-                                        setEstDeliveryDate(receipt.estimatedDelivery ? new Date(receipt.estimatedDelivery).toISOString().split("T")[0] : "");
+                                        setEstDeliveryDate(
+                                          receipt.estimatedDelivery
+                                            ? new Date(
+                                                receipt.estimatedDelivery,
+                                              )
+                                                .toISOString()
+                                                .split("T")[0]
+                                            : "",
+                                        );
                                         setTrackingModalOpen(true);
                                       }}
                                       title="Add/Edit Tracking"
@@ -2529,7 +3149,9 @@ export default function AdminPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white border-4 border-black rounded-3xl w-full max-w-md shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-black uppercase italic">Logistics Update</h2>
+              <h2 className="text-2xl font-black uppercase italic">
+                Logistics Update
+              </h2>
               <button
                 onClick={() => setTrackingModalOpen(false)}
                 className="bg-red-500 text-white w-8 h-8 rounded-full border-2 border-black flex items-center justify-center font-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
@@ -2539,20 +3161,34 @@ export default function AdminPage() {
             </div>
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Carrier Service</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Carrier Service
+                </label>
                 <select
                   value={carrier}
                   onChange={(e) => setCarrier(e.target.value)}
                   className="w-full h-12 border-2 border-black rounded-xl font-bold bg-slate-50 px-3 outline-none cursor-pointer"
                 >
                   <option value="">Select a carrier…</option>
-                  {["UPS", "FedEx", "J&T Express", "LBC", "DHL", "SPX", "NINJA Van Philippines"].map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                  {[
+                    "UPS",
+                    "FedEx",
+                    "J&T Express",
+                    "LBC",
+                    "DHL",
+                    "SPX",
+                    "NINJA Van Philippines",
+                  ].map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
                   ))}
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tracking Number</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Tracking Number
+                </label>
                 <input
                   value={trackingNumber}
                   onChange={(e) => setTrackingNumber(e.target.value)}
@@ -2561,7 +3197,9 @@ export default function AdminPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Estimated Delivery Date</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Estimated Delivery Date
+                </label>
                 <input
                   type="date"
                   value={estDeliveryDate}
@@ -2570,14 +3208,23 @@ export default function AdminPage() {
                 />
               </div>
               <div className="pt-4 flex gap-3">
-                <BrutalButton onClick={() => setTrackingModalOpen(false)} className="flex-1">Discard</BrutalButton>
+                <BrutalButton
+                  onClick={() => setTrackingModalOpen(false)}
+                  className="flex-1"
+                >
+                  Discard
+                </BrutalButton>
                 <BrutalButton
                   variant="black"
                   className="flex-1 shadow-[4px_4px_0px_0px_rgba(59,130,246,1)]"
                   onClick={handleSaveTracking}
                   disabled={isSavingTracking}
                 >
-                  {isSavingTracking ? <LoaderCircle size={16} className="animate-spin" /> : "Inject Tracking"}
+                  {isSavingTracking ? (
+                    <LoaderCircle size={16} className="animate-spin" />
+                  ) : (
+                    "Inject Tracking"
+                  )}
                 </BrutalButton>
               </div>
             </div>
