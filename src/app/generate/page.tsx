@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -198,7 +199,7 @@ const CustomSlider = ({
       max="100"
       value={value}
       onChange={(e) => onChange(Number(e.target.value))}
-      className="absolute inset-0 w-full h-full opacity-0Base cursor-pointer z-10"
+      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
     />
     <div
       className="absolute w-7 h-7 bg-white border-2 border-black rounded-xl shadow-[2px_2px_0_0_#000] pointer-events-none transition-all duration-75"
@@ -1692,7 +1693,7 @@ export default function GeneratorPage() {
                 {product.name}
               </h2>
               <span className="text-lg font-bold">
-                {pricingLoading ? "..." : mistToSui(pricing?.base ?? 0).toFixed(3)} SUI
+                {pricingLoading ? "..." : mistToSui(pricing?.base ?? 0)} SUI
               </span>
             </div>
             <div className="space-y-4">
@@ -2385,7 +2386,7 @@ export default function GeneratorPage() {
                     </div>
                   </div>
                   <div className="bg-black text-white px-6 py-2 rounded-full text-sm font-bold uppercase tracking-tight whitespace-nowrap">
-                    UPGRADE BUNDLE (+{pricingLoading ? "..." : mistToSui(pricing?.bundle ?? 0).toFixed(3)} SUI)
+                    UPGRADE BUNDLE (+{pricingLoading ? "..." : mistToSui(pricing?.bundle ?? 0)} SUI)
                   </div>
                 </div>
               </div>
@@ -2535,7 +2536,7 @@ export default function GeneratorPage() {
                   className="mt-8 w-full bg-blue-500 text-white border-4 border-black rounded-xl py-3 text-xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hover:translate-y-[-2px] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {minting ? <LoaderCircle className="w-6 h-6 animate-spin" /> : <Truck className="w-6 h-6" />}
-                  {minting ? "Minting..." : `Ship It for ${pricingLoading ? "..." : mistToSui(totalPrice).toFixed(3)} SUI`}
+                  {minting ? "Minting..." : `Ship It for ${pricingLoading ? "..." : mistToSui(totalPrice)} SUI`}
                 </button>
                 {error && (
                   <div className="mt-4 text-sm text-center bg-red-100 p-3 rounded-lg border border-red-300 text-red-700">
@@ -2582,7 +2583,7 @@ export default function GeneratorPage() {
                   </div>
                   <div className="flex justify-between text-xl font-bold mt-2 pt-2 border-t-2 border-black">
                     <span>Total</span>
-                    <span>{pricingLoading ? "..." : mistToSui(totalPrice).toFixed(3)} SUI</span>
+                    <span>{pricingLoading ? "..." : mistToSui(totalPrice)} SUI</span>
                   </div>
                 </div>
 
