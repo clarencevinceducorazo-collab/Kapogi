@@ -3,11 +3,42 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import {
-  Box, LockKeyhole, Key, ShieldCheck, ShieldAlert, LockOpen, Truck,
-  CheckCircle, FileText, Home, LoaderCircle, ClipboardList, Download,
-  Package, Clock, Search, X, Mail, Phone, MapPin, User, Crown, UserPlus,
-  UserMinus, PauseCircle, PlayCircle, Wallet, DollarSign, RefreshCw,
-  Trophy, Plus, ToggleLeft, ToggleRight, Gift, Pencil, AlertTriangle,
+  Box,
+  LockKeyhole,
+  Key,
+  ShieldCheck,
+  ShieldAlert,
+  LockOpen,
+  Truck,
+  CheckCircle,
+  FileText,
+  Home,
+  LoaderCircle,
+  ClipboardList,
+  Download,
+  Package,
+  Clock,
+  Search,
+  X,
+  Mail,
+  Phone,
+  MapPin,
+  User,
+  Crown,
+  UserPlus,
+  UserMinus,
+  PauseCircle,
+  PlayCircle,
+  Wallet,
+  DollarSign,
+  RefreshCw,
+  Trophy,
+  Plus,
+  ToggleLeft,
+  ToggleRight,
+  Gift,
+  Pencil,
+  AlertTriangle,
   ShoppingBag,
 } from "lucide-react";
 import {
@@ -42,7 +73,12 @@ import {
   type AchievementDef,
 } from "@/lib/sui";
 import { decryptShippingInfo, type ShippingInfo } from "@/lib/encryption";
-import { ORDER_STATUS, CONTRACT_ADDRESSES, mistToSui, suiToMist } from "@/lib/constants";
+import {
+  ORDER_STATUS,
+  CONTRACT_ADDRESSES,
+  mistToSui,
+  suiToMist,
+} from "@/lib/constants";
 import { getIPFSGatewayUrl } from "@/lib/pinata";
 
 // Shop hooks
@@ -58,7 +94,10 @@ import { ShopItemSection } from "@/components/kapogian/ShopItemSection";
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      "iconify-icon": React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+      "iconify-icon": React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      > & {
         icon: string;
         class?: string;
       };
@@ -69,43 +108,93 @@ declare global {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Receipt {
-  objectId: string; nftId: string; buyer: string; itemsSelected: string;
-  encryptedShippingInfo: string; status: number; paymentAmount: number;
-  createdAt: number; trackingNumber: string; carrier: string;
-  estimatedDelivery: number; character?: { name: string; imageUrl: string };
+  objectId: string;
+  nftId: string;
+  buyer: string;
+  itemsSelected: string;
+  encryptedShippingInfo: string;
+  status: number;
+  paymentAmount: number;
+  createdAt: number;
+  trackingNumber: string;
+  carrier: string;
+  estimatedDelivery: number;
+  character?: { name: string; imageUrl: string };
 }
 interface DecryptedCard extends ShippingInfo {
-  id: string; itemsSelected: string; character?: { name: string; imageUrl: string };
+  id: string;
+  itemsSelected: string;
+  character?: { name: string; imageUrl: string };
 }
-interface RegistryInfo { admins: string[]; mintPaused: boolean; pauseReason: string; }
-interface TreasuryInfo { treasuryAddress: string; baseMintPrice: number; bundleUpgradePrice: number; }
+interface RegistryInfo {
+  admins: string[];
+  mintPaused: boolean;
+  pauseReason: string;
+}
+interface TreasuryInfo {
+  treasuryAddress: string;
+  baseMintPrice: number;
+  bundleUpgradePrice: number;
+}
 
 // ─── UI Primitives ────────────────────────────────────────────────────────────
 
-const BrutalCard = ({ children, className = "", noPadding = false }: { children: React.ReactNode; className?: string; noPadding?: boolean }) => (
-  <div className={`bg-white border-4 border-black rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden ${className}`}>
+const BrutalCard = ({
+  children,
+  className = "",
+  noPadding = false,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  noPadding?: boolean;
+}) => (
+  <div
+    className={`bg-white border-4 border-black rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden ${className}`}
+  >
     <div className={noPadding ? "" : "p-6"}>{children}</div>
   </div>
 );
 
-const BrutalButton = ({ children, onClick, className = "", variant = "default", disabled = false, title }: {
-  children: React.ReactNode; onClick?: () => void; className?: string;
-  variant?: "default"|"primary"|"success"|"danger"|"black"|"purple"|"teal"|"orange"|"yellow";
-  disabled?: boolean; title?: string;
+const BrutalButton = ({
+  children,
+  onClick,
+  className = "",
+  variant = "default",
+  disabled = false,
+  title,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  variant?:
+    | "default"
+    | "primary"
+    | "success"
+    | "danger"
+    | "black"
+    | "purple"
+    | "teal"
+    | "orange"
+    | "yellow";
+  disabled?: boolean;
+  title?: string;
 }) => {
   const variants: Record<string, string> = {
     default: "bg-white text-black hover:bg-gray-50",
     primary: "bg-blue-500 text-white hover:bg-blue-600",
     success: "bg-green-500 text-white hover:bg-green-600",
-    danger:  "bg-red-500 text-white hover:bg-red-600",
-    black:   "bg-black text-white hover:bg-gray-800",
-    purple:  "bg-purple-500 text-white hover:bg-purple-600",
-    teal:    "bg-teal-500 text-white hover:bg-teal-600",
-    orange:  "bg-orange-500 text-white hover:bg-orange-600",
-    yellow:  "bg-yellow-400 text-black hover:bg-yellow-500",
+    danger: "bg-red-500 text-white hover:bg-red-600",
+    black: "bg-black text-white hover:bg-gray-800",
+    purple: "bg-purple-500 text-white hover:bg-purple-600",
+    teal: "bg-teal-500 text-white hover:bg-teal-600",
+    orange: "bg-orange-500 text-white hover:bg-orange-600",
+    yellow: "bg-yellow-400 text-black hover:bg-yellow-500",
   };
   return (
-    <button onClick={onClick} disabled={disabled} title={title}
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
       className={`h-10 px-4 border-2 border-black rounded-xl font-black text-xs uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none ${variants[variant]} ${className}`}
     >
       {children}
@@ -113,26 +202,60 @@ const BrutalButton = ({ children, onClick, className = "", variant = "default", 
   );
 };
 
-const shortAddr = (addr: string) => addr.length > 10 ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : addr;
+const shortAddr = (addr: string) =>
+  addr.length > 10 ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : addr;
 
-const Badge = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <span className={`px-2 py-0.5 border-2 border-black rounded font-black text-[9px] uppercase tracking-wider ${className}`}>{children}</span>
+const Badge = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <span
+    className={`px-2 py-0.5 border-2 border-black rounded font-black text-[9px] uppercase tracking-wider ${className}`}
+  >
+    {children}
+  </span>
 );
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
-interface Toast { id: number; message: string; type: "success"|"error"|"info"; }
+interface Toast {
+  id: number;
+  message: string;
+  type: "success" | "error" | "info";
+}
 
-const ToastContainer = ({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: number) => void }) => (
+const ToastContainer = ({
+  toasts,
+  onRemove,
+}: {
+  toasts: Toast[];
+  onRemove: (id: number) => void;
+}) => (
   <div className="fixed bottom-6 left-6 z-[200] flex flex-col gap-2 pointer-events-none">
     {toasts.map((toast) => (
-      <div key={toast.id} className={`pointer-events-auto flex items-start gap-3 min-w-[280px] max-w-[340px] border-4 border-black rounded-2xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] p-4 animate-in slide-in-from-left-4 fade-in duration-200 ${toast.type === "success" ? "bg-green-400" : toast.type === "error" ? "bg-red-400" : "bg-yellow-300"}`}>
+      <div
+        key={toast.id}
+        className={`pointer-events-auto flex items-start gap-3 min-w-[280px] max-w-[340px] border-4 border-black rounded-2xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] p-4 animate-in slide-in-from-left-4 fade-in duration-200 ${toast.type === "success" ? "bg-green-400" : toast.type === "error" ? "bg-red-400" : "bg-yellow-300"}`}
+      >
         <div className="flex-1">
           <p className="font-black text-black text-sm uppercase tracking-tight leading-snug">
-            {toast.type === "success" ? "✓ " : toast.type === "error" ? "✕ " : "● "}{toast.message}
+            {toast.type === "success"
+              ? "✓ "
+              : toast.type === "error"
+                ? "✕ "
+                : "● "}
+            {toast.message}
           </p>
         </div>
-        <button onClick={() => onRemove(toast.id)} className="text-black/60 hover:text-black font-black text-lg leading-none mt-0.5">×</button>
+        <button
+          onClick={() => onRemove(toast.id)}
+          className="text-black/60 hover:text-black font-black text-lg leading-none mt-0.5"
+        >
+          ×
+        </button>
       </div>
     ))}
   </div>
@@ -141,48 +264,120 @@ const ToastContainer = ({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: 
 // ─── REQ_LABELS ───────────────────────────────────────────────────────────────
 
 const REQ_LABELS: Record<number, { label: string; color: string }> = {
-  0: { label: "Total MMR",    color: "bg-purple-100 text-purple-700 border-purple-300" },
-  1: { label: "Best MMR",     color: "bg-blue-100 text-blue-700 border-blue-300" },
-  2: { label: "Total Summons",color: "bg-orange-100 text-orange-700 border-orange-300" },
-  3: { label: "Admin Granted",color: "bg-yellow-100 text-yellow-700 border-yellow-300" },
+  0: {
+    label: "Total MMR",
+    color: "bg-purple-100 text-purple-700 border-purple-300",
+  },
+  1: { label: "Best MMR", color: "bg-blue-100 text-blue-700 border-blue-300" },
+  2: {
+    label: "Total Summons",
+    color: "bg-orange-100 text-orange-700 border-orange-300",
+  },
+  3: {
+    label: "Admin Granted",
+    color: "bg-yellow-100 text-yellow-700 border-yellow-300",
+  },
 };
 
 // ─── BadgeUploadButton ────────────────────────────────────────────────────────
 
-function BadgeUploadButton({ currentUrl, onUploaded, onToast }: { currentUrl: string; onUploaded: (url: string) => void; onToast: (msg: string, type: Toast["type"]) => void }) {
+function BadgeUploadButton({
+  currentUrl,
+  onUploaded,
+  onToast,
+}: {
+  currentUrl: string;
+  onUploaded: (url: string) => void;
+  onToast: (msg: string, type: Toast["type"]) => void;
+}) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) { onToast("Select an image file.", "error"); return; }
-    if (file.size > 5 * 1024 * 1024) { onToast("Image must be under 5MB.", "error"); return; }
+    if (!file.type.startsWith("image/")) {
+      onToast("Select an image file.", "error");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      onToast("Image must be under 5MB.", "error");
+      return;
+    }
     setUploading(true);
     try {
       const form = new FormData();
       form.append("file", file, file.name);
       form.append("name", `achievement-badge-${Date.now()}`);
-      const res = await fetch("/api/pinata/upload", { method: "POST", body: form });
-      if (!res.ok) { const err = await res.json(); throw new Error(err.error ?? "Upload failed"); }
+      const res = await fetch("/api/pinata/upload", {
+        method: "POST",
+        body: form,
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? "Upload failed");
+      }
       const { imageUrl } = await res.json();
-      onUploaded(imageUrl); onToast("Badge uploaded!", "success");
-    } catch (err: any) { onToast(err?.message ?? "Upload failed.", "error"); }
-    finally { setUploading(false); if (fileInputRef.current) fileInputRef.current.value = ""; }
+      onUploaded(imageUrl);
+      onToast("Badge uploaded!", "success");
+    } catch (err: any) {
+      onToast(err?.message ?? "Upload failed.", "error");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
   return (
     <div className="flex items-center gap-2">
-      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
       {currentUrl && (
         <div className="w-9 h-9 rounded-lg border-2 border-black overflow-hidden flex-shrink-0 bg-slate-100">
-          <img src={currentUrl} alt="badge" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+          <img
+            src={currentUrl}
+            alt="badge"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
         </div>
       )}
-      <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
-        className="flex-1 h-9 flex items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-xl font-bold text-xs text-slate-500 hover:border-yellow-400 hover:text-yellow-600 hover:bg-yellow-50 transition-colors disabled:opacity-50">
-        {uploading ? <><LoaderCircle size={13} className="animate-spin" />Uploading...</> : currentUrl ? <><RefreshCw size={13} />Replace</> : <><Plus size={13} />Upload Badge</>}
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={uploading}
+        className="flex-1 h-9 flex items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-xl font-bold text-xs text-slate-500 hover:border-yellow-400 hover:text-yellow-600 hover:bg-yellow-50 transition-colors disabled:opacity-50"
+      >
+        {uploading ? (
+          <>
+            <LoaderCircle size={13} className="animate-spin" />
+            Uploading...
+          </>
+        ) : currentUrl ? (
+          <>
+            <RefreshCw size={13} />
+            Replace
+          </>
+        ) : (
+          <>
+            <Plus size={13} />
+            Upload Badge
+          </>
+        )}
       </button>
       {currentUrl && !uploading && (
-        <button type="button" onClick={() => onUploaded("")} className="w-9 h-9 flex items-center justify-center border-2 border-red-200 rounded-xl text-red-400 hover:bg-red-50 hover:border-red-400 transition-colors"><X size={13} /></button>
+        <button
+          type="button"
+          onClick={() => onUploaded("")}
+          className="w-9 h-9 flex items-center justify-center border-2 border-red-200 rounded-xl text-red-400 hover:bg-red-50 hover:border-red-400 transition-colors"
+        >
+          <X size={13} />
+        </button>
       )}
     </div>
   );
@@ -190,156 +385,463 @@ function BadgeUploadButton({ currentUrl, onUploaded, onToast }: { currentUrl: st
 
 // ─── AchievementSection ───────────────────────────────────────────────────────
 
-function AchievementSection({ superCapId, signAndExecute, onToast }: { superCapId: string; signAndExecute: any; onToast: (msg: string, type: Toast["type"]) => void }) {
+function AchievementSection({
+  superCapId,
+  signAndExecute,
+  onToast,
+}: {
+  superCapId: string;
+  signAndExecute: any;
+  onToast: (msg: string, type: Toast["type"]) => void;
+}) {
   const [achievements, setAchievements] = useState<AchievementDef[]>([]);
   const [loadingAchievements, setLoadingAchievements] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [newName, setNewName] = useState(""); const [newDesc, setNewDesc] = useState("");
-  const [newBadgeUrl, setNewBadgeUrl] = useState(""); const [newReqType, setNewReqType] = useState<number>(0);
+  const [newName, setNewName] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [newBadgeUrl, setNewBadgeUrl] = useState("");
+  const [newReqType, setNewReqType] = useState<number>(0);
   const [newThreshold, setNewThreshold] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState(""); const [editDesc, setEditDesc] = useState("");
-  const [editBadgeUrl, setEditBadgeUrl] = useState(""); const [savingEdit, setSavingEdit] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editBadgeUrl, setEditBadgeUrl] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
   const [grantingId, setGrantingId] = useState<string | null>(null);
-  const [grantRecipient, setGrantRecipient] = useState(""); const [issuingGrant, setIssuingGrant] = useState(false);
+  const [grantRecipient, setGrantRecipient] = useState("");
+  const [issuingGrant, setIssuingGrant] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  useEffect(() => { loadAchievements(); }, []);
+  useEffect(() => {
+    loadAchievements();
+  }, []);
   const loadAchievements = async () => {
     setLoadingAchievements(true);
-    try { const data = await getAllAchievements(); setAchievements(data.sort((a, b) => b.createdAt - a.createdAt)); }
-    catch { onToast("Failed to load achievements.", "error"); }
-    finally { setLoadingAchievements(false); }
+    try {
+      const data = await getAllAchievements();
+      setAchievements(data.sort((a, b) => b.createdAt - a.createdAt));
+    } catch {
+      onToast("Failed to load achievements.", "error");
+    } finally {
+      setLoadingAchievements(false);
+    }
   };
   const handleCreate = async () => {
-    if (!newName.trim() || !newDesc.trim()) { onToast("Name and description required.", "error"); return; }
-    if (newReqType !== 3 && (!newThreshold || Number(newThreshold) <= 0)) { onToast("Threshold must be > 0.", "error"); return; }
+    if (!newName.trim() || !newDesc.trim()) {
+      onToast("Name and description required.", "error");
+      return;
+    }
+    if (newReqType !== 3 && (!newThreshold || Number(newThreshold) <= 0)) {
+      onToast("Threshold must be > 0.", "error");
+      return;
+    }
     setCreating(true);
     try {
-      await superAdminCreateAchievement({ superAdminCapId: superCapId, name: newName.trim(), description: newDesc.trim(), badgeUrl: newBadgeUrl.trim(), requirementType: newReqType, threshold: newReqType === 3 ? 0 : Number(newThreshold), signAndExecute });
+      await superAdminCreateAchievement({
+        superAdminCapId: superCapId,
+        name: newName.trim(),
+        description: newDesc.trim(),
+        badgeUrl: newBadgeUrl.trim(),
+        requirementType: newReqType,
+        threshold: newReqType === 3 ? 0 : Number(newThreshold),
+        signAndExecute,
+      });
       onToast("Achievement created!", "success");
-      setNewName(""); setNewDesc(""); setNewBadgeUrl(""); setNewThreshold(""); setNewReqType(0); setShowCreateForm(false);
+      setNewName("");
+      setNewDesc("");
+      setNewBadgeUrl("");
+      setNewThreshold("");
+      setNewReqType(0);
+      setShowCreateForm(false);
       loadAchievements();
-    } catch { onToast("Failed to create achievement.", "error"); }
-    finally { setCreating(false); }
+    } catch {
+      onToast("Failed to create achievement.", "error");
+    } finally {
+      setCreating(false);
+    }
   };
   const handleToggleActive = async (a: AchievementDef) => {
     setTogglingId(a.objectId);
     try {
-      if (a.isActive) { await superAdminDeactivateAchievement({ superAdminCapId: superCapId, achievementObjectId: a.objectId, signAndExecute }); onToast(`"${a.name}" deactivated.`, "info"); }
-      else { await superAdminActivateAchievement({ superAdminCapId: superCapId, achievementObjectId: a.objectId, signAndExecute }); onToast(`"${a.name}" activated!`, "success"); }
+      if (a.isActive) {
+        await superAdminDeactivateAchievement({
+          superAdminCapId: superCapId,
+          achievementObjectId: a.objectId,
+          signAndExecute,
+        });
+        onToast(`"${a.name}" deactivated.`, "info");
+      } else {
+        await superAdminActivateAchievement({
+          superAdminCapId: superCapId,
+          achievementObjectId: a.objectId,
+          signAndExecute,
+        });
+        onToast(`"${a.name}" activated!`, "success");
+      }
       loadAchievements();
-    } catch { onToast("Failed to toggle achievement.", "error"); }
-    finally { setTogglingId(null); }
+    } catch {
+      onToast("Failed to toggle achievement.", "error");
+    } finally {
+      setTogglingId(null);
+    }
   };
   const handleSaveEdit = async (id: string) => {
-    if (!editName.trim() || !editDesc.trim()) { onToast("Name and description required.", "error"); return; }
+    if (!editName.trim() || !editDesc.trim()) {
+      onToast("Name and description required.", "error");
+      return;
+    }
     setSavingEdit(true);
     try {
-      await superAdminUpdateAchievementDisplay({ superAdminCapId: superCapId, achievementObjectId: id, name: editName.trim(), description: editDesc.trim(), badgeUrl: editBadgeUrl.trim(), signAndExecute });
-      onToast("Achievement updated!", "success"); setEditingId(null); loadAchievements();
-    } catch { onToast("Failed to update achievement.", "error"); }
-    finally { setSavingEdit(false); }
+      await superAdminUpdateAchievementDisplay({
+        superAdminCapId: superCapId,
+        achievementObjectId: id,
+        name: editName.trim(),
+        description: editDesc.trim(),
+        badgeUrl: editBadgeUrl.trim(),
+        signAndExecute,
+      });
+      onToast("Achievement updated!", "success");
+      setEditingId(null);
+      loadAchievements();
+    } catch {
+      onToast("Failed to update achievement.", "error");
+    } finally {
+      setSavingEdit(false);
+    }
   };
   const handleIssueGrant = async (id: string) => {
-    if (!grantRecipient.startsWith("0x")) { onToast("Invalid recipient address.", "error"); return; }
+    if (!grantRecipient.startsWith("0x")) {
+      onToast("Invalid recipient address.", "error");
+      return;
+    }
     setIssuingGrant(true);
     try {
-      await superAdminIssueGrant({ superAdminCapId: superCapId, achievementObjectId: id, recipientAddress: grantRecipient, signAndExecute });
-      onToast("Grant issued!", "success"); setGrantingId(null); setGrantRecipient("");
-    } catch { onToast("Failed to issue grant.", "error"); }
-    finally { setIssuingGrant(false); }
+      await superAdminIssueGrant({
+        superAdminCapId: superCapId,
+        achievementObjectId: id,
+        recipientAddress: grantRecipient,
+        signAndExecute,
+      });
+      onToast("Grant issued!", "success");
+      setGrantingId(null);
+      setGrantRecipient("");
+    } catch {
+      onToast("Failed to issue grant.", "error");
+    } finally {
+      setIssuingGrant(false);
+    }
   };
 
   return (
     <section className="border-4 border-black rounded-2xl overflow-hidden">
       <div className="bg-black text-white px-5 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2"><Trophy size={16} className="text-yellow-400" /><h3 className="font-black uppercase text-sm tracking-tight">Achievements</h3><span className="ml-1 px-2 py-0.5 bg-white/10 rounded text-[10px] font-black">{achievements.length}</span></div>
-        <button onClick={() => { setShowCreateForm(v => !v); setEditingId(null); setGrantingId(null); }} className="flex items-center gap-1.5 h-8 px-3 bg-yellow-400 text-black rounded-lg border-2 border-yellow-200 font-black text-xs uppercase hover:bg-yellow-300"><Plus size={13} /> New</button>
+        <div className="flex items-center gap-2">
+          <Trophy size={16} className="text-yellow-400" />
+          <h3 className="font-black uppercase text-sm tracking-tight">
+            Achievements
+          </h3>
+          <span className="ml-1 px-2 py-0.5 bg-white/10 rounded text-[10px] font-black">
+            {achievements.length}
+          </span>
+        </div>
+        <button
+          onClick={() => {
+            setShowCreateForm((v) => !v);
+            setEditingId(null);
+            setGrantingId(null);
+          }}
+          className="flex items-center gap-1.5 h-8 px-3 bg-yellow-400 text-black rounded-lg border-2 border-yellow-200 font-black text-xs uppercase hover:bg-yellow-300"
+        >
+          <Plus size={13} /> New
+        </button>
       </div>
       {showCreateForm && (
         <div className="p-5 border-b-2 border-black bg-yellow-50 space-y-3">
-          <p className="text-[10px] font-black uppercase tracking-widest text-yellow-700 mb-1">Create New Achievement</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-yellow-700 mb-1">
+            Create New Achievement
+          </p>
           <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Name</label><input value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. First Summoner" className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-yellow-400 mt-1" /></div>
-            <div className="col-span-2"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</label><input value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="e.g. Minted your first character" className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-yellow-400 mt-1" /></div>
-            <div className="col-span-2"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Badge Image</label><BadgeUploadButton currentUrl={newBadgeUrl} onUploaded={setNewBadgeUrl} onToast={onToast} /></div>
-            <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Requirement Type</label><select value={newReqType} onChange={e => setNewReqType(Number(e.target.value))} className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-bold text-sm bg-white outline-none cursor-pointer mt-1"><option value={0}>Total MMR</option><option value={1}>Best MMR</option><option value={2}>Total Summons</option><option value={3}>Admin Granted</option></select></div>
-            <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Threshold {newReqType === 3 && "(ignored)"}</label><input type="number" value={newThreshold} onChange={e => setNewThreshold(e.target.value)} placeholder={newReqType === 3 ? "N/A" : "e.g. 1000"} disabled={newReqType === 3} className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-yellow-400 mt-1 disabled:bg-slate-100 disabled:text-slate-400" /></div>
+            <div className="col-span-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Name
+              </label>
+              <input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="e.g. First Summoner"
+                className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-yellow-400 mt-1"
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Description
+              </label>
+              <input
+                value={newDesc}
+                onChange={(e) => setNewDesc(e.target.value)}
+                placeholder="e.g. Minted your first character"
+                className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-yellow-400 mt-1"
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
+                Badge Image
+              </label>
+              <BadgeUploadButton
+                currentUrl={newBadgeUrl}
+                onUploaded={setNewBadgeUrl}
+                onToast={onToast}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Requirement Type
+              </label>
+              <select
+                value={newReqType}
+                onChange={(e) => setNewReqType(Number(e.target.value))}
+                className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-bold text-sm bg-white outline-none cursor-pointer mt-1"
+              >
+                <option value={0}>Total MMR</option>
+                <option value={1}>Best MMR</option>
+                <option value={2}>Total Summons</option>
+                <option value={3}>Admin Granted</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Threshold {newReqType === 3 && "(ignored)"}
+              </label>
+              <input
+                type="number"
+                value={newThreshold}
+                onChange={(e) => setNewThreshold(e.target.value)}
+                placeholder={newReqType === 3 ? "N/A" : "e.g. 1000"}
+                disabled={newReqType === 3}
+                className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none focus:border-yellow-400 mt-1 disabled:bg-slate-100 disabled:text-slate-400"
+              />
+            </div>
           </div>
           <div className="flex gap-2 pt-1">
-            <button onClick={() => setShowCreateForm(false)} className="flex-1 h-10 border-2 border-slate-200 rounded-xl font-bold text-sm text-slate-500 hover:bg-slate-50">Cancel</button>
-            <button onClick={handleCreate} disabled={creating} className="flex-1 h-10 bg-black text-white rounded-xl font-black text-sm border-2 border-black disabled:opacity-50 flex items-center justify-center gap-2">
-              {creating ? <LoaderCircle size={14} className="animate-spin" /> : <><Plus size={14} /> Create</>}
+            <button
+              onClick={() => setShowCreateForm(false)}
+              className="flex-1 h-10 border-2 border-slate-200 rounded-xl font-bold text-sm text-slate-500 hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreate}
+              disabled={creating}
+              className="flex-1 h-10 bg-black text-white rounded-xl font-black text-sm border-2 border-black disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {creating ? (
+                <LoaderCircle size={14} className="animate-spin" />
+              ) : (
+                <>
+                  <Plus size={14} /> Create
+                </>
+              )}
             </button>
           </div>
         </div>
       )}
       <div className="divide-y-2 divide-slate-100 max-h-[420px] overflow-y-auto">
         {loadingAchievements ? (
-          <div className="p-8 flex items-center justify-center gap-2 text-slate-400 font-black text-xs uppercase"><LoaderCircle size={16} className="animate-spin" /> Loading...</div>
+          <div className="p-8 flex items-center justify-center gap-2 text-slate-400 font-black text-xs uppercase">
+            <LoaderCircle size={16} className="animate-spin" /> Loading...
+          </div>
         ) : achievements.length === 0 ? (
-          <div className="p-8 text-center font-black text-slate-300 text-xs uppercase">No achievements yet.</div>
-        ) : achievements.map(a => {
-          const req = REQ_LABELS[a.requirementType];
-          const isEditing = editingId === a.objectId; const isGranting = grantingId === a.objectId; const isToggling = togglingId === a.objectId;
-          return (
-            <div key={a.objectId} className="p-4 bg-white">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl border-2 border-black bg-slate-100 flex-shrink-0 overflow-hidden flex items-center justify-center">
-                  {a.badgeUrl ? <img src={a.badgeUrl} alt={a.name} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} /> : <Trophy size={18} className="text-slate-300" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-black text-sm text-slate-800 truncate">{a.name}</p>
-                    <span className={`px-1.5 py-0.5 border rounded text-[9px] font-black uppercase ${req.color}`}>{req.label}</span>
-                    {a.requirementType !== 3 && <span className="text-[9px] font-black text-slate-400 uppercase">≥ {a.threshold.toLocaleString()}</span>}
+          <div className="p-8 text-center font-black text-slate-300 text-xs uppercase">
+            No achievements yet.
+          </div>
+        ) : (
+          achievements.map((a) => {
+            const req = REQ_LABELS[a.requirementType];
+            const isEditing = editingId === a.objectId;
+            const isGranting = grantingId === a.objectId;
+            const isToggling = togglingId === a.objectId;
+            return (
+              <div key={a.objectId} className="p-4 bg-white">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl border-2 border-black bg-slate-100 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                    {a.badgeUrl ? (
+                      <img
+                        src={a.badgeUrl}
+                        alt={a.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <Trophy size={18} className="text-slate-300" />
+                    )}
                   </div>
-                  <p className="text-xs text-slate-400 font-semibold mt-0.5 truncate">{a.description}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-black text-sm text-slate-800 truncate">
+                        {a.name}
+                      </p>
+                      <span
+                        className={`px-1.5 py-0.5 border rounded text-[9px] font-black uppercase ${req.color}`}
+                      >
+                        {req.label}
+                      </span>
+                      {a.requirementType !== 3 && (
+                        <span className="text-[9px] font-black text-slate-400 uppercase">
+                          ≥ {a.threshold.toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-400 font-semibold mt-0.5 truncate">
+                      {a.description}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <button
+                      onClick={() => handleToggleActive(a)}
+                      disabled={isToggling}
+                      title={a.isActive ? "Deactivate" : "Activate"}
+                      className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors disabled:opacity-40 ${a.isActive ? "bg-green-400 hover:bg-green-500" : "bg-slate-200 hover:bg-slate-300"}`}
+                    >
+                      {isToggling ? (
+                        <LoaderCircle size={13} className="animate-spin" />
+                      ) : a.isActive ? (
+                        <ToggleRight size={14} />
+                      ) : (
+                        <ToggleLeft size={14} />
+                      )}
+                    </button>
+                    <button
+                      onClick={() =>
+                        isEditing
+                          ? setEditingId(null)
+                          : (() => {
+                              setEditingId(a.objectId);
+                              setEditName(a.name);
+                              setEditDesc(a.description);
+                              setEditBadgeUrl(a.badgeUrl);
+                              setGrantingId(null);
+                            })()
+                      }
+                      title="Edit display"
+                      className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors ${isEditing ? "bg-blue-400 text-white" : "bg-white hover:bg-blue-50"}`}
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    {a.requirementType === 3 && (
+                      <button
+                        onClick={() => {
+                          setGrantingId(isGranting ? null : a.objectId);
+                          setGrantRecipient("");
+                          setEditingId(null);
+                        }}
+                        title="Issue grant"
+                        className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors ${isGranting ? "bg-yellow-400" : "bg-white hover:bg-yellow-50"}`}
+                      >
+                        <Gift size={13} />
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <button onClick={() => handleToggleActive(a)} disabled={isToggling} title={a.isActive ? "Deactivate" : "Activate"} className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors disabled:opacity-40 ${a.isActive ? "bg-green-400 hover:bg-green-500" : "bg-slate-200 hover:bg-slate-300"}`}>
-                    {isToggling ? <LoaderCircle size={13} className="animate-spin" /> : a.isActive ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
-                  </button>
-                  <button onClick={() => isEditing ? setEditingId(null) : (() => { setEditingId(a.objectId); setEditName(a.name); setEditDesc(a.description); setEditBadgeUrl(a.badgeUrl); setGrantingId(null); })()} title="Edit display" className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors ${isEditing ? "bg-blue-400 text-white" : "bg-white hover:bg-blue-50"}`}><Pencil size={13} /></button>
-                  {a.requirementType === 3 && (
-                    <button onClick={() => { setGrantingId(isGranting ? null : a.objectId); setGrantRecipient(""); setEditingId(null); }} title="Issue grant" className={`w-8 h-8 rounded-lg border-2 border-black flex items-center justify-center transition-colors ${isGranting ? "bg-yellow-400" : "bg-white hover:bg-yellow-50"}`}><Gift size={13} /></button>
-                  )}
-                </div>
+                {isEditing && (
+                  <div className="mt-3 p-3 bg-blue-50 border-2 border-blue-200 rounded-xl space-y-2">
+                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">
+                      Edit Display Fields
+                    </p>
+                    <input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="Name"
+                      className="w-full h-9 border-2 border-slate-200 rounded-lg px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400"
+                    />
+                    <input
+                      value={editDesc}
+                      onChange={(e) => setEditDesc(e.target.value)}
+                      placeholder="Description"
+                      className="w-full h-9 border-2 border-slate-200 rounded-lg px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400"
+                    />
+                    <div>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
+                        Badge Image
+                      </label>
+                      <BadgeUploadButton
+                        currentUrl={editBadgeUrl}
+                        onUploaded={setEditBadgeUrl}
+                        onToast={onToast}
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="flex-1 h-8 border-2 border-slate-200 rounded-lg font-bold text-xs text-slate-500 hover:bg-slate-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleSaveEdit(a.objectId)}
+                        disabled={savingEdit}
+                        className="flex-1 h-8 bg-blue-500 text-white rounded-lg font-black text-xs border-2 border-blue-300 disabled:opacity-50 flex items-center justify-center gap-1"
+                      >
+                        {savingEdit ? (
+                          <LoaderCircle size={12} className="animate-spin" />
+                        ) : (
+                          "Save"
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {isGranting && (
+                  <div className="mt-3 p-3 bg-yellow-50 border-2 border-yellow-300 rounded-xl space-y-2">
+                    <p className="text-[10px] font-black text-yellow-700 uppercase tracking-widest">
+                      Issue Grant To Player
+                    </p>
+                    <input
+                      value={grantRecipient}
+                      onChange={(e) => setGrantRecipient(e.target.value)}
+                      placeholder="0x... player wallet address"
+                      className="w-full h-9 border-2 border-slate-200 rounded-lg px-3 font-semibold text-xs bg-white outline-none focus:border-yellow-400"
+                    />
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        onClick={() => {
+                          setGrantingId(null);
+                          setGrantRecipient("");
+                        }}
+                        className="flex-1 h-8 border-2 border-slate-200 rounded-lg font-bold text-xs text-slate-500 hover:bg-slate-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleIssueGrant(a.objectId)}
+                        disabled={issuingGrant || !grantRecipient}
+                        className="flex-1 h-8 bg-yellow-400 text-black rounded-lg font-black text-xs border-2 border-yellow-300 disabled:opacity-50 flex items-center justify-center gap-1"
+                      >
+                        {issuingGrant ? (
+                          <LoaderCircle size={12} className="animate-spin" />
+                        ) : (
+                          <>
+                            <Gift size={12} /> Send
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-              {isEditing && (
-                <div className="mt-3 p-3 bg-blue-50 border-2 border-blue-200 rounded-xl space-y-2">
-                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Edit Display Fields</p>
-                  <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Name" className="w-full h-9 border-2 border-slate-200 rounded-lg px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400" />
-                  <input value={editDesc} onChange={e => setEditDesc(e.target.value)} placeholder="Description" className="w-full h-9 border-2 border-slate-200 rounded-lg px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400" />
-                  <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Badge Image</label><BadgeUploadButton currentUrl={editBadgeUrl} onUploaded={setEditBadgeUrl} onToast={onToast} /></div>
-                  <div className="flex gap-2 pt-1">
-                    <button onClick={() => setEditingId(null)} className="flex-1 h-8 border-2 border-slate-200 rounded-lg font-bold text-xs text-slate-500 hover:bg-slate-50">Cancel</button>
-                    <button onClick={() => handleSaveEdit(a.objectId)} disabled={savingEdit} className="flex-1 h-8 bg-blue-500 text-white rounded-lg font-black text-xs border-2 border-blue-300 disabled:opacity-50 flex items-center justify-center gap-1">
-                      {savingEdit ? <LoaderCircle size={12} className="animate-spin" /> : "Save"}
-                    </button>
-                  </div>
-                </div>
-              )}
-              {isGranting && (
-                <div className="mt-3 p-3 bg-yellow-50 border-2 border-yellow-300 rounded-xl space-y-2">
-                  <p className="text-[10px] font-black text-yellow-700 uppercase tracking-widest">Issue Grant To Player</p>
-                  <input value={grantRecipient} onChange={e => setGrantRecipient(e.target.value)} placeholder="0x... player wallet address" className="w-full h-9 border-2 border-slate-200 rounded-lg px-3 font-semibold text-xs bg-white outline-none focus:border-yellow-400" />
-                  <div className="flex gap-2 pt-1">
-                    <button onClick={() => { setGrantingId(null); setGrantRecipient(""); }} className="flex-1 h-8 border-2 border-slate-200 rounded-lg font-bold text-xs text-slate-500 hover:bg-slate-50">Cancel</button>
-                    <button onClick={() => handleIssueGrant(a.objectId)} disabled={issuingGrant || !grantRecipient} className="flex-1 h-8 bg-yellow-400 text-black rounded-lg font-black text-xs border-2 border-yellow-300 disabled:opacity-50 flex items-center justify-center gap-1">
-                      {issuingGrant ? <LoaderCircle size={12} className="animate-spin" /> : <><Gift size={12} /> Send</>}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
       <div className="px-4 py-3 border-t-2 border-slate-100 bg-slate-50">
-        <button onClick={loadAchievements} className="w-full h-8 flex items-center justify-center gap-2 text-slate-500 font-bold text-xs uppercase hover:text-black"><RefreshCw size={12} /> Refresh</button>
+        <button
+          onClick={loadAchievements}
+          className="w-full h-8 flex items-center justify-center gap-2 text-slate-500 font-bold text-xs uppercase hover:text-black"
+        >
+          <RefreshCw size={12} /> Refresh
+        </button>
       </div>
     </section>
   );
@@ -347,148 +849,498 @@ function AchievementSection({ superCapId, signAndExecute, onToast }: { superCapI
 
 // ─── SuperAdminPanel ─────────────────────────────────────────────
 
-function SuperAdminPanel({ onClose, signAndExecute, onToast }: { onClose: () => void; signAndExecute: any; onToast: (msg: string, type: Toast["type"]) => void }) {
+function SuperAdminPanel({
+  onClose,
+  signAndExecute,
+  onToast,
+}: {
+  onClose: () => void;
+  signAndExecute: any;
+  onToast: (msg: string, type: Toast["type"]) => void;
+}) {
   const account = useCurrentAccount();
   const [registry, setRegistry] = useState<RegistryInfo | null>(null);
   const [treasury, setTreasury] = useState<TreasuryInfo | null>(null);
   const [superCapId, setSuperCapId] = useState<string>("");
   const [loadingInfo, setLoadingInfo] = useState(true);
-  const [newAdminAddr, setNewAdminAddr] = useState(""); const [addingAdmin, setAddingAdmin] = useState(false); const [removingAdmin, setRemovingAdmin] = useState<string | null>(null);
-  const [pauseReason, setPauseReason] = useState(""); const [togglingPause, setTogglingPause] = useState(false);
-  const [newTreasuryAddr, setNewTreasuryAddr] = useState(""); const [updatingTreasury, setUpdatingTreasury] = useState(false);
-  const [newMintPriceSui, setNewMintPriceSui] = useState(""); const [newBundlePriceSui, setNewBundlePriceSui] = useState("");
-  const [updatingMintPrice, setUpdatingMintPrice] = useState(false); const [updatingBundlePrice, setUpdatingBundlePrice] = useState(false);
+  const [newAdminAddr, setNewAdminAddr] = useState("");
+  const [addingAdmin, setAddingAdmin] = useState(false);
+  const [removingAdmin, setRemovingAdmin] = useState<string | null>(null);
+  const [pauseReason, setPauseReason] = useState("");
+  const [togglingPause, setTogglingPause] = useState(false);
+  const [newTreasuryAddr, setNewTreasuryAddr] = useState("");
+  const [updatingTreasury, setUpdatingTreasury] = useState(false);
+  const [newMintPriceSui, setNewMintPriceSui] = useState("");
+  const [newBundlePriceSui, setNewBundlePriceSui] = useState("");
+  const [updatingMintPrice, setUpdatingMintPrice] = useState(false);
+  const [updatingBundlePrice, setUpdatingBundlePrice] = useState(false);
 
-  useEffect(() => { loadInfo(); }, []);
+  useEffect(() => {
+    loadInfo();
+  }, []);
   const loadInfo = async () => {
     setLoadingInfo(true);
     try {
-      const [reg, treas] = await Promise.all([getAdminRegistryInfo(), getTreasuryConfigInfo()]);
-      setRegistry(reg); setTreasury(treas);
+      const [reg, treas] = await Promise.all([
+        getAdminRegistryInfo(),
+        getTreasuryConfigInfo(),
+      ]);
+      setRegistry(reg);
+      setTreasury(treas);
       if (account?.address) {
-        const ownedObjects = await suiClient.getOwnedObjects({ owner: account.address, filter: { StructType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::admin::SuperAdminCap` } });
-        if (ownedObjects.data[0]?.data?.objectId) setSuperCapId(ownedObjects.data[0].data.objectId);
+        const ownedObjects = await suiClient.getOwnedObjects({
+          owner: account.address,
+          filter: {
+            StructType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::admin::SuperAdminCap`,
+          },
+        });
+        if (ownedObjects.data[0]?.data?.objectId)
+          setSuperCapId(ownedObjects.data[0].data.objectId);
       }
-    } catch (e) { console.error(e); } finally { setLoadingInfo(false); }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingInfo(false);
+    }
   };
 
   const handleAddAdmin = async () => {
-    if (!newAdminAddr.startsWith("0x")) { onToast("Invalid address format", "error"); return; }
+    if (!newAdminAddr.startsWith("0x")) {
+      onToast("Invalid address format", "error");
+      return;
+    }
     setAddingAdmin(true);
-    try { await superAdminAddAdmin({ superAdminCapId: superCapId, newAdminAddress: newAdminAddr, signAndExecute }); onToast("Admin added!", "success"); setNewAdminAddr(""); loadInfo(); }
-    catch (e: any) { onToast(e?.message?.includes("EAlreadyAdmin") ? "Already an admin." : "Failed to add admin.", "error"); }
-    finally { setAddingAdmin(false); }
+    try {
+      await superAdminAddAdmin({
+        superAdminCapId: superCapId,
+        newAdminAddress: newAdminAddr,
+        signAndExecute,
+      });
+      onToast("Admin added!", "success");
+      setNewAdminAddr("");
+      loadInfo();
+    } catch (e: any) {
+      onToast(
+        e?.message?.includes("EAlreadyAdmin")
+          ? "Already an admin."
+          : "Failed to add admin.",
+        "error",
+      );
+    } finally {
+      setAddingAdmin(false);
+    }
   };
   const handleRemoveAdmin = async (addr: string) => {
     setRemovingAdmin(addr);
-    try { await superAdminRemoveAdmin({ superAdminCapId: superCapId, adminAddress: addr, signAndExecute }); onToast("Admin removed.", "success"); loadInfo(); }
-    catch { onToast("Failed to remove admin.", "error"); } finally { setRemovingAdmin(null); }
+    try {
+      await superAdminRemoveAdmin({
+        superAdminCapId: superCapId,
+        adminAddress: addr,
+        signAndExecute,
+      });
+      onToast("Admin removed.", "success");
+      loadInfo();
+    } catch {
+      onToast("Failed to remove admin.", "error");
+    } finally {
+      setRemovingAdmin(null);
+    }
   };
   const handleTogglePause = async () => {
-    if (!registry) return; setTogglingPause(true);
+    if (!registry) return;
+    setTogglingPause(true);
     try {
-      if (registry.mintPaused) { await superAdminUnpauseMinting({ superAdminCapId: superCapId, signAndExecute }); onToast("Minting resumed!", "success"); }
-      else { if (!pauseReason.trim()) { onToast("Enter a pause reason.", "error"); setTogglingPause(false); return; } await superAdminPauseMinting({ superAdminCapId: superCapId, reason: pauseReason, signAndExecute }); onToast("Minting paused.", "info"); setPauseReason(""); }
+      if (registry.mintPaused) {
+        await superAdminUnpauseMinting({
+          superAdminCapId: superCapId,
+          signAndExecute,
+        });
+        onToast("Minting resumed!", "success");
+      } else {
+        if (!pauseReason.trim()) {
+          onToast("Enter a pause reason.", "error");
+          setTogglingPause(false);
+          return;
+        }
+        await superAdminPauseMinting({
+          superAdminCapId: superCapId,
+          reason: pauseReason,
+          signAndExecute,
+        });
+        onToast("Minting paused.", "info");
+        setPauseReason("");
+      }
       loadInfo();
-    } catch { onToast("Failed to toggle pause.", "error"); } finally { setTogglingPause(false); }
+    } catch {
+      onToast("Failed to toggle pause.", "error");
+    } finally {
+      setTogglingPause(false);
+    }
   };
   const handleUpdateTreasury = async () => {
-    if (!newTreasuryAddr.startsWith("0x")) { onToast("Invalid address format", "error"); return; }
+    if (!newTreasuryAddr.startsWith("0x")) {
+      onToast("Invalid address format", "error");
+      return;
+    }
     setUpdatingTreasury(true);
-    try { await superAdminUpdateTreasury({ superAdminCapId: superCapId, newTreasuryAddress: newTreasuryAddr, signAndExecute }); onToast("Treasury updated!", "success"); setNewTreasuryAddr(""); loadInfo(); }
-    catch { onToast("Failed to update treasury.", "error"); } finally { setUpdatingTreasury(false); }
+    try {
+      await superAdminUpdateTreasury({
+        superAdminCapId: superCapId,
+        newTreasuryAddress: newTreasuryAddr,
+        signAndExecute,
+      });
+      onToast("Treasury updated!", "success");
+      setNewTreasuryAddr("");
+      loadInfo();
+    } catch {
+      onToast("Failed to update treasury.", "error");
+    } finally {
+      setUpdatingTreasury(false);
+    }
   };
   const handleUpdateMintPrice = async () => {
-    const sui = parseFloat(newMintPriceSui); if (isNaN(sui) || sui <= 0) { onToast("Invalid price", "error"); return; }
+    const sui = parseFloat(newMintPriceSui);
+    if (isNaN(sui) || sui <= 0) {
+      onToast("Invalid price", "error");
+      return;
+    }
     setUpdatingMintPrice(true);
-    try { await superAdminUpdateMintPrice({ superAdminCapId: superCapId, newPrice: suiToMist(sui), signAndExecute }); onToast("Mint price updated!", "success"); setNewMintPriceSui(""); loadInfo(); }
-    catch { onToast("Failed to update mint price.", "error"); } finally { setUpdatingMintPrice(false); }
+    try {
+      await superAdminUpdateMintPrice({
+        superAdminCapId: superCapId,
+        newPrice: suiToMist(sui),
+        signAndExecute,
+      });
+      onToast("Mint price updated!", "success");
+      setNewMintPriceSui("");
+      loadInfo();
+    } catch {
+      onToast("Failed to update mint price.", "error");
+    } finally {
+      setUpdatingMintPrice(false);
+    }
   };
   const handleUpdateBundlePrice = async () => {
-    const sui = parseFloat(newBundlePriceSui); if (isNaN(sui) || sui <= 0) { onToast("Invalid price", "error"); return; }
+    const sui = parseFloat(newBundlePriceSui);
+    if (isNaN(sui) || sui <= 0) {
+      onToast("Invalid price", "error");
+      return;
+    }
     setUpdatingBundlePrice(true);
-    try { await superAdminUpdateBundlePrice({ superAdminCapId: superCapId, newPrice: suiToMist(sui), signAndExecute }); onToast("Bundle price updated!", "success"); setNewBundlePriceSui(""); loadInfo(); }
-    catch { onToast("Failed to update bundle price.", "error"); } finally { setUpdatingBundlePrice(false); }
+    try {
+      await superAdminUpdateBundlePrice({
+        superAdminCapId: superCapId,
+        newPrice: suiToMist(sui),
+        signAndExecute,
+      });
+      onToast("Bundle price updated!", "success");
+      setNewBundlePriceSui("");
+      loadInfo();
+    } catch {
+      onToast("Failed to update bundle price.", "error");
+    } finally {
+      setUpdatingBundlePrice(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 z-[150] flex">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
+      />
       <div className="relative ml-auto h-full w-full max-w-lg bg-white border-l-4 border-black flex flex-col shadow-[-8px_0_0_0_rgba(0,0,0,1)] overflow-hidden">
         <div className="bg-black text-white px-6 py-5 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-3"><Crown size={22} className="text-yellow-400" /><div><h2 className="font-bold text-lg uppercase tracking-tight leading-none">Super Admin</h2><p className="text-[10px] font-semibold text-white/40 uppercase tracking-widest mt-0.5">System Configuration</p></div></div>
-          <button onClick={onClose} className="w-9 h-9 rounded-xl border-2 border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white font-bold text-lg">×</button>
+          <div className="flex items-center gap-3">
+            <Crown size={22} className="text-yellow-400" />
+            <div>
+              <h2 className="font-bold text-lg uppercase tracking-tight leading-none">
+                Super Admin
+              </h2>
+              <p className="text-[10px] font-semibold text-white/40 uppercase tracking-widest mt-0.5">
+                System Configuration
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-9 h-9 rounded-xl border-2 border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white font-bold text-lg"
+          >
+            ×
+          </button>
         </div>
         {superCapId && (
           <div className="px-6 py-2 bg-yellow-50 border-b-2 border-yellow-200 flex items-center gap-2">
             <Crown size={12} className="text-yellow-600" />
-            <span className="text-[10px] font-bold text-yellow-700 uppercase tracking-widest">Cap:</span>
-            <span className="text-[10px] font-mono text-yellow-600">{shortAddr(superCapId)}</span>
+            <span className="text-[10px] font-bold text-yellow-700 uppercase tracking-widest">
+              Cap:
+            </span>
+            <span className="text-[10px] font-mono text-yellow-600">
+              {shortAddr(superCapId)}
+            </span>
           </div>
         )}
         {loadingInfo ? (
-          <div className="flex-1 flex items-center justify-center gap-3 text-slate-400 font-bold uppercase text-sm"><LoaderCircle className="animate-spin" size={20} /> Loading config...</div>
+          <div className="flex-1 flex items-center justify-center gap-3 text-slate-400 font-bold uppercase text-sm">
+            <LoaderCircle className="animate-spin" size={20} /> Loading
+            config...
+          </div>
         ) : (
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {/* Mint Pause */}
-            <section className={`border-4 rounded-2xl p-5 ${registry?.mintPaused ? "border-red-500 bg-red-50" : "border-black bg-white"}`}>
-              <div className="flex items-center gap-2 mb-4">{registry?.mintPaused ? <PauseCircle size={18} className="text-red-500" /> : <PlayCircle size={18} className="text-green-500" />}<h3 className="font-black uppercase tracking-tight text-sm">Minting Status</h3><Badge className={registry?.mintPaused ? "bg-red-500 text-white ml-auto" : "bg-green-400 ml-auto"}>{registry?.mintPaused ? "PAUSED" : "ACTIVE"}</Badge></div>
-              {registry?.mintPaused && <div className="mb-4 p-3 bg-red-100 border-2 border-red-300 rounded-xl text-xs font-bold text-red-700 flex items-start gap-2"><AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />Reason: {registry.pauseReason || "No reason provided"}</div>}
-              {!registry?.mintPaused && <input placeholder="Pause reason (required)..." value={pauseReason} onChange={e => setPauseReason(e.target.value)} className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none mb-3 focus:border-blue-400" />}
-              <button className={`w-full h-10 rounded-xl flex items-center justify-center gap-2 font-bold text-sm text-white ${registry?.mintPaused ? "bg-green-500" : "bg-red-500"} disabled:opacity-50`} onClick={handleTogglePause} disabled={togglingPause || (!registry?.mintPaused && !pauseReason.trim())}>
-                {togglingPause ? <LoaderCircle size={15} className="animate-spin" /> : registry?.mintPaused ? <><PlayCircle size={15} /> Resume Minting</> : <><PauseCircle size={15} /> Pause Minting</>}
+            <section
+              className={`border-4 rounded-2xl p-5 ${registry?.mintPaused ? "border-red-500 bg-red-50" : "border-black bg-white"}`}
+            >
+              <div className="flex items-center gap-2 mb-4">
+                {registry?.mintPaused ? (
+                  <PauseCircle size={18} className="text-red-500" />
+                ) : (
+                  <PlayCircle size={18} className="text-green-500" />
+                )}
+                <h3 className="font-black uppercase tracking-tight text-sm">
+                  Minting Status
+                </h3>
+                <Badge
+                  className={
+                    registry?.mintPaused
+                      ? "bg-red-500 text-white ml-auto"
+                      : "bg-green-400 ml-auto"
+                  }
+                >
+                  {registry?.mintPaused ? "PAUSED" : "ACTIVE"}
+                </Badge>
+              </div>
+              {registry?.mintPaused && (
+                <div className="mb-4 p-3 bg-red-100 border-2 border-red-300 rounded-xl text-xs font-bold text-red-700 flex items-start gap-2">
+                  <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
+                  Reason: {registry.pauseReason || "No reason provided"}
+                </div>
+              )}
+              {!registry?.mintPaused && (
+                <input
+                  placeholder="Pause reason (required)..."
+                  value={pauseReason}
+                  onChange={(e) => setPauseReason(e.target.value)}
+                  className="w-full h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-sm bg-white outline-none mb-3 focus:border-blue-400"
+                />
+              )}
+              <button
+                className={`w-full h-10 rounded-xl flex items-center justify-center gap-2 font-bold text-sm text-white ${registry?.mintPaused ? "bg-green-500" : "bg-red-500"} disabled:opacity-50`}
+                onClick={handleTogglePause}
+                disabled={
+                  togglingPause ||
+                  (!registry?.mintPaused && !pauseReason.trim())
+                }
+              >
+                {togglingPause ? (
+                  <LoaderCircle size={15} className="animate-spin" />
+                ) : registry?.mintPaused ? (
+                  <>
+                    <PlayCircle size={15} /> Resume Minting
+                  </>
+                ) : (
+                  <>
+                    <PauseCircle size={15} /> Pause Minting
+                  </>
+                )}
               </button>
             </section>
             {/* Admin Whitelist */}
             <section className="border-4 border-black rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-4"><ShieldCheck size={18} /><h3 className="font-black uppercase tracking-tight text-sm">Admin Whitelist</h3><Badge className="bg-slate-100 ml-auto">{registry?.admins.length ?? 0} admins</Badge></div>
+              <div className="flex items-center gap-2 mb-4">
+                <ShieldCheck size={18} />
+                <h3 className="font-black uppercase tracking-tight text-sm">
+                  Admin Whitelist
+                </h3>
+                <Badge className="bg-slate-100 ml-auto">
+                  {registry?.admins.length ?? 0} admins
+                </Badge>
+              </div>
               <div className="space-y-2 mb-4 max-h-[160px] overflow-y-auto">
-                {(registry?.admins ?? []).length === 0 ? <p className="text-xs font-bold text-slate-400 text-center py-3">No admins whitelisted yet.</p> :
-                  registry?.admins.map(addr => (
-                    <div key={addr} className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                      <User size={12} className="text-slate-400 flex-shrink-0" />
-                      <span className="font-mono text-xs font-bold text-slate-600 flex-1 truncate" title={addr}>{addr}</span>
-                      <button onClick={() => handleRemoveAdmin(addr)} disabled={removingAdmin === addr} className="text-red-400 hover:text-red-600 disabled:opacity-40">
-                        {removingAdmin === addr ? <LoaderCircle size={14} className="animate-spin" /> : <UserMinus size={14} />}
+                {(registry?.admins ?? []).length === 0 ? (
+                  <p className="text-xs font-bold text-slate-400 text-center py-3">
+                    No admins whitelisted yet.
+                  </p>
+                ) : (
+                  registry?.admins.map((addr) => (
+                    <div
+                      key={addr}
+                      className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"
+                    >
+                      <User
+                        size={12}
+                        className="text-slate-400 flex-shrink-0"
+                      />
+                      <span
+                        className="font-mono text-xs font-bold text-slate-600 flex-1 truncate"
+                        title={addr}
+                      >
+                        {addr}
+                      </span>
+                      <button
+                        onClick={() => handleRemoveAdmin(addr)}
+                        disabled={removingAdmin === addr}
+                        className="text-red-400 hover:text-red-600 disabled:opacity-40"
+                      >
+                        {removingAdmin === addr ? (
+                          <LoaderCircle size={14} className="animate-spin" />
+                        ) : (
+                          <UserMinus size={14} />
+                        )}
                       </button>
                     </div>
-                  ))}
+                  ))
+                )}
               </div>
               <div className="flex gap-2">
-                <input placeholder="0x... wallet address" value={newAdminAddr} onChange={e => setNewAdminAddr(e.target.value)} className="flex-1 h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400" />
-                <button className="h-10 px-3 bg-blue-500 text-white rounded-xl font-bold disabled:opacity-50" onClick={handleAddAdmin} disabled={addingAdmin || !newAdminAddr}>
-                  {addingAdmin ? <LoaderCircle size={14} className="animate-spin" /> : <UserPlus size={14} />}
+                <input
+                  placeholder="0x... wallet address"
+                  value={newAdminAddr}
+                  onChange={(e) => setNewAdminAddr(e.target.value)}
+                  className="flex-1 h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400"
+                />
+                <button
+                  className="h-10 px-3 bg-blue-500 text-white rounded-xl font-bold disabled:opacity-50"
+                  onClick={handleAddAdmin}
+                  disabled={addingAdmin || !newAdminAddr}
+                >
+                  {addingAdmin ? (
+                    <LoaderCircle size={14} className="animate-spin" />
+                  ) : (
+                    <UserPlus size={14} />
+                  )}
                 </button>
               </div>
             </section>
             {/* Treasury */}
             <div className="border-2 border-slate-200 rounded-2xl p-5">
-              <div className="flex items-center gap-3 mb-3"><Wallet size={18} /><h3 className="font-bold uppercase tracking-tight text-sm">Treasury Wallet</h3></div>
-              <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl mb-3"><p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Current</p><p className="font-mono text-xs font-bold text-slate-700 truncate" title={treasury?.treasuryAddress}>{treasury?.treasuryAddress ?? "—"}</p></div>
+              <div className="flex items-center gap-3 mb-3">
+                <Wallet size={18} />
+                <h3 className="font-bold uppercase tracking-tight text-sm">
+                  Treasury Wallet
+                </h3>
+              </div>
+              <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl mb-3">
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">
+                  Current
+                </p>
+                <p
+                  className="font-mono text-xs font-bold text-slate-700 truncate"
+                  title={treasury?.treasuryAddress}
+                >
+                  {treasury?.treasuryAddress ?? "—"}
+                </p>
+              </div>
               <div className="flex gap-2">
-                <input placeholder="New 0x... address" value={newTreasuryAddr} onChange={e => setNewTreasuryAddr(e.target.value)} className="flex-1 h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400" />
-                <button className="h-10 px-4 bg-orange-500 text-white rounded-xl font-bold text-xs disabled:opacity-50" onClick={handleUpdateTreasury} disabled={updatingTreasury || !newTreasuryAddr}>{updatingTreasury ? <LoaderCircle size={14} className="animate-spin" /> : "Update"}</button>
+                <input
+                  placeholder="New 0x... address"
+                  value={newTreasuryAddr}
+                  onChange={(e) => setNewTreasuryAddr(e.target.value)}
+                  className="flex-1 h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400"
+                />
+                <button
+                  className="h-10 px-4 bg-orange-500 text-white rounded-xl font-bold text-xs disabled:opacity-50"
+                  onClick={handleUpdateTreasury}
+                  disabled={updatingTreasury || !newTreasuryAddr}
+                >
+                  {updatingTreasury ? (
+                    <LoaderCircle size={14} className="animate-spin" />
+                  ) : (
+                    "Update"
+                  )}
+                </button>
               </div>
             </div>
             {/* Pricing */}
             <div className="border-2 border-slate-200 rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-4"><DollarSign size={18} /><h3 className="font-bold uppercase tracking-tight text-sm">Pricing</h3></div>
+              <div className="flex items-center gap-2 mb-4">
+                <DollarSign size={18} />
+                <h3 className="font-bold uppercase tracking-tight text-sm">
+                  Pricing
+                </h3>
+              </div>
               <div className="space-y-4">
                 <div>
-                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">Base Mint Price</p>
-                  <p className="font-bold text-slate-600 text-sm mb-2">Current: {mistToSui(treasury?.baseMintPrice ?? 0).toFixed(3)} SUI</p>
-                  <div className="flex gap-2"><input placeholder="New price in SUI" type="number" value={newMintPriceSui} onChange={e => setNewMintPriceSui(e.target.value)} className="flex-1 h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400" /><button className="h-10 px-4 bg-slate-800 text-white rounded-xl font-bold text-xs disabled:opacity-50" onClick={handleUpdateMintPrice} disabled={updatingMintPrice || !newMintPriceSui}>{updatingMintPrice ? <LoaderCircle size={14} className="animate-spin" /> : "Set"}</button></div>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
+                    Base Mint Price
+                  </p>
+                  <p className="font-bold text-slate-600 text-sm mb-2">
+                    Current:{" "}
+                    {mistToSui(treasury?.baseMintPrice ?? 0).toFixed(3)} SUI
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      placeholder="New price in SUI"
+                      type="number"
+                      value={newMintPriceSui}
+                      onChange={(e) => setNewMintPriceSui(e.target.value)}
+                      className="flex-1 h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400"
+                    />
+                    <button
+                      className="h-10 px-4 bg-slate-800 text-white rounded-xl font-bold text-xs disabled:opacity-50"
+                      onClick={handleUpdateMintPrice}
+                      disabled={updatingMintPrice || !newMintPriceSui}
+                    >
+                      {updatingMintPrice ? (
+                        <LoaderCircle size={14} className="animate-spin" />
+                      ) : (
+                        "Set"
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <div>
-                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">Bundle Upgrade Price</p>
-                  <p className="font-bold text-slate-600 text-sm mb-2">Current: {mistToSui(treasury?.bundleUpgradePrice ?? 0).toFixed(3)} SUI</p>
-                  <div className="flex gap-2"><input placeholder="New price in SUI" type="number" value={newBundlePriceSui} onChange={e => setNewBundlePriceSui(e.target.value)} className="flex-1 h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400" /><button className="h-10 px-4 bg-slate-800 text-white rounded-xl font-bold text-xs disabled:opacity-50" onClick={handleUpdateBundlePrice} disabled={updatingBundlePrice || !newBundlePriceSui}>{updatingBundlePrice ? <LoaderCircle size={14} className="animate-spin" /> : "Set"}</button></div>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
+                    Bundle Upgrade Price
+                  </p>
+                  <p className="font-bold text-slate-600 text-sm mb-2">
+                    Current:{" "}
+                    {mistToSui(treasury?.bundleUpgradePrice ?? 0).toFixed(3)}{" "}
+                    SUI
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      placeholder="New price in SUI"
+                      type="number"
+                      value={newBundlePriceSui}
+                      onChange={(e) => setNewBundlePriceSui(e.target.value)}
+                      className="flex-1 h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400"
+                    />
+                    <button
+                      className="h-10 px-4 bg-slate-800 text-white rounded-xl font-bold text-xs disabled:opacity-50"
+                      onClick={handleUpdateBundlePrice}
+                      disabled={updatingBundlePrice || !newBundlePriceSui}
+                    >
+                      {updatingBundlePrice ? (
+                        <LoaderCircle size={14} className="animate-spin" />
+                      ) : (
+                        "Set"
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-            {superCapId && <AchievementSection superCapId={superCapId} signAndExecute={signAndExecute} onToast={onToast} />}
-            {superCapId && ( <ShopItemSection superCapId={superCapId} signAndExecute={signAndExecute} onToast={onToast} />)}
-            <button className="w-full h-10 flex items-center justify-center gap-2 bg-white border-2 border-slate-200 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-50" onClick={loadInfo}><RefreshCw size={14} /> Refresh Data</button>
+            {superCapId && (
+              <AchievementSection
+                superCapId={superCapId}
+                signAndExecute={signAndExecute}
+                onToast={onToast}
+              />
+            )}
+            {superCapId && (
+              <ShopItemSection
+                superCapId={superCapId}
+                signAndExecute={signAndExecute}
+                onToast={onToast}
+              />
+            )}
+            <button
+              className="w-full h-10 flex items-center justify-center gap-2 bg-white border-2 border-slate-200 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-50"
+              onClick={loadInfo}
+            >
+              <RefreshCw size={14} /> Refresh Data
+            </button>
           </div>
         )}
       </div>
@@ -498,64 +1350,117 @@ function SuperAdminPanel({ onClose, signAndExecute, onToast }: { onClose: () => 
 
 // ─── ShopOrdersTab ────────────────────────────────────────────────────────────
 
-function ShopOrdersTab({ onToast }: { onToast: (msg: string, type: Toast["type"]) => void }) {
+function ShopOrdersTab({
+  onToast,
+}: {
+  onToast: (msg: string, type: Toast["type"]) => void;
+}) {
   const { data: receipts = [], isLoading } = useAllShopReceipts();
-  const { markShipped }   = useMarkShopOrderShipped();
+  const { markShipped } = useMarkShopOrderShipped();
   const { markDelivered } = useMarkShopOrderDelivered();
-  const { addTracking }   = useAddShopTracking();
+  const { addTracking } = useAddShopTracking();
 
-  const [activeTab, setActiveTab]     = useState<"pending"|"shipped"|"delivered">("pending");
+  const [activeTab, setActiveTab] = useState<
+    "pending" | "shipped" | "delivered"
+  >("pending");
   const [searchQuery, searchQuerySet] = useState("");
-  const [adminKey, setAdminKey]       = useState("");
+  const [adminKey, setAdminKey] = useState("");
   const [decryptedId, setDecryptedId] = useState<string | null>(null);
-  const [decryptedInfo, setDecryptedInfo] = useState<(ShippingInfo & { id: string }) | null>(null);
+  const [decryptedInfo, setDecryptedInfo] = useState<
+    (ShippingInfo & { id: string }) | null
+  >(null);
 
-  const [trackingOpen, setTrackingOpen]     = useState(false);
-  const [trackingReceipt, setTrackingReceipt] = useState<ShopReceipt | null>(null);
-  const [trackingNum, setTrackingNum]       = useState("");
-  const [carrier, setCarrier]               = useState("");
-  const [estDate, setEstDate]               = useState("");
+  const [trackingOpen, setTrackingOpen] = useState(false);
+  const [trackingReceipt, setTrackingReceipt] = useState<ShopReceipt | null>(
+    null,
+  );
+  const [trackingNum, setTrackingNum] = useState("");
+  const [carrier, setCarrier] = useState("");
+  const [estDate, setEstDate] = useState("");
   const [savingTracking, setSavingTracking] = useState(false);
 
-  const stats = useMemo(() => ({
-    pending:   receipts.filter(r => r.status === 0).length,
-    shipped:   receipts.filter(r => r.status === 1).length,
-    delivered: receipts.filter(r => r.status === 2).length,
-  }), [receipts]);
+  const stats = useMemo(
+    () => ({
+      pending: receipts.filter((r) => r.status === 0).length,
+      shipped: receipts.filter((r) => r.status === 1).length,
+      delivered: receipts.filter((r) => r.status === 2).length,
+    }),
+    [receipts],
+  );
 
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase();
-    return receipts.filter(r => {
-      if (activeTab === "pending"   && r.status !== 0) return false;
-      if (activeTab === "shipped"   && r.status !== 1) return false;
+    return receipts.filter((r) => {
+      if (activeTab === "pending" && r.status !== 0) return false;
+      if (activeTab === "shipped" && r.status !== 1) return false;
       if (activeTab === "delivered" && r.status !== 2) return false;
-      if (q) return r.id.toLowerCase().includes(q) || r.buyer.toLowerCase().includes(q) || r.itemName.toLowerCase().includes(q);
+      if (q)
+        return (
+          r.id.toLowerCase().includes(q) ||
+          r.buyer.toLowerCase().includes(q) ||
+          r.itemName.toLowerCase().includes(q)
+        );
       return true;
     });
   }, [receipts, activeTab, searchQuery]);
 
   const handleMarkShipped = async (id: string) => {
-    try { await markShipped(id); onToast("Marked as Shipped!", "success"); } catch { onToast("Failed to mark shipped.", "error"); }
+    try {
+      await markShipped(id);
+      onToast("Marked as Shipped!", "success");
+    } catch {
+      onToast("Failed to mark shipped.", "error");
+    }
   };
   const handleMarkDelivered = async (id: string) => {
-    try { await markDelivered(id); onToast("Marked as Delivered!", "success"); } catch { onToast("Failed to mark delivered.", "error"); }
+    try {
+      await markDelivered(id);
+      onToast("Marked as Delivered!", "success");
+    } catch {
+      onToast("Failed to mark delivered.", "error");
+    }
   };
   const handleDecrypt = async (receipt: ShopReceipt) => {
-    if (decryptedId === receipt.id) { setDecryptedId(null); setDecryptedInfo(null); return; }
-    if (!adminKey) { onToast("Enter Admin Private Key first.", "error"); return; }
+    if (decryptedId === receipt.id) {
+      setDecryptedId(null);
+      setDecryptedInfo(null);
+      return;
+    }
+    if (!adminKey) {
+      onToast("Enter Admin Private Key first.", "error");
+      return;
+    }
     try {
-      const info = await decryptShippingInfo(receipt.encryptedShippingInfo, adminKey);
-      setDecryptedId(receipt.id); setDecryptedInfo({ ...info, id: receipt.id });
-    } catch { onToast("Decryption failed. Check your key.", "error"); }
+      const info = await decryptShippingInfo(
+        receipt.encryptedShippingInfo,
+        adminKey,
+      );
+      setDecryptedId(receipt.id);
+      setDecryptedInfo({ ...info, id: receipt.id });
+    } catch {
+      onToast("Decryption failed. Check your key.", "error");
+    }
   };
   const handleSaveTracking = async () => {
-    if (!trackingReceipt || !trackingNum || !carrier || !estDate) { onToast("All tracking fields required.", "error"); return; }
+    if (!trackingReceipt || !trackingNum || !carrier || !estDate) {
+      onToast("All tracking fields required.", "error");
+      return;
+    }
     setSavingTracking(true);
     try {
-      await addTracking(trackingReceipt.id, trackingNum, carrier, new Date(estDate).getTime());
-      onToast("Tracking saved!", "success"); setTrackingOpen(false);
-    } catch { onToast("Failed to save tracking.", "error"); }
-    finally { setSavingTracking(false); }
+      await addTracking(
+        trackingReceipt.id,
+        trackingNum,
+        carrier,
+        new Date(estDate).getTime(),
+      );
+      onToast("Tracking saved!", "success");
+      setTrackingOpen(false);
+    } catch {
+      onToast("Failed to save tracking.", "error");
+    } finally {
+      setSavingTracking(false);
+    }
   };
 
   return (
@@ -563,14 +1468,36 @@ function ShopOrdersTab({ onToast }: { onToast: (msg: string, type: Toast["type"]
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: "Pending",   count: stats.pending,   bg: "bg-yellow-400", icon: <Clock size={22} /> },
-          { label: "Shipped",   count: stats.shipped,   bg: "bg-blue-400 text-white",  icon: <Truck size={22} /> },
-          { label: "Delivered", count: stats.delivered, bg: "bg-green-400 text-white", icon: <CheckCircle size={22} /> },
+          {
+            label: "Pending",
+            count: stats.pending,
+            bg: "bg-yellow-400",
+            icon: <Clock size={22} />,
+          },
+          {
+            label: "Shipped",
+            count: stats.shipped,
+            bg: "bg-blue-400 text-white",
+            icon: <Truck size={22} />,
+          },
+          {
+            label: "Delivered",
+            count: stats.delivered,
+            bg: "bg-green-400 text-white",
+            icon: <CheckCircle size={22} />,
+          },
         ].map(({ label, count, bg, icon }) => (
           <BrutalCard key={label}>
             <div className="flex items-center gap-3">
-              <div className={`${bg} p-2 rounded-xl border-2 border-black`}>{icon}</div>
-              <div><p className="text-xs font-black uppercase text-slate-400">{label}</p><p className="text-3xl font-black">{count}</p></div>
+              <div className={`${bg} p-2 rounded-xl border-2 border-black`}>
+                {icon}
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase text-slate-400">
+                  {label}
+                </p>
+                <p className="text-3xl font-black">{count}</p>
+              </div>
             </div>
           </BrutalCard>
         ))}
@@ -578,24 +1505,68 @@ function ShopOrdersTab({ onToast }: { onToast: (msg: string, type: Toast["type"]
 
       {/* Key */}
       <BrutalCard>
-        <div className="flex items-center gap-3 mb-3"><LockKeyhole className="text-slate-400" size={18} /><h3 className="font-black uppercase text-sm">Decrypt Shipping</h3></div>
-        <div className="relative"><input type="password" placeholder="Admin private key..." value={adminKey} onChange={e => setAdminKey(e.target.value)} className="w-full h-12 bg-slate-50 border-4 border-black rounded-2xl px-5 font-bold placeholder:text-slate-300 outline-none" /><Key className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} /></div>
+        <div className="flex items-center gap-3 mb-3">
+          <LockKeyhole className="text-slate-400" size={18} />
+          <h3 className="font-black uppercase text-sm">Decrypt Shipping</h3>
+        </div>
+        <div className="relative">
+          <input
+            type="password"
+            placeholder="Admin private key..."
+            value={adminKey}
+            onChange={(e) => setAdminKey(e.target.value)}
+            className="w-full h-12 bg-slate-50 border-4 border-black rounded-2xl px-5 font-bold placeholder:text-slate-300 outline-none"
+          />
+          <Key
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300"
+            size={18}
+          />
+        </div>
       </BrutalCard>
 
       {/* Table */}
       <BrutalCard noPadding className="shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
         <div className="p-5 border-b-4 border-black flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-3"><h3 className="text-xl font-black uppercase tracking-tighter">Shop Orders</h3><Badge className="bg-yellow-400 border-2 border-black !text-xs !px-2.5 !py-0.5">{receipts.length}</Badge></div>
+          <div className="flex items-center gap-3">
+            <h3 className="text-xl font-black uppercase tracking-tighter">
+              Shop Orders
+            </h3>
+            <Badge className="bg-yellow-400 border-2 border-black !text-xs !px-2.5 !py-0.5">
+              {receipts.length}
+            </Badge>
+          </div>
           <div className="flex items-center border-2 border-black rounded-xl overflow-hidden shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-            {(["pending","shipped","delivered"] as const).map((tab, i) => {
-              const cnt = tab === "pending" ? stats.pending : tab === "shipped" ? stats.shipped : stats.delivered;
-              const Icon = tab === "pending" ? Clock : tab === "shipped" ? Truck : CheckCircle;
-              const ac = tab === "pending" ? "bg-yellow-400 text-black" : tab === "shipped" ? "bg-blue-500 text-white" : "bg-green-500 text-white";
+            {(["pending", "shipped", "delivered"] as const).map((tab, i) => {
+              const cnt =
+                tab === "pending"
+                  ? stats.pending
+                  : tab === "shipped"
+                    ? stats.shipped
+                    : stats.delivered;
+              const Icon =
+                tab === "pending"
+                  ? Clock
+                  : tab === "shipped"
+                    ? Truck
+                    : CheckCircle;
+              const ac =
+                tab === "pending"
+                  ? "bg-yellow-400 text-black"
+                  : tab === "shipped"
+                    ? "bg-blue-500 text-white"
+                    : "bg-green-500 text-white";
               return (
                 <React.Fragment key={tab}>
                   {i > 0 && <div className="w-0.5 h-6 bg-black" />}
-                  <button onClick={() => setActiveTab(tab)} className={`h-10 px-4 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 ${activeTab === tab ? `${ac} scale-105 z-10` : "bg-white text-slate-500 hover:bg-slate-50"}`}>
-                    <Icon size={12} /> {tab.charAt(0).toUpperCase() + tab.slice(1)} <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-black border border-current bg-black/10">{cnt}</span>
+                  <button
+                    onClick={() => setActiveTab(tab)}
+                    className={`h-10 px-4 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 ${activeTab === tab ? `${ac} scale-105 z-10` : "bg-white text-slate-500 hover:bg-slate-50"}`}
+                  >
+                    <Icon size={12} />{" "}
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}{" "}
+                    <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-black border border-current bg-black/10">
+                      {cnt}
+                    </span>
                   </button>
                 </React.Fragment>
               );
@@ -603,62 +1574,164 @@ function ShopOrdersTab({ onToast }: { onToast: (msg: string, type: Toast["type"]
           </div>
         </div>
         <div className="px-5 py-3 border-b-2 border-slate-100 bg-slate-50 flex gap-3 items-center">
-          <div className="relative flex-1"><input placeholder="Search name, buyer, ID..." value={searchQuery} onChange={e => searchQuerySet(e.target.value)} className="w-full bg-white border-2 border-black rounded-xl pl-10 h-10 font-bold text-sm outline-none" /><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} /></div>
-          <span className="text-[10px] font-black text-slate-400">{filtered.length} result{filtered.length !== 1 ? "s" : ""}</span>
+          <div className="relative flex-1">
+            <input
+              placeholder="Search name, buyer, ID..."
+              value={searchQuery}
+              onChange={(e) => searchQuerySet(e.target.value)}
+              className="w-full bg-white border-2 border-black rounded-xl pl-10 h-10 font-bold text-sm outline-none"
+            />
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              size={15}
+            />
+          </div>
+          <span className="text-[10px] font-black text-slate-400">
+            {filtered.length} result{filtered.length !== 1 ? "s" : ""}
+          </span>
         </div>
 
         {isLoading ? (
-          <div className="p-16 flex justify-center items-center gap-3 text-slate-400 font-black text-sm uppercase"><LoaderCircle className="animate-spin" size={24} /> Loading shop orders...</div>
+          <div className="p-16 flex justify-center items-center gap-3 text-slate-400 font-black text-sm uppercase">
+            <LoaderCircle className="animate-spin" size={24} /> Loading shop
+            orders...
+          </div>
         ) : filtered.length === 0 ? (
-          <div className="p-16 text-center font-black text-slate-400 uppercase text-sm">No shop orders to display.</div>
+          <div className="p-16 text-center font-black text-slate-400 uppercase text-sm">
+            No shop orders to display.
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead className="bg-slate-50 border-b-4 border-black sticky top-0 z-20">
                 <tr>
-                  <th className="p-4 text-left text-[11px] font-black uppercase text-slate-400 tracking-widest pl-6">Item & Order</th>
-                  <th className="p-4 text-left text-[11px] font-black uppercase text-slate-400 tracking-widest">Buyer</th>
-                  <th className="p-4 text-center text-[11px] font-black uppercase text-slate-400 tracking-widest">Status</th>
-                  <th className="p-4 text-right text-[11px] font-black uppercase text-slate-400 tracking-widest pr-6">Actions</th>
+                  <th className="p-4 text-left text-[11px] font-black uppercase text-slate-400 tracking-widest pl-6">
+                    Item & Order
+                  </th>
+                  <th className="p-4 text-left text-[11px] font-black uppercase text-slate-400 tracking-widest">
+                    Buyer
+                  </th>
+                  <th className="p-4 text-center text-[11px] font-black uppercase text-slate-400 tracking-widest">
+                    Status
+                  </th>
+                  <th className="p-4 text-right text-[11px] font-black uppercase text-slate-400 tracking-widest pr-6">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y-2 divide-slate-100">
-                {filtered.map(receipt => {
+                {filtered.map((receipt) => {
                   const isDecrypted = decryptedId === receipt.id;
                   return (
                     <React.Fragment key={receipt.id}>
-                      <tr className={`hover:bg-slate-50 ${isDecrypted ? "bg-blue-50/50" : ""}`}>
+                      <tr
+                        className={`hover:bg-slate-50 ${isDecrypted ? "bg-blue-50/50" : ""}`}
+                      >
                         <td className="p-4 pl-6">
-                          <p className="font-black text-slate-900 text-sm">{receipt.itemName}</p>
-                          <p className="text-xs font-mono text-slate-400 mt-0.5">{shortAddr(receipt.id)}</p>
+                          <p className="font-black text-slate-900 text-sm">
+                            {receipt.itemName}
+                          </p>
+                          <p className="text-xs font-mono text-slate-400 mt-0.5">
+                            {shortAddr(receipt.id)}
+                          </p>
                           <div className="flex gap-2 mt-1 flex-wrap">
-                            <Badge className="bg-white">Qty: {receipt.quantity}</Badge>
-                            {receipt.chosenSize && receipt.chosenSize !== "N/A" && <Badge className="bg-slate-100">{receipt.chosenSize}</Badge>}
-                            {receipt.chosenColor && <Badge className="bg-slate-100">{receipt.chosenColor}</Badge>}
-                            <Badge className="bg-sky-100 text-sky-700 border-sky-300">{mistToSui(Number(receipt.paymentAmount)).toFixed(3)} SUI</Badge>
+                            <Badge className="bg-white">
+                              Qty: {receipt.quantity}
+                            </Badge>
+                            {receipt.chosenSize &&
+                              receipt.chosenSize !== "N/A" && (
+                                <Badge className="bg-slate-100">
+                                  {receipt.chosenSize}
+                                </Badge>
+                              )}
+                            {receipt.chosenColor && (
+                              <Badge className="bg-slate-100">
+                                {receipt.chosenColor}
+                              </Badge>
+                            )}
+                            <Badge className="bg-sky-100 text-sky-700 border-sky-300">
+                              {mistToSui(Number(receipt.paymentAmount)).toFixed(
+                                3,
+                              )}{" "}
+                              SUI
+                            </Badge>
                           </div>
                         </td>
                         <td className="p-4">
-                          <p className="text-xs font-mono font-bold text-slate-600" title={receipt.buyer}>{shortAddr(receipt.buyer)}</p>
-                          {receipt.trackingNumber && <p className="text-[10px] font-bold text-teal-600 mt-0.5">📦 {receipt.carrier}: {receipt.trackingNumber}</p>}
+                          <p
+                            className="text-xs font-mono font-bold text-slate-600"
+                            title={receipt.buyer}
+                          >
+                            {shortAddr(receipt.buyer)}
+                          </p>
+                          {receipt.trackingNumber && (
+                            <p className="text-[10px] font-bold text-teal-600 mt-0.5">
+                              📦 {receipt.carrier}: {receipt.trackingNumber}
+                            </p>
+                          )}
                         </td>
                         <td className="p-4 text-center">
-                          {receipt.status === 0 ? <Badge className="bg-yellow-300 border-yellow-500 !text-[11px] !px-2.5 !py-1">Pending</Badge>
-                            : receipt.status === 1 ? <Badge className="bg-blue-400 text-white !text-[11px] !px-2.5 !py-1">Shipped</Badge>
-                            : <Badge className="bg-green-500 text-white !text-[11px] !px-2.5 !py-1">Delivered</Badge>}
+                          {receipt.status === 0 ? (
+                            <Badge className="bg-yellow-300 border-yellow-500 !text-[11px] !px-2.5 !py-1">
+                              Pending
+                            </Badge>
+                          ) : receipt.status === 1 ? (
+                            <Badge className="bg-blue-400 text-white !text-[11px] !px-2.5 !py-1">
+                              Shipped
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-green-500 text-white !text-[11px] !px-2.5 !py-1">
+                              Delivered
+                            </Badge>
+                          )}
                         </td>
                         <td className="p-4 pr-6">
                           <div className="flex justify-end gap-2 flex-wrap">
-                            <BrutalButton onClick={() => handleDecrypt(receipt)} variant={isDecrypted ? "danger" : "purple"} title={isDecrypted ? "Hide" : "Decrypt PII"}>
-                              {isDecrypted ? <LockKeyhole size={15} /> : <LockOpen size={15} />} {isDecrypted ? "Hide" : "Decrypt"}
+                            <BrutalButton
+                              onClick={() => handleDecrypt(receipt)}
+                              variant={isDecrypted ? "danger" : "purple"}
+                              title={isDecrypted ? "Hide" : "Decrypt PII"}
+                            >
+                              {isDecrypted ? (
+                                <LockKeyhole size={15} />
+                              ) : (
+                                <LockOpen size={15} />
+                              )}{" "}
+                              {isDecrypted ? "Hide" : "Decrypt"}
                             </BrutalButton>
-                            <BrutalButton variant="primary" disabled={receipt.status !== 0} onClick={() => handleMarkShipped(receipt.id)}>
+                            <BrutalButton
+                              variant="primary"
+                              disabled={receipt.status !== 0}
+                              onClick={() => handleMarkShipped(receipt.id)}
+                            >
                               <Truck size={15} /> Ship
                             </BrutalButton>
-                            <BrutalButton variant="success" disabled={receipt.status !== 1} onClick={() => handleMarkDelivered(receipt.id)}>
+                            <BrutalButton
+                              variant="success"
+                              disabled={receipt.status !== 1}
+                              onClick={() => handleMarkDelivered(receipt.id)}
+                            >
                               <CheckCircle size={15} /> Done
                             </BrutalButton>
-                            <BrutalButton variant="teal" className="!px-3" disabled={receipt.status !== 1} onClick={() => { setTrackingReceipt(receipt); setTrackingNum(receipt.trackingNumber || ""); setCarrier(receipt.carrier || ""); setEstDate(receipt.estimatedDelivery ? new Date(receipt.estimatedDelivery).toISOString().split("T")[0] : ""); setTrackingOpen(true); }} title="Add/Edit Tracking">
+                            <BrutalButton
+                              variant="teal"
+                              className="!px-3"
+                              disabled={receipt.status !== 1}
+                              onClick={() => {
+                                setTrackingReceipt(receipt);
+                                setTrackingNum(receipt.trackingNumber || "");
+                                setCarrier(receipt.carrier || "");
+                                setEstDate(
+                                  receipt.estimatedDelivery
+                                    ? new Date(receipt.estimatedDelivery)
+                                        .toISOString()
+                                        .split("T")[0]
+                                    : "",
+                                );
+                                setTrackingOpen(true);
+                              }}
+                              title="Add/Edit Tracking"
+                            >
                               <ClipboardList size={15} />
                             </BrutalButton>
                           </div>
@@ -668,11 +1741,48 @@ function ShopOrdersTab({ onToast }: { onToast: (msg: string, type: Toast["type"]
                         <tr className="bg-blue-50">
                           <td colSpan={4} className="px-6 py-4">
                             <div className="bg-white border-4 border-blue-200 rounded-2xl p-4 relative">
-                              <div className="absolute -top-2 -right-2 bg-black text-white px-2 py-0.5 text-[9px] font-black uppercase rounded border border-white">Decrypted</div>
+                              <div className="absolute -top-2 -right-2 bg-black text-white px-2 py-0.5 text-[9px] font-black uppercase rounded border border-white">
+                                Decrypted
+                              </div>
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                                <div><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><User size={9} /> Consignee</p><p className="font-black text-slate-700">{decryptedInfo.fullName}</p></div>
-                                <div><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><Phone size={9} /> Contact</p><p className="font-bold text-slate-700">{decryptedInfo.phone}</p>{decryptedInfo.email && <p className="font-bold text-slate-500 text-[10px]">{decryptedInfo.email}</p>}</div>
-                                <div className="md:col-span-2"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><MapPin size={9} /> Shipping Address</p><p className="font-bold text-slate-700">{decryptedInfo.address}, {decryptedInfo.city}, {decryptedInfo.province} {decryptedInfo.postalCode}, {decryptedInfo.country}</p>{decryptedInfo.notes && <p className="text-slate-500 italic mt-1 text-[10px]">Note: {decryptedInfo.notes}</p>}</div>
+                                <div>
+                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                    <User size={9} /> Consignee
+                                  </p>
+                                  <p className="font-black text-slate-700">
+                                    {decryptedInfo.fullName}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                    <Phone size={9} /> Contact
+                                  </p>
+                                  <p className="font-bold text-slate-700">
+                                    {decryptedInfo.phone}
+                                  </p>
+                                  {decryptedInfo.email && (
+                                    <p className="font-bold text-slate-500 text-[10px]">
+                                      {decryptedInfo.email}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="md:col-span-2">
+                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                    <MapPin size={9} /> Shipping Address
+                                  </p>
+                                  <p className="font-bold text-slate-700">
+                                    {decryptedInfo.address},{" "}
+                                    {decryptedInfo.city},{" "}
+                                    {decryptedInfo.province}{" "}
+                                    {decryptedInfo.postalCode},{" "}
+                                    {decryptedInfo.country}
+                                  </p>
+                                  {decryptedInfo.notes && (
+                                    <p className="text-slate-500 italic mt-1 text-[10px]">
+                                      Note: {decryptedInfo.notes}
+                                    </p>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </td>
@@ -692,22 +1802,82 @@ function ShopOrdersTab({ onToast }: { onToast: (msg: string, type: Toast["type"]
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white border-4 border-black rounded-3xl w-full max-w-md shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-black uppercase italic">Shop Tracking</h2>
-              <button onClick={() => setTrackingOpen(false)} className="bg-red-500 text-white w-8 h-8 rounded-full border-2 border-black flex items-center justify-center font-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"><X size={16} /></button>
+              <h2 className="text-2xl font-black uppercase italic">
+                Shop Tracking
+              </h2>
+              <button
+                onClick={() => setTrackingOpen(false)}
+                className="bg-red-500 text-white w-8 h-8 rounded-full border-2 border-black flex items-center justify-center font-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+              >
+                <X size={16} />
+              </button>
             </div>
             <div className="space-y-4">
-              <div className="space-y-1.5"><label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Carrier</label>
-                <select value={carrier} onChange={e => setCarrier(e.target.value)} className="w-full h-12 border-2 border-black rounded-xl font-bold bg-slate-50 px-3 outline-none cursor-pointer">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Carrier
+                </label>
+                <select
+                  value={carrier}
+                  onChange={(e) => setCarrier(e.target.value)}
+                  className="w-full h-12 border-2 border-black rounded-xl font-bold bg-slate-50 px-3 outline-none cursor-pointer"
+                >
                   <option value="">Select carrier…</option>
-                  {["UPS","FedEx","J&T Express","LBC","DHL","SPX","NINJA Van Philippines"].map(c => <option key={c} value={c}>{c}</option>)}
+                  {[
+                    "UPS",
+                    "FedEx",
+                    "J&T Express",
+                    "LBC",
+                    "DHL",
+                    "SPX",
+                    "NINJA Van Philippines",
+                  ].map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
                 </select>
               </div>
-              <div className="space-y-1.5"><label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tracking Number</label><input value={trackingNum} onChange={e => setTrackingNum(e.target.value)} className="w-full h-12 border-2 border-black rounded-xl font-bold bg-slate-50 px-4 outline-none" placeholder="e.g. 1Z999AA10123456784" /></div>
-              <div className="space-y-1.5"><label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Est. Delivery Date</label><input type="date" value={estDate} onChange={e => setEstDate(e.target.value)} className="w-full h-12 border-2 border-black rounded-xl font-bold bg-slate-50 px-4 outline-none" /></div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Tracking Number
+                </label>
+                <input
+                  value={trackingNum}
+                  onChange={(e) => setTrackingNum(e.target.value)}
+                  className="w-full h-12 border-2 border-black rounded-xl font-bold bg-slate-50 px-4 outline-none"
+                  placeholder="e.g. 1Z999AA10123456784"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Est. Delivery Date
+                </label>
+                <input
+                  type="date"
+                  value={estDate}
+                  onChange={(e) => setEstDate(e.target.value)}
+                  className="w-full h-12 border-2 border-black rounded-xl font-bold bg-slate-50 px-4 outline-none"
+                />
+              </div>
               <div className="pt-4 flex gap-3">
-                <BrutalButton onClick={() => setTrackingOpen(false)} className="flex-1">Cancel</BrutalButton>
-                <BrutalButton variant="black" className="flex-1 shadow-[4px_4px_0px_0px_rgba(59,130,246,1)]" onClick={handleSaveTracking} disabled={savingTracking}>
-                  {savingTracking ? <LoaderCircle size={16} className="animate-spin" /> : "Save Tracking"}
+                <BrutalButton
+                  onClick={() => setTrackingOpen(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </BrutalButton>
+                <BrutalButton
+                  variant="black"
+                  className="flex-1 shadow-[4px_4px_0px_0px_rgba(59,130,246,1)]"
+                  onClick={handleSaveTracking}
+                  disabled={savingTracking}
+                >
+                  {savingTracking ? (
+                    <LoaderCircle size={16} className="animate-spin" />
+                  ) : (
+                    "Save Tracking"
+                  )}
                 </BrutalButton>
               </div>
             </div>
@@ -724,46 +1894,66 @@ export default function AdminPage() {
   const account = useCurrentAccount();
   const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
 
-  const [isAdmin, setIsAdmin]           = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [roleLoading, setRoleLoading]   = useState(true);
+  const [roleLoading, setRoleLoading] = useState(true);
 
   const [adminPrivateKey, setAdminPrivateKey] = useState("");
-  const [receipts, setReceipts]               = useState<Receipt[]>([]);
-  const [decryptedCards, setDecryptedCards]   = useState<DecryptedCard[]>([]);
-  const [loading, setLoading]                 = useState(true);
-  const [error, setError]                     = useState("");
-  const [searchQuery, setSearchQuery]         = useState("");
-  const [filterItem, setFilterItem]           = useState<string>("all");
-  const [activeTab, setActiveTab]             = useState<"pending"|"shipped"|"delivered">("pending");
+  const [receipts, setReceipts] = useState<Receipt[]>([]);
+  const [decryptedCards, setDecryptedCards] = useState<DecryptedCard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterItem, setFilterItem] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<
+    "pending" | "shipped" | "delivered"
+  >("pending");
   const [superAdminPanelOpen, setSuperAdminPanelOpen] = useState(false);
 
   // Main section tab: "nft" (existing order receipts) vs "shop" (new shop receipts)
-  const [mainTab, setMainTab] = useState<"nft"|"shop">("nft");
+  const [mainTab, setMainTab] = useState<"nft" | "shop">("nft");
 
   // Tracking modal state
   const [trackingModalOpen, setTrackingModalOpen] = useState(false);
-  const [selectedReceipt, setSelectedReceipt]     = useState<Receipt | null>(null);
-  const [trackingNumber, setTrackingNumber]       = useState("");
-  const [carrier, setCarrier]                     = useState("");
-  const [estDeliveryDate, setEstDeliveryDate]     = useState("");
-  const [isSavingTracking, setIsSavingTracking]   = useState(false);
+  const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [carrier, setCarrier] = useState("");
+  const [estDeliveryDate, setEstDeliveryDate] = useState("");
+  const [isSavingTracking, setIsSavingTracking] = useState(false);
 
-  const [toasts, setToasts]     = useState<Toast[]>([]);
-  const toastCounter            = useRef(0);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const toastCounter = useRef(0);
   const showToast = (message: string, type: Toast["type"] = "info") => {
     const id = ++toastCounter.current;
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(
+      () => setToasts((prev) => prev.filter((t) => t.id !== id)),
+      3500,
+    );
   };
-  const removeToast = (id: number) => setToasts(prev => prev.filter(t => t.id !== id));
+  const removeToast = (id: number) =>
+    setToasts((prev) => prev.filter((t) => t.id !== id));
 
   useEffect(() => {
-    if (!account?.address) { setIsAdmin(false); setIsSuperAdmin(false); setRoleLoading(false); return; }
+    if (!account?.address) {
+      setIsAdmin(false);
+      setIsSuperAdmin(false);
+      setRoleLoading(false);
+      return;
+    }
     setRoleLoading(true);
-    Promise.all([checkIsAdmin(account.address), checkIsSuperAdmin(account.address)])
-      .then(([admin, superAdmin]) => { setIsAdmin(admin || superAdmin); setIsSuperAdmin(superAdmin); })
-      .catch(() => { setIsAdmin(false); setIsSuperAdmin(false); })
+    Promise.all([
+      checkIsAdmin(account.address),
+      checkIsSuperAdmin(account.address),
+    ])
+      .then(([admin, superAdmin]) => {
+        setIsAdmin(admin || superAdmin);
+        setIsSuperAdmin(superAdmin);
+      })
+      .catch(() => {
+        setIsAdmin(false);
+        setIsSuperAdmin(false);
+      })
       .finally(() => setRoleLoading(false));
   }, [account?.address]);
 
@@ -772,111 +1962,292 @@ export default function AdminPage() {
     else setLoading(false);
   }, [isAdmin]);
 
-  const stats = useMemo(() => ({
-    pending:   receipts.filter(r => r.status === ORDER_STATUS.PENDING).length,
-    shipped:   receipts.filter(r => r.status === ORDER_STATUS.SHIPPED).length,
-    delivered: receipts.filter(r => r.status === ORDER_STATUS.DELIVERED).length,
-  }), [receipts]);
+  const stats = useMemo(
+    () => ({
+      pending: receipts.filter((r) => r.status === ORDER_STATUS.PENDING).length,
+      shipped: receipts.filter((r) => r.status === ORDER_STATUS.SHIPPED).length,
+      delivered: receipts.filter((r) => r.status === ORDER_STATUS.DELIVERED)
+        .length,
+    }),
+    [receipts],
+  );
 
   const allItems = useMemo(() => {
     const items = new Set<string>();
-    receipts.forEach(r => r.itemsSelected.split(",").forEach(i => items.add(i.trim())));
+    receipts.forEach((r) =>
+      r.itemsSelected.split(",").forEach((i) => items.add(i.trim())),
+    );
     return Array.from(items).sort();
   }, [receipts]);
 
   const filteredReceipts = useMemo(() => {
     const q = searchQuery.toLowerCase();
-    return receipts.filter(r => {
-      if (activeTab === "pending" && r.status !== ORDER_STATUS.PENDING) return false;
-      if (activeTab === "shipped" && r.status !== ORDER_STATUS.SHIPPED) return false;
-      if (activeTab === "delivered" && r.status !== ORDER_STATUS.DELIVERED) return false;
-      if (filterItem !== "all" && !r.itemsSelected.split(",").map(i => i.trim()).includes(filterItem)) return false;
-      if (q) { const matchName = r.character?.name?.toLowerCase().includes(q); const matchId = r.objectId.toLowerCase().includes(q); const matchBuyer = r.buyer.toLowerCase().includes(q); if (!matchName && !matchId && !matchBuyer) return false; }
+    return receipts.filter((r) => {
+      if (activeTab === "pending" && r.status !== ORDER_STATUS.PENDING)
+        return false;
+      if (activeTab === "shipped" && r.status !== ORDER_STATUS.SHIPPED)
+        return false;
+      if (activeTab === "delivered" && r.status !== ORDER_STATUS.DELIVERED)
+        return false;
+      if (
+        filterItem !== "all" &&
+        !r.itemsSelected
+          .split(",")
+          .map((i) => i.trim())
+          .includes(filterItem)
+      )
+        return false;
+      if (q) {
+        const matchName = r.character?.name?.toLowerCase().includes(q);
+        const matchId = r.objectId.toLowerCase().includes(q);
+        const matchBuyer = r.buyer.toLowerCase().includes(q);
+        if (!matchName && !matchId && !matchBuyer) return false;
+      }
       return true;
     });
   }, [receipts, searchQuery, filterItem, activeTab]);
 
   const loadReceipts = async () => {
     try {
-      setLoading(true); setError("");
+      setLoading(true);
+      setError("");
       const allReceiptObjects = await getAllReceipts();
-      if (allReceiptObjects.length === 0) { setReceipts([]); setLoading(false); return; }
-      const parsedReceipts: Omit<Receipt, "character">[] = allReceiptObjects.map((obj: any) => ({
-        objectId: obj.data.objectId, nftId: obj.data.content.fields.nft_id, buyer: obj.data.content.fields.buyer,
-        itemsSelected: obj.data.content.fields.items_selected, encryptedShippingInfo: obj.data.content.fields.encrypted_shipping_info,
-        status: Number(obj.data.content.fields.status), paymentAmount: Number(obj.data.content.fields.payment_amount),
-        createdAt: Number(obj.data.content.fields.created_at), trackingNumber: obj.data.content.fields.tracking_number || "",
-        carrier: obj.data.content.fields.carrier || "", estimatedDelivery: Number(obj.data.content.fields.estimated_delivery || 0),
-      })).sort((a, b) => b.createdAt - a.createdAt);
-      const nftObjects = await suiClient.multiGetObjects({ ids: parsedReceipts.map(r => r.nftId), options: { showDisplay: true } });
-      const nftsMap = new Map(nftObjects.filter(obj => obj.data).map(obj => [obj.data?.objectId, { imageUrl: getIPFSGatewayUrl((obj.data?.display?.data as any)?.image_url), name: (obj.data?.display?.data as any)?.name }]));
-      setReceipts(parsedReceipts.map(r => ({ ...r, character: nftsMap.get(r.nftId) })));
-    } catch (err) { console.error(err); setError("Failed to load orders. Please refresh."); }
-    finally { setLoading(false); }
+      if (allReceiptObjects.length === 0) {
+        setReceipts([]);
+        setLoading(false);
+        return;
+      }
+      const parsedReceipts: Omit<Receipt, "character">[] = allReceiptObjects
+        .map((obj: any) => ({
+          objectId: obj.data.objectId,
+          nftId: obj.data.content.fields.nft_id,
+          buyer: obj.data.content.fields.buyer,
+          itemsSelected: obj.data.content.fields.items_selected,
+          encryptedShippingInfo:
+            obj.data.content.fields.encrypted_shipping_info,
+          status: Number(obj.data.content.fields.status),
+          paymentAmount: Number(obj.data.content.fields.payment_amount),
+          createdAt: Number(obj.data.content.fields.created_at),
+          trackingNumber: obj.data.content.fields.tracking_number || "",
+          carrier: obj.data.content.fields.carrier || "",
+          estimatedDelivery: Number(
+            obj.data.content.fields.estimated_delivery || 0,
+          ),
+        }))
+        .sort((a, b) => b.createdAt - a.createdAt);
+      const nftObjects = await suiClient.multiGetObjects({
+        ids: parsedReceipts.map((r) => r.nftId),
+        options: { showDisplay: true },
+      });
+      const nftsMap = new Map(
+        nftObjects
+          .filter((obj) => obj.data)
+          .map((obj) => [
+            obj.data?.objectId,
+            {
+              imageUrl: getIPFSGatewayUrl(
+                (obj.data?.display?.data as any)?.image_url,
+              ),
+              name: (obj.data?.display?.data as any)?.name,
+            },
+          ]),
+      );
+      setReceipts(
+        parsedReceipts.map((r) => ({ ...r, character: nftsMap.get(r.nftId) })),
+      );
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load orders. Please refresh.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleToggleDecrypt = async (receipt: Receipt) => {
-    if (decryptedCards.some(c => c.id === receipt.objectId)) { setDecryptedCards([]); return; }
-    if (!adminPrivateKey) { showToast("Enter Admin Private Key first.", "error"); return; }
+    if (decryptedCards.some((c) => c.id === receipt.objectId)) {
+      setDecryptedCards([]);
+      return;
+    }
+    if (!adminPrivateKey) {
+      showToast("Enter Admin Private Key first.", "error");
+      return;
+    }
     try {
-      const decryptedInfo = await decryptShippingInfo(receipt.encryptedShippingInfo, adminPrivateKey);
-      setDecryptedCards([{ id: receipt.objectId, ...decryptedInfo, itemsSelected: receipt.itemsSelected, character: receipt.character }]);
-    } catch { showToast("Decryption failed. Check your key.", "error"); }
+      const decryptedInfo = await decryptShippingInfo(
+        receipt.encryptedShippingInfo,
+        adminPrivateKey,
+      );
+      setDecryptedCards([
+        {
+          id: receipt.objectId,
+          ...decryptedInfo,
+          itemsSelected: receipt.itemsSelected,
+          character: receipt.character,
+        },
+      ]);
+    } catch {
+      showToast("Decryption failed. Check your key.", "error");
+    }
   };
 
   const handleMarkShipped = async (receiptId: string) => {
-    try { await markAsShipped({ receiptObjectId: receiptId, signAndExecute }); showToast("Order marked as Shipped!", "success"); loadReceipts(); } catch { showToast("Failed to mark as shipped.", "error"); }
+    try {
+      await markAsShipped({ receiptObjectId: receiptId, signAndExecute });
+      showToast("Order marked as Shipped!", "success");
+      loadReceipts();
+    } catch {
+      showToast("Failed to mark as shipped.", "error");
+    }
   };
   const handleMarkDelivered = async (receiptId: string) => {
-    try { await markAsDelivered({ receiptObjectId: receiptId, signAndExecute }); showToast("Order marked as Delivered!", "success"); loadReceipts(); } catch { showToast("Failed to mark as delivered.", "error"); }
+    try {
+      await markAsDelivered({ receiptObjectId: receiptId, signAndExecute });
+      showToast("Order marked as Delivered!", "success");
+      loadReceipts();
+    } catch {
+      showToast("Failed to mark as delivered.", "error");
+    }
   };
   const handleSaveTracking = async () => {
-    if (!selectedReceipt || !trackingNumber || !carrier || !estDeliveryDate) { showToast("All tracking fields are required.", "error"); return; }
+    if (!selectedReceipt || !trackingNumber || !carrier || !estDeliveryDate) {
+      showToast("All tracking fields are required.", "error");
+      return;
+    }
     setIsSavingTracking(true);
-    try { await addTrackingInfo({ receiptObjectId: selectedReceipt.objectId, trackingNumber, carrier, estimatedDelivery: new Date(estDeliveryDate).getTime(), signAndExecute }); showToast("Tracking information saved!", "success"); setTrackingModalOpen(false); loadReceipts(); }
-    catch { showToast("Failed to save tracking info.", "error"); }
-    finally { setIsSavingTracking(false); }
-  };
-  const handleDownloadImage = async (imageUrl: string, characterName: string) => {
     try {
-      const response = await fetch(imageUrl); const blob = await response.blob(); const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a"); link.href = blobUrl; link.download = `kapogian_${characterName.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.png`;
-      document.body.appendChild(link); link.click(); document.body.removeChild(link); window.URL.revokeObjectURL(blobUrl);
-    } catch { window.open(imageUrl, "_blank"); }
+      await addTrackingInfo({
+        receiptObjectId: selectedReceipt.objectId,
+        trackingNumber,
+        carrier,
+        estimatedDelivery: new Date(estDeliveryDate).getTime(),
+        signAndExecute,
+      });
+      showToast("Tracking information saved!", "success");
+      setTrackingModalOpen(false);
+      loadReceipts();
+    } catch {
+      showToast("Failed to save tracking info.", "error");
+    } finally {
+      setIsSavingTracking(false);
+    }
+  };
+  const handleDownloadImage = async (
+    imageUrl: string,
+    characterName: string,
+  ) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `kapogian_${characterName.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(imageUrl, "_blank");
+    }
   };
 
-  if (!account) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4" style={{ backgroundImage: "radial-gradient(#000 1px, transparent 1px)", backgroundSize: "24px 24px" }}>
-      <BrutalCard className="max-w-md w-full text-center"><LockKeyhole size={48} className="mx-auto mb-4 text-slate-400" /><h2 className="font-black text-2xl uppercase mb-3">Admin Access</h2><p className="text-sm font-bold text-slate-500 mb-6">Connect your wallet to continue.</p><CustomConnectButton className="!bg-blue-500 !border-4 !border-black !text-white !font-black !px-6 !py-2 !rounded-xl !shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:!bg-blue-600" /></BrutalCard>
-    </div>
-  );
+  if (!account)
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center bg-slate-50 p-4"
+        style={{
+          backgroundImage: "radial-gradient(#000 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+        }}
+      >
+        <BrutalCard className="max-w-md w-full text-center">
+          <LockKeyhole size={48} className="mx-auto mb-4 text-slate-400" />
+          <h2 className="font-black text-2xl uppercase mb-3">Admin Access</h2>
+          <p className="text-sm font-bold text-slate-500 mb-6">
+            Connect your wallet to continue.
+          </p>
+          <CustomConnectButton className="!bg-blue-500 !border-4 !border-black !text-white !font-black !px-6 !py-2 !rounded-xl !shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:!bg-blue-600" />
+        </BrutalCard>
+      </div>
+    );
 
-  if (roleLoading) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <div className="flex items-center gap-3 font-bold text-slate-400 uppercase"><LoaderCircle className="animate-spin" size={28} /> Verifying access...</div>
-    </div>
-  );
+  if (roleLoading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <div className="flex items-center gap-3 font-bold text-slate-400 uppercase">
+          <LoaderCircle className="animate-spin" size={28} /> Verifying
+          access...
+        </div>
+      </div>
+    );
 
-  if (!isAdmin) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4" style={{ backgroundImage: "radial-gradient(#000 1px, transparent 1px)", backgroundSize: "24px 24px" }}>
-      <BrutalCard className="max-w-md w-full text-center"><ShieldAlert size={48} className="mx-auto mb-4 text-red-500" /><h2 className="font-black text-2xl uppercase mb-3">Access Denied...</h2><p className="mb-2 font-bold text-slate-600">This wallet is not in the admin whitelist.</p><p className="text-xs font-mono text-slate-400">{account.address}</p></BrutalCard>
-    </div>
-  );
+  if (!isAdmin)
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center bg-slate-50 p-4"
+        style={{
+          backgroundImage: "radial-gradient(#000 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+        }}
+      >
+        <BrutalCard className="max-w-md w-full text-center">
+          <ShieldAlert size={48} className="mx-auto mb-4 text-red-500" />
+          <h2 className="font-black text-2xl uppercase mb-3">
+            Access Denied...
+          </h2>
+          <p className="mb-2 font-bold text-slate-600">
+            This wallet is not in the admin whitelist.
+          </p>
+          <p className="text-xs font-mono text-slate-400">{account.address}</p>
+        </BrutalCard>
+      </div>
+    );
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900" style={{ backgroundImage: "radial-gradient(#000 1px, transparent 1px)", backgroundSize: "24px 24px", backgroundAttachment: "fixed", zoom: 0.9 }}>
+    <div
+      className="min-h-screen bg-slate-50 font-sans text-slate-900"
+      style={{
+        backgroundImage: "radial-gradient(#000 1px, transparent 1px)",
+        backgroundSize: "24px 24px",
+        backgroundAttachment: "fixed",
+        zoom: 0.9,
+      }}
+    >
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-white border-b-4 border-black px-6 py-4 shadow-[0_4px_0_0_rgba(0,0,0,0.05)]">
         <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-4">
-            <div className="bg-black text-white p-2.5 rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"><Box size={24} /></div>
-            <div><h1 className="text-2xl font-black uppercase tracking-tight leading-none">Management</h1><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Kapogian Admin Console</p></div>
+            <div className="bg-black text-white p-2.5 rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+              <Box size={24} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black uppercase tracking-tight leading-none">
+                Management
+              </h1>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                Kapogian Admin Console
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/"><BrutalButton className="!px-3"><Home size={20} /></BrutalButton></Link>
-            {isSuperAdmin && <BrutalButton variant="yellow" onClick={() => setSuperAdminPanelOpen(true)} className="gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"><Crown size={16} /><span>Super Admin</span></BrutalButton>}
+            <Link href="/">
+              <BrutalButton className="!px-3">
+                <Home size={20} />
+              </BrutalButton>
+            </Link>
+            {isSuperAdmin && (
+              <BrutalButton
+                variant="yellow"
+                onClick={() => setSuperAdminPanelOpen(true)}
+                className="gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+              >
+                <Crown size={16} />
+                <span>Super Admin</span>
+              </BrutalButton>
+            )}
             <div className="bg-white border-4 border-black px-6 py-2 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-black text-sm flex items-center gap-2">
-              {isSuperAdmin && <Crown size={14} className="text-yellow-500" />}{shortAddr(account.address)}
+              {isSuperAdmin && <Crown size={14} className="text-yellow-500" />}
+              {shortAddr(account.address)}
             </div>
             <CustomConnectButton className="!bg-blue-500 !border-4 !border-black !text-white !font-black !px-5 !py-2 !rounded-xl !shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:!bg-blue-600 !text-sm" />
           </div>
@@ -905,114 +2276,492 @@ export default function AdminPage() {
           <>
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-              <BrutalCard><div className="flex items-center gap-4"><div className="bg-yellow-400 p-3 rounded-xl border-2 border-black"><Clock size={28} /></div><div><p className="text-xs font-black uppercase text-slate-400">Pending</p><p className="text-4xl font-black">{stats.pending}</p></div></div></BrutalCard>
-              <BrutalCard><div className="flex items-center gap-4"><div className="bg-blue-400 p-3 rounded-xl border-2 border-black text-white"><Truck size={28} /></div><div><p className="text-xs font-black uppercase text-slate-400">Shipped</p><p className="text-4xl font-black">{stats.shipped}</p></div></div></BrutalCard>
-              <BrutalCard><div className="flex items-center gap-4"><div className="bg-green-400 p-3 rounded-xl border-2 border-black text-white"><CheckCircle size={28} /></div><div><p className="text-xs font-black uppercase text-slate-400">Delivered</p><p className="text-4xl font-black">{stats.delivered}</p></div></div></BrutalCard>
-              <BrutalCard className="bg-blue-500"><div className="flex items-center gap-4"><div className="bg-black p-3 rounded-xl border-2 border-black text-white"><Package size={28} /></div><div><p className="text-xs font-black uppercase text-blue-900/60">Total Orders</p><p className="text-4xl font-black text-black">{receipts.length}</p></div></div></BrutalCard>
+              <BrutalCard>
+                <div className="flex items-center gap-4">
+                  <div className="bg-yellow-400 p-3 rounded-xl border-2 border-black">
+                    <Clock size={28} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black uppercase text-slate-400">
+                      Pending
+                    </p>
+                    <p className="text-4xl font-black">{stats.pending}</p>
+                  </div>
+                </div>
+              </BrutalCard>
+              <BrutalCard>
+                <div className="flex items-center gap-4">
+                  <div className="bg-blue-400 p-3 rounded-xl border-2 border-black text-white">
+                    <Truck size={28} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black uppercase text-slate-400">
+                      Shipped
+                    </p>
+                    <p className="text-4xl font-black">{stats.shipped}</p>
+                  </div>
+                </div>
+              </BrutalCard>
+              <BrutalCard>
+                <div className="flex items-center gap-4">
+                  <div className="bg-green-400 p-3 rounded-xl border-2 border-black text-white">
+                    <CheckCircle size={28} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black uppercase text-slate-400">
+                      Delivered
+                    </p>
+                    <p className="text-4xl font-black">{stats.delivered}</p>
+                  </div>
+                </div>
+              </BrutalCard>
+              <BrutalCard className="bg-blue-500">
+                <div className="flex items-center gap-4">
+                  <div className="bg-black p-3 rounded-xl border-2 border-black text-white">
+                    <Package size={28} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black uppercase text-blue-900/60">
+                      Total Orders
+                    </p>
+                    <p className="text-4xl font-black text-black">
+                      {receipts.length}
+                    </p>
+                  </div>
+                </div>
+              </BrutalCard>
             </div>
 
             {/* Main grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
               <aside className="lg:col-span-4 flex flex-col gap-6">
                 <BrutalCard>
-                  <div className="flex items-center gap-3 mb-4"><LockKeyhole className="text-slate-400" size={20} /><h3 className="font-black uppercase tracking-tight text-base">Security Credentials</h3></div>
-                  <p className="text-xs text-slate-500 font-bold mb-4 bg-slate-50 p-3 rounded-xl border-2 border-dashed border-slate-300 leading-tight">AES-256 decryption key. Only processed locally in memory.</p>
-                  <div className="relative">
-                    <input type="password" placeholder="Enter Private Key..." value={adminPrivateKey} onChange={e => setAdminPrivateKey(e.target.value)} className="w-full h-14 bg-slate-50 border-4 border-black rounded-2xl px-5 text-lg font-bold placeholder:text-slate-300 focus:bg-white focus:ring-0 outline-none transition-all" />
-                    <Key className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
+                  <div className="flex items-center gap-3 mb-4">
+                    <LockKeyhole className="text-slate-400" size={20} />
+                    <h3 className="font-black uppercase tracking-tight text-base">
+                      Security Credentials
+                    </h3>
                   </div>
-                  <div className="mt-4 flex items-start gap-3 bg-blue-50 border-2 border-dashed border-blue-200 rounded-xl p-3"><ShieldCheck size={18} className="text-blue-500 flex-shrink-0 mt-0.5" /><p className="text-xs font-bold text-blue-700 leading-tight">Your private key is never sent to any server. Local decryption only.</p></div>
+                  <p className="text-xs text-slate-500 font-bold mb-4 bg-slate-50 p-3 rounded-xl border-2 border-dashed border-slate-300 leading-tight">
+                    AES-256 decryption key. Only processed locally in memory.
+                  </p>
+                  <div className="relative">
+                    <input
+                      type="password"
+                      placeholder="Enter Private Key..."
+                      value={adminPrivateKey}
+                      onChange={(e) => setAdminPrivateKey(e.target.value)}
+                      className="w-full h-14 bg-slate-50 border-4 border-black rounded-2xl px-5 text-lg font-bold placeholder:text-slate-300 focus:bg-white focus:ring-0 outline-none transition-all"
+                    />
+                    <Key
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300"
+                      size={20}
+                    />
+                  </div>
+                  <div className="mt-4 flex items-start gap-3 bg-blue-50 border-2 border-dashed border-blue-200 rounded-xl p-3">
+                    <ShieldCheck
+                      size={18}
+                      className="text-blue-500 flex-shrink-0 mt-0.5"
+                    />
+                    <p className="text-xs font-bold text-blue-700 leading-tight">
+                      Your private key is never sent to any server. Local
+                      decryption only.
+                    </p>
+                  </div>
                 </BrutalCard>
-                <BrutalCard noPadding className="flex-1 flex flex-col shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                  <div className="p-5 bg-slate-900 text-white flex justify-between items-center"><h3 className="font-black uppercase text-base tracking-widest flex items-center gap-2"><FileText size={18} /> Shipping Payload</h3></div>
+                <BrutalCard
+                  noPadding
+                  className="flex-1 flex flex-col shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+                >
+                  <div className="p-5 bg-slate-900 text-white flex justify-between items-center">
+                    <h3 className="font-black uppercase text-base tracking-widest flex items-center gap-2">
+                      <FileText size={18} /> Shipping Payload
+                    </h3>
+                  </div>
                   <div className="p-6 overflow-y-auto max-h-[48vh]">
                     {decryptedCards.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                        <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center border-2 border-slate-200"><LockOpen className="text-slate-300" size={36} /></div>
-                        <div><p className="font-black text-slate-400 uppercase text-base tracking-tighter">Cipher Block Locked</p><p className="text-sm font-bold text-slate-300 mt-1">Select an order and click Decrypt</p></div>
-                      </div>
-                    ) : decryptedCards.map(card => (
-                      <div key={card.id} className="space-y-6">
-                        <div className="flex gap-4 p-4 bg-blue-50 border-4 border-blue-200 rounded-2xl relative">
-                          <div className="absolute -top-2 -right-2 bg-black text-white px-2 py-0.5 text-[9px] font-black uppercase rounded border border-white">Decrypted</div>
-                          {card.character?.imageUrl && <Image src={card.character.imageUrl} alt={card.character.name || "Character"} width={88} height={88} className="w-22 h-22 rounded-xl border-2 border-black object-cover shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]" />}
-                          <div className="flex flex-col justify-center"><p className="text-xs font-black text-blue-500 uppercase leading-none mb-1">Holder Identity</p><h4 className="font-black text-slate-900 text-xl leading-tight">{card.character?.name}</h4><p className="text-xs font-mono font-bold text-slate-400 mt-1 uppercase truncate w-40" title={card.id}>{shortAddr(card.id)}</p></div>
+                        <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center border-2 border-slate-200">
+                          <LockOpen className="text-slate-300" size={36} />
                         </div>
-                        <div className="space-y-4">
-                          {[
-                            { label: "Consignee", icon: <User size={11} />, value: card.full_name },
-                            { label: "Email", icon: <Mail size={11} />, value: card.email },
-                            { label: "Shipping Destination", icon: <MapPin size={11} />, value: card.address },
-                          ].map(({ label, icon, value }) => (
-                            <div key={label} className="space-y-1.5"><label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">{icon} {label}</label><div className="p-3 bg-slate-50 border-2 border-black rounded-xl font-black text-slate-700 text-sm">{value}</div></div>
-                          ))}
-                          <div className="space-y-1.5"><label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Phone size={11} /> Contact</label><p className="p-3 bg-slate-50 border-2 border-black rounded-xl font-black text-slate-700 text-xs">{card.contact_number}</p></div>
-                          <div className="space-y-1.5"><label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Package size={11} /> Inventory</label>
-                            <div className="flex flex-wrap gap-1.5 p-3 bg-slate-50 border-2 border-black rounded-xl">{card.itemsSelected.split(",").map(item => <Badge key={item} className="bg-white !text-[10px]">{item.trim()}</Badge>)}</div>
+                        <div>
+                          <p className="font-black text-slate-400 uppercase text-base tracking-tighter">
+                            Cipher Block Locked
+                          </p>
+                          <p className="text-sm font-bold text-slate-300 mt-1">
+                            Select an order and click Decrypt
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      decryptedCards.map((card) => (
+                        <div key={card.id} className="space-y-6">
+                          <div className="flex gap-4 p-4 bg-blue-50 border-4 border-blue-200 rounded-2xl relative">
+                            <div className="absolute -top-2 -right-2 bg-black text-white px-2 py-0.5 text-[9px] font-black uppercase rounded border border-white">
+                              Decrypted
+                            </div>
+                            {card.character?.imageUrl && (
+                              <Image
+                                src={card.character.imageUrl}
+                                alt={card.character.name || "Character"}
+                                width={88}
+                                height={88}
+                                className="w-22 h-22 rounded-xl border-2 border-black object-cover shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                              />
+                            )}
+                            <div className="flex flex-col justify-center">
+                              <p className="text-xs font-black text-blue-500 uppercase leading-none mb-1">
+                                Holder Identity
+                              </p>
+                              <h4 className="font-black text-slate-900 text-xl leading-tight">
+                                {card.character?.name}
+                              </h4>
+                              <p
+                                className="text-xs font-mono font-bold text-slate-400 mt-1 uppercase truncate w-40"
+                                title={card.id}
+                              >
+                                {shortAddr(card.id)}
+                              </p>
+                            </div>
                           </div>
-                          {card.character?.imageUrl && <BrutalButton variant="black" className="w-full h-12 text-sm" onClick={() => handleDownloadImage(card.character!.imageUrl, card.character!.name)}><Download size={16} /> Download NFT Image</BrutalButton>}
+                          <div className="space-y-4">
+                            {[
+                              {
+                                label: "Consignee",
+                                icon: <User size={11} />,
+                                value: card.full_name,
+                              },
+                              {
+                                label: "Email",
+                                icon: <Mail size={11} />,
+                                value: card.email,
+                              },
+                              {
+                                label: "Shipping Destination",
+                                icon: <MapPin size={11} />,
+                                value: card.address,
+                              },
+                            ].map(({ label, icon, value }) => (
+                              <div key={label} className="space-y-1.5">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                  {icon} {label}
+                                </label>
+                                <div className="p-3 bg-slate-50 border-2 border-black rounded-xl font-black text-slate-700 text-sm">
+                                  {value}
+                                </div>
+                              </div>
+                            ))}
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                <Phone size={11} /> Contact
+                              </label>
+                              <p className="p-3 bg-slate-50 border-2 border-black rounded-xl font-black text-slate-700 text-xs">
+                                {card.contact_number}
+                              </p>
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                <Package size={11} /> Inventory
+                              </label>
+                              <div className="flex flex-wrap gap-1.5 p-3 bg-slate-50 border-2 border-black rounded-xl">
+                                {card.itemsSelected.split(",").map((item) => (
+                                  <Badge
+                                    key={item}
+                                    className="bg-white !text-[10px]"
+                                  >
+                                    {item.trim()}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                            {card.character?.imageUrl && (
+                              <BrutalButton
+                                variant="black"
+                                className="w-full h-12 text-sm"
+                                onClick={() =>
+                                  handleDownloadImage(
+                                    card.character!.imageUrl,
+                                    card.character!.name,
+                                  )
+                                }
+                              >
+                                <Download size={16} /> Download NFT Image
+                              </BrutalButton>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </BrutalCard>
               </aside>
 
               {/* Order Registry */}
               <section className="lg:col-span-8 flex flex-col">
-                <BrutalCard noPadding className="shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col flex-1">
+                <BrutalCard
+                  noPadding
+                  className="shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col flex-1"
+                >
                   <div className="p-5 border-b-4 border-black flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div className="flex items-center gap-3"><h3 className="text-xl font-black uppercase tracking-tighter">NFT Order Registry</h3><Badge className="bg-yellow-400 border-2 border-black !text-xs !px-2.5 !py-0.5">{receipts.length}</Badge></div>
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-xl font-black uppercase tracking-tighter">
+                        NFT Order Registry
+                      </h3>
+                      <Badge className="bg-yellow-400 border-2 border-black !text-xs !px-2.5 !py-0.5">
+                        {receipts.length}
+                      </Badge>
+                    </div>
                     <div className="flex items-center border-2 border-black rounded-xl overflow-hidden shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                      {(["pending","shipped","delivered"] as const).map((tab, i) => {
-                        const count = tab === "pending" ? stats.pending : tab === "shipped" ? stats.shipped : stats.delivered;
-                        const Icon = tab === "pending" ? Clock : tab === "shipped" ? Truck : CheckCircle;
-                        const activeColor = tab === "pending" ? "bg-yellow-400 text-black" : tab === "shipped" ? "bg-blue-500 text-white" : "bg-green-500 text-white";
-                        return (
-                          <React.Fragment key={tab}>
-                            {i > 0 && <div className="w-0.5 h-6 bg-black" />}
-                            <button onClick={() => setActiveTab(tab)} className={`h-10 px-4 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 ${activeTab === tab ? `${activeColor} scale-105 z-10` : "bg-white text-slate-500 hover:bg-slate-50"}`}>
-                              <Icon size={12} /> {tab.charAt(0).toUpperCase() + tab.slice(1)} <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-black border bg-black/10 border-current">{count}</span>
-                            </button>
-                          </React.Fragment>
-                        );
-                      })}
+                      {(["pending", "shipped", "delivered"] as const).map(
+                        (tab, i) => {
+                          const count =
+                            tab === "pending"
+                              ? stats.pending
+                              : tab === "shipped"
+                                ? stats.shipped
+                                : stats.delivered;
+                          const Icon =
+                            tab === "pending"
+                              ? Clock
+                              : tab === "shipped"
+                                ? Truck
+                                : CheckCircle;
+                          const activeColor =
+                            tab === "pending"
+                              ? "bg-yellow-400 text-black"
+                              : tab === "shipped"
+                                ? "bg-blue-500 text-white"
+                                : "bg-green-500 text-white";
+                          return (
+                            <React.Fragment key={tab}>
+                              {i > 0 && <div className="w-0.5 h-6 bg-black" />}
+                              <button
+                                onClick={() => setActiveTab(tab)}
+                                className={`h-10 px-4 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 ${activeTab === tab ? `${activeColor} scale-105 z-10` : "bg-white text-slate-500 hover:bg-slate-50"}`}
+                              >
+                                <Icon size={12} />{" "}
+                                {tab.charAt(0).toUpperCase() + tab.slice(1)}{" "}
+                                <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-black border bg-black/10 border-current">
+                                  {count}
+                                </span>
+                              </button>
+                            </React.Fragment>
+                          );
+                        },
+                      )}
                     </div>
                   </div>
                   <div className="px-5 py-3 border-b-2 border-slate-100 bg-slate-50 flex flex-wrap gap-3 items-center">
-                    <div className="relative flex-1 min-w-[200px]"><input placeholder="Search name, object ID, or wallet..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full bg-white border-2 border-black rounded-xl pl-10 h-10 font-bold text-sm outline-none" /><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />{searchQuery && <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-black"><X size={13} /></button>}</div>
-                    <div className="flex items-center gap-1.5"><span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Item</span><select value={filterItem} onChange={e => setFilterItem(e.target.value)} className="h-10 bg-white border-2 border-black rounded-xl px-3 font-black text-xs uppercase outline-none cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"><option value="all">All Items</option>{allItems.map(item => <option key={item} value={item}>{item}</option>)}</select></div>
-                    <span className="text-[10px] font-black text-slate-400 ml-auto">{filteredReceipts.length} result{filteredReceipts.length !== 1 ? "s" : ""}</span>
+                    <div className="relative flex-1 min-w-[200px]">
+                      <input
+                        placeholder="Search name, object ID, or wallet..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-white border-2 border-black rounded-xl pl-10 h-10 font-bold text-sm outline-none"
+                      />
+                      <Search
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                        size={15}
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-black"
+                        >
+                          <X size={13} />
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                        Item
+                      </span>
+                      <select
+                        value={filterItem}
+                        onChange={(e) => setFilterItem(e.target.value)}
+                        className="h-10 bg-white border-2 border-black rounded-xl px-3 font-black text-xs uppercase outline-none cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                      >
+                        <option value="all">All Items</option>
+                        {allItems.map((item) => (
+                          <option key={item} value={item}>
+                            {item}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <span className="text-[10px] font-black text-slate-400 ml-auto">
+                      {filteredReceipts.length} result
+                      {filteredReceipts.length !== 1 ? "s" : ""}
+                    </span>
                   </div>
                   {loading ? (
-                    <div className="p-16 flex justify-center items-center gap-3 text-slate-400 font-black text-sm uppercase"><LoaderCircle className="animate-spin" size={24} /> Loading orders...</div>
+                    <div className="p-16 flex justify-center items-center gap-3 text-slate-400 font-black text-sm uppercase">
+                      <LoaderCircle className="animate-spin" size={24} />{" "}
+                      Loading orders...
+                    </div>
                   ) : filteredReceipts.length === 0 ? (
-                    <div className="p-16 text-center font-black text-slate-400 uppercase text-sm">No orders to display.</div>
+                    <div className="p-16 text-center font-black text-slate-400 uppercase text-sm">
+                      No orders to display.
+                    </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full border-collapse">
                         <thead className="bg-slate-50 border-b-4 border-black sticky top-0 z-20">
-                          <tr><th className="p-4 text-left text-[11px] font-black uppercase text-slate-400 tracking-widest pl-6">Asset & ID</th><th className="p-4 text-left text-[11px] font-black uppercase text-slate-400 tracking-widest">Cart</th><th className="p-4 text-center text-[11px] font-black uppercase text-slate-400 tracking-widest">Status</th><th className="p-4 text-right text-[11px] font-black uppercase text-slate-400 tracking-widest pr-6">Actions</th></tr>
+                          <tr>
+                            <th className="p-4 text-left text-[11px] font-black uppercase text-slate-400 tracking-widest pl-6">
+                              Asset & ID
+                            </th>
+                            <th className="p-4 text-left text-[11px] font-black uppercase text-slate-400 tracking-widest">
+                              Cart
+                            </th>
+                            <th className="p-4 text-center text-[11px] font-black uppercase text-slate-400 tracking-widest">
+                              Status
+                            </th>
+                            <th className="p-4 text-right text-[11px] font-black uppercase text-slate-400 tracking-widest pr-6">
+                              Actions
+                            </th>
+                          </tr>
                         </thead>
                         <tbody className="divide-y-2 divide-slate-100">
-                          {filteredReceipts.map(receipt => {
-                            const isDecrypted = decryptedCards.some(c => c.id === receipt.objectId);
+                          {filteredReceipts.map((receipt) => {
+                            const isDecrypted = decryptedCards.some(
+                              (c) => c.id === receipt.objectId,
+                            );
                             return (
-                              <tr key={receipt.objectId} className={`hover:bg-slate-50 ${isDecrypted ? "bg-blue-50/50" : ""}`}>
+                              <tr
+                                key={receipt.objectId}
+                                className={`hover:bg-slate-50 ${isDecrypted ? "bg-blue-50/50" : ""}`}
+                              >
                                 <td className="p-4 pl-6">
                                   <div className="flex items-center gap-3">
-                                    {receipt.character?.imageUrl ? <Image src={receipt.character.imageUrl} alt={receipt.character.name || "NFT"} width={64} height={64} className="w-16 h-16 rounded-xl border-2 border-black bg-white object-cover flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" /> : <div className="w-16 h-16 rounded-xl border-2 border-black bg-slate-100 flex items-center justify-center text-slate-300 flex-shrink-0"><Package size={24} /></div>}
-                                    <div><p className="font-black text-slate-900 text-sm leading-none">{receipt.character?.name || shortAddr(receipt.nftId)}</p><p className="text-xs font-mono font-bold text-slate-400 mt-1.5 uppercase" title={receipt.objectId}>{shortAddr(receipt.objectId)}</p></div>
+                                    {receipt.character?.imageUrl ? (
+                                      <Image
+                                        src={receipt.character.imageUrl}
+                                        alt={receipt.character.name || "NFT"}
+                                        width={64}
+                                        height={64}
+                                        className="w-16 h-16 rounded-xl border-2 border-black bg-white object-cover flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                                      />
+                                    ) : (
+                                      <div className="w-16 h-16 rounded-xl border-2 border-black bg-slate-100 flex items-center justify-center text-slate-300 flex-shrink-0">
+                                        <Package size={24} />
+                                      </div>
+                                    )}
+                                    <div>
+                                      <p className="font-black text-slate-900 text-sm leading-none">
+                                        {receipt.character?.name ||
+                                          shortAddr(receipt.nftId)}
+                                      </p>
+                                      <p
+                                        className="text-xs font-mono font-bold text-slate-400 mt-1.5 uppercase"
+                                        title={receipt.objectId}
+                                      >
+                                        {shortAddr(receipt.objectId)}
+                                      </p>
+                                    </div>
                                   </div>
                                 </td>
-                                <td className="p-4"><div className="flex flex-wrap gap-1.5 max-w-[180px]">{receipt.itemsSelected.split(",").map(item => <Badge key={item} className={`!text-[10px] ${item.trim() === "ALL_BUNDLE" ? "bg-blue-500 text-white" : "bg-white"}`}>{item.trim()}</Badge>)}</div></td>
-                                <td className="p-4 text-center">{receipt.status === ORDER_STATUS.PENDING ? <Badge className="bg-yellow-300 border-yellow-500 !text-[11px] !px-2.5 !py-1">Pending</Badge> : receipt.status === ORDER_STATUS.SHIPPED ? <Badge className="bg-blue-400 text-white !text-[11px] !px-2.5 !py-1">Shipped</Badge> : <Badge className="bg-green-500 text-white !text-[11px] !px-2.5 !py-1">Delivered</Badge>}</td>
+                                <td className="p-4">
+                                  <div className="flex flex-wrap gap-1.5 max-w-[180px]">
+                                    {receipt.itemsSelected
+                                      .split(",")
+                                      .map((item) => (
+                                        <Badge
+                                          key={item}
+                                          className={`!text-[10px] ${item.trim() === "ALL_BUNDLE" ? "bg-blue-500 text-white" : "bg-white"}`}
+                                        >
+                                          {item.trim()}
+                                        </Badge>
+                                      ))}
+                                  </div>
+                                </td>
+                                <td className="p-4 text-center">
+                                  {receipt.status === ORDER_STATUS.PENDING ? (
+                                    <Badge className="bg-yellow-300 border-yellow-500 !text-[11px] !px-2.5 !py-1">
+                                      Pending
+                                    </Badge>
+                                  ) : receipt.status ===
+                                    ORDER_STATUS.SHIPPED ? (
+                                    <Badge className="bg-blue-400 text-white !text-[11px] !px-2.5 !py-1">
+                                      Shipped
+                                    </Badge>
+                                  ) : (
+                                    <Badge className="bg-green-500 text-white !text-[11px] !px-2.5 !py-1">
+                                      Delivered
+                                    </Badge>
+                                  )}
+                                </td>
                                 <td className="p-4 pr-6">
                                   <div className="flex justify-end gap-2 flex-wrap">
-                                    <BrutalButton onClick={() => handleToggleDecrypt(receipt)} title={isDecrypted ? "Clear Data" : "Decrypt PII"} variant={isDecrypted ? "danger" : "purple"}>{isDecrypted ? <LockKeyhole size={15} /> : <LockOpen size={15} />}{isDecrypted ? "Hide" : "Decrypt"}</BrutalButton>
-                                    <BrutalButton variant="primary" disabled={receipt.status !== ORDER_STATUS.PENDING} onClick={() => handleMarkShipped(receipt.objectId)}><Truck size={15} /> Ship</BrutalButton>
-                                    <BrutalButton variant="success" disabled={receipt.status !== ORDER_STATUS.SHIPPED} onClick={() => handleMarkDelivered(receipt.objectId)}><CheckCircle size={15} /> Done</BrutalButton>
-                                    <BrutalButton variant="teal" className="!px-3" disabled={receipt.status !== ORDER_STATUS.SHIPPED} onClick={() => { setSelectedReceipt(receipt); setTrackingNumber(receipt.trackingNumber || ""); setCarrier(receipt.carrier || ""); setEstDeliveryDate(receipt.estimatedDelivery ? new Date(receipt.estimatedDelivery).toISOString().split("T")[0] : ""); setTrackingModalOpen(true); }} title="Add/Edit Tracking"><ClipboardList size={15} /></BrutalButton>
+                                    <BrutalButton
+                                      onClick={() =>
+                                        handleToggleDecrypt(receipt)
+                                      }
+                                      title={
+                                        isDecrypted
+                                          ? "Clear Data"
+                                          : "Decrypt PII"
+                                      }
+                                      variant={
+                                        isDecrypted ? "danger" : "purple"
+                                      }
+                                    >
+                                      {isDecrypted ? (
+                                        <LockKeyhole size={15} />
+                                      ) : (
+                                        <LockOpen size={15} />
+                                      )}
+                                      {isDecrypted ? "Hide" : "Decrypt"}
+                                    </BrutalButton>
+                                    <BrutalButton
+                                      variant="primary"
+                                      disabled={
+                                        receipt.status !== ORDER_STATUS.PENDING
+                                      }
+                                      onClick={() =>
+                                        handleMarkShipped(receipt.objectId)
+                                      }
+                                    >
+                                      <Truck size={15} /> Ship
+                                    </BrutalButton>
+                                    <BrutalButton
+                                      variant="success"
+                                      disabled={
+                                        receipt.status !== ORDER_STATUS.SHIPPED
+                                      }
+                                      onClick={() =>
+                                        handleMarkDelivered(receipt.objectId)
+                                      }
+                                    >
+                                      <CheckCircle size={15} /> Done
+                                    </BrutalButton>
+                                    <BrutalButton
+                                      variant="teal"
+                                      className="!px-3"
+                                      disabled={
+                                        receipt.status !== ORDER_STATUS.SHIPPED
+                                      }
+                                      onClick={() => {
+                                        setSelectedReceipt(receipt);
+                                        setTrackingNumber(
+                                          receipt.trackingNumber || "",
+                                        );
+                                        setCarrier(receipt.carrier || "");
+                                        setEstDeliveryDate(
+                                          receipt.estimatedDelivery
+                                            ? new Date(
+                                                receipt.estimatedDelivery,
+                                              )
+                                                .toISOString()
+                                                .split("T")[0]
+                                            : "",
+                                        );
+                                        setTrackingModalOpen(true);
+                                      }}
+                                      title="Add/Edit Tracking"
+                                    >
+                                      <ClipboardList size={15} />
+                                    </BrutalButton>
                                   </div>
                                 </td>
                               </tr>
@@ -1036,21 +2785,97 @@ export default function AdminPage() {
       {trackingModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white border-4 border-black rounded-3xl w-full max-w-md shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-8">
-            <div className="flex justify-between items-center mb-6"><h2 className="text-2xl font-black uppercase italic">Logistics Update</h2><button onClick={() => setTrackingModalOpen(false)} className="bg-red-500 text-white w-8 h-8 rounded-full border-2 border-black flex items-center justify-center font-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"><X size={16} /></button></div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-black uppercase italic">
+                Logistics Update
+              </h2>
+              <button
+                onClick={() => setTrackingModalOpen(false)}
+                className="bg-red-500 text-white w-8 h-8 rounded-full border-2 border-black flex items-center justify-center font-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+              >
+                <X size={16} />
+              </button>
+            </div>
             <div className="space-y-4">
-              <div className="space-y-1.5"><label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Carrier Service</label><select value={carrier} onChange={e => setCarrier(e.target.value)} className="w-full h-12 border-2 border-black rounded-xl font-bold bg-slate-50 px-3 outline-none cursor-pointer"><option value="">Select a carrier…</option>{["UPS","FedEx","J&T Express","LBC","DHL","SPX","NINJA Van Philippines"].map(c => <option key={c} value={c}>{c}</option>)}</select></div>
-              <div className="space-y-1.5"><label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tracking Number</label><input value={trackingNumber} onChange={e => setTrackingNumber(e.target.value)} className="w-full h-12 border-2 border-black rounded-xl font-bold bg-slate-50 px-4 outline-none" placeholder="e.g. 1Z999AA10123456784" /></div>
-              <div className="space-y-1.5"><label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Estimated Delivery Date</label><input type="date" value={estDeliveryDate} onChange={e => setEstDeliveryDate(e.target.value)} className="w-full h-12 border-2 border-black rounded-xl font-bold bg-slate-50 px-4 outline-none" /></div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Carrier Service
+                </label>
+                <select
+                  value={carrier}
+                  onChange={(e) => setCarrier(e.target.value)}
+                  className="w-full h-12 border-2 border-black rounded-xl font-bold bg-slate-50 px-3 outline-none cursor-pointer"
+                >
+                  <option value="">Select a carrier…</option>
+                  {[
+                    "UPS",
+                    "FedEx",
+                    "J&T Express",
+                    "LBC",
+                    "DHL",
+                    "SPX",
+                    "NINJA Van Philippines",
+                  ].map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Tracking Number
+                </label>
+                <input
+                  value={trackingNumber}
+                  onChange={(e) => setTrackingNumber(e.target.value)}
+                  className="w-full h-12 border-2 border-black rounded-xl font-bold bg-slate-50 px-4 outline-none"
+                  placeholder="e.g. 1Z999AA10123456784"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Estimated Delivery Date
+                </label>
+                <input
+                  type="date"
+                  value={estDeliveryDate}
+                  onChange={(e) => setEstDeliveryDate(e.target.value)}
+                  className="w-full h-12 border-2 border-black rounded-xl font-bold bg-slate-50 px-4 outline-none"
+                />
+              </div>
               <div className="pt-4 flex gap-3">
-                <BrutalButton onClick={() => setTrackingModalOpen(false)} className="flex-1">Discard</BrutalButton>
-                <BrutalButton variant="black" className="flex-1 shadow-[4px_4px_0px_0px_rgba(59,130,246,1)]" onClick={handleSaveTracking} disabled={isSavingTracking}>{isSavingTracking ? <LoaderCircle size={16} className="animate-spin" /> : "Inject Tracking"}</BrutalButton>
+                <BrutalButton
+                  onClick={() => setTrackingModalOpen(false)}
+                  className="flex-1"
+                >
+                  Discard
+                </BrutalButton>
+                <BrutalButton
+                  variant="black"
+                  className="flex-1 shadow-[4px_4px_0px_0px_rgba(59,130,246,1)]"
+                  onClick={handleSaveTracking}
+                  disabled={isSavingTracking}
+                >
+                  {isSavingTracking ? (
+                    <LoaderCircle size={16} className="animate-spin" />
+                  ) : (
+                    "Inject Tracking"
+                  )}
+                </BrutalButton>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {superAdminPanelOpen && <SuperAdminPanel onClose={() => setSuperAdminPanelOpen(false)} signAndExecute={signAndExecute} onToast={showToast} />}
+      {superAdminPanelOpen && (
+        <SuperAdminPanel
+          onClose={() => setSuperAdminPanelOpen(false)}
+          signAndExecute={signAndExecute}
+          onToast={showToast}
+        />
+      )}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   );
