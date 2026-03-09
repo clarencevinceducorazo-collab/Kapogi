@@ -17,7 +17,7 @@ const ALLOWED_ORIGINS: string[] = [
   ...(PROD_ORIGIN ? [`https://www.${PROD_ORIGIN.replace(/^https?:\/\//, "")}`] : []),
   "https://kapogian.xyz",
   "https://www.kapogian.xyz",
-  "http://192.168.30.240:8085", // Added from your environment
+  "http://192.168.30.240:8085", 
   "http://localhost:3000",
   "http://localhost:3001",
   "http://localhost:9002",
