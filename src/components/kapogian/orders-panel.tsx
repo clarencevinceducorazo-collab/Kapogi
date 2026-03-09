@@ -82,7 +82,6 @@ export function OrdersPanel({ account }: { account: any }) {
         return [];
       };
 
-      // Fetch from both registries simultaneously for a complete manifest record
       const [nftIds, shopIds] = await Promise.all([
         fetchRegistryIds(CONTRACT_ADDRESSES.RECEIPT_REGISTRY_ID),
         fetchRegistryIds(CONTRACT_ADDRESSES.SHOP_RECEIPT_REGISTRY_ID)
@@ -95,7 +94,6 @@ export function OrdersPanel({ account }: { account: any }) {
         return;
       }
 
-      // Fetch all objects in chunks to avoid URL length limits
       const receiptObjects = [];
       for (let i = 0; i < allIds.length; i += 50) {
         const chunk = allIds.slice(i, i + 50);
@@ -111,10 +109,8 @@ export function OrdersPanel({ account }: { account: any }) {
         if (!res.data?.content || res.data.content.dataType !== "moveObject") return;
         const f = res.data.content.fields as any;
         
-        // Filter by current account using case-insensitive comparison
         if (f.buyer?.toLowerCase() !== account.address.toLowerCase()) return;
 
-        // Distinguish between Shop orders and NFT rituals
         const isShop = !!f.item_id;
 
         const order: Order = {
@@ -143,7 +139,6 @@ export function OrdersPanel({ account }: { account: any }) {
         parsed.push(order);
       });
 
-      // Resolve secondary metadata (images) for the manifests
       const [nftData, shopItemData] = await Promise.all([
         nftRefs.length > 0 ? suiClient.multiGetObjects({ ids: nftRefs, options: { showDisplay: true } }) : Promise.resolve([]),
         shopItemRefs.length > 0 ? suiClient.multiGetObjects({ ids: shopItemRefs, options: { showContent: true } }) : Promise.resolve([]),
@@ -160,7 +155,6 @@ export function OrdersPanel({ account }: { account: any }) {
             o.imageUrl = getIPFSGatewayUrl(d.image_url); 
           }
         } else {
-          // Find original item ID from receipt content
           const r = receiptObjects.find(x => x.data?.objectId === o.objectId);
           const iidRaw = (r?.data?.content as any)?.fields?.item_id;
           const iid = typeof iidRaw === 'string' ? iidRaw : iidRaw?.id || iidRaw;
