@@ -24,7 +24,7 @@ export const PageFooter = () => {
 
           <div className="space-y-2">
             <p className="text-xl font-bold tracking-tight">
-              Collect Digital Magic, Get Real Rewards
+              Collect Digital Magic, Get Real Rewards.
             </p>
             <p className="text-white/70 text-sm font-medium">
               The ultimate phygital collectible experience on Sui.
