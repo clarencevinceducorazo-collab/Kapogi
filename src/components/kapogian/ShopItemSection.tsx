@@ -155,49 +155,53 @@ function DropdownAssetSelect({ label, value, onChange, onToast, required, files,
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-    if (file.size > MAX_UPLOAD_SIZE) {
-      setUploadErrorMsg("File is too heavy (Max 200MB). Please optimize the asset.");
-      setUploadStatus('error');
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
-    }
+  if (file.size > MAX_UPLOAD_SIZE) {
+    setUploadErrorMsg("File is too heavy (Max 200MB).");
+    setUploadStatus('error');
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    return;
+  }
 
-    setUploadStatus('loading');
-    setUploadErrorMsg("");
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("name", `shop-asset-${Date.now()}`);
-      
-      const res = await fetch("/api/pinata/upload", { 
-        method: "POST", 
-        body: formData
-      });
-      
-      const responseData = await res.json().catch(() => ({}));
+  setUploadStatus('loading');
+  setUploadErrorMsg("");
+  try {
+    // 1. Get presigned URL (JWT stays on server)
+    const presignRes = await fetch("/api/pinata/upload");
+    if (!presignRes.ok) throw new Error("Failed to get upload URL");
+    const { url } = await presignRes.json();
 
-      if (!res.ok) {
-        throw new Error(responseData.error || `Upload failed with status ${res.status}`);
-      }
+    // 2. Upload directly browser → Pinata, bypasses Next.js entirely
+    const formData = new FormData();
+    formData.append("file", file);
 
-      onChange(responseData.imageUrl);
-      setUploadStatus('success');
-      setTimeout(() => {
-        setUploadStatus('idle');
-        setOpen(false);
-      }, 1500);
-    } catch (err: any) {
-      console.error("Upload error:", err);
-      setUploadErrorMsg(err.message || "Failed to process asset upload. Please check your network.");
-      setUploadStatus('error');
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
+    const uploadRes = await fetch(url, { method: "POST", body: formData });
+    if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status}`);
+
+    const data = await uploadRes.json();
+    const cid = data?.data?.cid;
+    if (!cid) throw new Error("No CID from Pinata");
+
+    const gatewayUrl = process.env.NEXT_PUBLIC_PINATA_GATEWAY_URL || "https://nft.kapogian.xyz";
+    const gatewayKey = process.env.NEXT_PUBLIC_PINATA_GATEWAY_KEY || "";
+    const imageUrl = gatewayKey
+      ? `${gatewayUrl}/ipfs/${cid}?pinataGatewayToken=${gatewayKey}`
+      : `${gatewayUrl}/ipfs/${cid}`;
+
+    onChange(imageUrl);
+    setUploadStatus('success');
+    setTimeout(() => { setUploadStatus('idle'); setOpen(false); }, 1500);
+  } catch (err: any) {
+    console.error("Upload error:", err);
+    setUploadErrorMsg(err.message || "Upload failed.");
+    setUploadStatus('error');
+  } finally {
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+};
 
   return (
     <div className="flex flex-col gap-2" ref={ref}>

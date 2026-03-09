@@ -28,6 +28,11 @@ const nextConfig: NextConfig = {
     },
   },
 
+  middlewareClientMaxBodySize: '200mb', // 👈 add this
+
+    // Add this:
+  serverExternalPackages: ['pinata'],
+
   images: {
     unoptimized: true,  // Required for: Cloudflare, Netlify, static exports, and IPFS images
     remotePatterns: [
