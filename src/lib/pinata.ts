@@ -153,10 +153,15 @@ export async function uploadCharacterToIPFS(
 
 /**
  * Get IPFS gateway URL for display with proper authentication
- * FIXED: Now more robust against raw CIDs and different URL patterns
+ * FIXED: Now robust against local paths, raw CIDs and different URL patterns
  */
 export function getIPFSGatewayUrl(ipfsUrl: string): string {
   if (!ipfsUrl) return "";
+
+  // 0. Handle local paths
+  if (ipfsUrl.startsWith("/") || ipfsUrl.startsWith("./") || ipfsUrl.startsWith("../")) {
+    return ipfsUrl;
+  }
 
   let cid = "";
   const baseUrl = IPFS_CONFIG.gatewayUrl || "https://nft.kapogian.xyz";

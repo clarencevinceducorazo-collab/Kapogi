@@ -26,6 +26,7 @@ import {
 import { CustomConnectButton } from "@/components/kapogian/CustomConnectButton";
 import { PageHeader } from "@/components/kapogian/page-header";
 import { PageFooter } from "@/components/kapogian/page-footer";
+import { cn } from "@/lib/utils";
 
 interface Order {
   objectId: string;
@@ -70,7 +71,6 @@ export default function MyOrdersPage() {
     setLoading(true);
     setError("");
     try {
-      // Discovery: Fetch events for both NFT Receipts and Shop Receipts
       const nftEventType = `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ORDER_RECEIPT}::ReceiptCreated`;
       const shopEventType = `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.SHOP_RECEIPT}::ReceiptCreated`;
 
@@ -106,14 +106,13 @@ export default function MyOrdersPage() {
         fetchUserReceiptIds(shopEventType),
       ]);
 
-      const allIds = [...nftReceiptIds, ...shopReceiptIds];
+      const allIds = Array.from(new Set([...nftReceiptIds, ...shopReceiptIds]));
       if (allIds.length === 0) {
         setOrders([]);
         setLoading(false);
         return;
       }
 
-      // Fetch all receipt objects
       const receiptObjects = [];
       const chunkSize = 50;
       for (let i = 0; i < allIds.length; i += chunkSize) {
@@ -125,7 +124,6 @@ export default function MyOrdersPage() {
         receiptObjects.push(...chunkRes);
       }
 
-      // Filter and parse
       const parsed: Order[] = [];
       const nftReferenceIds: string[] = [];
       const shopItemReferenceIds: string[] = [];
@@ -144,14 +142,15 @@ export default function MyOrdersPage() {
           trackingNumber: fields.tracking_number || "",
           carrier: fields.carrier || "",
           estimatedDelivery: Number(fields.estimated_delivery || 0),
-          itemName: isShop ? fields.item_name : "Unnamed Kapogian",
+          itemName: isShop ? fields.item_name : "Spirit Manifest",
           itemsSelected: isShop 
             ? [fields.chosen_size, fields.chosen_color].filter(v => v && v !== "N/A")
             : fields.items_selected.split(",").map((s: string) => s.trim()),
         };
 
         if (isShop) {
-          shopItemReferenceIds.push(fields.item_id.id || fields.item_id);
+          const itemId = fields.item_id.id || fields.item_id;
+          if (itemId) shopItemReferenceIds.push(itemId);
         } else {
           order.nftId = fields.nft_id;
           if (fields.nft_id) nftReferenceIds.push(fields.nft_id);
@@ -160,7 +159,6 @@ export default function MyOrdersPage() {
         parsed.push(order);
       });
 
-      // Fetch images for NFTs and ShopItems
       const [nftDataRes, shopItemDataRes] = await Promise.all([
         nftReferenceIds.length > 0 
           ? suiClient.multiGetObjects({ ids: nftReferenceIds, options: { showDisplay: true } })
@@ -170,21 +168,17 @@ export default function MyOrdersPage() {
           : Promise.resolve([]),
       ]);
 
-      const nftMap = new Map(nftDataRes.map(o => [o.data?.objectId, (o.data?.display?.data as any)]));
-      const shopMap = new Map(shopItemDataRes.map(o => [o.data?.objectId, (o.data?.content as any)?.fields]));
+      const nftMap = new Map(nftDataRes.filter(o => o.data).map(o => [o.data?.objectId, (o.data?.display?.data as any)]));
+      const shopMap = new Map(shopItemDataRes.filter(o => o.data).map(o => [o.data?.objectId, (o.data?.content as any)?.fields]));
 
-      // Final Assembly
       const finalOrders = parsed.map(order => {
         if (order.type === "nft") {
           const display = nftMap.get(order.nftId!);
           if (display) {
             order.itemName = display.name || order.itemName;
-            order.imageUrl = getIPFSGatewayUrl(display.image_url);
+            order.imageUrl = display.image_url;
           }
         } else {
-          // Find the shop item ID from the object again (since we didn't store it in the array mapping yet)
-          // We'll re-extract from the original objects if needed, but let's assume the order preserved relative to fetch.
-          // Actually let's just find the shop item ID in the receipt fields.
           const receiptObj = receiptObjects.find(r => r.data?.objectId === order.objectId);
           const itemId = receiptObj?.data?.content?.dataType === "moveObject" 
             ? (receiptObj.data.content.fields as any).item_id.id || (receiptObj.data.content.fields as any).item_id
@@ -194,6 +188,8 @@ export default function MyOrdersPage() {
           if (fields) {
             order.imageUrl = fields.image_animated || fields.image_static;
             order.isAnimated = !!fields.image_animated;
+          } else {
+            order.imageUrl = "/images/KapogianLogo.webp";
           }
         }
         return order;
@@ -202,7 +198,7 @@ export default function MyOrdersPage() {
       setOrders(finalOrders);
     } catch (err) {
       console.error("Failed to load orders:", err);
-      setError("Sync failed. The library is temporarily unreachable.");
+      setError("Sync failed. Manifest data unavailable.");
     } finally {
       setLoading(false);
     }
@@ -309,7 +305,7 @@ function OrderCard({ order, statusInfo, onClick }: { order: Order; statusInfo: S
     <div onClick={onClick} className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all cursor-pointer group flex flex-col md:flex-row items-center gap-6">
       <div className="relative shrink-0">
         <div className="w-24 h-24 bg-gray-100 rounded-2xl border-4 border-black overflow-hidden relative group-hover:rotate-3 transition-transform">
-          {order.imageUrl && <Image src={order.imageUrl} alt="img" fill className="object-contain p-1" unoptimized={order.isAnimated} />}
+          {order.imageUrl && <Image src={getIPFSGatewayUrl(order.imageUrl)} alt="img" fill className="object-contain p-1" unoptimized={order.isAnimated} />}
         </div>
         <div className={cn("absolute -bottom-2 -right-2 p-2 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]", statusInfo.bg)}>
           {statusInfo.icon}
@@ -318,7 +314,7 @@ function OrderCard({ order, statusInfo, onClick }: { order: Order; statusInfo: S
       <div className="flex-grow text-center md:text-left min-w-0">
         <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">
           <h3 className="text-2xl font-black uppercase tracking-tight truncate">{order.itemName}</h3>
-          <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-full uppercase self-center md:self-auto border-2 border-black", order.type === 'shop' ? 'bg-cyan-400' : 'bg-pink-400')}>
+          <span className={cn("text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase self-center md:self-auto border-2 border-black", order.type === 'shop' ? 'bg-cyan-400' : 'bg-pink-400')}>
             {order.type}
           </span>
         </div>
@@ -351,7 +347,7 @@ function OrderModal({ order, statusInfo, trackingUrl, onClose }: { order: Order;
         <div className="p-8 space-y-8 overflow-y-auto custom-scrollbar">
           <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
             <div className="w-40 h-40 bg-slate-50 rounded-3xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] shrink-0 overflow-hidden relative transform -rotate-2">
-              {order.imageUrl && <Image src={order.imageUrl} alt="img" fill className="object-contain p-2" unoptimized={order.isAnimated} />}
+              {order.imageUrl && <Image src={getIPFSGatewayUrl(order.imageUrl)} alt="img" fill className="object-contain p-2" unoptimized={order.isAnimated} />}
             </div>
             <div className="flex-grow space-y-4 text-center md:text-left">
               <div>

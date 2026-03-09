@@ -86,7 +86,7 @@ export function OrdersPanel({ account }: { account: any }) {
       };
 
       const [nftIds, shopIds] = await Promise.all([fetchIds(nftEventType), fetchIds(shopEventType)]);
-      const allIds = [...nftIds, ...shopIds];
+      const allIds = Array.from(new Set([...nftIds, ...shopIds])); // Deduplicate
 
       if (allIds.length === 0) {
         setOrders([]);
@@ -125,8 +125,13 @@ export function OrdersPanel({ account }: { account: any }) {
             : f.items_selected.split(",").map((s: string) => s.trim()),
         };
 
-        if (isShop) shopItemRefs.push(f.item_id.id || f.item_id);
-        else { order.nftId = f.nft_id; if (f.nft_id) nftRefs.push(f.nft_id); }
+        if (isShop) {
+          const itemId = f.item_id.id || f.item_id;
+          if (itemId) shopItemRefs.push(itemId);
+        } else {
+          order.nftId = f.nft_id;
+          if (f.nft_id) nftRefs.push(f.nft_id);
+        }
         parsed.push(order);
       });
 
@@ -135,18 +140,27 @@ export function OrdersPanel({ account }: { account: any }) {
         shopItemRefs.length > 0 ? suiClient.multiGetObjects({ ids: shopItemRefs, options: { showContent: true } }) : Promise.resolve([]),
       ]);
 
-      const nftMap = new Map(nftData.map(o => [o.data?.objectId, (o.data?.display?.data as any)]));
-      const shopMap = new Map(shopItemData.map(o => [o.data?.objectId, (o.data?.content as any)?.fields]));
+      const nftMap = new Map(nftData.filter(o => o.data).map(o => [o.data?.objectId, (o.data?.display?.data as any)]));
+      const shopMap = new Map(shopItemData.filter(o => o.data).map(o => [o.data?.objectId, (o.data?.content as any)?.fields]));
 
       const final = parsed.map(o => {
         if (o.type === "nft") {
           const d = nftMap.get(o.nftId!);
-          if (d) { o.itemName = d.name || o.itemName; o.imageUrl = getIPFSGatewayUrl(d.image_url); }
+          if (d) { 
+            o.itemName = d.name || o.itemName; 
+            o.imageUrl = getIPFSGatewayUrl(d.image_url); 
+          }
         } else {
           const r = receiptObjects.find(x => x.data?.objectId === o.objectId);
           const iid = r?.data?.content?.dataType === "moveObject" ? (r.data.content.fields as any).item_id.id || (r.data.content.fields as any).item_id : null;
           const f = shopMap.get(iid);
-          if (f) { o.imageUrl = f.image_animated || f.image_static; o.isAnimated = !!f.image_animated; }
+          if (f) { 
+            o.imageUrl = f.image_animated || f.image_static; 
+            o.isAnimated = !!f.image_animated; 
+          } else {
+            // Fallback for deleted shop items
+            o.imageUrl = "/images/KapogianLogo.webp";
+          }
         }
         return o;
       }).sort((a, b) => b.createdAt - a.createdAt);
@@ -211,7 +225,7 @@ export function OrdersPanel({ account }: { account: any }) {
             <div key={order.objectId} onClick={() => setSelectedOrder(order)}
               className="group bg-white border-4 border-slate-100 rounded-[2rem] p-4 flex flex-col sm:flex-row items-center gap-4 cursor-pointer hover:border-sky-200 transition-all hover:translate-x-1 shadow-sm">
               <div className="w-20 h-20 rounded-2xl bg-slate-50 border-2 border-slate-100 overflow-hidden relative flex-shrink-0 shadow-inner">
-                {order.imageUrl && <Image src={order.imageUrl} alt="o" fill className="object-contain p-1" unoptimized={order.isAnimated} />}
+                {order.imageUrl && <Image src={getIPFSGatewayUrl(order.imageUrl)} alt="o" fill className="object-contain p-1" unoptimized={order.isAnimated} />}
               </div>
               <div className="flex-grow text-center sm:text-left overflow-hidden w-full">
                 <div className="flex items-center gap-2 justify-center sm:justify-start mb-1">
@@ -244,7 +258,7 @@ export function OrdersPanel({ account }: { account: any }) {
             <h2 className="text-3xl font-headline mb-2 border-b-4 border-slate-50 pb-4 uppercase tracking-tight">Order Record</h2>
             <div className="flex flex-col sm:flex-row items-center gap-6 mb-6 pt-4">
               <div className="w-32 h-32 rounded-3xl border-4 border-black overflow-hidden relative shadow-lg bg-slate-50 transform -rotate-3">
-                {selectedOrder.imageUrl && <Image src={selectedOrder.imageUrl} alt="o" fill className="object-contain p-2" unoptimized={selectedOrder.isAnimated} />}
+                {selectedOrder.imageUrl && <Image src={getIPFSGatewayUrl(selectedOrder.imageUrl)} alt="o" fill className="object-contain p-2" unoptimized={selectedOrder.isAnimated} />}
               </div>
               <div className="text-center sm:text-left flex-1 min-w-0">
                 <p className="text-2xl font-black uppercase italic tracking-tighter leading-tight truncate">{selectedOrder.itemName}</p>
