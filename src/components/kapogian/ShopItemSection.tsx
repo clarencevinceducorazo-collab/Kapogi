@@ -525,7 +525,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
     <>
       {deleteItemConfirm && (
         <ConfirmModal
-          title="Burn Shop Item"
+          title="Burn Shop Item."
           subtitle="Atomic Object Erasure"
           warning="Permanently deletes this item from the blockchain. This action is irreversible. Item must be hidden (paused) first."
           onConfirm={confirmDeleteItem}
