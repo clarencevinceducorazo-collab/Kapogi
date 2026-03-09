@@ -2656,7 +2656,7 @@ export default function GeneratorPage() {
                     Order Receipt
                   </h2>
                   <p className="text-stone-500 font-medium text-sm mt-1">
-                    Order #{txHash.substring(0, 8)}
+                    Order. #{txHash.substring(0, 8)}
                   </p>
                 </div>
 
