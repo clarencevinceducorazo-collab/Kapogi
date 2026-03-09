@@ -49,6 +49,10 @@ export function timeAgo(timestamp: number | string): string {
   return `${Math.floor(seconds)}s ago`;
 }
 
+/**
+ * Super Admin: Permanently delete a ShopItem from the registry and delete the object.
+ * Item MUST be available=false before calling.
+ */
 export async function burnShopItem(params: {
   superAdminCapId: string;
   shopItemId: string;
@@ -56,7 +60,7 @@ export async function burnShopItem(params: {
 }) {
   const tx = new Transaction();
   tx.moveCall({
-    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::delete_shop_item`,
+    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::burn_shop_item`,
     arguments: [
       tx.object(params.superAdminCapId),
       tx.object(CONTRACT_ADDRESSES.SHOP_REGISTRY_ID),
@@ -64,7 +68,7 @@ export async function burnShopItem(params: {
       tx.object('0x6'),
     ],
   });
-  return params.signAndExecute({ transaction: tx }, { showEffects: true });
+  return params.signAndExecute({ transaction: tx });
 }
 
 /**
@@ -86,5 +90,5 @@ export async function burnShopReceipt(params: {
       tx.object('0x6'),
     ],
   });
-  return params.signAndExecute({ transaction: tx }, { showEffects: true });
+  return params.signAndExecute({ transaction: tx });
 }
