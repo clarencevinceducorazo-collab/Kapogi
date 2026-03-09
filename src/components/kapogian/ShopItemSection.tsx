@@ -383,10 +383,13 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
     }
   }, [isOpen]);
 
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: shopQueryKeys.items });
-    queryClient.invalidateQueries({ queryKey: shopQueryKeys.receipts });
-    refetch();
+  const invalidate = async () => {
+    await new Promise((res) => setTimeout(res, 1500)); // wait for chain
+    await queryClient.invalidateQueries({ queryKey: shopQueryKeys.items });
+    await queryClient.invalidateQueries({ queryKey: shopQueryKeys.receipts });
+    await queryClient.invalidateQueries({ queryKey: shopQueryKeys.registry });
+    await queryClient.invalidateQueries({ queryKey: shopQueryKeys.receiptRegistry });
+    await refetch();
   };
 
   const openCreate = () => { setForm(BLANK_FORM); setIsEditing(false); setIsOpen(true); };
@@ -409,6 +412,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
     try {
       const tx = new Transaction();
       if (isEditing) {
+        // Update display fields
         tx.moveCall({
           target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::update_shop_item_display`,
           arguments: [
@@ -423,6 +427,19 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
             tx.object("0x6"),
           ],
         });
+
+        // Update price in same transaction if provided
+        if (form.priceSui && parseFloat(form.priceSui) > 0) {
+          tx.moveCall({
+            target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::update_shop_item_price`,
+            arguments: [
+              tx.object(superCapId),
+              tx.object(targetId),
+              tx.pure.u64(suiToMist(parseFloat(form.priceSui))),
+              tx.object("0x6"),
+            ],
+          });
+        }
       } else {
         tx.moveCall({
           target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::create_shop_item`,
@@ -446,7 +463,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
       await signAndExecute({ transaction: tx });
       onToast(isEditing ? "Item updated!" : "Item created!", "success");
       setIsOpen(false);
-      invalidate();
+      await invalidate(); // was: invalidate()
     } catch (e: any) {
       onToast(e.message || "Action failed.", "error");
     } finally {
@@ -466,7 +483,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
       });
       await signAndExecute({ transaction: tx });
       onToast(item.available ? "Item hidden." : "Item visible!", "success");
-      invalidate();
+      await invalidate();
     } catch {
       onToast("Toggle failed.", "error");
     } finally {
@@ -491,7 +508,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
       await signAndExecute({ transaction: tx });
       onToast(`"${deleteItemConfirm.name}" permanently deleted.`, "success");
       setDeleteItemConfirm(null);
-      invalidate();
+      await invalidate();
     } catch (err: any) {
       onToast(err?.message?.slice(0, 80) ?? "Deletion failed.", "error");
     } finally {
@@ -517,7 +534,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
       await signAndExecute({ transaction: tx });
       onToast(`Receipt ${formatAddress(deleteReceiptConfirm.id)} deleted.`, "success");
       setDeleteReceiptConfirm(null);
-      invalidate();
+      await invalidate();
     } catch (err: any) {
       onToast(err?.message?.slice(0, 80) ?? "Deletion failed.", "error");
     } finally {
