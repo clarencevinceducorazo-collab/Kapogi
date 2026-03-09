@@ -940,13 +940,13 @@ export default function AdminPage() {
                         </div>
                         <div className="space-y-4">
                           {[
-                            { label: "Consignee", icon: <User size={11} />, value: card.fullName },
+                            { label: "Consignee", icon: <User size={11} />, value: card.full_name },
                             { label: "Email", icon: <Mail size={11} />, value: card.email },
                             { label: "Shipping Destination", icon: <MapPin size={11} />, value: card.address },
                           ].map(({ label, icon, value }) => (
                             <div key={label} className="space-y-1.5"><label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">{icon} {label}</label><div className="p-3 bg-slate-50 border-2 border-black rounded-xl font-black text-slate-700 text-sm">{value}</div></div>
                           ))}
-                          <div className="space-y-1.5"><label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Phone size={11} /> Contact</label><p className="p-3 bg-slate-50 border-2 border-black rounded-xl font-black text-slate-700 text-xs">{card.phone}</p></div>
+                          <div className="space-y-1.5"><label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Phone size={11} /> Contact</label><p className="p-3 bg-slate-50 border-2 border-black rounded-xl font-black text-slate-700 text-xs">{card.contact_number}</p></div>
                           <div className="space-y-1.5"><label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Package size={11} /> Inventory</label>
                             <div className="flex flex-wrap gap-1.5 p-3 bg-slate-50 border-2 border-black rounded-xl">{card.itemsSelected.split(",").map(item => <Badge key={item} className="bg-white !text-[10px]">{item.trim()}</Badge>)}</div>
                           </div>
