@@ -709,6 +709,23 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                   <div>
                     <SectionLabel icon={Palette}>Colors</SectionLabel>
                     <DropdownMultiSelect label="Colors" options={STANDARD_COLORS} selected={form.colors} onToggle={(c) => setForm(f => ({ ...f, colors: f.colors.includes(c) ? f.colors.filter(x => x !== c) : [...f.colors, c]}))} />
+                    {/* Add background color picker */}
+                    <SectionLabel icon={Palette}>Background Color</SectionLabel>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {PRESET_BGS.map((bg) => (
+                        <button
+                          key={bg}
+                          type="button"
+                          className={cn(
+                            "w-10 h-10 rounded-xl border-2 border-black transition-all bg-gradient-to-br",
+                            bg,
+                            form.colorBg === bg ? "ring-4 ring-cyan-400 scale-110" : "opacity-80 hover:opacity-100"
+                          )}
+                          onClick={() => setForm({ ...form, colorBg: bg })}
+                          title={bg}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
 
