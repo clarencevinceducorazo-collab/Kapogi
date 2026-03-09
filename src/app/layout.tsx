@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Kapogian | Collectible Reality",
-    description: "Generate a 1-of-1 character. Mint on SUI.",
+    description: "Generate a 1-of-1 character.. Mint on SUI.",
     url: "https://kapogian.xyz",
     siteName: "Kapogian",
     images: [
