@@ -379,7 +379,7 @@ export default function KapogianShop() {
                       <div className="bg-sky-50 border-2 border-black rounded-xl p-1 flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] min-w-[70px]">
                         <iconify-icon icon="token-branded:sui" class="text-blue-500 text-xl" />
                         <span className="font-black text-black text-sm pt-1 pb-1 pr-1">
-                          {mistToSui(Number(item.priceMist)).toFixed(2)}
+                          {mistToSui(Number(item.priceMist)).toFixed(3)}
                         </span>
                       </div>
                       <button
@@ -432,7 +432,7 @@ export default function KapogianShop() {
               <div className="relative z-10 bg-sky-50 border-2 border-black rounded-xl p-3 flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                 <iconify-icon icon="token-branded:sui" class="text-blue-500 text-2xl" />
                 <span className="font-black text-black text-xl">
-                  {mistToSui(Number(selectedItem.priceMist)).toFixed(2)}
+                  {mistToSui(Number(selectedItem.priceMist)).toFixed(3)}
                 </span>
               </div>
             </div>
@@ -777,7 +777,7 @@ export default function KapogianShop() {
                         <span className="font-black text-slate-400 text-xs uppercase tracking-widest">Total SUI</span>
                         <div className="flex-1 bg-sky-50 border-2 border-black rounded-xl p-3 flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] ml-4">
                           <iconify-icon icon="token-branded:sui" class="text-blue-500 text-2xl" />
-                          <span className="font-black text-black text-xl">{totalSui.toFixed(2)}</span>
+                          <span className="font-black text-black text-xl">{totalSui.toFixed(3)}</span>
                         </div>
                       </div>
                     </div>

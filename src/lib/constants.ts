@@ -125,7 +125,7 @@ export function mistToSui(mist: number): number {
 }
 
 export function formatSui(mist: number): string {
-  return `${mistToSui(mist).toFixed(2)} SUI`;
+  return `${mistToSui(mist).toFixed(3)} SUI`;
 }
 
 /** Parse a comma-separated on-chain string into a trimmed string array. */

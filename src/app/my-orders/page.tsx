@@ -445,7 +445,7 @@ function OrderCard({
           </div>
           <div className="flex items-center gap-2 border-2 border-transparent group-hover:border-black group-hover:bg-white group-hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] px-3 py-1.5 rounded-xl cursor-default transition-all">
             <Hash size={12} className="text-black" />
-            {(order.paymentAmount / 1_000_000_000).toFixed(2)} SUI
+            {(order.paymentAmount / 1_000_000_000).toFixed(3)} SUI
           </div>
         </div>
       </div>
@@ -565,7 +565,7 @@ function OrderModal({
                 Payment
               </p>
               <p className="font-bold text-lg">
-                {(order.paymentAmount / 1_000_000_000).toFixed(2)} SUI
+                {(order.paymentAmount / 1_000_000_000).toFixed(3)} SUI
               </p>
             </div>
             <div

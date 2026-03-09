@@ -319,7 +319,7 @@ export function OrdersPanel({ account }: { account: any }) {
                     {new Date(order.createdAt).toLocaleDateString()}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Hash size={10} /> {(order.paymentAmount / 1e9).toFixed(2)}{" "}
+                    <Hash size={10} /> {(order.paymentAmount / 1e9).toFixed(3)}{" "}
                     SUI
                   </span>
                 </div>
@@ -395,7 +395,7 @@ export function OrdersPanel({ account }: { account: any }) {
                   <Hash size={10} /> Payment
                 </p>
                 <p className="font-bold text-slate-800">
-                  {(selectedOrder.paymentAmount / 1e9).toFixed(2)} SUI
+                  {(selectedOrder.paymentAmount / 1e9).toFixed(3)} SUI
                 </p>
               </div>
             </div>

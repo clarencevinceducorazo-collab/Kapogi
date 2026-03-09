@@ -189,7 +189,6 @@ function BadgeUploadButton({ currentUrl, onUploaded, onToast }: { currentUrl: st
 }
 
 // ─── AchievementSection ───────────────────────────────────────────────────────
-// (identical to original — keeping full implementation)
 
 function AchievementSection({ superCapId, signAndExecute, onToast }: { superCapId: string; signAndExecute: any; onToast: (msg: string, type: Toast["type"]) => void }) {
   const [achievements, setAchievements] = useState<AchievementDef[]>([]);
@@ -346,7 +345,7 @@ function AchievementSection({ superCapId, signAndExecute, onToast }: { superCapI
   );
 }
 
-// ─── SuperAdminPanel (unchanged) ─────────────────────────────────────────────
+// ─── SuperAdminPanel ─────────────────────────────────────────────
 
 function SuperAdminPanel({ onClose, signAndExecute, onToast }: { onClose: () => void; signAndExecute: any; onToast: (msg: string, type: Toast["type"]) => void }) {
   const account = useCurrentAccount();
@@ -464,7 +463,7 @@ function SuperAdminPanel({ onClose, signAndExecute, onToast }: { onClose: () => 
             </section>
             {/* Treasury */}
             <div className="border-2 border-slate-200 rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-3"><Wallet size={18} /><h3 className="font-bold uppercase tracking-tight text-sm">Treasury Wallet</h3></div>
+              <div className="flex items-center gap-3 mb-3"><Wallet size={18} /><h3 className="font-bold uppercase tracking-tight text-sm">Treasury Wallet</h3></div>
               <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl mb-3"><p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Current</p><p className="font-mono text-xs font-bold text-slate-700 truncate" title={treasury?.treasuryAddress}>{treasury?.treasuryAddress ?? "—"}</p></div>
               <div className="flex gap-2">
                 <input placeholder="New 0x... address" value={newTreasuryAddr} onChange={e => setNewTreasuryAddr(e.target.value)} className="flex-1 h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400" />
@@ -477,12 +476,12 @@ function SuperAdminPanel({ onClose, signAndExecute, onToast }: { onClose: () => 
               <div className="space-y-4">
                 <div>
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">Base Mint Price</p>
-                  <p className="font-bold text-slate-600 text-sm mb-2">Current: {mistToSui(treasury?.baseMintPrice ?? 0)} SUI</p>
+                  <p className="font-bold text-slate-600 text-sm mb-2">Current: {mistToSui(treasury?.baseMintPrice ?? 0).toFixed(3)} SUI</p>
                   <div className="flex gap-2"><input placeholder="New price in SUI" type="number" value={newMintPriceSui} onChange={e => setNewMintPriceSui(e.target.value)} className="flex-1 h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400" /><button className="h-10 px-4 bg-slate-800 text-white rounded-xl font-bold text-xs disabled:opacity-50" onClick={handleUpdateMintPrice} disabled={updatingMintPrice || !newMintPriceSui}>{updatingMintPrice ? <LoaderCircle size={14} className="animate-spin" /> : "Set"}</button></div>
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">Bundle Upgrade Price</p>
-                  <p className="font-bold text-slate-600 text-sm mb-2">Current: {mistToSui(treasury?.bundleUpgradePrice ?? 0)} SUI</p>
+                  <p className="font-bold text-slate-600 text-sm mb-2">Current: {mistToSui(treasury?.bundleUpgradePrice ?? 0).toFixed(3)} SUI</p>
                   <div className="flex gap-2"><input placeholder="New price in SUI" type="number" value={newBundlePriceSui} onChange={e => setNewBundlePriceSui(e.target.value)} className="flex-1 h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400" /><button className="h-10 px-4 bg-slate-800 text-white rounded-xl font-bold text-xs disabled:opacity-50" onClick={handleUpdateBundlePrice} disabled={updatingBundlePrice || !newBundlePriceSui}>{updatingBundlePrice ? <LoaderCircle size={14} className="animate-spin" /> : "Set"}</button></div>
                 </div>
               </div>
@@ -506,7 +505,7 @@ function ShopOrdersTab({ onToast }: { onToast: (msg: string, type: Toast["type"]
   const { addTracking }   = useAddShopTracking();
 
   const [activeTab, setActiveTab]     = useState<"pending"|"shipped"|"delivered">("pending");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, searchQuerySet] = useState("");
   const [adminKey, setAdminKey]       = useState("");
   const [decryptedId, setDecryptedId] = useState<string | null>(null);
   const [decryptedInfo, setDecryptedInfo] = useState<(ShippingInfo & { id: string }) | null>(null);
@@ -604,7 +603,7 @@ function ShopOrdersTab({ onToast }: { onToast: (msg: string, type: Toast["type"]
           </div>
         </div>
         <div className="px-5 py-3 border-b-2 border-slate-100 bg-slate-50 flex gap-3 items-center">
-          <div className="relative flex-1"><input placeholder="Search name, buyer, ID..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full bg-white border-2 border-black rounded-xl pl-10 h-10 font-bold text-sm outline-none" /><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} /></div>
+          <div className="relative flex-1"><input placeholder="Search name, buyer, ID..." value={searchQuery} onChange={e => searchQuerySet(e.target.value)} className="w-full bg-white border-2 border-black rounded-xl pl-10 h-10 font-bold text-sm outline-none" /><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} /></div>
           <span className="text-[10px] font-black text-slate-400">{filtered.length} result{filtered.length !== 1 ? "s" : ""}</span>
         </div>
 
@@ -636,7 +635,7 @@ function ShopOrdersTab({ onToast }: { onToast: (msg: string, type: Toast["type"]
                             <Badge className="bg-white">Qty: {receipt.quantity}</Badge>
                             {receipt.chosenSize && receipt.chosenSize !== "N/A" && <Badge className="bg-slate-100">{receipt.chosenSize}</Badge>}
                             {receipt.chosenColor && <Badge className="bg-slate-100">{receipt.chosenColor}</Badge>}
-                            <Badge className="bg-sky-100 text-sky-700 border-sky-300">{mistToSui(Number(receipt.paymentAmount)).toFixed(2)} SUI</Badge>
+                            <Badge className="bg-sky-100 text-sky-700 border-sky-300">{mistToSui(Number(receipt.paymentAmount)).toFixed(3)} SUI</Badge>
                           </div>
                         </td>
                         <td className="p-4">

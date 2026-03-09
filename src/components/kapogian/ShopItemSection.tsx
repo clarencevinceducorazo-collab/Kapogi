@@ -24,7 +24,7 @@ import { useShopItems, useAllShopReceipts } from "@/lib/useShopQueries";
 import { useQueryClient } from "@tanstack/react-query";
 import { shopQueryKeys } from "@/lib/useShopQueries";
 import type { ShopItem, ShopReceipt } from "@/lib/shopTypes";
-import { cn } from "@/lib/utils";
+import { cn, formatAddress } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -485,7 +485,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
         ],
       });
       await signAndExecute({ transaction: tx });
-      onToast(`"${deleteItemConfirm.name}" deleted.`, "success");
+      onToast(`"${deleteItemConfirm.name}" permanently deleted.`, "success");
       setDeleteItemConfirm(null);
       invalidate();
     } catch (err: any) {
@@ -511,7 +511,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
         ],
       });
       await signAndExecute({ transaction: tx });
-      onToast(`Receipt deleted.`, "success");
+      onToast(`Receipt ${formatAddress(deleteReceiptConfirm.id)} deleted.`, "success");
       setDeleteReceiptConfirm(null);
       invalidate();
     } catch (err: any) {
@@ -580,7 +580,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                     <div className="flex items-center gap-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
                       <span className={item.available ? "text-emerald-500" : "text-rose-500"}>{item.available ? "Visible" : "Hidden"}</span>
                       <span>•</span>
-                      <span>{item.priceSui} SUI</span>
+                      <span>{Number(item.priceSui).toFixed(3)} SUI</span>
                       <span>•</span>
                       <span>{item.stock} Stock</span>
                     </div>
@@ -608,7 +608,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
               <div key={r.id} className="p-4 flex items-center gap-3">
                 <div className="flex-1">
                   <p className="font-black text-xs text-slate-800">{r.itemName}</p>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase">{shortAddr(r.buyer)} • {r.paymentSui} SUI</p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase">{formatAddress(r.buyer)} • {Number(r.paymentSui).toFixed(3)} SUI</p>
                 </div>
                 {r.status === 2 && (
                   <button onClick={() => setDeleteReceiptConfirm(r)} className="w-8 h-8 rounded-lg border-2 border-black bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 shadow-[2px_2px_0_0_#9f1239]">
@@ -638,7 +638,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                   <div className="text-center w-full px-2">
                     <span className="text-[8px] font-black uppercase text-slate-400">{SHOP_ITEM_TYPE_LABELS[form.itemType as keyof typeof SHOP_ITEM_TYPE_LABELS]}</span>
                     <h4 className="font-black text-lg text-slate-800 leading-tight uppercase truncate">{form.name || "UNNAMED OBJECT"}</h4>
-                    <div className="bg-sky-50 rounded-xl py-1.5 border border-slate-100 mt-2 font-black text-sm text-blue-500">SUI {form.priceSui || "0.00"}</div>
+                    <div className="bg-sky-50 rounded-xl py-1.5 border border-slate-100 mt-2 font-black text-sm text-blue-500">SUI {Number(form.priceSui || 0).toFixed(3)}</div>
                   </div>
                 </div>
               </div>
@@ -672,7 +672,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                 <div className="grid grid-cols-2 gap-8">
                   <div>
                     <SectionLabel icon={DollarSign} required>Price (SUI)</SectionLabel>
-                    <input type="number" value={form.priceSui} onChange={(e) => setForm({ ...form, priceSui: e.target.value })} className="w-full bg-slate-50 border-4 border-slate-100 rounded-2xl px-6 py-4 font-black outline-none" placeholder="0.00" />
+                    <input type="number" value={form.priceSui} onChange={(e) => setForm({ ...form, priceSui: e.target.value })} className="w-full bg-slate-50 border-4 border-slate-100 rounded-2xl px-6 py-4 font-black outline-none" placeholder="0.000" />
                   </div>
                   <div>
                     <SectionLabel icon={Package} required>Initial Supply</SectionLabel>
