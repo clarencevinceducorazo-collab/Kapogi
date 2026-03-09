@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -764,7 +763,7 @@ export default function GeneratorPage() {
 
   useEffect(() => {
     if (!account?.address || !isShippingInitialized) return;
-    
+
     const data = {
       name: shippingName,
       email: shippingEmail,
@@ -1810,7 +1809,8 @@ export default function GeneratorPage() {
                         Under Maintenance
                       </h2>
                       <p className="font-bold text-slate-600 text-lg leading-relaxed mb-4">
-                        {pauseReason || "The summoning ritual is temporarily on hold."}
+                        {pauseReason ||
+                          "The summoning ritual is temporarily on hold."}
                       </p>
                     </div>
                   </div>
@@ -1881,19 +1881,25 @@ export default function GeneratorPage() {
                               label="Cuteness"
                               value={stats.cuteness}
                               color="bg-pink-400"
-                              onChange={(v) => setStats({ ...stats, cuteness: v })}
+                              onChange={(v) =>
+                                setStats({ ...stats, cuteness: v })
+                              }
                             />
                             <EnchantmentControl
                               label="Confidence"
                               value={stats.confidence}
                               color="bg-blue-400"
-                              onChange={(v) => setStats({ ...stats, confidence: v })}
+                              onChange={(v) =>
+                                setStats({ ...stats, confidence: v })
+                              }
                             />
                             <EnchantmentControl
                               label="Tili Factor"
                               value={stats.tiliFactor}
                               color="bg-orange-400"
-                              onChange={(v) => setStats({ ...stats, tiliFactor: v })}
+                              onChange={(v) =>
+                                setStats({ ...stats, tiliFactor: v })
+                              }
                             />
                           </div>
                         </div>
@@ -1916,13 +1922,17 @@ export default function GeneratorPage() {
                               label="Visayas"
                               value={stats.visayas}
                               color="bg-blue-400"
-                              onChange={(v) => setStats({ ...stats, visayas: v })}
+                              onChange={(v) =>
+                                setStats({ ...stats, visayas: v })
+                              }
                             />
                             <EnchantmentControl
                               label="Mindanao"
                               value={stats.mindanao}
                               color="bg-yellow-400"
-                              onChange={(v) => setStats({ ...stats, mindanao: v })}
+                              onChange={(v) =>
+                                setStats({ ...stats, mindanao: v })
+                              }
                             />
                           </div>
                         </div>
@@ -2176,7 +2186,9 @@ export default function GeneratorPage() {
                   ) : (
                     <div className="flex flex-col items-center justify-center w-full h-full text-stone-500">
                       <Ghost size={48} className="mb-2" />
-                      <p className="font-semibold">Summon failed or not started</p>
+                      <p className="font-semibold">
+                        Summon failed or not started
+                      </p>
                     </div>
                   )}
                 </div>
@@ -2221,7 +2233,10 @@ export default function GeneratorPage() {
                         Battle MMR
                       </p>
                       {loading ? (
-                        <p className="font-display font-bold uppercase leading-none text-black/50 w-16 text-center" style={{ fontSize: "20px" }}>
+                        <p
+                          className="font-display font-bold uppercase leading-none text-black/50 w-16 text-center"
+                          style={{ fontSize: "20px" }}
+                        >
                           {shufflingMmr.toString().padStart(3, "0")}
                         </p>
                       ) : (
@@ -2241,12 +2256,22 @@ export default function GeneratorPage() {
                         Rank
                       </p>
                       {loading ? (
-                        <h3 className={cn("w-32 text-center truncate", shufflingRank.style)}>
+                        <h3
+                          className={cn(
+                            "w-32 text-center truncate",
+                            shufflingRank.style,
+                          )}
+                        >
                           {shufflingRank.name}
                         </h3>
                       ) : (
                         <>
-                          <h3 className={cn("animate__animated animate__fadeInUp", displayRankInfo.style)}>
+                          <h3
+                            className={cn(
+                              "animate__animated animate__fadeInUp",
+                              displayRankInfo.style,
+                            )}
+                          >
                             {displayRankInfo.name}
                           </h3>
                           <p className="text-[10px] font-bold text-stone-400 mt-1 uppercase tracking-wide">
@@ -2288,13 +2313,21 @@ export default function GeneratorPage() {
                 <div className="text-center min-h-[56px] flex flex-col justify-center">
                   {loading ? (
                     <>
-                      <p className="font-display font-semibold text-lg uppercase">Summoning...</p>
-                      <p className="text-sm text-stone-500">Wait, it's almost here.</p>
+                      <p className="font-display font-semibold text-lg uppercase">
+                        Summoning...
+                      </p>
+                      <p className="text-sm text-stone-500">
+                        Wait, it's almost here.
+                      </p>
                     </>
                   ) : (
                     <>
-                      <p className="font-display font-semibold text-lg uppercase">Character Ready!</p>
-                      <p className="text-sm text-stone-500">Choose your merchandise.</p>
+                      <p className="font-display font-semibold text-lg uppercase">
+                        Character Ready!
+                      </p>
+                      <p className="text-sm text-stone-500">
+                        Choose your merchandise.
+                      </p>
                     </>
                   )}
                 </div>
@@ -2353,7 +2386,8 @@ export default function GeneratorPage() {
                         onClick={() => setSelection(product.name)}
                         className={cn(
                           "group bg-white rounded-xl border-4 border-black p-4 flex flex-col items-center hard-shadow hover:-translate-y-1 transition-all",
-                          selection === product.name && "translate-y-1 shadow-none bg-yellow-300",
+                          selection === product.name &&
+                            "translate-y-1 shadow-none bg-yellow-300",
                         )}
                       >
                         <Icon className="text-4xl mb-2" />
@@ -2369,7 +2403,8 @@ export default function GeneratorPage() {
                   onClick={() => setSelection("Bundle")}
                   className={cn(
                     "relative bg-yellow-400 border-4 border-black rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 hard-shadow hover:-translate-y-1 transition-all cursor-pointer group",
-                    selection === "Bundle" && "translate-y-1 shadow-none bg-yellow-300",
+                    selection === "Bundle" &&
+                      "translate-y-1 shadow-none bg-yellow-300",
                   )}
                 >
                   <div className="flex items-center gap-4">
@@ -2386,7 +2421,11 @@ export default function GeneratorPage() {
                     </div>
                   </div>
                   <div className="bg-black text-white px-6 py-2 rounded-full text-sm font-bold uppercase tracking-tight whitespace-nowrap">
-                    UPGRADE BUNDLE (+{pricingLoading ? "..." : mistToSui(pricing?.bundle ?? 0)} SUI)
+                    UPGRADE BUNDLE (+
+                    {pricingLoading
+                      ? "..."
+                      : mistToSui(pricing?.bundle ?? 0)}{" "}
+                    SUI)
                   </div>
                 </div>
               </div>
@@ -2438,7 +2477,9 @@ export default function GeneratorPage() {
                         </span>
                       </div>
                       <div>
-                        <label className="font-semibold uppercase text-xs tracking-wide">Full Name</label>
+                        <label className="font-semibold uppercase text-xs tracking-wide">
+                          Full Name
+                        </label>
                         <Input
                           type="text"
                           value={shippingName}
@@ -2448,7 +2489,9 @@ export default function GeneratorPage() {
                         />
                       </div>
                       <div>
-                        <label className="font-semibold uppercase text-xs tracking-wide">Email</label>
+                        <label className="font-semibold uppercase text-xs tracking-wide">
+                          Email
+                        </label>
                         <Input
                           type="email"
                           value={shippingEmail}
@@ -2458,7 +2501,9 @@ export default function GeneratorPage() {
                         />
                       </div>
                       <div>
-                        <label className="font-semibold uppercase text-xs tracking-wide">Contact Number</label>
+                        <label className="font-semibold uppercase text-xs tracking-wide">
+                          Contact Number
+                        </label>
                         <Input
                           type="text"
                           value={shippingContact}
@@ -2478,40 +2523,80 @@ export default function GeneratorPage() {
                         </span>
                       </div>
                       <div>
-                        <label className="font-semibold uppercase text-xs tracking-wide">Province</label>
-                        <Select onValueChange={handleProvinceChange} value={selectedProvince?.code} disabled={provincesLoading}>
+                        <label className="font-semibold uppercase text-xs tracking-wide">
+                          Province
+                        </label>
+                        <Select
+                          onValueChange={handleProvinceChange}
+                          value={selectedProvince?.code}
+                          disabled={provincesLoading}
+                        >
                           <SelectTrigger className="w-full max-w-2xl border-4 border-black rounded-xl p-3 bg-stone-50 text-base font-medium focus:bg-white transition-all !h-auto">
-                            <SelectValue placeholder={provincesLoading ? "Loading..." : "Select Province"} />
+                            <SelectValue
+                              placeholder={
+                                provincesLoading
+                                  ? "Loading..."
+                                  : "Select Province"
+                              }
+                            />
                           </SelectTrigger>
                           <SelectContent>
                             {provinces.map((p) => (
-                              <SelectItem key={p.code} value={p.code}>{p.name}</SelectItem>
+                              <SelectItem key={p.code} value={p.code}>
+                                {p.name}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
-                        <label className="font-semibold uppercase text-xs tracking-wide">City</label>
-                        <Select onValueChange={handleCityChange} value={selectedCity?.code} disabled={!selectedProvince || citiesLoading}>
+                        <label className="font-semibold uppercase text-xs tracking-wide">
+                          City
+                        </label>
+                        <Select
+                          onValueChange={handleCityChange}
+                          value={selectedCity?.code}
+                          disabled={!selectedProvince || citiesLoading}
+                        >
                           <SelectTrigger className="w-full max-w-2xl border-4 border-black rounded-xl p-3 bg-stone-50 text-base font-medium focus:bg-white transition-all !h-auto">
-                            <SelectValue placeholder={citiesLoading ? "Loading..." : "Select City"} />
+                            <SelectValue
+                              placeholder={
+                                citiesLoading ? "Loading..." : "Select City"
+                              }
+                            />
                           </SelectTrigger>
                           <SelectContent>
                             {cities.map((c) => (
-                              <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                              <SelectItem key={c.code} value={c.code}>
+                                {c.name}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
-                        <label className="font-semibold uppercase text-xs tracking-wide">Barangay</label>
-                        <Select onValueChange={handleBarangayChange} value={selectedBarangay?.code} disabled={!selectedCity || barangaysLoading}>
+                        <label className="font-semibold uppercase text-xs tracking-wide">
+                          Barangay
+                        </label>
+                        <Select
+                          onValueChange={handleBarangayChange}
+                          value={selectedBarangay?.code}
+                          disabled={!selectedCity || barangaysLoading}
+                        >
                           <SelectTrigger className="w-full max-w-2xl border-4 border-black rounded-xl p-3 bg-stone-50 text-base font-medium focus:bg-white transition-all !h-auto">
-                            <SelectValue placeholder={barangaysLoading ? "Loading..." : "Select Neighborhood"} />
+                            <SelectValue
+                              placeholder={
+                                barangaysLoading
+                                  ? "Loading..."
+                                  : "Select Neighborhood"
+                              }
+                            />
                           </SelectTrigger>
                           <SelectContent>
                             {barangays.map((b) => (
-                              <SelectItem key={b.code} value={b.code}>{b.name}</SelectItem>
+                              <SelectItem key={b.code} value={b.code}>
+                                {b.name}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -2519,7 +2604,9 @@ export default function GeneratorPage() {
                     </div>
                   </div>
                   <div className="mt-6">
-                    <label className="font-semibold uppercase text-xs tracking-wide">Street Address</label>
+                    <label className="font-semibold uppercase text-xs tracking-wide">
+                      Street Address
+                    </label>
                     <Input
                       type="text"
                       value={streetAddress}
@@ -2535,8 +2622,14 @@ export default function GeneratorPage() {
                   disabled={minting || pricingLoading}
                   className="mt-8 w-full bg-blue-500 text-white border-4 border-black rounded-xl py-3 text-xl font-display font-semibold uppercase tracking-tight hard-shadow-sm hover:translate-y-[-2px] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  {minting ? <LoaderCircle className="w-6 h-6 animate-spin" /> : <Truck className="w-6 h-6" />}
-                  {minting ? "Minting..." : `Ship It for ${pricingLoading ? "..." : mistToSui(totalPrice)} SUI`}
+                  {minting ? (
+                    <LoaderCircle className="w-6 h-6 animate-spin" />
+                  ) : (
+                    <Truck className="w-6 h-6" />
+                  )}
+                  {minting
+                    ? "Minting..."
+                    : `Ship It for ${pricingLoading ? "..." : mistToSui(totalPrice)} SUI`}
                 </button>
                 {error && (
                   <div className="mt-4 text-sm text-center bg-red-100 p-3 rounded-lg border border-red-300 text-red-700">
@@ -2553,22 +2646,38 @@ export default function GeneratorPage() {
                 { hidden: page !== "page-receipt" },
               )}
             >
-              <div ref={receiptRef} className="w-full max-w-sm bg-white border-x-4 border-t-4 border-b-[12px] border-dotted border-black rounded-t-xl relative p-6 shadow-2xl mb-8">
+              <div
+                ref={receiptRef}
+                className="w-full max-w-sm bg-white border-x-4 border-t-4 border-b-[12px] border-dotted border-black rounded-t-xl relative p-6 shadow-2xl mb-8"
+              >
                 <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-green-200 rounded-full border-4 border-black" />
                 <div className="text-center mb-6 border-b-2 border-dashed border-stone-300 pb-4">
-                  <h2 className="font-display text-3xl font-semibold uppercase tracking-tight">Order Receipt</h2>
-                  <p className="text-stone-500 font-medium text-sm mt-1">Order #{txHash.substring(0, 8)}</p>
+                  <h2 className="font-display text-3xl font-semibold uppercase tracking-tight">
+                    Order Receipt
+                  </h2>
+                  <p className="text-stone-500 font-medium text-sm mt-1">
+                    Order #{txHash.substring(0, 8)}
+                  </p>
                 </div>
 
                 <div className="flex gap-4 mb-6">
                   <div className="w-20 h-20 bg-stone-100 border-2 border-black rounded-md shrink-0 overflow-hidden relative">
                     {generatedImage && (
-                      <Image src={generatedImage} alt="Character" fill className="object-contain" />
+                      <Image
+                        src={generatedImage}
+                        alt="Character"
+                        fill
+                        className="object-contain"
+                      />
                     )}
                   </div>
                   <div className="flex flex-col justify-center">
-                    <span className="font-semibold text-lg">{generatedName}</span>
-                    <span className="text-sm text-stone-500">Digital Asset Secured</span>
+                    <span className="font-semibold text-lg">
+                      {generatedName}
+                    </span>
+                    <span className="text-sm text-stone-500">
+                      Digital Asset Secured
+                    </span>
                   </div>
                 </div>
 
@@ -2583,7 +2692,9 @@ export default function GeneratorPage() {
                   </div>
                   <div className="flex justify-between text-xl font-bold mt-2 pt-2 border-t-2 border-black">
                     <span>Total</span>
-                    <span>{pricingLoading ? "..." : mistToSui(totalPrice)} SUI</span>
+                    <span>
+                      {pricingLoading ? "..." : mistToSui(totalPrice)} SUI
+                    </span>
                   </div>
                 </div>
 
@@ -2632,7 +2743,8 @@ export default function GeneratorPage() {
                 Generation Temporarily Unavailable
               </DialogTitle>
               <DialogDescription className="text-slate-600 font-bold text-center text-base leading-relaxed">
-                Too many users are generating characters right now.<br />
+                Too many users are generating characters right now.
+                <br />
                 Please come back in a few minutes and try again.
               </DialogDescription>
             </DialogHeader>
