@@ -19,7 +19,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { suiClient } from "@/lib/sui";
-import { CONTRACT_ADDRESSES, ORDER_STATUS, mistToSui } from "@/lib/constants";
+import { CONTRACT_ADDRESSES, MODULES, ORDER_STATUS, mistToSui } from "@/lib/constants";
 import { getIPFSGatewayUrl } from "@/lib/pinata";
 import { cn } from "@/lib/utils";
 
@@ -48,8 +48,9 @@ export function OrdersPanel({ account }: { account: any }) {
 
   useEffect(() => {
     if (selectedOrder) {
+      const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
-      return () => { document.body.style.overflow = ""; };
+      return () => { document.body.style.overflow = originalOverflow; };
     }
   }, [selectedOrder]);
 
@@ -66,6 +67,7 @@ export function OrdersPanel({ account }: { account: any }) {
     setLoading(true);
     setError("");
     try {
+      // Helper to fetch IDs from a registry object
       const fetchRegistryIds = async (registryId: string) => {
         try {
           const obj = await suiClient.getObject({
@@ -77,11 +79,12 @@ export function OrdersPanel({ account }: { account: any }) {
             return (fields.receipt_ids || []).map((id: any) => typeof id === 'string' ? id : id.id || id);
           }
         } catch (e) {
-          console.warn(`Registry ${registryId} not found.`);
+          console.warn(`Registry ${registryId} not found or inaccessible.`);
         }
         return [];
       };
 
+      // 1. DISCOVER ALL RELEVANT RECEIPTS
       const [nftIds, shopIds] = await Promise.all([
         fetchRegistryIds(CONTRACT_ADDRESSES.RECEIPT_REGISTRY_ID),
         fetchRegistryIds(CONTRACT_ADDRESSES.SHOP_RECEIPT_REGISTRY_ID)
@@ -94,84 +97,94 @@ export function OrdersPanel({ account }: { account: any }) {
         return;
       }
 
+      // 2. FETCH RECEIPT OBJECTS
       const receiptObjects = [];
-      for (let i = 0; i < allIds.length; i += 50) {
-        const chunk = allIds.slice(i, i + 50);
+      const chunkSize = 50;
+      for (let i = 0; i < allIds.length; i += chunkSize) {
+        const chunk = allIds.slice(i, i + chunkSize);
         const res = await suiClient.multiGetObjects({ ids: chunk, options: { showContent: true } });
         receiptObjects.push(...res);
       }
 
       const parsed: Order[] = [];
-      const nftRefs: string[] = [];
-      const shopItemRefs: string[] = [];
+      const nftReferenceIds: string[] = [];
+      const shopItemReferenceIds: string[] = [];
 
       receiptObjects.forEach((res) => {
         if (!res.data?.content || res.data.content.dataType !== "moveObject") return;
-        const f = res.data.content.fields as any;
+        const fields = res.data.content.fields as any;
         
-        if (f.buyer?.toLowerCase() !== account.address.toLowerCase()) return;
+        // Match buyer (normalized)
+        if (fields.buyer?.toLowerCase() !== account.address.toLowerCase()) return;
 
-        const isShop = !!f.item_id;
+        const isShop = !!fields.item_id;
 
         const order: Order = {
           objectId: res.data.objectId,
           type: isShop ? "shop" : "nft",
-          createdAt: Number(f.created_at || 0),
-          status: Number(f.status || 0),
-          paymentAmount: Number(f.payment_amount || 0),
-          trackingNumber: f.tracking_number || "",
-          carrier: f.carrier || "",
-          estimatedDelivery: Number(f.estimated_delivery || 0),
-          itemName: isShop ? f.item_name : "Spirit Manifest",
+          createdAt: Number(fields.created_at || 0),
+          status: Number(fields.status || 0),
+          paymentAmount: Number(fields.payment_amount || 0),
+          trackingNumber: fields.tracking_number || "",
+          carrier: fields.carrier || "",
+          estimatedDelivery: Number(fields.estimated_delivery || 0),
+          itemName: isShop ? fields.item_name : "Spirit Manifest",
           itemsSelected: isShop 
-            ? [f.chosen_size, f.chosen_color].filter(v => v && v !== "N/A")
-            : (f.items_selected || "").split(",").map((s: string) => s.trim()).filter(Boolean),
+            ? [fields.chosen_size, fields.chosen_color].filter(v => v && v !== "N/A")
+            : (fields.items_selected || "").split(",").map((s: string) => s.trim()).filter(Boolean),
         };
 
         if (isShop) {
-          const itemId = typeof f.item_id === 'string' ? f.item_id : f.item_id?.id || f.item_id;
-          if (itemId) shopItemRefs.push(itemId);
+          const itemId = typeof fields.item_id === 'string' ? fields.item_id : fields.item_id?.id || fields.item_id;
+          if (itemId) shopItemReferenceIds.push(itemId);
         } else {
-          const nftId = typeof f.nft_id === 'string' ? f.nft_id : f.nft_id?.id || f.nft_id;
+          const nftId = typeof fields.nft_id === 'string' ? fields.nft_id : fields.nft_id?.id || fields.nft_id;
           order.nftId = nftId;
-          if (nftId) nftRefs.push(nftId);
+          if (nftId) nftReferenceIds.push(nftId);
         }
+
         parsed.push(order);
       });
 
-      const [nftData, shopItemData] = await Promise.all([
-        nftRefs.length > 0 ? suiClient.multiGetObjects({ ids: nftRefs, options: { showDisplay: true } }) : Promise.resolve([]),
-        shopItemRefs.length > 0 ? suiClient.multiGetObjects({ ids: shopItemRefs, options: { showContent: true } }) : Promise.resolve([]),
+      // 3. ENRICH WITH VISUALS
+      const [nftDataRes, shopItemDataRes] = await Promise.all([
+        nftReferenceIds.length > 0 
+          ? suiClient.multiGetObjects({ ids: nftReferenceIds, options: { showDisplay: true } })
+          : Promise.resolve([]),
+        shopItemReferenceIds.length > 0
+          ? suiClient.multiGetObjects({ ids: shopItemReferenceIds, options: { showContent: true } })
+          : Promise.resolve([]),
       ]);
 
-      const nftMap = new Map(nftData.filter(o => o.data).map(o => [o.data?.objectId, (o.data?.display?.data as any)]));
-      const shopMap = new Map(shopItemData.filter(o => o.data).map(o => [o.data?.objectId, (o.data?.content as any)?.fields]));
+      const nftMap = new Map(nftDataRes.filter(o => o.data).map(o => [o.data?.objectId, (o.data?.display?.data as any)]));
+      const shopMap = new Map(shopItemDataRes.filter(o => o.data).map(o => [o.data?.objectId, (o.data?.content as any)?.fields]));
 
-      const final = parsed.map(o => {
-        if (o.type === "nft") {
-          const d = nftMap.get(o.nftId!);
-          if (d) { 
-            o.itemName = d.name || o.itemName; 
-            o.imageUrl = getIPFSGatewayUrl(d.image_url); 
+      const finalOrders = parsed.map(order => {
+        if (order.type === "nft") {
+          const display = nftMap.get(order.nftId!);
+          if (display) {
+            order.itemName = display.name || order.itemName;
+            order.imageUrl = getIPFSGatewayUrl(display.image_url);
           }
         } else {
-          const r = receiptObjects.find(x => x.data?.objectId === o.objectId);
-          const iidRaw = (r?.data?.content as any)?.fields?.item_id;
-          const iid = typeof iidRaw === 'string' ? iidRaw : iidRaw?.id || iidRaw;
+          // For shop, we need to find the specific item link
+          const receiptObj = receiptObjects.find(r => r.data?.objectId === order.objectId);
+          const iidRaw = (receiptObj?.data?.content as any)?.fields?.item_id;
+          const itemId = typeof iidRaw === 'string' ? iidRaw : iidRaw?.id || iidRaw;
           
-          const f = shopMap.get(iid);
-          if (f) { 
-            o.imageUrl = f.image_animated || f.image_static; 
-            o.isAnimated = !!f.image_animated; 
+          const fields = shopMap.get(itemId);
+          if (fields) {
+            order.imageUrl = fields.image_animated || fields.image_static;
+            order.isAnimated = !!fields.image_animated;
           }
         }
-        return o;
+        return order;
       }).sort((a, b) => b.createdAt - a.createdAt);
 
-      setOrders(final);
+      setOrders(finalOrders);
     } catch (err) {
-      console.error("Manifest Load Error:", err);
-      setError("Sync interrupted. Retrying data stream...");
+      console.error("Failed to load manifests:", err);
+      setError("Sync interrupted. Manifest data unavailable.");
     } finally {
       setLoading(false);
     }
@@ -207,8 +220,8 @@ export function OrdersPanel({ account }: { account: any }) {
         <div className="flex bg-slate-100 p-1 rounded-2xl border-2 border-slate-200 shadow-sm">
           {[
             { id: "all",  label: "All",    icon: Layers },
-            { id: "nft",  label: "NFT Rituals", icon: Sparkles },
-            { id: "shop", label: "Shop Gear",    icon: ShoppingBag },
+            { id: "nft",  label: "Rituals", icon: Sparkles },
+            { id: "shop", label: "Shop",    icon: ShoppingBag },
           ].map((btn) => (
             <button
               key={btn.id}
@@ -231,7 +244,9 @@ export function OrdersPanel({ account }: { account: any }) {
         <div className="text-center py-20 bg-slate-50/50 rounded-[2.5rem] border-4 border-dashed border-slate-100 flex flex-col items-center">
           <ShoppingBag className="mb-4 text-slate-200" size={64} strokeWidth={1.5} />
           <p className="font-bold uppercase tracking-widest text-sm text-slate-400">No records found in this sector</p>
-          {filter === 'shop' && <a href="/shop" className="mt-6 text-sky-500 font-bold hover:underline">Teleport to Shop →</a>}
+          <a href={filter === 'shop' ? '/shop' : '/generate'} className="mt-6 text-sky-500 font-bold hover:underline">
+            {filter === 'shop' ? 'Visit Shop →' : 'Start Summoning →'}
+          </a>
         </div>
       ) : (
         <div className="grid gap-4">

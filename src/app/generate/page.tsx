@@ -2657,7 +2657,7 @@ export default function GeneratorPage() {
                   </h2>
                   <p className="text-stone-500 font-medium text-sm mt-1">
                     Order. #{txHash.substring(0, 8)}
-                  </p>
+                  </p>  
                 </div>
 
                 <div className="flex gap-4 mb-6">
