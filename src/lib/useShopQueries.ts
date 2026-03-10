@@ -8,7 +8,7 @@
  *   const { data: receipts }         = useAllShopReceipts(); // admin only
  */
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { useSuiClient } from "@mysten/dapp-kit";
 import { CONTRACT_ADDRESSES } from "@/lib/constants";
 import {
@@ -25,19 +25,26 @@ import {
 // ─── Query Keys ──────────────────────────────────────────────────────────────
 
 export const shopQueryKeys = {
-  registry:       ["shop", "registry"]          as const,
-  items:          ["shop", "items"]             as const,
-  item:    (id: string) => ["shop", "item", id] as const,
-  receiptRegistry: ["shop", "receipt-registry"] as const,
-  receipts:       ["shop", "receipts"]          as const,
-  receipt: (id: string) => ["shop", "receipt", id] as const,
+  registry:        ["shop", "registry"]              as const,
+  items:           ["shop", "items"]                 as const,
+  item:     (id: string) => ["shop", "item", id]     as const,
+  receiptRegistry: ["shop", "receipt-registry"]      as const,
+  receipts:        ["shop", "receipts"]              as const,
+  receipt:  (id: string) => ["shop", "receipt", id]  as const,
   myReceipts: (addr: string) => ["shop", "receipts", "my", addr] as const,
 };
 
-// ─── ShopRegistry ────────────────────────────────────────────────────────────
+// ─── Shared polling options type ──────────────────────────────────────────────
+
+type PollingOptions = Pick<
+  UseQueryOptions,
+  "refetchInterval" | "refetchIntervalInBackground" | "refetchOnWindowFocus"
+>;
+
+// ─── ShopRegistry ─────────────────────────────────────────────────────────────
 
 /** Fetch the ShopRegistry to get all item IDs. */
-export function useShopRegistry() {
+export function useShopRegistry(options?: PollingOptions) {
   const client = useSuiClient();
 
   return useQuery({
@@ -51,20 +58,31 @@ export function useShopRegistry() {
       const fields = obj.data.content.fields as unknown as RawShopRegistryFields;
       return {
         id:           CONTRACT_ADDRESSES.SHOP_REGISTRY_ID,
-        itemIds:      fields.item_ids as string[],   // ← no .map(x => x.id)
+        itemIds:      fields.item_ids as string[],
         totalCreated: Number(fields.total_created),
       };
     },
     staleTime: 30_000,
+    ...options,
   });
 }
 
 // ─── All Shop Items ───────────────────────────────────────────────────────────
 
-/** Fetch all ShopItems from the registry. Filters out unavailable if filterAvailable=true. */
-export function useShopItems(filterAvailable = false) {
-  const client    = useSuiClient();
-  const { data: registry } = useShopRegistry();
+/**
+ * Fetch all ShopItems from the registry.
+ * Pass `options` to enable realtime polling, e.g.:
+ *   useShopItems(true, { refetchInterval: 12_000, refetchOnWindowFocus: true })
+ */
+export function useShopItems(
+  filterAvailable = false,
+  options?: PollingOptions,
+) {
+  const client = useSuiClient();
+
+  // Forward the same polling options to the registry so new item IDs
+  // are picked up automatically when you deploy merch from the admin.
+  const { data: registry } = useShopRegistry(options);
 
   return useQuery({
     queryKey: shopQueryKeys.items,
@@ -88,10 +106,11 @@ export function useShopItems(filterAvailable = false) {
     },
     enabled:   !!registry?.itemIds.length,
     staleTime: 15_000,
+    ...options, // spreads refetchInterval, refetchIntervalInBackground, refetchOnWindowFocus
   });
 }
 
-// ─── Single Shop Item ────────────────────────────────────────────────────────
+// ─── Single Shop Item ─────────────────────────────────────────────────────────
 
 export function useShopItem(itemId: string | undefined) {
   const client = useSuiClient();
@@ -113,7 +132,7 @@ export function useShopItem(itemId: string | undefined) {
   });
 }
 
-// ─── ShopReceiptRegistry ─────────────────────────────────────────────────────
+// ─── ShopReceiptRegistry ──────────────────────────────────────────────────────
 
 export function useShopReceiptRegistry() {
   const client = useSuiClient();
@@ -141,8 +160,8 @@ export function useShopReceiptRegistry() {
 
 /** Fetch all shop receipts. Intended for the admin panel only. */
 export function useAllShopReceipts() {
-  const client                    = useSuiClient();
-  const { data: registry }        = useShopReceiptRegistry();
+  const client             = useSuiClient();
+  const { data: registry } = useShopReceiptRegistry();
 
   return useQuery({
     queryKey: shopQueryKeys.receipts,
@@ -191,7 +210,7 @@ export function useShopReceipt(receiptId: string | undefined) {
   });
 }
 
-// ─── My Shop Receipts (buyer) ────────────────────────────────────────────────
+// ─── My Shop Receipts (buyer) ─────────────────────────────────────────────────
 
 /**
  * Fetch all shop receipts belonging to a specific buyer address.

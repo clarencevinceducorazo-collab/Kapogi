@@ -961,17 +961,37 @@ function SuperAdminPanel({
       onToast("Invalid address format", "error");
       return;
     }
+    const addrToAdd = newAdminAddr.trim();
     setAddingAdmin(true);
+  
+    // ✅ Optimistic update — show immediately
+    setRegistry((prev) =>
+      prev
+        ? {
+            ...prev,
+            admins: prev.admins.includes(addrToAdd)
+              ? prev.admins
+              : [...prev.admins, addrToAdd],
+          }
+        : prev,
+    );
+    setNewAdminAddr("");
+  
     try {
       await superAdminAddAdmin({
         superAdminCapId: superCapId,
-        newAdminAddress: newAdminAddr,
+        newAdminAddress: addrToAdd,
         signAndExecute,
       });
       onToast("Admin added!", "success");
-      setNewAdminAddr("");
-      loadInfo();
     } catch (e: any) {
+      // ↩️ Rollback if tx fails
+      setRegistry((prev) =>
+        prev
+          ? { ...prev, admins: prev.admins.filter((a) => a !== addrToAdd) }
+          : prev,
+      );
+      setNewAdminAddr(addrToAdd);
       onToast(
         e?.message?.includes("EAlreadyAdmin")
           ? "Already an admin."
@@ -982,9 +1002,15 @@ function SuperAdminPanel({
       setAddingAdmin(false);
     }
   };
-
+  
   const handleRemoveAdmin = async (addr: string) => {
     setRemovingAdmin(addr);
+  
+    // ✅ Optimistic update — remove immediately
+    setRegistry((prev) =>
+      prev ? { ...prev, admins: prev.admins.filter((a) => a !== addr) } : prev,
+    );
+  
     try {
       await superAdminRemoveAdmin({
         superAdminCapId: superCapId,
@@ -992,8 +1018,11 @@ function SuperAdminPanel({
         signAndExecute,
       });
       onToast("Admin removed.", "success");
-      loadInfo();
     } catch {
+      // ↩️ Rollback if tx fails
+      setRegistry((prev) =>
+        prev ? { ...prev, admins: [...prev.admins, addr] } : prev,
+      );
       onToast("Failed to remove admin.", "error");
     } finally {
       setRemovingAdmin(null);
