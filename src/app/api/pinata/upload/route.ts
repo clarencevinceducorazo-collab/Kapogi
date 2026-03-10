@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
+    console.log(`[API] Received asset: ${file.name}, size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
 
     const { imageUrl, imageHash } = await uploadCharacterToIPFS(file, { name });
     return NextResponse.json({ imageUrl, imageHash });
