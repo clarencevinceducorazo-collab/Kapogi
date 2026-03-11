@@ -4,20 +4,18 @@ import "server-only";
 /**
  * GET /api/pinata/upload
  * 
- * Generates a signed upload URL from Pinata.
- * Uses direct fetch to avoid common SDK resolution issues in specific environments.
+ * Generates a signed upload URL from Pinata using standard fetch.
+ * This avoids "Module not found" errors associated with the Pinata SDK.
  */
 export async function GET() {
   const jwt = process.env.PINATA_JWT;
-  const gatewayUrl = process.env.NEXT_PUBLIC_PINATA_GATEWAY_URL || "https://nft.kapogian.xyz";
 
   if (!jwt) {
     return NextResponse.json({ error: "Pinata JWT not configured" }, { status: 500 });
   }
 
   try {
-    // Generate a signed upload URL using Pinata v3 API
-    // This allows the client to upload directly without exposing the JWT
+    // Generate a signed upload URL using Pinata v3 API directly via fetch
     const response = await fetch("https://uploads.pinata.cloud/v3/files/upload-url", {
       method: "POST",
       headers: {

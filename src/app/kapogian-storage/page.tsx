@@ -18,7 +18,11 @@ import {
   AlertCircle, 
   Database,
   RefreshCw,
-  X
+  X,
+  Copy,
+  Calendar,
+  Layers,
+  HardDrive
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/kapogian/page-header';
@@ -68,7 +72,7 @@ const fmtDt = (d: string) => {
   if (!d) return '—';
   try {
     const date = new Date(d);
-    return date.toLocaleDateString();
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   } catch {
     return d;
   }
@@ -166,9 +170,9 @@ export default function KapogianStoragePage() {
     }, 2500);
   };
 
-  const copyText = (text: string) => {
+  const copyText = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
-      .then(() => addToast('Copied to clipboard!', 'success'))
+      .then(() => addToast(`${label} copied!`, 'success'))
       .catch(() => addToast('Copy failed', 'error'));
   };
 
@@ -324,32 +328,62 @@ export default function KapogianStoragePage() {
                     <p className="font-black uppercase tracking-widest text-slate-400">Empty Chamber</p>
                   </div>
                 ) : (
-                  <div className={cn(view === 'grid' ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-6" : "space-y-3")}>
+                  <div className={cn(view === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-3")}>
                     {currentFiles.map((file, i) => (
-                      <div key={file.id} className={cn("file-card group rounded-[2rem] overflow-hidden", selectedIds.has(file.id) && "selected")} style={{ animationDelay: `${i * 0.05}s` }}>
+                      <div key={file.id} className={cn("file-card group rounded-[2.5rem] overflow-hidden", selectedIds.has(file.id) && "selected")} style={{ animationDelay: `${i * 0.05}s` }}>
                         <div className="flex flex-col">
-                          <div className={cn("relative h-36 flex items-center justify-center cursor-pointer overflow-hidden", thCls(file.name))} onClick={() => toggleSelection(file.id)}>
+                          <div className={cn("relative h-48 flex items-center justify-center cursor-pointer overflow-hidden", thCls(file.name))} onClick={() => toggleSelection(file.id)}>
                             <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:12px_12px]" />
                             {tyGrp(file.name) === 'image' || tyGrp(file.name) === 'gif' ? (
-                              <div className="absolute inset-0 p-2 flex items-center justify-center">
-                                <img src={file.url} alt={file.name} className="w-full h-full object-contain drop-shadow-md rounded-xl transition-transform duration-500 group-hover:scale-110" loading="lazy" />
+                              <div className="absolute inset-0 p-3 flex items-center justify-center">
+                                <img src={file.url} alt={file.name} className="w-full h-full object-contain drop-shadow-xl rounded-2xl transition-transform duration-500 group-hover:scale-110" loading="lazy" />
                               </div>
                             ) : (
-                              <span className="text-5xl drop-shadow-lg group-hover:scale-110 transition-transform duration-500 select-none relative z-10">{emoF(file.name)}</span>
+                              <span className="text-6xl drop-shadow-lg group-hover:scale-110 transition-transform duration-500 select-none relative z-10">{emoF(file.name)}</span>
                             )}
+                            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={(e) => { e.stopPropagation(); deleteFile(file.id); }} className="w-8 h-8 bg-red-500 text-white rounded-xl flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors">
+                                    <Trash2 size={14} />
+                                </button>
+                            </div>
                           </div>
-                          <div className="p-4 bg-white">
-                            <p className="font-black text-slate-800 text-xs truncate mb-1 leading-tight">{file.name}</p>
-                            <div className="flex items-center justify-between">
-                              <span className="text-[9px] font-black text-slate-300 uppercase">{fmtDt(file.date)}</span>
-                              <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => copyText(file.url)} className="squishy w-7 h-7 bg-sky-50 rounded-lg flex items-center justify-center border border-sky-100 text-sky-400 hover:bg-sky-400 hover:text-white transition-all shadow-sm">
-                                  <LinkIcon size={12} />
+                          <div className="p-5 bg-white space-y-3">
+                            <div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Name</p>
+                                <p className="font-black text-slate-800 text-sm truncate leading-tight" title={file.name}>{file.name}</p>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5 flex items-center gap-1"><HardDrive size={10} /> Size</p>
+                                    <p className="font-bold text-slate-600 text-[11px]">{fmtSz(file.size)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5 flex items-center gap-1"><Calendar size={10} /> Date</p>
+                                    <p className="font-bold text-slate-600 text-[11px]">{fmtDt(file.date)}</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><Copy size={10} /> CID</p>
+                                <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-lg px-2 py-1.5 group/cid cursor-pointer hover:bg-sky-50 transition-colors" onClick={() => copyText(file.cid, "CID")}>
+                                    <span className="font-mono text-[9px] text-slate-400 truncate flex-1 uppercase">{file.cid}</span>
+                                    <Copy size={10} className="text-slate-200 group-hover/cid:text-sky-400" />
+                                </div>
+                            </div>
+
+                            <div>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><Layers size={10} /> File ID</p>
+                                <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-lg px-2 py-1.5 group/id cursor-pointer hover:bg-sky-50 transition-colors" onClick={() => copyText(file.id, "ID")}>
+                                    <span className="font-mono text-[9px] text-slate-400 truncate flex-1 uppercase">{file.id}</span>
+                                    <Copy size={10} className="text-slate-200 group-hover/id:text-sky-400" />
+                                </div>
+                            </div>
+
+                            <div className="pt-2 flex gap-2">
+                                <button onClick={() => copyText(file.url, "URL")} className="flex-1 h-9 bg-sky-50 rounded-xl flex items-center justify-center gap-2 border-2 border-sky-100 text-sky-500 font-black text-[10px] uppercase tracking-widest hover:bg-sky-500 hover:text-white transition-all shadow-sm">
+                                  <LinkIcon size={12} /> Copy Link
                                 </button>
-                                <button onClick={() => deleteFile(file.id)} className="squishy w-7 h-7 bg-red-50 rounded-lg flex items-center justify-center border border-red-100 text-red-400 hover:bg-red-500 hover:text-white transition-all shadow-sm">
-                                  <Trash2 size={12} />
-                                </button>
-                              </div>
                             </div>
                           </div>
                         </div>
