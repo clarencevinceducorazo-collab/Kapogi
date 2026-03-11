@@ -30,7 +30,7 @@ import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/kapogian/page-header';
 import { PageFooter } from '@/components/kapogian/page-footer';
 
-// ─── Constants & Types ────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface KapoFile {
   id: string;
@@ -49,12 +49,6 @@ interface KapoGroup {
   emoji: string;
   date: string;
   vis: 'public' | 'private';
-}
-
-interface Toast {
-  id: number;
-  message: string;
-  type: 'info' | 'success' | 'error';
 }
 
 const fmtSz = (b: number) => b >= 1048576 ? (b / 1048576).toFixed(2) + ' MB' : (b / 1024).toFixed(2) + ' KB';
@@ -108,9 +102,8 @@ export default function KapogianStoragePage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   
   const [files, setFiles] = useState<KapoFile[]>([]);
-  const [groups, setGroups] = useState<KapoGroup[]>([]);
   const [isLoadingFiles, setIsLoadingFiles] = useState(true);
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [toasts, setToasts] = useState<{ id: number; message: string; type: 'info' | 'success' | 'error' }[]>([]);
   
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [groupModalOpen, setGroupModalOpen] = useState(false);
@@ -122,16 +115,19 @@ export default function KapogianStoragePage() {
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupEmoji, setNewGroupEmoji] = useState("📁");
 
-  // ─── Persistence ───
-  useEffect(() => {
-    const saved = localStorage.getItem('kapogian_storage_groups');
-    if (saved) {
-      try { setGroups(JSON.parse(saved)); } catch (e) { console.error(e); }
+  // ─── Persistence Logic ───
+  const [groups, setGroups] = useState<KapoGroup[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const saved = localStorage.getItem('kapogian-groups');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
-  }, []);
+  });
 
   useEffect(() => {
-    localStorage.setItem('kapogian_storage_groups', JSON.stringify(groups));
+    localStorage.setItem('kapogian-groups', JSON.stringify(groups));
   }, [groups]);
 
   const fetchFiles = async () => {
@@ -153,7 +149,7 @@ export default function KapogianStoragePage() {
         }));
         setFiles(parsedFiles);
 
-        // Deduced groups update
+        // Deduce groups from Pinata metadata and add if they don't exist in local state
         const foundGroups = new Set<string>();
         parsedFiles.forEach(f => { if (f.group) foundGroups.add(f.group); });
         
@@ -183,7 +179,7 @@ export default function KapogianStoragePage() {
     fetchFiles();
   }, []);
 
-  const addToast = (message: string, type: Toast['type'] = 'info') => {
+  const addToast = (message: string, type: 'info' | 'success' | 'error' = 'info') => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => {
@@ -253,6 +249,7 @@ export default function KapogianStoragePage() {
         const { url } = await presignRes.json();
         const formData = new FormData();
         formData.append("file", file);
+        // During actual upload, you'd typically send metadata to your backend to pin with group
         await fetch(url, { method: "POST", body: formData });
       }
       await fetchFiles(); 
@@ -272,7 +269,7 @@ export default function KapogianStoragePage() {
       id: RI(),
       name: newGroupName.trim(),
       emoji: newGroupEmoji,
-      date: new Date().toISOString(),
+      date: new Date().toISOString().split('T')[0],
       vis: activeTab
     };
     setGroups(prev => [newG, ...prev]);
@@ -681,7 +678,7 @@ export default function KapogianStoragePage() {
       {groupModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setGroupModalOpen(false)} />
-          <div className="relative bg-white border-4 border-black rounded-[3rem] p-8 max-w-sm w-full shadow-[12px_12px_0_0_rgba(0,0,0,1)] animate-in zoom-in-95">
+          <div className="relative bg-white border-4 border-black rounded-[3rem] p-8 max-sm w-full shadow-[12px_12px_0_0_rgba(0,0,0,1)] animate-in zoom-in-95">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-black text-slate-800">New Group 📂</h3>
               <button onClick={() => setGroupModalOpen(false)} className="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center font-bold text-slate-400 hover:bg-red-500 hover:text-white transition-all">✕</button>
@@ -717,7 +714,7 @@ export default function KapogianStoragePage() {
 
               <div className="pt-4 flex gap-3">
                 <button onClick={() => setGroupModalOpen(false)} className="flex-1 h-12 bg-slate-100 text-slate-500 font-black rounded-2xl hover:bg-slate-200 transition-all text-xs uppercase tracking-widest">Cancel</button>
-                <button onClick={handleCreateGroup} className="flex-1 h-12 bg-indigo-500 text-white font-black rounded-2xl shadow-[4px_4px_0_0_#3730a3] hover:bg-indigo-600 transition-all text-xs uppercase tracking-widest">Create</button>
+                <button onClick={saveGroup} className="flex-1 h-12 bg-indigo-500 text-white font-black rounded-2xl shadow-[4px_4px_0_0_#3730a3] hover:bg-indigo-600 transition-all text-xs uppercase tracking-widest">Create</button>
               </div>
             </div>
           </div>
@@ -725,7 +722,7 @@ export default function KapogianStoragePage() {
       )}
 
       {/* Toast Host */}
-      <div className="fixed bottom-10 right-10 z-[200] flex flex-col gap-3 pointer-events-none">
+      <div id="toast-container" className="fixed bottom-10 right-10 z-[200] flex flex-col gap-3 pointer-events-none">
         {toasts.map(t => (
           <div key={t.id} className={cn("pointer-events-auto flex items-center gap-3 px-6 py-4 rounded-[1.5rem] border-4 border-black font-black text-xs uppercase tracking-widest shadow-[6px_6px_0_0_rgba(0,0,0,1)] animate-in slide-in-from-right-4 duration-300", 
             t.type === 'success' ? 'bg-green-400 text-black' : t.type === 'error' ? 'bg-red-400 text-white' : 'bg-white')}>
