@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   File, 
   FolderOpen, 
@@ -22,24 +22,15 @@ import {
   Copy,
   Calendar,
   Layers,
-  HardDrive
+  HardDrive,
+  Pencil,
+  Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/kapogian/page-header';
 import { PageFooter } from '@/components/kapogian/page-footer';
 
 // ─── Constants & Types ────────────────────────────────────────────────────────
-
-const GROUP_PALETTE = [
-  'bg-gradient-to-br from-sky-100 to-blue-100',
-  'bg-gradient-to-br from-cyan-100 to-blue-100',
-  'bg-gradient-to-br from-pink-100 to-rose-100',
-  'bg-gradient-to-br from-violet-100 to-purple-100',
-  'bg-gradient-to-br from-emerald-100 to-teal-100',
-  'bg-gradient-to-br from-orange-100 to-red-100',
-  'bg-gradient-to-br from-indigo-100 to-blue-100',
-  'bg-gradient-to-br from-fuchsia-100 to-pink-100',
-];
 
 interface KapoFile {
   id: string;
@@ -57,6 +48,7 @@ interface KapoGroup {
   name: string;
   emoji: string;
   date: string;
+  vis: 'public' | 'private';
 }
 
 interface Toast {
@@ -118,8 +110,18 @@ export default function KapogianStoragePage() {
   const [groups, setGroups] = useState<KapoGroup[]>([]);
   const [isLoadingFiles, setIsLoadingFiles] = useState(true);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [groupModalOpen, setGroupModalOpen] = useState(false);
+  
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [uploadGroup, setUploadGroup] = useState("");
+  const [uploadVis, setUploadVis] = useState<'public' | 'private'>('public');
+
+  const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupEmoji, setNewGroupEmoji] = useState("📁");
+
+  const groupEmojis = ['📁', '🛍️', '🎞️', '🖼️', '🎨', '🔥', '⭐', '🌐', '🎵', '📦', '💎', '🏆'];
 
   const fetchFiles = async () => {
     setIsLoadingFiles(true);
@@ -140,15 +142,23 @@ export default function KapogianStoragePage() {
         }));
         setFiles(parsedFiles);
 
+        // Deduce groups from file metadata if they don't exist in our state
         const foundGroups = new Set<string>();
         parsedFiles.forEach(f => { if (f.group) foundGroups.add(f.group); });
-        const initialGroups: KapoGroup[] = Array.from(foundGroups).map(name => ({
-          id: RI(),
-          name,
-          emoji: '📦',
-          date: new Date().toISOString()
-        }));
-        setGroups(initialGroups);
+        
+        setGroups(prev => {
+          const existingNames = new Set(prev.map(g => g.name));
+          const newGroups: KapoGroup[] = Array.from(foundGroups)
+            .filter(name => !existingNames.has(name))
+            .map(name => ({
+              id: RI(),
+              name,
+              emoji: '📦',
+              date: new Date().toISOString(),
+              vis: 'public'
+            }));
+          return [...prev, ...newGroups];
+        });
       }
     } catch (err) {
       console.error(err);
@@ -192,18 +202,18 @@ export default function KapogianStoragePage() {
       });
   }, [files, activeTab, typeFilter, searchQuery, sortOption]);
 
+  const filteredGroups = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return groups
+      .filter(g => g.vis === activeTab)
+      .filter(g => !q || g.name.toLowerCase().includes(q) || g.id.toLowerCase().includes(q));
+  }, [groups, activeTab, searchQuery]);
+
   const totalPages = Math.max(1, Math.ceil(filteredFiles.length / rowsPerPage));
   const currentFiles = useMemo(() => {
     const start = (currentPage - 1) * rowsPerPage;
     return filteredFiles.slice(start, start + rowsPerPage);
   }, [filteredFiles, currentPage, rowsPerPage]);
-
-  const toggleSelection = (id: string) => {
-    const next = new Set(selectedIds);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setSelectedIds(next);
-  };
 
   const deleteFile = async (id: string) => {
     try {
@@ -231,6 +241,9 @@ export default function KapogianStoragePage() {
         const { url } = await presignRes.json();
         const formData = new FormData();
         formData.append("file", file);
+        
+        // Metadata handled on Pinata side via specific V3 upload pattern 
+        // For simulation/MVP we assume the backend handles the group tagging
         await fetch(url, { method: "POST", body: formData });
       }
       await fetchFiles(); 
@@ -244,6 +257,26 @@ export default function KapogianStoragePage() {
     }
   };
 
+  const handleCreateGroup = () => {
+    if (!newGroupName.trim()) return addToast('Name required', 'error');
+    const newG: KapoGroup = {
+      id: RI(),
+      name: newGroupName.trim(),
+      emoji: newGroupEmoji,
+      date: new Date().toISOString(),
+      vis: activeTab
+    };
+    setGroups(prev => [newG, ...prev]);
+    setNewGroupName("");
+    setGroupModalOpen(false);
+    addToast('Group created!', 'success');
+  };
+
+  const deleteGroup = (id: string) => {
+    setGroups(prev => prev.filter(g => g.id !== id));
+    addToast('Group deleted', 'info');
+  };
+
   return (
     <div className="bg-gradient-to-b from-amber-100 via-yellow-50 to-white text-slate-700 min-h-screen font-body selection:bg-blue-200 selection:text-pink-900">
       <style jsx global>{`
@@ -255,7 +288,6 @@ export default function KapogianStoragePage() {
         .sidebar { background: linear-gradient(170deg,#ffffff 60%,#f0f8ff); box-shadow: 6px 0 28px rgba(209,217,230,.45); border-right: 2px solid rgba(255,255,255,.95); }
         .file-card { background:linear-gradient(145deg,#fff,#fffdf5); box-shadow:7px 7px 16px #ddd5c0,-7px -7px 16px #fff; border:2px solid rgba(255,255,255,.9); transition:all .32s cubic-bezier(.34,1.56,.64,1); animation:card-in .38s cubic-bezier(.34,1.56,.64,1) both; }
         .file-card:hover { transform:translateY(-8px) scale(1.025); box-shadow:12px 12px 28px #cfc7b0,-12px -12px 24px #fff; }
-        .file-card.selected { background:linear-gradient(145deg,#eff6ff,#dbeafe); border-color:#38bdf8; }
         .th-gif  { background:linear-gradient(135deg,#fce7f3,#fbcfe8); }
         .th-png  { background:linear-gradient(135deg,#e0f2fe,#bae6fd); }
         .th-jpg,.th-jpeg { background:linear-gradient(135deg,#dcfce7,#bbf7d0); }
@@ -268,6 +300,10 @@ export default function KapogianStoragePage() {
         .th-def  { background:linear-gradient(135deg,#f8fafc,#f1f5f9); }
         .squishy { transition:transform .13s cubic-bezier(.34,1.56,.64,1); cursor:pointer; }
         .squishy:active { transform:scale(.88); }
+        .tab-btn { position:relative; padding-bottom:8px; font-weight:800; font-size:.875rem; color:#94a3b8; transition:color .2s; }
+        .tab-btn::after { content:''; position:absolute; bottom:0; left:0; width:0; height:3px; background:linear-gradient(90deg,#38bdf8,#3b82f6); border-radius:99px; transition:width .3s cubic-bezier(.34,1.56,.64,1); }
+        .tab-btn.active { color:#1e293b; }
+        .tab-btn.active::after { width:100%; }
         .nav-item { transition:all .22s cubic-bezier(.34,1.56,.64,1); cursor:pointer; }
         .nav-item.active { background:linear-gradient(135deg,rgba(251,191,36,.2),rgba(249,115,22,.13)); color:#0284c7; border-color:rgba(251,191,36,.32); box-shadow:3px 3px 10px rgba(251,191,36,.18),-3px -3px 8px #fff; }
       `}</style>
@@ -290,11 +326,11 @@ export default function KapogianStoragePage() {
           </div>
           <nav className="flex-1 space-y-1">
             <button onClick={() => setPage('files')} className={cn("w-full nav-item flex items-center gap-3 px-4 py-2.5 rounded-2xl font-black text-xs transition-all border-2 border-transparent", page === 'files' ? "active" : "text-slate-400 hover:bg-amber-50")}>
-              <File className={cn("w-4 h-4", page === 'files' ? "text-sky-500" : "text-slate-300")} />
+              <File className={cn("w-4 h-4", page === 'files' ? "text-sky-50" : "text-slate-300")} />
               Files
             </button>
             <button onClick={() => setPage('groups')} className={cn("w-full nav-item flex items-center gap-3 px-4 py-2.5 rounded-2xl font-black text-xs transition-all border-2 border-transparent", page === 'groups' ? "active" : "text-slate-400 hover:bg-amber-50")}>
-              <FolderOpen className={cn("w-4 h-4", page === 'groups' ? "text-sky-500" : "text-slate-300")} />
+              <FolderOpen className={cn("w-4 h-4", page === 'groups' ? "text-sky-50" : "text-slate-300")} />
               Groups
               <span className="ml-auto bg-sky-100 text-sky-600 text-[9px] font-black px-2 py-0.5 rounded-full">{groups.length}</span>
             </button>
@@ -303,17 +339,73 @@ export default function KapogianStoragePage() {
 
         <main className="flex-1 lg:ml-52 min-w-0">
           <div className="max-w-6xl mx-auto px-5 pt-10 pb-28">
+            
+            {/* Header with Title & Add Button */}
+            <div className="flex items-center justify-between mb-7 flex-wrap gap-4 pl-12 lg:pl-0">
+              <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none uppercase">{page === 'files' ? 'Files' : 'Groups'}</h1>
+              <div className="flex gap-2">
+                <button onClick={fetchFiles} disabled={isLoadingFiles} className="squishy bg-white border-2 border-slate-100 rounded-2xl w-12 h-12 flex items-center justify-center text-slate-400 hover:text-sky-500 transition-all shadow-sm">
+                  <RefreshCw size={18} className={isLoadingFiles ? "animate-spin" : ""} />
+                </button>
+                <button 
+                  onClick={() => page === 'files' ? setUploadModalOpen(true) : setGroupModalOpen(true)} 
+                  className="squishy bg-indigo-500 text-white font-black px-6 py-3 rounded-full text-xs flex items-center gap-2 hover:bg-indigo-600 transition-all uppercase tracking-widest shadow-lg"
+                >
+                  <Plus size={18} /> {page === 'files' ? 'Add' : 'Add'}
+                </button>
+              </div>
+            </div>
+
+            {/* Sub-tabs for Public/Private */}
+            <div className="flex gap-6 mb-6 border-b-2 border-slate-100">
+              <button onClick={() => setActiveTab('public')} className={cn("tab-btn", activeTab === 'public' && "active")}>PUBLIC</button>
+              <button onClick={() => setActiveTab('private')} className={cn("tab-btn", activeTab === 'private' && "active")}>PRIVATE</button>
+            </div>
+
+            {/* Description & Search */}
+            <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <p className="text-sm font-medium text-slate-400">
+                {activeTab === 'public' 
+                  ? `All ${page} in this section are public and accessible via public IPFS.` 
+                  : `Private ${page} are only visible to authorized explorers.`}
+              </p>
+              <div className="relative w-full max-w-sm">
+                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" />
+                <input 
+                  type="text" 
+                  placeholder={`Search by IPFS ${page}`} 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-white border-2 border-slate-100 rounded-xl pl-10 pr-4 py-2 text-sm font-medium focus:border-indigo-300 outline-none transition-all shadow-sm"
+                />
+              </div>
+            </div>
+
             {page === 'files' && (
               <div className="animate-in fade-in duration-500">
-                <div className="flex items-center justify-between mb-7 flex-wrap gap-4">
-                  <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none uppercase italic">Files</h1>
-                  <div className="flex gap-2">
-                    <button onClick={fetchFiles} disabled={isLoadingFiles} className="squishy bg-white border-2 border-slate-100 rounded-2xl w-12 h-12 flex items-center justify-center text-slate-400 hover:text-sky-500 transition-all shadow-sm">
-                      <RefreshCw size={18} className={isLoadingFiles ? "animate-spin" : ""} />
-                    </button>
-                    <button onClick={() => setUploadModalOpen(true)} className="squishy bg-gradient-to-r from-sky-400 to-blue-600 text-white font-black px-6 py-3 rounded-2xl text-xs flex items-center gap-2 hover:shadow-lg transition-all uppercase tracking-widest shadow-[4px_4px_0_0_#0369a1]">
-                      <PlusCircle size={18} /> Upload New
-                    </button>
+                {/* View/Sort Controls */}
+                <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+                  <div className="flex gap-1.5 flex-wrap">
+                    <button onClick={() => setTypeFilter('all')} className={cn("px-3 py-1.5 rounded-full font-extrabold text-[10px] border-2 uppercase transition-all", typeFilter === 'all' ? "bg-sky-500 text-white border-sky-600" : "bg-white text-slate-400 border-slate-100")}>All</button>
+                    <button onClick={() => setTypeFilter('image')} className={cn("px-3 py-1.5 rounded-full font-extrabold text-[10px] border-2 uppercase transition-all", typeFilter === 'image' ? "bg-sky-500 text-white border-sky-600" : "bg-white text-slate-400 border-slate-100")}>🖼️ Images</button>
+                    <button onClick={() => setTypeFilter('gif')} className={cn("px-3 py-1.5 rounded-full font-extrabold text-[10px] border-2 uppercase transition-all", typeFilter === 'gif' ? "bg-sky-500 text-white border-sky-600" : "bg-white text-slate-400 border-slate-100")}>🎞️ GIFs</button>
+                    <button onClick={() => setTypeFilter('other')} className={cn("px-3 py-1.5 rounded-full font-extrabold text-[10px] border-2 uppercase transition-all", typeFilter === 'other' ? "bg-sky-500 text-white border-sky-600" : "bg-white text-slate-400 border-slate-100")}>📁 Other</button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} className="bg-white border-2 border-slate-100 rounded-xl px-3 py-2 text-xs font-black text-slate-600 cursor-pointer focus:border-sky-400 outline-none shadow-sm">
+                      <option value="date-desc">Newest First</option>
+                      <option value="date-asc">Oldest First</option>
+                      <option value="size-desc">Largest First</option>
+                      <option value="size-asc">Smallest First</option>
+                    </select>
+                    <div className="bg-white p-1 rounded-xl border-2 border-slate-100 flex gap-1 shadow-sm">
+                      <button onClick={() => setView('grid')} className={cn("p-1.5 rounded-lg transition-all", view === 'grid' ? "bg-sky-100 text-sky-600" : "text-slate-300 hover:text-slate-400")}>
+                        <LayoutGrid size={16} />
+                      </button>
+                      <button onClick={() => setView('list')} className={cn("p-1.5 rounded-lg transition-all", view === 'list' ? "bg-sky-100 text-sky-600" : "text-slate-300 hover:text-slate-400")}>
+                        <List size={16} />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -322,7 +414,7 @@ export default function KapogianStoragePage() {
                     <LoaderCircle size={48} className="animate-spin text-sky-400" />
                     <p className="font-black uppercase tracking-widest text-slate-400">Syncing with Pinata...</p>
                   </div>
-                ) : filteredFiles.length === 0 ? (
+                ) : currentFiles.length === 0 ? (
                   <div className="text-center py-32 opacity-40">
                     <Database size={64} className="mx-auto mb-4 text-slate-200" />
                     <p className="font-black uppercase tracking-widest text-slate-400">Empty Chamber</p>
@@ -333,7 +425,12 @@ export default function KapogianStoragePage() {
                       {currentFiles.map((file, i) => (
                         <div key={file.id} className={cn("file-card group rounded-[2.5rem] overflow-hidden", selectedIds.has(file.id) && "selected")} style={{ animationDelay: `${i * 0.05}s` }}>
                           <div className="flex flex-col">
-                            <div className={cn("relative h-48 flex items-center justify-center cursor-pointer overflow-hidden", thCls(file.name))} onClick={() => toggleSelection(file.id)}>
+                            <div className={cn("relative h-48 flex items-center justify-center cursor-pointer overflow-hidden", thCls(file.name))} onClick={() => {
+                              const next = new Set(selectedIds);
+                              if (next.has(file.id)) next.delete(file.id);
+                              else next.add(file.id);
+                              setSelectedIds(next);
+                            }}>
                               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:12px_12px]" />
                               {tyGrp(file.name) === 'image' || tyGrp(file.name) === 'gif' ? (
                                 <div className="absolute inset-0 p-3 flex items-center justify-center">
@@ -370,14 +467,6 @@ export default function KapogianStoragePage() {
                                   <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-lg px-2 py-1.5 group/cid cursor-pointer hover:bg-sky-50 transition-colors" onClick={() => copyText(file.cid, "CID")}>
                                       <span className="font-mono text-[9px] text-slate-400 truncate flex-1 uppercase">{file.cid}</span>
                                       <Copy size={10} className="text-slate-200 group-hover/cid:text-sky-400" />
-                                  </div>
-                              </div>
-
-                              <div>
-                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><Layers size={10} /> File ID</p>
-                                  <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-lg px-2 py-1.5 group/id cursor-pointer hover:bg-sky-50 transition-colors" onClick={() => copyText(file.id, "ID")}>
-                                      <span className="font-mono text-[9px] text-slate-400 truncate flex-1 uppercase">{file.id}</span>
-                                      <Copy size={10} className="text-slate-200 group-hover/id:text-sky-400" />
                                   </div>
                               </div>
 
@@ -447,25 +536,49 @@ export default function KapogianStoragePage() {
 
             {page === 'groups' && (
               <div className="animate-in fade-in duration-500">
-                <div className="flex items-center justify-between mb-7">
-                  <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none uppercase italic">Groups</h1>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {groups.map((group, i) => {
-                    const fc = files.filter(f => f.group === group.name);
-                    const ts = fc.reduce((a, f) => a + f.size, 0);
-                    return (
-                      <div key={group.id} className="file-card group rounded-[2.5rem] overflow-hidden flex flex-col h-full bg-white transition-all hover:scale-105">
-                        <div className={cn("relative h-32 flex items-center justify-center", GROUP_PALETTE[i % GROUP_PALETTE.length])}>
-                          <span className="text-6xl drop-shadow-xl z-10">{group.emoji}</span>
-                        </div>
-                        <div className="p-6 flex flex-col flex-1">
-                          <h3 className="text-xl font-black text-slate-800 uppercase italic tracking-tighter mb-1 truncate">{group.name}</h3>
-                          <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-6">Total weight: {fmtSz(ts)}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="bg-white border-2 border-slate-50 rounded-3xl overflow-hidden shadow-sm">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50/50 border-b border-slate-100 text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                        <th className="px-6 py-4">Name</th>
+                        <th className="px-6 py-4">Created At</th>
+                        <th className="px-6 py-4 text-center">Group ID</th>
+                        <th className="px-6 py-4 text-center">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {filteredGroups.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="px-6 py-12 text-center text-slate-300 font-bold italic">No groups found in this sector.</td>
+                        </tr>
+                      ) : (
+                        filteredGroups.map((group) => (
+                          <tr key={group.id} className="hover:bg-slate-50 transition-colors group">
+                            <td className="px-6 py-4 flex items-center gap-3">
+                              <span className="text-xl">{group.emoji}</span>
+                              <span className="font-black text-slate-700">{group.name}</span>
+                            </td>
+                            <td className="px-6 py-4 text-slate-400 font-bold text-sm">{fmtDt(group.date)}</td>
+                            <td className="px-6 py-4 text-center">
+                              <button onClick={() => copyText(group.id, "Group ID")} className="p-2 text-slate-300 hover:text-indigo-500 transition-colors">
+                                <Copy size={18} />
+                              </button>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center justify-center gap-2">
+                                <button className="p-2 text-slate-300 hover:text-slate-600 transition-colors">
+                                  <Pencil size={18} />
+                                </button>
+                                <button onClick={() => deleteGroup(group.id)} className="p-2 text-slate-300 hover:text-rose-500 transition-colors">
+                                  <Trash2 size={18} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
@@ -482,11 +595,32 @@ export default function KapogianStoragePage() {
               <h3 className="text-2xl font-black text-slate-800 uppercase italic tracking-tight">Upload Asset</h3>
               <button onClick={() => setUploadModalOpen(false)} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-red-500 hover:text-white transition-all shadow-sm">✕</button>
             </div>
+            
             <div className="border-4 border-dashed border-sky-100 rounded-[2.5rem] p-12 text-center mb-6 hover:border-sky-400 hover:bg-sky-50 transition-all cursor-pointer group" onClick={() => document.getElementById('upload-input')?.click()}>
               <div className="text-6xl mb-4 group-hover:scale-110 transition-transform">🚀</div>
               <p className="font-black text-slate-500 text-sm uppercase tracking-widest">Drop files or <span className="text-sky-500 underline">Browse</span></p>
               <input id="upload-input" type="file" multiple className="hidden" onChange={(e) => setPendingFiles(Array.from(e.target.files || []))} />
             </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-6">
+                <div>
+                    <label className="block text-[10px] font-black text-slate-400 mb-1 uppercase tracking-widest ml-2">Visibility</label>
+                    <select value={uploadVis} onChange={(e) => setUploadVis(e.target.value as any)} className="w-full h-12 bg-sky-50 border-2 border-sky-100 rounded-2xl px-4 font-bold text-slate-700 text-sm cursor-pointer outline-none focus:border-sky-400">
+                        <option value="public">🌐 Public</option>
+                        <option value="private">🔒 Private</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-[10px] font-black text-slate-400 mb-1 uppercase tracking-widest ml-2">Assign to Group</label>
+                    <select value={uploadGroup} onChange={(e) => setUploadGroup(e.target.value)} className="w-full h-12 bg-sky-50 border-2 border-sky-100 rounded-2xl px-4 font-bold text-slate-700 text-sm cursor-pointer outline-none focus:border-sky-400">
+                        <option value="">No Group</option>
+                        {groups.map(g => (
+                          <option key={g.id} value={g.name}>{g.emoji} {g.name}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+
             {pendingFiles.length > 0 && (
               <div className="space-y-2 mb-6 max-h-40 overflow-y-auto custom-scrollbar pr-2">
                 {pendingFiles.map((f, i) => (
@@ -501,6 +635,53 @@ export default function KapogianStoragePage() {
             <button onClick={handleUpload} className="w-full py-5 bg-black text-white rounded-[2rem] font-black uppercase tracking-[0.2em] text-sm shadow-[6px_6px_0_0_#0ea5e9] hover:bg-slate-800 transition-all active:translate-y-1 active:shadow-none flex items-center justify-center gap-3">
               <Upload size={20} /> Deploy to IPFS
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* New Group Modal */}
+      {groupModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setGroupModalOpen(false)} />
+          <div className="relative bg-white border-4 border-black rounded-[3rem] p-8 max-w-sm w-full shadow-[12px_12px_0_0_rgba(0,0,0,1)] animate-in zoom-in-95">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-black text-slate-800">New Group 📂</h3>
+              <button onClick={() => setGroupModalOpen(false)} className="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center font-bold text-slate-400 hover:bg-red-500 hover:text-white transition-all">✕</button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 mb-1 uppercase tracking-widest ml-2">Group Name</label>
+                <input 
+                  type="text" 
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  placeholder="e.g. shop-assets" 
+                  className="w-full h-12 bg-sky-50 border-2 border-sky-100 rounded-2xl px-4 font-bold text-slate-700 placeholder-slate-200 text-sm outline-none focus:border-indigo-400 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest ml-2">Emoji Badge</label>
+                <div className="grid grid-cols-6 gap-2">
+                  {groupEmojis.map(e => (
+                    <button 
+                      key={e} 
+                      onClick={() => setNewGroupEmoji(e)}
+                      className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-xl border-2 transition-all", 
+                        newGroupEmoji === e ? "bg-indigo-50 border-indigo-400 shadow-sm" : "bg-slate-50 border-slate-100 hover:border-slate-200")}
+                    >
+                      {e}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button onClick={() => setGroupModalOpen(false)} className="flex-1 h-12 bg-slate-100 text-slate-500 font-black rounded-2xl hover:bg-slate-200 transition-all text-xs uppercase tracking-widest">Cancel</button>
+                <button onClick={handleCreateGroup} className="flex-1 h-12 bg-indigo-500 text-white font-black rounded-2xl shadow-[4px_4px_0_0_#3730a3] hover:bg-indigo-600 transition-all text-xs uppercase tracking-widest">Create</button>
+              </div>
+            </div>
           </div>
         </div>
       )}
