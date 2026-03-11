@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   File, 
   FolderOpen, 
-  PlusCircle, 
   Search, 
   LayoutGrid, 
   List, 
@@ -21,12 +20,10 @@ import {
   X,
   Copy,
   Calendar,
-  Layers,
   HardDrive,
   Pencil,
   Plus,
-  Hash,
-  Filter
+  Hash
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/kapogian/page-header';
@@ -272,7 +269,7 @@ export default function KapogianStoragePage() {
     setGroups(prev => [newG, ...prev]);
     setNewGroupName("");
     setGroupModalOpen(false);
-    addToast('Group created!', 'success');
+    addToast(`Group "${newG.name}" created!`, 'success');
   };
 
   const navigateToGroup = (groupName: string) => {
@@ -369,7 +366,7 @@ export default function KapogianStoragePage() {
                   onClick={() => page === 'files' ? setUploadModalOpen(true) : setGroupModalOpen(true)} 
                   className="squishy bg-indigo-500 text-white font-black px-6 py-3 rounded-full text-xs flex items-center gap-2 hover:bg-indigo-600 transition-all uppercase tracking-widest shadow-lg"
                 >
-                  <Plus size={18} /> {page === 'files' ? 'Add' : 'Add'}
+                  <Plus size={18} /> Add
                 </button>
               </div>
             </div>
@@ -598,7 +595,10 @@ export default function KapogianStoragePage() {
                                 <button className="p-2 text-slate-300 hover:text-slate-600 transition-colors">
                                   <Pencil size={18} />
                                 </button>
-                                <button className="p-2 text-slate-300 hover:text-rose-500 transition-colors">
+                                <button className="p-2 text-slate-300 hover:text-rose-500 transition-colors" onClick={() => {
+                                  setGroups(prev => prev.filter(g => g.id !== group.id));
+                                  addToast('Group deleted', 'success');
+                                }}>
                                   <Trash2 size={18} />
                                 </button>
                               </div>
@@ -651,7 +651,7 @@ export default function KapogianStoragePage() {
             </div>
 
             {pendingFiles.length > 0 && (
-              <div className="space-y-2 mb-6 max-h-40 overflow-y-auto custom-scrollbar pr-2">
+              <div className="space-y-2 mb-6 max-h-40 overflow-y-auto pr-2">
                 {pendingFiles.map((f, i) => (
                   <div key={i} className="flex items-center gap-3 bg-sky-50 border border-sky-100 rounded-xl px-4 py-2 shadow-sm">
                     <span className="text-xl">{emoF(f.name)}</span>
@@ -668,7 +668,7 @@ export default function KapogianStoragePage() {
         </div>
       )}
 
-      {/* New Group Modal */}
+      {/* Group Modal */}
       {groupModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setGroupModalOpen(false)} />
