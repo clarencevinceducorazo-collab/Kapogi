@@ -23,7 +23,8 @@ import {
   HardDrive,
   Pencil,
   Plus,
-  Hash
+  Hash,
+  Eye
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/kapogian/page-header';
@@ -55,8 +56,6 @@ interface Toast {
   message: string;
   type: 'info' | 'success' | 'error';
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmtSz = (b: number) => b >= 1048576 ? (b / 1048576).toFixed(2) + ' MB' : (b / 1024).toFixed(2) + ' KB';
 const fmtDt = (d: string) => {
@@ -94,6 +93,8 @@ const RI = () => {
   return s;
 };
 
+const GROUP_EMOJIS = ['📁', '🛍️', '🎞️', '🖼️', '🎨', '🔥', '⭐', '🌐', '🎵', '📦', '💎', '🏆'];
+
 export default function KapogianStoragePage() {
   const [page, setPage] = useState<'files' | 'groups'>('files');
   const [activeTab, setActiveTab] = useState<'public' | 'private'>('public');
@@ -121,7 +122,17 @@ export default function KapogianStoragePage() {
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupEmoji, setNewGroupEmoji] = useState("📁");
 
-  const groupEmojis = ['📁', '🛍️', '🎞️', '🖼️', '🎨', '🔥', '⭐', '🌐', '🎵', '📦', '💎', '🏆'];
+  // ─── Persistence ───
+  useEffect(() => {
+    const saved = localStorage.getItem('kapogian_storage_groups');
+    if (saved) {
+      try { setGroups(JSON.parse(saved)); } catch (e) { console.error(e); }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('kapogian_storage_groups', JSON.stringify(groups));
+  }, [groups]);
 
   const fetchFiles = async () => {
     setIsLoadingFiles(true);
@@ -142,7 +153,7 @@ export default function KapogianStoragePage() {
         }));
         setFiles(parsedFiles);
 
-        // Deduce groups from file metadata if they don't exist in our state
+        // Deduced groups update
         const foundGroups = new Set<string>();
         parsedFiles.forEach(f => { if (f.group) foundGroups.add(f.group); });
         
@@ -242,8 +253,6 @@ export default function KapogianStoragePage() {
         const { url } = await presignRes.json();
         const formData = new FormData();
         formData.append("file", file);
-        
-        // Metadata handled on Pinata side via specific V3 upload pattern 
         await fetch(url, { method: "POST", body: formData });
       }
       await fetchFiles(); 
@@ -322,7 +331,7 @@ export default function KapogianStoragePage() {
           <div className="flex items-center gap-2.5 px-3 mb-7">
             <span className="text-3xl animate-bounce inline-block leading-none">🪅</span>
             <div>
-              <div className="text-[11px] font-black text-slate-800 uppercase tracking-tight">KAPOGIAN</div>
+              <div className="text-[11px] font-black text-slate-800 uppercase tracking-tight leading-none">KAPOGIAN</div>
               <div className="text-[10px] font-extrabold text-sky-400 tracking-widest uppercase mt-0.5">STORAGE</div>
             </div>
           </div>
@@ -654,7 +663,7 @@ export default function KapogianStoragePage() {
               <div className="space-y-2 mb-6 max-h-40 overflow-y-auto pr-2">
                 {pendingFiles.map((f, i) => (
                   <div key={i} className="flex items-center gap-3 bg-sky-50 border border-sky-100 rounded-xl px-4 py-2 shadow-sm">
-                    <span className="text-xl">{emoF(f.name)}</span>
+                    <span className="text-lg">{emoF(f.name)}</span>
                     <span className="flex-1 text-xs font-black text-slate-600 truncate">{f.name}</span>
                     <span className="text-[9px] font-black text-slate-400">{fmtSz(f.size)}</span>
                   </div>
@@ -693,7 +702,7 @@ export default function KapogianStoragePage() {
               <div>
                 <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest ml-2">Emoji Badge</label>
                 <div className="grid grid-cols-6 gap-2">
-                  {groupEmojis.map(e => (
+                  {GROUP_EMOJIS.map(e => (
                     <button 
                       key={e} 
                       onClick={() => setNewGroupEmoji(e)}
