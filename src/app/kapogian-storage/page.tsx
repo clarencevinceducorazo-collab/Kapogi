@@ -32,7 +32,8 @@ import {
   Smartphone,
   ShieldCheck,
   Check as CheckIcon,
-  HardDrive
+  HardDrive,
+  RefreshCw
 } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
@@ -62,6 +63,7 @@ interface KapoFile {
   date: string;
   vis: 'public' | 'private';
   group: string;
+  url: string;
 }
 
 interface KapoGroup {
@@ -82,8 +84,12 @@ interface Toast {
 const fmtSz = (b: number) => b >= 1048576 ? (b / 1048576).toFixed(2) + ' MB' : (b / 1024).toFixed(2) + ' KB';
 const fmtDt = (d: string) => {
   if (!d) return '—';
-  const [y, m, day] = d.split('-');
-  return `${+m}/${+day}/${y}`;
+  try {
+    const date = new Date(d);
+    return date.toLocaleDateString();
+  } catch {
+    return d;
+  }
 };
 const sCID = (c: string) => c.length > 12 ? c.slice(0, 6) + '…' + c.slice(-5) : c;
 const ext = (n: string) => (n.split('.').pop() || '').toLowerCase();
@@ -102,13 +108,6 @@ const tyGrp = (n: string) => {
   if (['gif'].includes(e)) return 'gif';
   if (['png', 'jpg', 'jpeg', 'webp', 'svg'].includes(e)) return 'image';
   return 'other';
-};
-
-const RC = (p?: string) => {
-  const c = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  let s = '';
-  for (let i = 0; i < 36; i++) s += c[Math.floor(Math.random() * c.length)];
-  return (p || 'bafyb') + s;
 };
 
 const RI = () => {
@@ -133,29 +132,9 @@ export default function KapogianStoragePage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   
   // Data State
-  const [files, setFiles] = useState<KapoFile[]>([
-    { id: RI(), name: 'conquesthoodie.gif', cid: RC(), size: 22.18 * 1024 * 1024, date: '2026-03-06', vis: 'public', group: 'shop-assets' },
-    { id: RI(), name: 'shop-asset-1772779488515.png', cid: RC(), size: 1.99 * 1024 * 1024, date: '2026-03-06', vis: 'public', group: 'shop-assets' },
-    { id: RI(), name: 'shop-asset-1772778981114.png', cid: RC(), size: 417.97 * 1024, date: '2026-03-06', vis: 'public', group: 'shop-assets' },
-    { id: RI(), name: 'shop-asset-1772778612500.png', cid: RC(), size: 8.85 * 1024 * 1024, date: '2026-03-06', vis: 'public', group: 'shop-assets' },
-    { id: RI(), name: 'shop-asset-1772778587586.png', cid: RC(), size: 6.91 * 1024 * 1024, date: '2026-03-06', vis: 'public', group: '' },
-    { id: RI(), name: 'herobackground.png', cid: RC(), size: 619.69 * 1024, date: '2026-01-27', vis: 'public', group: '' },
-    { id: RI(), name: 'taqeemcdaniel-758761370426345.gif', cid: RC(), size: 11.38 * 1024 * 1024, date: '2026-01-08', vis: 'public', group: 'gifs' },
-    { id: RI(), name: 'Download.gif', cid: RC(), size: 10.34 * 1024 * 1024, date: '2026-01-08', vis: 'public', group: 'gifs' },
-    { id: RI(), name: 'Download1-ezgif-to-gif-converter.gif', cid: RC(), size: 16.21 * 1024 * 1024, date: '2026-01-08', vis: 'public', group: 'gifs' },
-    { id: RI(), name: 'b-sinag-logo.png', cid: RC('bafkr'), size: 255.36 * 1024, date: '2026-01-07', vis: 'public', group: '' },
-    { id: RI(), name: 'kapo-banner-v2.png', cid: RC(), size: 3.42 * 1024 * 1024, date: '2025-12-20', vis: 'private', group: '' },
-    { id: RI(), name: 'biringan-map.svg', cid: RC(), size: 88.5 * 1024, date: '2025-12-18', vis: 'private', group: '' },
-    { id: RI(), name: 'pogi-coin-render.png', cid: RC(), size: 512 * 1024, date: '2025-12-10', vis: 'private', group: '' },
-    { id: RI(), name: 'kapo-classic-tee-mockup.jpg', cid: RC(), size: 1.12 * 1024 * 1024, date: '2025-11-30', vis: 'public', group: 'shop-assets' },
-    { id: RI(), name: 'merch-hoodie-black.png', cid: RC(), size: 2.8 * 1024 * 1024, date: '2025-11-20', vis: 'public', group: 'shop-assets' },
-    { id: RI(), name: 'metadata.json', cid: RC(), size: 12.4 * 1024, date: '2025-11-15', vis: 'private', group: '' },
-  ]);
-  
-  const [groups, setGroups] = useState<KapoGroup[]>([
-    { id: RI(), name: 'shop-assets', emoji: '🛍️', date: '2026-03-06' },
-    { id: RI(), name: 'gifs', emoji: '🎞️', date: '2026-01-08' },
-  ]);
+  const [files, setFiles] = useState<KapoFile[]>([]);
+  const [groups, setGroups] = useState<KapoGroup[]>([]);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(true);
 
   // UI State
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -174,6 +153,50 @@ export default function KapogianStoragePage() {
   const [newGroupEmoji, setNewGroupEmoji] = useState('📁');
 
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+
+  // ─── Data Fetching ──────────────────────────────────────────────────────────
+
+  const fetchFiles = async () => {
+    setIsLoadingFiles(true);
+    try {
+      const res = await fetch("/api/pinata/list");
+      if (!res.ok) throw new Error("Failed to fetch from Pinata");
+      const data = await res.json();
+      if (data.files) {
+        const parsedFiles: KapoFile[] = data.files.map((f: any) => ({
+          id: f.ipfsHash, // Use IPFS Hash as stable ID
+          name: f.name,
+          cid: f.ipfsHash,
+          size: f.size || 0,
+          date: f.date || new Date().toISOString(),
+          vis: 'public', // Pinata files are generally public via gateway
+          group: f.group || '',
+          url: f.url
+        }));
+        setFiles(parsedFiles);
+
+        // Auto-generate groups based on found metadata
+        const foundGroups = new Set<string>();
+        parsedFiles.forEach(f => { if (f.group) foundGroups.add(f.group); });
+        const initialGroups: KapoGroup[] = Array.from(foundGroups).map(name => ({
+          id: RI(),
+          name,
+          emoji: '📦',
+          date: new Date().toISOString()
+        }));
+        setGroups(initialGroups);
+      }
+    } catch (err) {
+      console.error(err);
+      addToast("Failed to sync storage with Pinata", "error");
+    } finally {
+      setIsLoadingFiles(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFiles();
+  }, []);
 
   // ─── Logic ──────────────────────────────────────────────────────────────────
 
@@ -222,19 +245,48 @@ export default function KapogianStoragePage() {
 
   const clearSelection = () => setSelectedIds(new Set());
 
-  const bulkDelete = () => {
+  const bulkDelete = async () => {
     if (selectedIds.size === 0) return;
+    const idsToDelete = Array.from(selectedIds);
+    addToast(`Starting bulk unpin of ${idsToDelete.length} files...`, 'info');
+    
+    let successCount = 0;
+    for (const hash of idsToDelete) {
+      try {
+        const res = await fetch("/api/pinata/unpin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ hash })
+        });
+        if (res.ok) successCount++;
+      } catch (err) {
+        console.error("Failed to unpin", hash, err);
+      }
+    }
+
     setFiles(prev => prev.filter(f => !selectedIds.has(f.id)));
-    addToast(`${selectedIds.size} files deleted`, 'success');
+    addToast(`${successCount} files unpinned successfully`, 'success');
     clearSelection();
   };
 
-  const deleteFile = (id: string) => {
-    setFiles(prev => prev.filter(f => f.id !== id));
-    const next = new Set(selectedIds);
-    next.delete(id);
-    setSelectedIds(next);
-    addToast('File removed', 'success');
+  const deleteFile = async (id: string) => {
+    try {
+      const res = await fetch("/api/pinata/unpin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hash: id })
+      });
+      if (!res.ok) throw new Error("Unpin request failed");
+      
+      setFiles(prev => prev.filter(f => f.id !== id));
+      const next = new Set(selectedIds);
+      next.delete(id);
+      setSelectedIds(next);
+      addToast('File removed from IPFS', 'success');
+    } catch (err) {
+      console.error(err);
+      addToast("Failed to delete file from Pinata", "error");
+    }
     setActiveDropdownId(null);
   };
 
@@ -250,27 +302,40 @@ export default function KapogianStoragePage() {
     setFiles(prev => prev.map(f => f.id === renamingFileId ? { ...f, name: renameValue.trim() } : f));
     setRenameModalOpen(false);
     setRenamingFileId(null);
-    addToast('Renamed successfully', 'success');
+    addToast('Renamed locally', 'success');
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (pendingFiles.length === 0) {
       addToast('No files selected', 'error');
       return;
     }
-    const newFiles: KapoFile[] = pendingFiles.map(f => ({
-      id: RI(),
-      name: f.name,
-      cid: RC(),
-      size: f.size,
-      date: new Date().toISOString().slice(0, 10),
-      vis: uploadVisibility,
-      group: uploadGroup
-    }));
-    setFiles(prev => [...newFiles, ...prev]);
-    setUploadModalOpen(false);
-    setPendingFiles([]);
-    addToast(`${newFiles.length} files uploaded! 🚀`, 'success');
+    
+    setIsLoadingFiles(true);
+    addToast(`Uploading ${pendingFiles.length} manifests to IPFS...`, 'info');
+    
+    try {
+      for (const file of pendingFiles) {
+        const presignRes = await fetch("/api/pinata/upload");
+        const { url } = await presignRes.json();
+        
+        const formData = new FormData();
+        formData.append("file", file);
+        
+        const uploadRes = await fetch(url, { method: "POST", body: formData });
+        if (!uploadRes.ok) throw new Error(`Upload failed for ${file.name}`);
+      }
+      
+      await fetchFiles(); // Refresh list
+      setUploadModalOpen(false);
+      setPendingFiles([]);
+      addToast(`All files deployed to IPFS! 🚀`, 'success');
+    } catch (err) {
+      console.error(err);
+      addToast("One or more uploads failed", "error");
+    } finally {
+      setIsLoadingFiles(false);
+    }
   };
 
   const saveGroup = () => {
@@ -279,7 +344,7 @@ export default function KapogianStoragePage() {
       id: RI(),
       name: newGroupName.trim(),
       emoji: newGroupEmoji,
-      date: new Date().toISOString().slice(0, 10)
+      date: new Date().toISOString()
     };
     setGroups(prev => [...prev, newGroup]);
     setGroupModalOpen(false);
@@ -299,10 +364,9 @@ export default function KapogianStoragePage() {
   const browseGroup = (groupName: string) => {
     setPage('files');
     setActiveTab('public');
-    setSearchQuery('');
+    setSearchQuery(groupName);
     setTypeFilter('all');
-    // We could filter strictly by group, but for this MVP we just jump to files
-    addToast(`Browsing ${groupName}`, 'info');
+    addToast(`Filtering by group: ${groupName}`, 'info');
   };
 
   return (
@@ -387,12 +451,12 @@ export default function KapogianStoragePage() {
           <div className="mx-1 mt-4 neo-sm rounded-2xl p-3.5 border-2 border-white">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Storage</span>
-              <span className="text-[9px] font-black text-sky-500">4.2 / 10 GB</span>
+              <span className="text-[9px] font-black text-sky-500">{fmtSz(files.reduce((a,f)=>a+f.size,0))} used</span>
             </div>
             <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div className="h-full w-[42%] bg-gradient-to-r from-sky-400 to-blue-500 rounded-full transition-all duration-700" />
+              <div className="h-full w-[12%] bg-gradient-to-r from-sky-400 to-blue-500 rounded-full transition-all duration-700" />
             </div>
-            <p className="text-[8px] font-bold text-slate-300 mt-1.5 uppercase">42% Used · 5.8 GB Free</p>
+            <p className="text-[8px] font-bold text-slate-300 mt-1.5 uppercase">IPFS Decentralized Vault</p>
           </div>
         </aside>
 
@@ -407,18 +471,23 @@ export default function KapogianStoragePage() {
                     <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none uppercase italic">Files</h1>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Kapogian Cloud · IPFS Powered</p>
                   </div>
-                  <button onClick={() => setUploadModalOpen(true)} className="squishy bg-gradient-to-r from-sky-400 to-blue-600 text-white font-black px-6 py-3 rounded-2xl text-xs flex items-center gap-2 hover:shadow-lg hover:shadow-sky-200 hover:-translate-y-0.5 transition-all uppercase tracking-widest shadow-[4px_4px_0_0_#0369a1]">
-                    <PlusCircle size={18} /> Add New
-                  </button>
+                  <div className="flex gap-2">
+                    <button onClick={fetchFiles} disabled={isLoadingFiles} className="squishy bg-white border-2 border-slate-100 rounded-2xl w-12 h-12 flex items-center justify-center text-slate-400 hover:text-sky-500 transition-all shadow-sm">
+                      <RefreshCw size={18} className={isLoadingFiles ? "animate-spin" : ""} />
+                    </button>
+                    <button onClick={() => setUploadModalOpen(true)} className="squishy bg-gradient-to-r from-sky-400 to-blue-600 text-white font-black px-6 py-3 rounded-2xl text-xs flex items-center gap-2 hover:shadow-lg hover:shadow-sky-200 hover:-translate-y-0.5 transition-all uppercase tracking-widest shadow-[4px_4px_0_0_#0369a1]">
+                      <PlusCircle size={18} /> Add New
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex gap-6 mb-6 border-b-4 border-slate-100">
                   <button onClick={() => setActiveTab('public')} className={cn("tab-btn pb-2 font-black text-xs uppercase tracking-widest transition-all relative", activeTab === 'public' ? "active text-slate-800" : "text-slate-400")}>
-                    Public
+                    Public Vault
                     {activeTab === 'public' && <div className="absolute bottom-0 left-0 w-full h-1 bg-sky-400 rounded-t-full" />}
                   </button>
                   <button onClick={() => setActiveTab('private')} className={cn("tab-btn pb-2 font-black text-xs uppercase tracking-widest transition-all relative", activeTab === 'private' ? "active text-slate-800" : "text-slate-400")}>
-                    Private
+                    Private (N/A)
                     {activeTab === 'private' && <div className="absolute bottom-0 left-0 w-full h-1 bg-sky-400 rounded-t-full" />}
                   </button>
                 </div>
@@ -474,7 +543,12 @@ export default function KapogianStoragePage() {
                   </div>
                 )}
 
-                {currentFiles.length === 0 ? (
+                {isLoadingFiles ? (
+                  <div className="flex flex-col items-center justify-center py-32 gap-4">
+                    <LoaderCircle size={48} className="animate-spin text-sky-400" />
+                    <p className="font-black uppercase tracking-widest text-slate-400">Syncing with Pinata...</p>
+                  </div>
+                ) : currentFiles.length === 0 ? (
                   <div className="text-center py-32 opacity-40">
                     <Database size={64} className="mx-auto mb-4 text-slate-200" />
                     <p className="font-black uppercase tracking-widest text-slate-400">Empty Chamber</p>
@@ -500,7 +574,7 @@ export default function KapogianStoragePage() {
                                   type="checkbox" 
                                   checked={selectedIds.has(file.id)}
                                   readOnly
-                                  className="w-4 h-4 rounded-md border-2 border-black/10 appearance-none bg-white checked:bg-sky-400 transition-all pointer-events-none" 
+                                  className="kapo-check checked:bg-sky-400" 
                                 />
                               </div>
                               <div className="absolute bottom-3 left-3 bg-white/80 backdrop-blur-sm border border-white px-2 py-0.5 rounded-lg text-[8px] font-black uppercase text-slate-500 shadow-sm">
@@ -518,11 +592,11 @@ export default function KapogianStoragePage() {
                               <div className="flex items-center justify-between">
                                 <span className="text-[9px] font-black text-slate-300 uppercase">{fmtDt(file.date)}</span>
                                 <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button onClick={() => addToast('Opening manifest...', 'info')} className="squishy w-7 h-7 bg-sky-50 rounded-lg flex items-center justify-center border border-sky-100 text-sky-400 hover:bg-sky-400 hover:text-white transition-all shadow-sm">
-                                    <Eye size={12} />
+                                  <button onClick={() => copyText(file.url)} className="squishy w-7 h-7 bg-sky-50 rounded-lg flex items-center justify-center border border-sky-100 text-sky-400 hover:bg-sky-400 hover:text-white transition-all shadow-sm">
+                                    <LinkIcon size={12} />
                                   </button>
-                                  <button onClick={() => copyText(file.cid)} className="squishy w-7 h-7 bg-slate-50 rounded-lg flex items-center justify-center border border-slate-100 text-slate-400 hover:bg-slate-800 hover:text-white transition-all shadow-sm">
-                                    <Copy size={12} />
+                                  <button onClick={() => deleteFile(file.id)} className="squishy w-7 h-7 bg-red-50 rounded-lg flex items-center justify-center border border-red-100 text-red-400 hover:bg-red-500 hover:text-white transition-all shadow-sm">
+                                    <Trash2 size={12} />
                                   </button>
                                 </div>
                               </div>
@@ -534,7 +608,7 @@ export default function KapogianStoragePage() {
                               type="checkbox" 
                               checked={selectedIds.has(file.id)}
                               onChange={() => toggleSelection(file.id)}
-                              className="w-4 h-4 rounded-md border-2 border-black/10 appearance-none bg-white checked:bg-sky-400 transition-all cursor-pointer" 
+                              className="kapo-check checked:bg-sky-400" 
                             />
                             <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center border-2 border-white shadow-sm text-2xl shrink-0 cursor-pointer", thCls(file.name))} onClick={() => toggleSelection(file.id)}>
                               {emoF(file.name)}
@@ -570,7 +644,7 @@ export default function KapogianStoragePage() {
                       <select 
                         value={rowsPerPage} 
                         onChange={(e) => { setRowsPerPage(+e.target.value); setCurrentPage(1); }}
-                        className="bg-sky-50 border-2 border-sky-100 rounded-xl px-2 py-1 text-[10px] font-black text-slate-600 outline-none cursor-pointer"
+                        className="bg-sky-50 border-2 border-sky-100 rounded-xl px-2 py-1 text-xs font-extrabold text-slate-600 cursor-pointer"
                       >
                         {ITEMS_PER_PAGE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
                       </select>
@@ -675,10 +749,10 @@ export default function KapogianStoragePage() {
             {pendingFiles.length > 0 && (
               <div className="space-y-2 mb-6 max-h-40 overflow-y-auto custom-scrollbar pr-2">
                 {pendingFiles.map((f, i) => (
-                  <div key={i} className="flex items-center gap-3 bg-sky-50 border-2 border-sky-100 rounded-xl px-4 py-2 shadow-sm">
+                  <div key={i} className="flex items-center gap-3 bg-sky-50 border border-sky-100 rounded-xl px-4 py-2 shadow-sm">
                     <span className="text-xl">{emoF(f.name)}</span>
                     <span className="flex-1 text-xs font-black text-slate-600 truncate">{f.name}</span>
-                    <span className="text-[9px] font-black text-slate-300">{fmtSz(f.size)}</span>
+                    <span className="text-[9px] font-black text-slate-400">{fmtSz(f.size)}</span>
                   </div>
                 ))}
               </div>
@@ -747,7 +821,7 @@ export default function KapogianStoragePage() {
       <div className="fixed bottom-10 right-10 z-[200] flex flex-col gap-3 pointer-events-none">
         {toasts.map(t => (
           <div key={t.id} className={cn("pointer-events-auto flex items-center gap-3 px-6 py-4 rounded-[1.5rem] border-4 border-black font-black text-xs uppercase tracking-widest shadow-[6px_6px_0_0_rgba(0,0,0,1)] animate-in slide-in-from-right-4 duration-300", 
-            t.type === 'success' ? 'bg-green-400' : t.type === 'error' ? 'bg-red-400 text-white' : 'bg-white')}>
+            t.type === 'success' ? 'bg-green-400 text-black' : t.type === 'error' ? 'bg-red-400 text-white' : 'bg-white')}>
             {t.type === 'success' ? <CheckCircle size={18} /> : t.type === 'error' ? <AlertCircle size={18} /> : <Database size={18} />}
             {t.message}
           </div>

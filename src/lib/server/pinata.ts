@@ -56,7 +56,10 @@ export async function listPinnedFiles() {
     ipfsHash: row.ipfs_pin_hash,
     name: row.metadata?.name || row.ipfs_pin_hash,
     url: getIPFSGatewayUrl(`ipfs://${row.ipfs_pin_hash}`, config),
-    mimeType: row.mime_type
+    mimeType: row.mime_type,
+    size: row.size || 0,
+    date: row.date_pinned || new Date().toISOString(),
+    group: row.metadata?.keyvalues?.group || ""
   }));
 }
 
