@@ -328,68 +328,119 @@ export default function KapogianStoragePage() {
                     <p className="font-black uppercase tracking-widest text-slate-400">Empty Chamber</p>
                   </div>
                 ) : (
-                  <div className={cn(view === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-3")}>
-                    {currentFiles.map((file, i) => (
-                      <div key={file.id} className={cn("file-card group rounded-[2.5rem] overflow-hidden", selectedIds.has(file.id) && "selected")} style={{ animationDelay: `${i * 0.05}s` }}>
-                        <div className="flex flex-col">
-                          <div className={cn("relative h-48 flex items-center justify-center cursor-pointer overflow-hidden", thCls(file.name))} onClick={() => toggleSelection(file.id)}>
-                            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:12px_12px]" />
-                            {tyGrp(file.name) === 'image' || tyGrp(file.name) === 'gif' ? (
-                              <div className="absolute inset-0 p-3 flex items-center justify-center">
-                                <img src={file.url} alt={file.name} className="w-full h-full object-contain drop-shadow-xl rounded-2xl transition-transform duration-500 group-hover:scale-110" loading="lazy" />
+                  <>
+                    <div className={cn(view === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-3")}>
+                      {currentFiles.map((file, i) => (
+                        <div key={file.id} className={cn("file-card group rounded-[2.5rem] overflow-hidden", selectedIds.has(file.id) && "selected")} style={{ animationDelay: `${i * 0.05}s` }}>
+                          <div className="flex flex-col">
+                            <div className={cn("relative h-48 flex items-center justify-center cursor-pointer overflow-hidden", thCls(file.name))} onClick={() => toggleSelection(file.id)}>
+                              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:12px_12px]" />
+                              {tyGrp(file.name) === 'image' || tyGrp(file.name) === 'gif' ? (
+                                <div className="absolute inset-0 p-3 flex items-center justify-center">
+                                  <img src={file.url} alt={file.name} className="w-full h-full object-contain drop-shadow-xl rounded-2xl transition-transform duration-500 group-hover:scale-110" loading="lazy" />
+                                </div>
+                              ) : (
+                                <span className="text-6xl drop-shadow-lg group-hover:scale-110 transition-transform duration-500 select-none relative z-10">{emoF(file.name)}</span>
+                              )}
+                              <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button onClick={(e) => { e.stopPropagation(); deleteFile(file.id); }} className="w-8 h-8 bg-red-500 text-white rounded-xl flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors">
+                                      <Trash2 size={14} />
+                                  </button>
                               </div>
-                            ) : (
-                              <span className="text-6xl drop-shadow-lg group-hover:scale-110 transition-transform duration-500 select-none relative z-10">{emoF(file.name)}</span>
-                            )}
-                            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={(e) => { e.stopPropagation(); deleteFile(file.id); }} className="w-8 h-8 bg-red-500 text-white rounded-xl flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors">
-                                    <Trash2 size={14} />
-                                </button>
                             </div>
-                          </div>
-                          <div className="p-5 bg-white space-y-3">
-                            <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Name</p>
-                                <p className="font-black text-slate-800 text-sm truncate leading-tight" title={file.name}>{file.name}</p>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5 flex items-center gap-1"><HardDrive size={10} /> Size</p>
-                                    <p className="font-bold text-slate-600 text-[11px]">{fmtSz(file.size)}</p>
-                                </div>
-                                <div>
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5 flex items-center gap-1"><Calendar size={10} /> Date</p>
-                                    <p className="font-bold text-slate-600 text-[11px]">{fmtDt(file.date)}</p>
-                                </div>
-                            </div>
+                            <div className="p-5 bg-white space-y-3">
+                              <div>
+                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Name</p>
+                                  <p className="font-black text-slate-800 text-sm truncate leading-tight" title={file.name}>{file.name}</p>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5 flex items-center gap-1"><HardDrive size={10} /> Size</p>
+                                      <p className="font-bold text-slate-600 text-[11px]">{fmtSz(file.size)}</p>
+                                  </div>
+                                  <div>
+                                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5 flex items-center gap-1"><Calendar size={10} /> Date</p>
+                                      <p className="font-bold text-slate-600 text-[11px]">{fmtDt(file.date)}</p>
+                                  </div>
+                              </div>
 
-                            <div>
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><Copy size={10} /> CID</p>
-                                <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-lg px-2 py-1.5 group/cid cursor-pointer hover:bg-sky-50 transition-colors" onClick={() => copyText(file.cid, "CID")}>
-                                    <span className="font-mono text-[9px] text-slate-400 truncate flex-1 uppercase">{file.cid}</span>
-                                    <Copy size={10} className="text-slate-200 group-hover/cid:text-sky-400" />
-                                </div>
-                            </div>
+                              <div>
+                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><Copy size={10} /> CID</p>
+                                  <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-lg px-2 py-1.5 group/cid cursor-pointer hover:bg-sky-50 transition-colors" onClick={() => copyText(file.cid, "CID")}>
+                                      <span className="font-mono text-[9px] text-slate-400 truncate flex-1 uppercase">{file.cid}</span>
+                                      <Copy size={10} className="text-slate-200 group-hover/cid:text-sky-400" />
+                                  </div>
+                              </div>
 
-                            <div>
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><Layers size={10} /> File ID</p>
-                                <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-lg px-2 py-1.5 group/id cursor-pointer hover:bg-sky-50 transition-colors" onClick={() => copyText(file.id, "ID")}>
-                                    <span className="font-mono text-[9px] text-slate-400 truncate flex-1 uppercase">{file.id}</span>
-                                    <Copy size={10} className="text-slate-200 group-hover/id:text-sky-400" />
-                                </div>
-                            </div>
+                              <div>
+                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><Layers size={10} /> File ID</p>
+                                  <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-lg px-2 py-1.5 group/id cursor-pointer hover:bg-sky-50 transition-colors" onClick={() => copyText(file.id, "ID")}>
+                                      <span className="font-mono text-[9px] text-slate-400 truncate flex-1 uppercase">{file.id}</span>
+                                      <Copy size={10} className="text-slate-200 group-hover/id:text-sky-400" />
+                                  </div>
+                              </div>
 
-                            <div className="pt-2 flex gap-2">
-                                <button onClick={() => copyText(file.url, "URL")} className="flex-1 h-9 bg-sky-50 rounded-xl flex items-center justify-center gap-2 border-2 border-sky-100 text-sky-500 font-black text-[10px] uppercase tracking-widest hover:bg-sky-500 hover:text-white transition-all shadow-sm">
-                                  <LinkIcon size={12} /> Copy Link
-                                </button>
+                              <div className="pt-2 flex gap-2">
+                                  <button onClick={() => copyText(file.url, "URL")} className="flex-1 h-9 bg-sky-50 rounded-xl flex items-center justify-center gap-2 border-2 border-sky-100 text-sky-500 font-black text-[10px] uppercase tracking-widest hover:bg-sky-500 hover:text-white transition-all shadow-sm">
+                                    <LinkIcon size={12} /> Copy Link
+                                  </button>
+                              </div>
                             </div>
                           </div>
                         </div>
+                      ))}
+                    </div>
+
+                    {/* Pagination Controls */}
+                    {filteredFiles.length > 0 && (
+                      <div className="mt-12 flex justify-center">
+                        <div className="neo-sm rounded-2xl px-6 py-3 border-2 border-white flex items-center gap-6">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Rows:</span>
+                            <select 
+                              value={rowsPerPage} 
+                              onChange={(e) => {
+                                setRowsPerPage(Number(e.target.value));
+                                setCurrentPage(1);
+                              }}
+                              className="bg-sky-50 border-2 border-sky-100 rounded-xl px-2 py-1 text-xs font-black text-slate-600 cursor-pointer focus:border-sky-400 outline-none"
+                            >
+                              <option value={8}>8</option>
+                              <option value={12}>12</option>
+                              <option value={24}>24</option>
+                              <option value={48}>48</option>
+                            </select>
+                          </div>
+                          
+                          <div className="h-6 w-px bg-slate-100" />
+                          
+                          <div className="flex items-center gap-4">
+                            <button 
+                              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                              disabled={currentPage === 1}
+                              className="squishy w-10 h-10 neo-sm rounded-xl flex items-center justify-center text-slate-400 hover:text-sky-500 disabled:opacity-20 disabled:cursor-not-allowed transition-all border border-white"
+                            >
+                              <ArrowLeft size={18} />
+                            </button>
+                            
+                            <div className="flex flex-col items-center min-w-[80px]">
+                              <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-0.5">Page</span>
+                              <span className="text-sm font-black text-slate-700">{currentPage} <span className="text-slate-300 font-bold mx-1">/</span> {totalPages}</span>
+                            </div>
+                            
+                            <button 
+                              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                              disabled={currentPage === totalPages}
+                              className="squishy w-10 h-10 neo-sm rounded-xl flex items-center justify-center text-slate-400 hover:text-sky-500 disabled:opacity-20 disabled:cursor-not-allowed transition-all border border-white"
+                            >
+                              <ArrowRight size={18} />
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
