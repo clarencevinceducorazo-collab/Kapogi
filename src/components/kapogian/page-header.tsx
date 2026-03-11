@@ -50,7 +50,7 @@ export const PageHeader = () => {
   }, [account?.address]);
 
   const navLinks = [
-    { name: "HOME", href: "/" },
+    { name: "HOMES", href: "/" },
     { name: "SUMMON", href: "/generate" },
     { name: "SHOP", href: "/shop" },
     { name: "EARN", href: "/earn" },
