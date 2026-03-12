@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  File, 
+  File as FileIcon, 
   FolderOpen, 
   Search, 
   LayoutGrid, 
@@ -24,7 +24,8 @@ import {
   Pencil,
   Plus,
   Hash,
-  Eye
+  Eye,
+  MoreVertical
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/kapogian/page-header';
@@ -39,7 +40,7 @@ interface KapoFile {
   size: number;
   date: string;
   vis: 'public' | 'private';
-  group: string;
+  group: string; // This will store the Group ID
   url: string;
 }
 
@@ -87,13 +88,12 @@ export default function KapogianStoragePage() {
   const [page, setPage] = useState<'files' | 'groups'>('files');
   const [activeTab, setActiveTab] = useState<'public' | 'private'>('public');
   const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'gif' | 'other'>('all');
-  const [groupFilter, setGroupFilter] = useState<string | null>(null);
+  const [groupFilter, setGroupFilter] = useState<string | null>(null); // Stores Group ID
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('date-desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(12);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   
   const [files, setFiles] = useState<KapoFile[]>([]);
   const [groups, setGroups] = useState<KapoGroup[]>([]);
@@ -103,18 +103,15 @@ export default function KapogianStoragePage() {
   
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [groupModalOpen, setGroupModalOpen] = useState(false);
-  const [renameModalOpen, setRenameModalOpen] = useState(false);
   
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
-  const [uploadGroup, setUploadGroup] = useState("");
+  const [uploadGroup, setUploadGroup] = useState(""); // Stores Group ID
   const [uploadVis, setUploadVis] = useState<'public' | 'private'>('public');
 
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupEmoji, setNewGroupEmoji] = useState("📁");
-  const [renamingId, setRenamingId] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState("");
 
-  // ─── Hydration & Logic ───
+  // ─── Logic ───
 
   useEffect(() => {
     setMounted(true);
@@ -144,14 +141,14 @@ export default function KapogianStoragePage() {
           size: f.size || 0,
           date: f.date || new Date().toISOString(),
           vis: 'public', 
-          group: f.group || '',
+          group: f.group || '', // This is the group ID from metadata
           url: f.url
         }));
         setFiles(parsedFiles);
       }
     } catch (err) {
       console.error(err);
-      addToast("Failed to sync storage with Pinata", "error");
+      addToast("Failed to sync storage", "error");
     } finally {
       setIsLoadingFiles(false);
     }
@@ -163,7 +160,6 @@ export default function KapogianStoragePage() {
       const res = await fetch('/api/pinata/groups');
       const data = await res.json();
       
-      // Load cosmetic emoji preferences from localStorage
       const savedEmojis = typeof window !== 'undefined' ? localStorage.getItem('kapo-group-emojis') : null;
       const emojiMap = savedEmojis ? JSON.parse(savedEmojis) : {};
 
@@ -199,13 +195,13 @@ export default function KapogianStoragePage() {
       
       if (data.error) throw new Error(data.error);
 
-      // Save emoji preference locally
+      const realId = data.data.id;
       const savedEmojis = JSON.parse(localStorage.getItem('kapo-group-emojis') || '{}');
-      savedEmojis[data.data.id] = newGroupEmoji;
+      savedEmojis[realId] = newGroupEmoji;
       localStorage.setItem('kapo-group-emojis', JSON.stringify(savedEmojis));
 
       const newG: KapoGroup = {
-        id: data.data.id,
+        id: realId,
         name: data.data.name,
         emoji: newGroupEmoji,
         date: data.data.createdAt || new Date().toISOString(),
@@ -275,16 +271,14 @@ export default function KapogianStoragePage() {
     if (pendingFiles.length === 0) return addToast('No files selected', 'error');
     setIsLoadingFiles(true);
     try {
+      const targetGroupId = uploadGroup || groupFilter || "";
+      
       for (const file of pendingFiles) {
-        const presignRes = await fetch("/api/pinata/upload");
+        // Pass group_id to get a signed URL that includes the group and metadata
+        const presignRes = await fetch(`/api/pinata/upload${targetGroupId ? `?group_id=${targetGroupId}` : ''}`);
         const { url } = await presignRes.json();
         const formData = new FormData();
         formData.append("file", file);
-        
-        // If a group is selected, we should ideally pass group_id here
-        // Pinata V3 uses a different approach for adding files to groups
-        // usually via the CID after upload or in the metadata.
-        
         await fetch(url, { method: "POST", body: formData });
       }
       await fetchFiles(); 
@@ -313,11 +307,12 @@ export default function KapogianStoragePage() {
     }
   };
 
-  const navigateToGroup = (groupName: string) => {
-    setGroupFilter(groupName);
+  const navigateToGroup = (groupId: string) => {
+    setGroupFilter(groupId);
     setPage('files');
     setCurrentPage(1);
-    addToast(`Viewing group: ${groupName}`, 'info');
+    const g = groups.find(x => x.id === groupId);
+    addToast(`Viewing group: ${g?.name || 'Collection'}`, 'info');
   };
 
   if (!mounted) return null;
@@ -361,7 +356,7 @@ export default function KapogianStoragePage() {
           </div>
           <nav className="flex-1 space-y-1">
             <button onClick={() => setPage('files')} className={cn("w-full nav-item flex items-center gap-3 px-4 py-2.5 rounded-2xl font-black text-xs transition-all border-2 border-transparent", page === 'files' ? "active" : "text-slate-400 hover:bg-amber-50")}>
-              <File className={cn("w-4 h-4", page === 'files' ? "text-sky-50" : "text-slate-300")} />
+              <FileIcon className={cn("w-4 h-4", page === 'files' ? "text-sky-50" : "text-slate-300")} />
               Files
             </button>
             <button onClick={() => setPage('groups')} className={cn("w-full nav-item flex items-center gap-3 px-4 py-2.5 rounded-2xl font-black text-xs transition-all border-2 border-transparent", page === 'groups' ? "active" : "text-slate-400 hover:bg-amber-50")}>
@@ -383,7 +378,9 @@ export default function KapogianStoragePage() {
                 {page === 'files' && groupFilter && (
                   <div className="flex items-center gap-2 bg-sky-50 border-2 border-sky-100 px-3 py-1.5 rounded-2xl shadow-sm">
                     <span className="text-[10px] font-black text-sky-400 uppercase tracking-widest">Group:</span>
-                    <span className="text-xs font-black text-sky-600 uppercase italic">{groupFilter}</span>
+                    <span className="text-xs font-black text-sky-600 uppercase italic">
+                      {groups.find(g => g.id === groupFilter)?.name || 'Selected'}
+                    </span>
                     <button onClick={() => setGroupFilter(null)} className="w-5 h-5 flex items-center justify-center rounded-full bg-sky-100 text-sky-500 hover:bg-red-500 hover:text-white transition-all">
                       <X size={10} />
                     </button>
@@ -446,7 +443,7 @@ export default function KapogianStoragePage() {
                           <div className={cn("relative h-48 flex items-center justify-center overflow-hidden", thCls(file.name))}>
                             <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:12px_12px]" />
                             {tyGrp(file.name) === 'image' || tyGrp(file.name) === 'gif' ? (
-                              <img src={file.url} alt={file.name} className="w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-110" />
+                              <img src={file.url} alt={file.name} className="w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-110" loading="lazy" />
                             ) : (
                               <span className="text-6xl drop-shadow-lg group-hover:scale-110 transition-transform duration-500">{emoF(file.name)}</span>
                             )}
@@ -538,7 +535,7 @@ export default function KapogianStoragePage() {
                         {filteredGroups.map((group) => (
                           <tr key={group.id} className="hover:bg-slate-50 transition-colors group">
                             <td className="px-8 py-5">
-                              <button onClick={() => navigateToGroup(group.name)} className="flex items-center gap-3 hover:translate-x-1 transition-transform group/btn">
+                              <button onClick={() => navigateToGroup(group.id)} className="flex items-center gap-3 hover:translate-x-1 transition-transform group/btn">
                                 <span className="text-2xl group-hover/btn:scale-110 transition-transform">{group.emoji}</span>
                                 <span className="font-black text-slate-700 uppercase italic tracking-tighter underline decoration-2 decoration-sky-100 group-hover/btn:text-sky-500 group-hover/btn:decoration-sky-400">{group.name}</span>
                               </button>
@@ -571,7 +568,7 @@ export default function KapogianStoragePage() {
 
       {/* Upload Modal */}
       {uploadModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 modal-bg">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setUploadModalOpen(false)} />
           <div className="modal-box relative bg-white border-4 border-black rounded-[3rem] p-8 max-w-lg w-full shadow-[12px_12px_0_0_rgba(0,0,0,1)]">
             <div className="flex items-center justify-between mb-8">
@@ -595,7 +592,7 @@ export default function KapogianStoragePage() {
                     <select value={uploadGroup || groupFilter || ""} onChange={(e) => setUploadGroup(e.target.value)} className="w-full h-12 bg-sky-50 border-2 border-sky-100 rounded-2xl px-4 font-bold text-slate-700 text-sm outline-none focus:border-sky-400">
                         <option value="">No Group</option>
                         {groups.map(g => (
-                          <option key={g.id} value={g.name}>{g.emoji} {g.name}</option>
+                          <option key={g.id} value={g.id}>{g.emoji} {g.name}</option>
                         ))}
                     </select>
                 </div>
@@ -609,7 +606,7 @@ export default function KapogianStoragePage() {
 
       {/* New Group Modal */}
       {groupModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 modal-bg">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setGroupModalOpen(false)} />
           <div className="modal-box relative bg-white border-4 border-black rounded-[3rem] p-8 max-w-sm w-full shadow-[12px_12px_0_0_rgba(0,0,0,1)]">
             <div className="flex items-center justify-between mb-6">
@@ -638,7 +635,7 @@ export default function KapogianStoragePage() {
         </div>
       )}
 
-      {/* Toast Overlay */}
+      {/* Toast Host */}
       <div className="fixed bottom-10 right-10 z-[200] flex flex-col gap-3 pointer-events-none">
         {toasts.map(t => (
           <div key={t.id} className={cn("pointer-events-auto flex items-center gap-3 px-6 py-4 rounded-[1.5rem] border-4 border-black font-black text-xs uppercase tracking-widest shadow-[6px_6px_0_0_rgba(0,0,0,1)] animate-in slide-in-from-right-4 duration-300", t.type === 'success' ? 'bg-green-400 text-black' : t.type === 'error' ? 'bg-red-400 text-white' : 'bg-white')}>
