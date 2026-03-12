@@ -1,12 +1,5 @@
 "use client";
 
-/**
- * ShopItemSection.tsx
- * Fixed: colorBg is now stored as a CSS hex/linear-gradient string
- * so it works correctly in both the admin preview AND the shop page's
- * style={{ backgroundColor: item.colorBg }} prop.
- */
-
 import React, { useState, useRef, useEffect } from "react";
 import {
   ShoppingBag, Plus, RefreshCw, LoaderCircle, Pencil, X,
@@ -33,29 +26,23 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
 const STANDARD_SIZES  = ["XS", "S", "M", "L", "XL", "XXL"];
 const STANDARD_COLORS = ["White", "Black", "Blue", "Red", "Grey", "Beige", "Cyan", "Pink", "Green", "Yellow", "Purple"];
-const MAX_UPLOAD_SIZE = 200 * 1024 * 1024; // 200MB
+const MAX_UPLOAD_SIZE = 200 * 1024 * 1024;
 
-// Each preset has:
-//   value  — what gets stored on-chain in colorBg (valid CSS, works in style={{ backgroundColor }})
-//   label  — human name
-//   preview — inline style for the swatch in the admin picker
 export const COLOR_BG_PRESETS = [
-  { value: "#e0f2fe",  label: "Sky Blue",    preview: "#e0f2fe" },
-  { value: "#fce7f3",  label: "Pink",        preview: "#fce7f3" },
-  { value: "#d1fae5",  label: "Emerald",     preview: "#d1fae5" },
-  { value: "#ede9fe",  label: "Violet",      preview: "#ede9fe" },
-  { value: "#fef9c3",  label: "Yellow",      preview: "#fef9c3" },
-  { value: "#ffedd5",  label: "Orange",      preview: "#ffedd5" },
-  { value: "#f1f5f9",  label: "Slate",       preview: "#f1f5f9" },
-  { value: "#e0e7ff",  label: "Indigo",      preview: "#e0e7ff" },
-  { value: "#fef3c7",  label: "Amber",       preview: "#fef3c7" },
-  { value: "#f0fdf4",  label: "Mint",        preview: "#f0fdf4" },
-  { value: "#fff1f2",  label: "Rose",        preview: "#fff1f2" },
-  { value: "#f0f9ff",  label: "Light Sky",   preview: "#f0f9ff" },
+  { value: "#e0f2fe", label: "Sky Blue",  preview: "#e0f2fe" },
+  { value: "#fce7f3", label: "Pink",      preview: "#fce7f3" },
+  { value: "#d1fae5", label: "Emerald",   preview: "#d1fae5" },
+  { value: "#ede9fe", label: "Violet",    preview: "#ede9fe" },
+  { value: "#fef9c3", label: "Yellow",    preview: "#fef9c3" },
+  { value: "#ffedd5", label: "Orange",    preview: "#ffedd5" },
+  { value: "#f1f5f9", label: "Slate",     preview: "#f1f5f9" },
+  { value: "#e0e7ff", label: "Indigo",    preview: "#e0e7ff" },
+  { value: "#fef3c7", label: "Amber",     preview: "#fef3c7" },
+  { value: "#f0fdf4", label: "Mint",      preview: "#f0fdf4" },
+  { value: "#fff1f2", label: "Rose",      preview: "#fff1f2" },
+  { value: "#f0f9ff", label: "Light Sky", preview: "#f0f9ff" },
 ];
 
 const DEFAULT_COLOR_BG = COLOR_BG_PRESETS[0].value;
@@ -65,8 +52,6 @@ const STATUS_LABELS: Record<number, { label: string; cls: string }> = {
   1: { label: "Shipped",   cls: "bg-blue-100 text-blue-700 border-blue-300" },
   2: { label: "Delivered", cls: "bg-green-100 text-green-700 border-green-300" },
 };
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Toast { message: string; type: "success" | "error" | "info" }
 
@@ -95,8 +80,6 @@ interface PinataFile {
   name: string;
   url: string;
 }
-
-// ─── Helper Components ────────────────────────────────────────────────────────
 
 function SectionLabel({ icon: Icon, children, required }: { icon: any; children: React.ReactNode; required?: boolean }) {
   return (
@@ -165,6 +148,7 @@ function DropdownAssetSelect({ label, value, onChange, onToast, required, files,
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
+  // ✅ Same pattern as generate page — POST with FormData directly to server
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -177,21 +161,20 @@ function DropdownAssetSelect({ label, value, onChange, onToast, required, files,
     setUploadStatus('loading');
     setUploadErrorMsg("");
     try {
-      const presignRes = await fetch("/api/pinata/upload");
-      if (!presignRes.ok) throw new Error("Failed to get upload URL");
-      const { url } = await presignRes.json();
-      const formData = new FormData();
-      formData.append("file", file);
-      const uploadRes = await fetch(url, { method: "POST", body: formData });
-      if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status}`);
+      const uploadForm = new FormData();
+      uploadForm.append("file", file, file.name);
+      uploadForm.append("name", file.name);
+      const uploadRes = await fetch("/api/pinata/upload", {
+        method: "POST",
+        body: uploadForm,
+      });
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json().catch(() => ({}));
+        throw new Error(err?.error || `Upload failed: ${uploadRes.status}`);
+      }
       const data = await uploadRes.json();
-      const cid = data?.data?.cid;
-      if (!cid) throw new Error("No CID from Pinata");
-      const gatewayUrl = process.env.NEXT_PUBLIC_PINATA_GATEWAY_URL || "https://nft.kapogian.xyz";
-      const gatewayKey = process.env.NEXT_PUBLIC_PINATA_GATEWAY_KEY || "";
-      const imageUrl = gatewayKey
-        ? `${gatewayUrl}/ipfs/${cid}?pinataGatewayToken=${gatewayKey}`
-        : `${gatewayUrl}/ipfs/${cid}`;
+      const imageUrl = data?.imageUrl;
+      if (!imageUrl) throw new Error("No URL returned from server");
       onChange(imageUrl);
       setUploadStatus('success');
       setTimeout(() => { setUploadStatus('idle'); setOpen(false); }, 1500);
@@ -316,8 +299,6 @@ function DropdownAssetSelect({ label, value, onChange, onToast, required, files,
   );
 }
 
-// ─── Confirm Modal ────────────────────────────────────────────────────────────
-
 function ConfirmModal({ title, subtitle, warning, onConfirm, onCancel, loading, variant = "danger" }: {
   title: string; subtitle: string; warning: string;
   onConfirm: () => void; onCancel: () => void; loading: boolean;
@@ -347,8 +328,6 @@ function ConfirmModal({ title, subtitle, warning, onConfirm, onCancel, loading, 
     </div>
   );
 }
-
-// ─── Main Component ───────────────────────────────────────────────────────────
 
 export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegistryId }: Props) {
   const queryClient = useQueryClient();
@@ -396,7 +375,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
       sizes: item.sizes, colors: item.colors,
       imageStatic: item.imageStatic, imageAnimated: item.imageAnimated,
       imageBack: item.imageBack,
-      // Normalise: if it's an old Tailwind gradient string, fall back to default
       colorBg: item.colorBg?.startsWith("#") ? item.colorBg : DEFAULT_COLOR_BG,
     });
     setTargetId(item.id);
@@ -420,7 +398,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
             tx.pure.string(form.imageStatic.trim()),
             tx.pure.string(form.imageAnimated.trim()),
             tx.pure.string(form.imageBack.trim()),
-            tx.pure.string(form.colorBg.trim()), // now a valid CSS color
+            tx.pure.string(form.colorBg.trim()),
             tx.object("0x6"),
           ],
         });
@@ -449,7 +427,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
             tx.pure.string(form.imageStatic.trim()),
             tx.pure.string(form.imageAnimated.trim()),
             tx.pure.string(form.imageBack.trim()),
-            tx.pure.string(form.colorBg.trim()), // now a valid CSS color
+            tx.pure.string(form.colorBg.trim()),
             tx.object("0x6"),
           ],
         });
@@ -583,11 +561,7 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
             ) : (
               items.map((item) => (
                 <div key={item.id} className="p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors">
-                  {/* Thumbnail — use backgroundColor directly, it's now a valid CSS color */}
-                  <div
-                    className="w-14 h-14 rounded-2xl border-2 border-black overflow-hidden flex-shrink-0"
-                    style={{ backgroundColor: item.colorBg || "#e0f2fe" }}
-                  >
+                  <div className="w-14 h-14 rounded-2xl border-2 border-black overflow-hidden flex-shrink-0" style={{ backgroundColor: item.colorBg || "#e0f2fe" }}>
                     <img src={item.imageStatic} className="w-full h-full object-contain p-1" alt="p" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -641,41 +615,27 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
         )}
       </section>
 
-      {/* ── Deploy / Modify Modal ───────────────────────────────────────── */}
       {isOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setIsOpen(false)} />
           <div className="relative w-full max-w-5xl bg-white rounded-[3rem] border-4 border-black shadow-[12px_12px_0_0_rgba(0,0,0,1)] flex overflow-hidden animate-in zoom-in-95 duration-300" style={{ maxHeight: "92vh" }}>
-
-            {/* Left — live preview */}
-            <div
-              className="w-72 flex-shrink-0 p-8 border-r-4 border-slate-50 relative overflow-hidden transition-colors duration-300"
-              style={{ backgroundColor: form.colorBg || DEFAULT_COLOR_BG }}
-            >
+            <div className="w-72 flex-shrink-0 p-8 border-r-4 border-slate-50 relative overflow-hidden transition-colors duration-300" style={{ backgroundColor: form.colorBg || DEFAULT_COLOR_BG }}>
               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#000_1.5px,transparent_1.5px)] [background-size:16px_16px]" />
               <div className="relative z-10 flex flex-col h-full items-center">
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-6">Manifest Preview</span>
                 <div className="w-full bg-white rounded-[2.5rem] border-4 border-black p-4 shadow-xl mb-6 flex flex-col items-center">
-                  <div
-                    className="w-full aspect-square rounded-[1.8rem] border-2 border-slate-50 flex items-center justify-center relative mb-4"
-                    style={{ backgroundColor: form.colorBg || DEFAULT_COLOR_BG }}
-                  >
-                    {form.imageStatic
-                      ? <img src={form.imageStatic} className="w-full h-full object-contain p-2" alt="p" />
-                      : <Plus size={40} className="text-slate-300" />}
+                  <div className="w-full aspect-square rounded-[1.8rem] border-2 border-slate-50 flex items-center justify-center relative mb-4" style={{ backgroundColor: form.colorBg || DEFAULT_COLOR_BG }}>
+                    {form.imageStatic ? <img src={form.imageStatic} className="w-full h-full object-contain p-2" alt="p" /> : <Plus size={40} className="text-slate-300" />}
                   </div>
                   <div className="text-center w-full px-2">
                     <span className="text-[8px] font-black uppercase text-slate-400">{SHOP_ITEM_TYPE_LABELS[form.itemType as keyof typeof SHOP_ITEM_TYPE_LABELS]}</span>
                     <h4 className="font-black text-lg text-slate-800 leading-tight uppercase truncate">{form.name || "UNNAMED OBJECT"}</h4>
-                    <div className="bg-sky-50 rounded-xl py-1.5 border border-slate-100 mt-2 font-black text-sm text-blue-500">
-                      SUI {Number(form.priceSui || 0).toFixed(3)}
-                    </div>
+                    <div className="bg-sky-50 rounded-xl py-1.5 border border-slate-100 mt-2 font-black text-sm text-blue-500">SUI {Number(form.priceSui || 0).toFixed(3)}</div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Right — form */}
             <div className="flex-1 flex flex-col bg-white">
               <div className="px-10 pt-8 pb-6 border-b-4 border-slate-50 flex items-start justify-between">
                 <h2 className="text-3xl font-black text-slate-800 tracking-tighter uppercase italic flex items-center gap-3">
@@ -686,12 +646,10 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
               </div>
 
               <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar">
-                {/* Identity */}
                 <div className="space-y-6">
                   <SectionLabel icon={Tag} required>Identity</SectionLabel>
                   <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full bg-slate-50 border-4 border-slate-100 rounded-2xl px-6 py-4 font-black text-slate-700 text-lg outline-none focus:border-cyan-300"
-                    placeholder="Product Name..." />
+                    className="w-full bg-slate-50 border-4 border-slate-100 rounded-2xl px-6 py-4 font-black text-slate-700 text-lg outline-none focus:border-cyan-300" placeholder="Product Name..." />
                   <div className="grid grid-cols-5 gap-3">
                     {Object.entries(SHOP_ITEM_TYPE_LABELS).map(([val, label]) => (
                       <button key={val} onClick={() => setForm({ ...form, itemType: Number(val) })}
@@ -704,7 +662,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                   </div>
                 </div>
 
-                {/* Price / Stock */}
                 <div className="grid grid-cols-2 gap-8">
                   <div>
                     <SectionLabel icon={DollarSign} required>Price (SUI)</SectionLabel>
@@ -718,7 +675,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                   </div>
                 </div>
 
-                {/* Sizes / Colors / Background */}
                 <div className="grid grid-cols-2 gap-8">
                   <div>
                     <SectionLabel icon={Palette}>Sizes</SectionLabel>
@@ -731,27 +687,16 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                       <DropdownMultiSelect label="Colors" options={STANDARD_COLORS} selected={form.colors}
                         onToggle={(c) => setForm(f => ({ ...f, colors: f.colors.includes(c) ? f.colors.filter(x => x !== c) : [...f.colors, c] }))} />
                     </div>
-                    {/* ── Background color picker ── */}
                     <div>
                       <SectionLabel icon={Palette}>Card Background</SectionLabel>
                       <div className="flex flex-wrap gap-2 mt-1">
                         {COLOR_BG_PRESETS.map((preset) => (
-                          <button
-                            key={preset.value}
-                            type="button"
-                            title={preset.label}
-                            onClick={() => setForm({ ...form, colorBg: preset.value })}
-                            className={cn(
-                              "w-9 h-9 rounded-xl border-2 transition-all",
-                              form.colorBg === preset.value
-                                ? "border-black scale-110 shadow-[0_0_0_3px_rgba(0,0,0,0.15)]"
-                                : "border-slate-200 hover:border-slate-400 opacity-80 hover:opacity-100"
-                            )}
-                            style={{ backgroundColor: preset.preview }}
-                          />
+                          <button key={preset.value} type="button" title={preset.label} onClick={() => setForm({ ...form, colorBg: preset.value })}
+                            className={cn("w-9 h-9 rounded-xl border-2 transition-all",
+                              form.colorBg === preset.value ? "border-black scale-110 shadow-[0_0_0_3px_rgba(0,0,0,0.15)]" : "border-slate-200 hover:border-slate-400 opacity-80 hover:opacity-100")}
+                            style={{ backgroundColor: preset.preview }} />
                         ))}
                       </div>
-                      {/* Selected color feedback */}
                       <p className="mt-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">
                         Selected: <span className="text-slate-600">{COLOR_BG_PRESETS.find(p => p.value === form.colorBg)?.label ?? form.colorBg}</span>
                       </p>
@@ -759,7 +704,6 @@ export function ShopItemSection({ superCapId, signAndExecute, onToast, adminRegi
                   </div>
                 </div>
 
-                {/* Assets */}
                 <div className="grid grid-cols-3 gap-6">
                   <DropdownAssetSelect label="Static" value={form.imageStatic} onChange={(url) => setForm({ ...form, imageStatic: url })} onToast={onToast} required files={pinataFiles} loadingFiles={loadingFiles} />
                   <DropdownAssetSelect label="Animated" value={form.imageAnimated} onChange={(url) => setForm({ ...form, imageAnimated: url })} onToast={onToast} files={pinataFiles} loadingFiles={loadingFiles} />

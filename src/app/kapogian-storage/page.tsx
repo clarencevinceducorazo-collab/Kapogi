@@ -30,8 +30,6 @@ import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/kapogian/page-header';
 import { PageFooter } from '@/components/kapogian/page-footer';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 interface KapoFile {
   id: string;
   name: string;
@@ -39,7 +37,7 @@ interface KapoFile {
   size: number;
   date: string;
   vis: 'public' | 'private';
-  group: string; // Stores Group ID (UUID)
+  group: string;
   url: string;
 }
 
@@ -57,9 +55,7 @@ const fmtDt = (d: string) => {
   try {
     const date = new Date(d);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-  } catch {
-    return d;
-  }
+  } catch { return d; }
 };
 const sCID = (c: string) => c.length > 12 ? c.slice(0, 6) + '…' + c.slice(-5) : c;
 const ext = (n: string) => (n.split('.').pop() || '').toLowerCase();
@@ -110,8 +106,6 @@ export default function KapogianStoragePage() {
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupEmoji, setNewGroupEmoji] = useState("📁");
 
-  // ─── Logic ───
-
   useEffect(() => {
     setMounted(true);
     fetchFiles();
@@ -121,9 +115,7 @@ export default function KapogianStoragePage() {
   const addToast = (message: string, type: 'info' | 'success' | 'error' = 'info') => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, 2500);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 2500);
   };
 
   const fetchFiles = async () => {
@@ -158,10 +150,8 @@ export default function KapogianStoragePage() {
     try {
       const res = await fetch('/api/pinata/groups');
       const data = await res.json();
-      
       const savedEmojis = typeof window !== 'undefined' ? localStorage.getItem('kapo-group-emojis') : null;
       const emojiMap = savedEmojis ? JSON.parse(savedEmojis) : {};
-
       if (data.data) {
         const list = Array.isArray(data.data) ? data.data : (data.data.groups || []);
         const parsed: KapoGroup[] = list.map((g: any) => ({
@@ -191,14 +181,11 @@ export default function KapogianStoragePage() {
         body: JSON.stringify({ name: newGroupName.trim() })
       });
       const data = await res.json();
-      
       if (data.error) throw new Error(data.error);
-
       const realId = data.data.id;
       const savedEmojis = JSON.parse(localStorage.getItem('kapo-group-emojis') || '{}');
       savedEmojis[realId] = newGroupEmoji;
       localStorage.setItem('kapo-group-emojis', JSON.stringify(savedEmojis));
-
       const newG: KapoGroup = {
         id: realId,
         name: data.data.name,
@@ -206,7 +193,6 @@ export default function KapogianStoragePage() {
         date: data.data.createdAt || new Date().toISOString(),
         vis: 'public'
       };
-      
       setGroups(prev => [newG, ...prev]);
       setNewGroupName("");
       setGroupModalOpen(false);
@@ -222,7 +208,6 @@ export default function KapogianStoragePage() {
     try {
       const res = await fetch(`/api/pinata/groups/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Delete failed');
-      
       setGroups(prev => prev.filter(g => g.id !== id));
       addToast('Group deleted', 'success');
     } catch {
@@ -239,7 +224,6 @@ export default function KapogianStoragePage() {
   const filteredFiles = useMemo(() => {
     const q = searchQuery.toLowerCase();
     const [sk, sd] = sortOption.split('-');
-    
     return files
       .filter(f => f.vis === activeTab)
       .filter(f => typeFilter === 'all' || tyGrp(f.name) === typeFilter)
@@ -266,28 +250,40 @@ export default function KapogianStoragePage() {
     return filteredFiles.slice(start, start + rowsPerPage);
   }, [filteredFiles, currentPage, rowsPerPage]);
 
+  // ✅ Same pattern as generate page — POST with FormData directly to server
   const handleUpload = async () => {
     if (pendingFiles.length === 0) return addToast('No files selected', 'error');
     setIsLoadingFiles(true);
     try {
-      const targetGroupId = uploadGroup || groupFilter || "";
-      
       for (const file of pendingFiles) {
-        const presignRes = await fetch(`/api/pinata/upload${targetGroupId ? `?group_id=${targetGroupId}` : ''}`);
-        const { url } = await presignRes.json();
-        const formData = new FormData();
-        formData.append("file", file);
-        await fetch(url, { method: "POST", body: formData });
+        const uploadForm = new FormData();
+        uploadForm.append("file", file, file.name);
+        uploadForm.append("name", file.name);
+        const uploadRes = await fetch("/api/pinata/upload", {
+          method: "POST",
+          body: uploadForm,
+        });
+        if (!uploadRes.ok) {
+          const err = await uploadRes.json().catch(() => ({}));
+          throw new Error(err.error || "IPFS upload failed");
+        }
       }
-      await fetchFiles(); 
+      await fetchFiles();
       setUploadModalOpen(false);
       setPendingFiles([]);
-      addToast(`Upload complete!`, 'success');
-    } catch (err) {
-      addToast("Upload failed", "error");
+      setUploadGroup("");
+      addToast(`${pendingFiles.length} file${pendingFiles.length > 1 ? 's' : ''} uploaded!`, 'success');
+    } catch (err: any) {
+      addToast(err.message || "Upload failed", "error");
     } finally {
       setIsLoadingFiles(false);
     }
+  };
+
+  const closeUploadModal = () => {
+    setUploadModalOpen(false);
+    setPendingFiles([]);
+    setUploadGroup("");
   };
 
   const deleteFile = async (id: string) => {
@@ -570,35 +566,60 @@ export default function KapogianStoragePage() {
       {/* Upload Modal */}
       {uploadModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setUploadModalOpen(false)} />
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closeUploadModal} />
           <div className="modal-box relative bg-white border-4 border-black rounded-[3rem] p-8 max-w-lg w-full shadow-[12px_12px_0_0_rgba(0,0,0,1)]">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-2xl font-black text-slate-800 uppercase italic tracking-tight">Upload Asset</h3>
-              <button onClick={() => setUploadModalOpen(false)} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-red-500 hover:text-white transition-all shadow-sm">✕</button>
+              <button onClick={closeUploadModal} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-red-500 hover:text-white transition-all shadow-sm">✕</button>
             </div>
-            <div id="drop-zone" onClick={() => document.getElementById('file-input-up')?.click()} className="border-4 border-dashed border-sky-100 rounded-[2.5rem] p-12 text-center mb-6 hover:border-sky-400 hover:bg-sky-50 transition-all cursor-pointer group">
-              <div className="text-6xl mb-4 group-hover:scale-110 transition-transform">🚀</div>
-              <p className="font-black text-slate-500 text-sm uppercase tracking-widest">Browse Files</p>
-              <input id="file-input-up" type="file" multiple className="hidden" onChange={(e) => setPendingFiles(Array.from(e.target.files || []))} />
+            <div
+              id="drop-zone"
+              onClick={() => document.getElementById('file-input-up')?.click()}
+              className="border-4 border-dashed border-sky-100 rounded-[2.5rem] p-10 text-center mb-6 hover:border-sky-400 hover:bg-sky-50 transition-all cursor-pointer group"
+            >
+              <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">🚀</div>
+              {pendingFiles.length === 0 ? (
+                <p className="font-black text-slate-500 text-sm uppercase tracking-widest">Browse Files</p>
+              ) : (
+                <div className="space-y-1">
+                  <p className="font-black text-sky-500 text-sm uppercase tracking-widest">{pendingFiles.length} file{pendingFiles.length > 1 ? 's' : ''} selected</p>
+                  <div className="max-h-24 overflow-y-auto space-y-0.5 mt-2">
+                    {pendingFiles.map((f, i) => (
+                      <p key={i} className="text-[10px] text-slate-400 font-mono truncate">{f.name}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <input
+                id="file-input-up"
+                type="file"
+                multiple
+                className="hidden"
+                onChange={(e) => setPendingFiles(Array.from(e.target.files || []))}
+              />
             </div>
             <div className="grid grid-cols-2 gap-3 mb-6">
-                <div>
-                    <label className="block text-[10px] font-black text-slate-400 mb-1 uppercase tracking-widest ml-2">Visibility</label>
-                    <select value={uploadVis} onChange={(e) => setUploadVis(e.target.value as any)} className="w-full h-12 bg-sky-50 border-2 border-sky-100 rounded-2xl px-4 font-bold text-slate-700 text-sm outline-none focus:border-sky-400">
-                        <option value="public">🌐 Public</option><option value="private">🔒 Private</option>
-                    </select>
-                </div>
-                <div>
-                    <label className="block text-[10px] font-black text-slate-400 mb-1 uppercase tracking-widest ml-2">Group</label>
-                    <select value={uploadGroup || groupFilter || ""} onChange={(e) => setUploadGroup(e.target.value)} className="w-full h-12 bg-sky-50 border-2 border-sky-100 rounded-2xl px-4 font-bold text-slate-700 text-sm outline-none focus:border-sky-400">
-                        <option value="">No Group</option>
-                        {groups.map(g => (
-                          <option key={g.id} value={g.id}>{g.emoji} {g.name}</option>
-                        ))}
-                    </select>
-                </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 mb-1 uppercase tracking-widest ml-2">Visibility</label>
+                <select value={uploadVis} onChange={(e) => setUploadVis(e.target.value as any)} className="w-full h-12 bg-sky-50 border-2 border-sky-100 rounded-2xl px-4 font-bold text-slate-700 text-sm outline-none focus:border-sky-400">
+                  <option value="public">🌐 Public</option><option value="private">🔒 Private</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 mb-1 uppercase tracking-widest ml-2">Group</label>
+                <select value={uploadGroup || groupFilter || ""} onChange={(e) => setUploadGroup(e.target.value)} className="w-full h-12 bg-sky-50 border-2 border-sky-100 rounded-2xl px-4 font-bold text-slate-700 text-sm outline-none focus:border-sky-400">
+                  <option value="">No Group</option>
+                  {groups.map(g => (
+                    <option key={g.id} value={g.id}>{g.emoji} {g.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <button onClick={handleUpload} className="w-full py-5 bg-black text-white rounded-[2rem] font-black uppercase tracking-[0.2em] text-sm shadow-[6px_6px_0_0_#0ea5e9] hover:bg-slate-800 transition-all active:translate-y-1 flex items-center justify-center gap-3">
+            <button
+              onClick={handleUpload}
+              disabled={pendingFiles.length === 0}
+              className="w-full py-5 bg-black text-white rounded-[2rem] font-black uppercase tracking-[0.2em] text-sm shadow-[6px_6px_0_0_#0ea5e9] hover:bg-slate-800 transition-all active:translate-y-1 flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
               <Upload size={20} /> Deploy to IPFS
             </button>
           </div>
