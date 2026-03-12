@@ -9,35 +9,36 @@ import {
   Loader2,
   ShieldCheck,
   ChevronDown,
+  Phone,
+  PhoneOff,
+  PhoneCall,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface SupportMessage {
   id: string;
-  /** clientMsgId is embedded in the payload so we can do exact echo-dedup */
   clientMsgId?: string;
   text: string;
   sender: "user" | "admin";
   timestamp: number;
 }
 
+type UserCallState =
+  | { status: "idle" }
+  | { status: "ringing" }
+  | { status: "active"; startedAt: number };
+
 const ABLY_KEY = "YEbuRQ.r9odYA:eJmjank2w4vunEmM6HKLsKY557aJyRLPd8urztGykVs";
+const RING_TIMEOUT_MS = 30_000; // dismiss ringing if no cancel arrives after 30 s
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Merge a new message into an existing array, deduplicating by:
- *  1. Ably message id  (exact match — canonical)
- *  2. clientMsgId      (our payload field — replaces the optimistic bubble)
- */
 function mergeMessage(
   prev: SupportMessage[],
   incoming: SupportMessage,
 ): SupportMessage[] {
-  // 1. Already present by Ably id?
   if (incoming.id && prev.some((m) => m.id === incoming.id)) return prev;
-
-  // 2. Replace matching optimistic bubble by clientMsgId
   if (incoming.clientMsgId) {
     const idx = prev.findIndex(
       (m) => m.id.startsWith("optimistic-") && m.clientMsgId === incoming.clientMsgId,
@@ -48,8 +49,140 @@ function mergeMessage(
       return next;
     }
   }
-
   return [...prev, incoming];
+}
+
+// ─── Call Timer ───────────────────────────────────────────────────────────────
+
+function CallTimer({ startedAt }: { startedAt: number }) {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - startedAt) / 1000)), 500);
+    return () => clearInterval(id);
+  }, [startedAt]);
+  const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
+  const ss = String(elapsed % 60).padStart(2, "0");
+  return <span className="font-mono tabular-nums">{mm}:{ss}</span>;
+}
+
+// ─── Incoming Call Modal ──────────────────────────────────────────────────────
+
+function IncomingCallModal({
+  onAccept,
+  onReject,
+}: {
+  onAccept: () => void;
+  onReject: () => void;
+}) {
+  // Animate the phone icon
+  const [ring, setRing] = useState(true);
+  useEffect(() => {
+    const id = setInterval(() => setRing((v) => !v), 600);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="relative bg-white border-4 border-black rounded-[2.5rem] p-8 max-w-xs w-full shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] animate-in zoom-in-95 duration-300 text-center">
+        {/* Decorative pulse rings */}
+        <div className="flex justify-center mb-6 relative">
+          <span className="absolute w-24 h-24 rounded-full bg-green-200 animate-ping opacity-40" />
+          <span className="absolute w-20 h-20 rounded-full bg-green-300 animate-ping opacity-30 [animation-delay:150ms]" />
+          <div
+            className={`relative w-16 h-16 rounded-full border-4 border-black flex items-center justify-center transition-transform duration-300 ${
+              ring ? "bg-green-400 scale-110" : "bg-green-500 scale-100"
+            }`}
+          >
+            <PhoneCall size={28} className="text-black" />
+          </div>
+        </div>
+
+        {/* Text */}
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+          Incoming Call
+        </p>
+        <h2 className="text-xl font-black uppercase tracking-tight text-slate-900 mb-1">
+          Kapogian Support
+        </h2>
+        <p className="text-sm font-semibold text-slate-500 mb-8">
+          An admin wants to speak with you
+        </p>
+
+        {/* Buttons */}
+        <div className="flex gap-4 justify-center">
+          {/* Reject */}
+          <button
+            onClick={onReject}
+            className="w-16 h-16 rounded-full bg-red-500 border-4 border-black flex flex-col items-center justify-center gap-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-red-400 active:translate-y-0.5 active:shadow-none transition-all"
+            aria-label="Reject call"
+          >
+            <PhoneOff size={22} className="text-white" />
+            <span className="text-[8px] font-black text-white uppercase">Decline</span>
+          </button>
+
+          {/* Accept */}
+          <button
+            onClick={onAccept}
+            className="w-16 h-16 rounded-full bg-green-500 border-4 border-black flex flex-col items-center justify-center gap-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-green-400 active:translate-y-0.5 active:shadow-none transition-all"
+            aria-label="Accept call"
+          >
+            <Phone size={22} className="text-white" />
+            <span className="text-[8px] font-black text-white uppercase">Accept</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Active Call Overlay (inside drawer) ─────────────────────────────────────
+
+function ActiveCallOverlay({
+  startedAt,
+  onEndCall,
+}: {
+  startedAt: number;
+  onEndCall: () => void;
+}) {
+  return (
+    <div className="absolute inset-0 z-10 bg-black/95 flex flex-col items-center justify-center gap-5 rounded-b-[2rem]">
+      {/* Animated waveform dots */}
+      <div className="flex items-end gap-1.5 h-10">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <span
+            key={i}
+            className="w-1.5 rounded-full bg-green-400 animate-bounce"
+            style={{
+              height: `${16 + (i % 3) * 12}px`,
+              animationDelay: `${i * 100}ms`,
+              animationDuration: "0.8s",
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="text-center">
+        <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">
+          Call Active
+        </p>
+        <p className="text-3xl font-black text-green-400">
+          <CallTimer startedAt={startedAt} />
+        </p>
+        <p className="text-xs font-semibold text-white/40 mt-1">
+          Kapogian Support
+        </p>
+      </div>
+
+      <button
+        onClick={onEndCall}
+        className="w-16 h-16 rounded-full bg-red-500 border-4 border-black flex flex-col items-center justify-center gap-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-red-400 active:translate-y-0.5 active:shadow-none transition-all mt-2"
+        aria-label="End call"
+      >
+        <PhoneOff size={22} className="text-white" />
+        <span className="text-[8px] font-black text-white uppercase">End</span>
+      </button>
+    </div>
+  );
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -61,13 +194,13 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
   const [connected, setConnected] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [sending, setSending] = useState(false);
+  const [callState, setCallState] = useState<UserCallState>({ status: "idle" });
 
   const ablyRef = useRef<Ably.Realtime | null>(null);
   const channelRef = useRef<Ably.RealtimeChannel | null>(null);
-  /** Prevents live-subscription handler from running before history is merged */
   const historyLoadedRef = useRef(false);
-  /** Buffer for live messages that arrive before history finishes loading */
   const liveBufferRef = useRef<SupportMessage[]>([]);
+  const ringTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -94,12 +227,11 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
     const channel = ably.channels.get(channelName);
     channelRef.current = channel;
 
-    // Announce to admin inbox
+    // Announce presence to admin
     const inboxChannel = ably.channels.get("kapogian-support-inbox");
     inboxChannel.publish("user-connected", { walletAddress });
 
-    // ── Subscribe BEFORE history so we don't miss live messages ─────────────
-    // But buffer them until history is merged so we don't get duplicates.
+    // ── Chat subscriptions ───────────────────────────────────────────────────
     channel.subscribe("admin-message", (msg) => {
       if (destroyed) return;
       const incoming: SupportMessage = {
@@ -108,10 +240,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
         sender: "admin",
         timestamp: msg.data.timestamp ?? Date.now(),
       };
-      if (!historyLoadedRef.current) {
-        liveBufferRef.current.push(incoming);
-        return;
-      }
+      if (!historyLoadedRef.current) { liveBufferRef.current.push(incoming); return; }
       setMessages((prev) => mergeMessage(prev, incoming));
       setUnreadCount((c) => c + 1);
     });
@@ -125,33 +254,48 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
         sender: "user",
         timestamp: msg.data.timestamp ?? Date.now(),
       };
-      if (!historyLoadedRef.current) {
-        liveBufferRef.current.push(incoming);
-        return;
-      }
+      if (!historyLoadedRef.current) { liveBufferRef.current.push(incoming); return; }
       setMessages((prev) => mergeMessage(prev, incoming));
     });
 
-    // ── Load history, then flush the live buffer ─────────────────────────────
+    // ── Call subscriptions ───────────────────────────────────────────────────
+
+    channel.subscribe("call-request", (msg) => {
+      if (destroyed) return;
+      // Only show the ringing modal if we're not already in a call
+      setCallState((prev) => {
+        if (prev.status !== "idle") return prev;
+        return { status: "ringing" };
+      });
+
+      // Auto-dismiss ringing after timeout (in case admin cancels without us knowing)
+      if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
+      ringTimeoutRef.current = setTimeout(() => {
+        if (!destroyed) {
+          setCallState((prev) => (prev.status === "ringing" ? { status: "idle" } : prev));
+        }
+      }, RING_TIMEOUT_MS);
+    });
+
+    channel.subscribe("call-ended", () => {
+      if (destroyed) return;
+      if (ringTimeoutRef.current) { clearTimeout(ringTimeoutRef.current); ringTimeoutRef.current = null; }
+      setCallState({ status: "idle" });
+    });
+
+    // ── Load history ─────────────────────────────────────────────────────────
     const CLOSED_CODES = new Set([80017, 80000, 90001]);
 
     const loadHistory = async () => {
       try {
-        // Wait until the connection is established before attaching/fetching
         await new Promise<void>((resolve, reject) => {
           if (destroyed) return resolve();
           if (ably.connection.state === "connected") return resolve();
-          if (ably.connection.state === "closed" ||
-              ably.connection.state === "failed") {
-            return reject(Object.assign(new Error("Connection closed"), { code: 80017 }));
-          }
+          if (ably.connection.state === "closed" || ably.connection.state === "failed")
+            return reject(Object.assign(new Error("closed"), { code: 80017 }));
           ably.connection.once("connected", () => resolve());
-          ably.connection.once("failed", () =>
-            reject(Object.assign(new Error("Connection failed"), { code: 80000 })),
-          );
-          ably.connection.once("closed", () =>
-            reject(Object.assign(new Error("Connection closed"), { code: 80017 })),
-          );
+          ably.connection.once("failed", () => reject(Object.assign(new Error("failed"), { code: 80000 })));
+          ably.connection.once("closed", () => reject(Object.assign(new Error("closed"), { code: 80017 })));
         });
         if (destroyed) return;
 
@@ -172,23 +316,16 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
           }))
           .sort((a, b) => a.timestamp - b.timestamp);
 
-        // Merge history, then flush any live messages that arrived during load
         setMessages(() => {
           let merged = historical;
-          for (const live of liveBufferRef.current) {
-            merged = mergeMessage(merged, live);
-          }
+          for (const live of liveBufferRef.current) merged = mergeMessage(merged, live);
           liveBufferRef.current = [];
           historyLoadedRef.current = true;
           return merged;
         });
       } catch (e: any) {
         const code = e?.code ?? e?.statusCode;
-        // Silently ignore closed-connection errors (Strict Mode unmount, navigation)
-        if (!CLOSED_CODES.has(code) && !destroyed) {
-          console.warn("History load failed:", e);
-        }
-        // Always mark history as loaded so buffered live messages aren't stuck
+        if (!CLOSED_CODES.has(code) && !destroyed) console.warn("History load failed:", e);
         if (!destroyed) {
           historyLoadedRef.current = true;
           setMessages(() => {
@@ -204,17 +341,18 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
 
     return () => {
       destroyed = true;
+      if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
       channel.unsubscribe();
       ably.close();
     };
   }, [channelName]);
 
-  // ── Scroll to bottom on new messages ────────────────────────────────────────
+  // ── Scroll to bottom ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (open) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, open]);
 
-  // ── Clear unread when opened ─────────────────────────────────────────────────
+  // ── Clear unread on open ─────────────────────────────────────────────────────
   useEffect(() => {
     if (open) {
       setUnreadCount(0);
@@ -222,44 +360,54 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
     }
   }, [open]);
 
-  // ── Send ──────────────────────────────────────────────────────────────────────
+  // ── Accept call ──────────────────────────────────────────────────────────────
+  const handleAcceptCall = useCallback(async () => {
+    if (ringTimeoutRef.current) { clearTimeout(ringTimeoutRef.current); ringTimeoutRef.current = null; }
+    const startedAt = Date.now();
+    setCallState({ status: "active", startedAt });
+    // Open the drawer so user can see the active call overlay
+    setOpen(true);
+    try {
+      await channelRef.current?.publish("call-accepted", { timestamp: startedAt });
+    } catch { }
+  }, []);
+
+  // ── Reject call ──────────────────────────────────────────────────────────────
+  const handleRejectCall = useCallback(async () => {
+    if (ringTimeoutRef.current) { clearTimeout(ringTimeoutRef.current); ringTimeoutRef.current = null; }
+    setCallState({ status: "idle" });
+    try {
+      await channelRef.current?.publish("call-rejected", { timestamp: Date.now() });
+    } catch { }
+  }, []);
+
+  // ── End call (user-initiated) ────────────────────────────────────────────────
+  const handleEndCall = useCallback(async () => {
+    setCallState({ status: "idle" });
+    try {
+      await channelRef.current?.publish("call-ended", { from: "user", timestamp: Date.now() });
+    } catch { }
+  }, []);
+
+  // ── Send message ─────────────────────────────────────────────────────────────
   const handleSend = useCallback(async () => {
     const text = input.trim();
     if (!text || !channelRef.current || sending) return;
 
     setSending(true);
-
-    // Use a stable clientMsgId so the echo can replace the optimistic bubble exactly
     const clientMsgId = `cmid-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const timestamp = Date.now();
-
-    const optimistic: SupportMessage = {
-      id: `optimistic-${clientMsgId}`,
-      clientMsgId,
-      text,
-      sender: "user",
-      timestamp,
-    };
+    const optimistic: SupportMessage = { id: `optimistic-${clientMsgId}`, clientMsgId, text, sender: "user", timestamp };
 
     setMessages((prev) => [...prev, optimistic]);
     setInput("");
 
     try {
-      // Re-announce so admin discovers this user even if they missed the first ping
       if (ablyRef.current) {
-        ablyRef.current.channels
-          .get("kapogian-support-inbox")
-          .publish("user-connected", { walletAddress });
+        ablyRef.current.channels.get("kapogian-support-inbox").publish("user-connected", { walletAddress });
       }
-
-      await channelRef.current.publish("user-message", {
-        text,
-        timestamp,
-        clientMsgId,   // ← included in payload for echo-dedup
-        walletAddress,
-      });
+      await channelRef.current.publish("user-message", { text, timestamp, clientMsgId, walletAddress });
     } catch {
-      // Roll back optimistic on failure
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
       setInput(text);
     } finally {
@@ -268,24 +416,36 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
   }, [input, sending, walletAddress]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
   if (!walletAddress) return null;
 
   return (
     <>
+      {/* ── Incoming Call Modal (rendered above everything) ── */}
+      {callState.status === "ringing" && (
+        <IncomingCallModal
+          onAccept={handleAcceptCall}
+          onReject={handleRejectCall}
+        />
+      )}
+
       {/* ── FAB Button ── */}
       <button
         onClick={() => setOpen((v) => !v)}
         className="fixed bottom-6 right-6 z-[90] w-14 h-14 bg-black text-white rounded-full border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.25)] flex items-center justify-center hover:scale-105 transition-transform"
         aria-label="Open support chat"
       >
-        {open ? <X size={22} /> : <MessageCircle size={22} />}
-        {!open && unreadCount > 0 && (
+        {/* Show pulsing green phone if call is active */}
+        {callState.status === "active" ? (
+          <Phone size={22} className="text-green-400 animate-pulse" />
+        ) : open ? (
+          <X size={22} />
+        ) : (
+          <MessageCircle size={22} />
+        )}
+        {!open && unreadCount > 0 && callState.status === "idle" && (
           <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 border-2 border-white rounded-full text-[10px] font-black flex items-center justify-center">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
@@ -313,7 +473,11 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
                   Kapogian Support
                 </p>
                 <p className="text-[10px] font-bold text-white/40 mt-0.5">
-                  {connected ? "Connected · replies in real-time" : "Connecting..."}
+                  {callState.status === "active"
+                    ? "📞 Call in progress"
+                    : connected
+                    ? "Connected · replies in real-time"
+                    : "Connecting..."}
                 </p>
               </div>
             </div>
@@ -325,28 +489,29 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
             </button>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[280px] max-h-[380px] bg-[#fdfcfa]">
+          {/* Message area (relative so the active-call overlay can be absolute) */}
+          <div className="relative flex-1 overflow-y-auto p-4 space-y-3 min-h-[280px] max-h-[380px] bg-[#fdfcfa]">
+            {/* ── Active call overlay ── */}
+            {callState.status === "active" && (
+              <ActiveCallOverlay
+                startedAt={callState.startedAt}
+                onEndCall={handleEndCall}
+              />
+            )}
+
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full py-10 gap-3 text-center">
                 <div className="w-14 h-14 bg-slate-100 rounded-full border-2 border-slate-200 flex items-center justify-center">
                   <MessageCircle size={24} className="text-slate-300" />
                 </div>
                 <div>
-                  <p className="font-black text-slate-500 text-sm uppercase tracking-tight">
-                    Send us a message
-                  </p>
-                  <p className="text-xs text-slate-400 font-semibold mt-1">
-                    We'll respond as soon as possible
-                  </p>
+                  <p className="font-black text-slate-500 text-sm uppercase tracking-tight">Send us a message</p>
+                  <p className="text-xs text-slate-400 font-semibold mt-1">We'll respond as soon as possible</p>
                 </div>
               </div>
             ) : (
               messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
-                >
+                <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
                   <div
                     className={`max-w-[78%] px-3.5 py-2.5 rounded-2xl text-sm font-semibold leading-snug ${
                       msg.sender === "user"
@@ -355,22 +520,11 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
                     }`}
                   >
                     {msg.sender === "admin" && (
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                        Kapogian Admin
-                      </p>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Kapogian Admin</p>
                     )}
                     <p>{msg.text}</p>
-                    <p
-                      className={`text-[9px] mt-1 font-mono ${
-                        msg.sender === "user"
-                          ? "text-white/40 text-right"
-                          : "text-slate-400"
-                      }`}
-                    >
-                      {new Date(msg.timestamp).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                    <p className={`text-[9px] mt-1 font-mono ${msg.sender === "user" ? "text-white/40 text-right" : "text-slate-400"}`}>
+                      {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
                 </div>
@@ -396,11 +550,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
               className="w-10 h-10 rounded-2xl bg-black text-white border-2 border-black flex items-center justify-center disabled:opacity-40 hover:bg-slate-800 transition-colors flex-shrink-0"
               aria-label="Send message"
             >
-              {sending ? (
-                <Loader2 size={15} className="animate-spin" />
-              ) : (
-                <Send size={15} />
-              )}
+              {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
             </button>
           </div>
         </div>
