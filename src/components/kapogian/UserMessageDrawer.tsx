@@ -183,7 +183,6 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
 
     // ── Chat subscriptions ───────────────────────────────────────────────────
     channel.subscribe("admin-message", (msg) => {
-      if (destroyed) return;
       const incoming: SupportMessage = {
         id: msg.id ?? `live-admin-${Date.now()}`,
         text: msg.data.text,
@@ -196,7 +195,6 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
     });
 
     channel.subscribe("user-message", (msg) => {
-      if (destroyed) return;
       const incoming: SupportMessage = {
         id: msg.id ?? `live-user-${Date.now()}`,
         clientMsgId: msg.data.clientMsgId,
@@ -212,21 +210,19 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
 
     // Admin is calling — show ringing modal
     // Do NOT call getUserMedia here — it's triggered by an Ably message, not a user gesture
-    channel.subscribe("call-request", (msg) => {
-      if (destroyed) return;
+    channel.subscribe("call-request", () => {
       setCallState((prev) => {
         if (prev.status !== "idle") return prev;
         return { status: "ringing" };
       });
       if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
       ringTimeoutRef.current = setTimeout(() => {
-        if (!destroyed) setCallState((prev) => prev.status === "ringing" ? { status: "idle" } : prev);
+        setCallState((prev) => prev.status === "ringing" ? { status: "idle" } : prev);
       }, RING_TIMEOUT_MS);
     });
 
     // Admin cancelled or hung up
     channel.subscribe("call-ended", () => {
-      if (destroyed) return;
       if (ringTimeoutRef.current) { clearTimeout(ringTimeoutRef.current); ringTimeoutRef.current = null; }
       webrtc.hangup();
       setCallState({ status: "idle" });
@@ -243,7 +239,6 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
 
     // ICE candidates from admin
     channel.subscribe("webrtc-ice", (msg) => {
-      if (destroyed) return;
       webrtc.handleIceCandidate(msg.data.candidate).catch(console.error);
     });
 
@@ -253,7 +248,6 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
     const loadHistory = async () => {
       try {
         await new Promise<void>((resolve, reject) => {
-          if (destroyed) return resolve();
           if (ably.connection.state === "connected") return resolve();
           if (ably.connection.state === "closed" || ably.connection.state === "failed")
             return reject(Object.assign(new Error("closed"), { code: 80017 }));
@@ -261,13 +255,10 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
           ably.connection.once("failed", () => reject(Object.assign(new Error("failed"), { code: 80000 })));
           ably.connection.once("closed", () => reject(Object.assign(new Error("closed"), { code: 80017 })));
         });
-        if (destroyed) return;
 
         await channel.attach();
-        if (destroyed) return;
 
         const page = await channel.history({ limit: 100, direction: "forwards" });
-        if (destroyed) return;
 
         const historical: SupportMessage[] = page.items
           .filter((m) => m.name === "user-message" || m.name === "admin-message")
@@ -289,15 +280,13 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
         });
       } catch (e: any) {
         const code = e?.code ?? e?.statusCode;
-        if (!CLOSED_CODES.has(code) && !destroyed) console.warn("History load failed:", e);
-        if (!destroyed) {
-          historyLoadedRef.current = true;
-          setMessages(() => {
-            const flushed = liveBufferRef.current;
-            liveBufferRef.current = [];
-            return flushed;
-          });
-        }
+        if (!CLOSED_CODES.has(code)) console.warn("History load failed:", e);
+        historyLoadedRef.current = true;
+        setMessages(() => {
+          const flushed = liveBufferRef.current;
+          liveBufferRef.current = [];
+          return flushed;
+        });
       }
     };
 
