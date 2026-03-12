@@ -10,12 +10,14 @@ import {
   ShieldCheck,
   Inbox,
   Circle,
+  X,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface SupportMessage {
   id: string;
+  clientMsgId?: string;
   text: string;
   sender: "user" | "admin";
   timestamp: number;
@@ -33,23 +35,76 @@ const ABLY_KEY = "YEbuRQ.r9odYA:eJmjank2w4vunEmM6HKLsKY557aJyRLPd8urztGykVs";
 const shortAddr = (addr: string) =>
   addr.length > 10 ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : addr;
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Merge a message into an array, deduplicating by Ably id or clientMsgId */
+function mergeMessage(
+  prev: SupportMessage[],
+  incoming: SupportMessage,
+): SupportMessage[] {
+  // Deduplicate by Ably message id
+  if (incoming.id && prev.some((m) => m.id === incoming.id)) return prev;
+
+  // Replace optimistic admin bubble by clientMsgId
+  if (incoming.sender === "admin" && incoming.clientMsgId) {
+    const idx = prev.findIndex(
+      (m) =>
+        m.id.startsWith("optimistic-") &&
+        m.clientMsgId === incoming.clientMsgId,
+    );
+    if (idx !== -1) {
+      const next = [...prev];
+      next[idx] = incoming;
+      return next;
+    }
+  }
+
+  return [...prev, incoming];
+}
+
+// ─── Per-user subscription state ─────────────────────────────────────────────
+
+interface UserSubState {
+  channel: Ably.RealtimeChannel;
+  historyLoaded: boolean;
+  liveBuffer: SupportMessage[];
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function AdminMessagesTab() {
-  const [conversations, setConversations] = useState<Map<string, Conversation>>(new Map());
+  const [conversations, setConversations] = useState<Map<string, Conversation>>(
+    new Map(),
+  );
   const [activeWallet, setActiveWallet] = useState<string | null>(null);
   const [replyInput, setReplyInput] = useState("");
   const [connected, setConnected] = useState(false);
   const [sending, setSending] = useState(false);
 
   const ablyRef = useRef<Ably.Realtime | null>(null);
-  const channelsRef = useRef<Map<string, Ably.RealtimeChannel>>(new Map());
+  /**
+   * Per-wallet subscription state. Tracks the channel instance plus whether
+   * history has finished loading (so live messages aren't appended prematurely).
+   */
+  const subsRef = useRef<Map<string, UserSubState>>(new Map());
+  /**
+   * Ref mirror of activeWallet so live-subscription callbacks can read the
+   * current value without stale closures (avoids misusing setState as a reader).
+   */
+  const activeWalletRef = useRef<string | null>(null);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // ── Boot Ably ─────────────────────────────────────────────────────────────
+  // Keep the ref in sync
   useEffect(() => {
-    let destroyed = false; // guard against React Strict Mode double-invoke
+    activeWalletRef.current = activeWallet;
+  }, [activeWallet]);
+
+  // ── Boot Ably ──────────────────────────────────────────────────────────────
+  useEffect(() => {
+    let destroyed = false;
+    const CLOSED_CODES = new Set([80017, 80000, 90001]);
 
     const ably = new Ably.Realtime({ key: ABLY_KEY });
     ablyRef.current = ably;
@@ -58,87 +113,235 @@ export function AdminMessagesTab() {
     ably.connection.on("disconnected", () => { if (!destroyed) setConnected(false); });
     ably.connection.on("failed", () => { if (!destroyed) setConnected(false); });
 
-    // Listen for users announcing themselves (fired on every message send)
+    // ── localStorage helpers ───────────────────────────────────────────────
+    // Wallet addresses are stored permanently in localStorage so conversations
+    // survive page reloads regardless of Ably's 2-minute history window.
+    const LS_KEY = "kapogian_admin_known_wallets";
+
+    const readStoredWallets = (): string[] => {
+      try {
+        return JSON.parse(localStorage.getItem(LS_KEY) ?? "[]");
+      } catch {
+        return [];
+      }
+    };
+
+    const saveWallet = (wallet: string) => {
+      try {
+        const existing = new Set(readStoredWallets());
+        if (existing.has(wallet)) return;
+        existing.add(wallet);
+        localStorage.setItem(LS_KEY, JSON.stringify(Array.from(existing)));
+      } catch {
+        // localStorage unavailable — gracefully ignore
+      }
+    };
+
+    // ── Step 1: restore all previously-known wallets from localStorage ─────
+    // This runs synchronously before any Ably async work so the sidebar
+    // is populated immediately on mount, even before Ably connects.
+    const storedWallets = readStoredWallets();
+    for (const wallet of storedWallets) {
+      if (!destroyed) subscribeToUser(wallet);
+    }
+
     const inboxChannel = ably.channels.get("kapogian-support-inbox");
+
+    // ── Step 2: subscribe live for new user announcements ─────────────────
     inboxChannel.subscribe("user-connected", (msg) => {
       if (destroyed) return;
       const { walletAddress } = msg.data as { walletAddress: string };
-      if (walletAddress) subscribeToUser(walletAddress, ably);
+      if (!walletAddress) return;
+      saveWallet(walletAddress);           // persist for future reloads
+      subscribeToUser(walletAddress);      // subscribe if not already
     });
+
+    // ── Step 3: also replay recent Ably inbox history (best-effort) ────────
+    // This catches any wallets that messaged after the last time this admin
+    // was online but before localStorage was populated (e.g. first ever load).
+    const loadInboxHistory = async () => {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          if (destroyed) return resolve();
+          if (ably.connection.state === "connected") return resolve();
+          ably.connection.once("connected", () => resolve());
+          ably.connection.once("failed", () =>
+            reject(Object.assign(new Error("Connection failed"), { code: 80000 })),
+          );
+          ably.connection.once("closed", () =>
+            reject(Object.assign(new Error("Connection closed"), { code: 80017 })),
+          );
+        });
+        if (destroyed) return;
+
+        await inboxChannel.attach();
+        if (destroyed) return;
+
+        const page = await inboxChannel.history({
+          limit: 100,
+          direction: "backwards",
+        });
+        if (destroyed) return;
+
+        const seen = new Set<string>(readStoredWallets());
+        for (const item of page.items) {
+          if (item.name !== "user-connected") continue;
+          const wallet = (item.data as { walletAddress?: string })?.walletAddress;
+          if (!wallet) continue;
+          saveWallet(wallet);
+          if (!seen.has(wallet)) {
+            seen.add(wallet);
+            subscribeToUser(wallet);
+          }
+        }
+
+        // Page through if there are more
+        let nextPage = page.hasNext() ? await page.next() : null;
+        while (nextPage && !destroyed) {
+          for (const item of nextPage.items) {
+            if (item.name !== "user-connected") continue;
+            const wallet = (item.data as { walletAddress?: string })?.walletAddress;
+            if (!wallet) continue;
+            saveWallet(wallet);
+            if (!seen.has(wallet)) {
+              seen.add(wallet);
+              subscribeToUser(wallet);
+            }
+          }
+          nextPage = nextPage.hasNext() ? await nextPage.next() : null;
+        }
+      } catch (e: any) {
+        const code = e?.code ?? e?.statusCode;
+        if (CLOSED_CODES.has(code)) return;
+        if (!destroyed) console.warn("Inbox history load failed:", e);
+      }
+    };
+
+    loadInboxHistory();
 
     return () => {
       destroyed = true;
-      channelsRef.current.forEach((ch) => ch.unsubscribe());
-      channelsRef.current.clear();
+      subsRef.current.forEach((s) => s.channel.unsubscribe());
+      subsRef.current.clear();
       inboxChannel.unsubscribe();
       ably.close();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Subscribe to a specific user's channel + load history ───────────────
-  const subscribeToUser = useCallback(
-    (walletAddress: string, ablyInstance?: Ably.Realtime) => {
-      const ably = ablyInstance ?? ablyRef.current;
-      if (!ably) return;
-      if (channelsRef.current.has(walletAddress)) return; // already subscribed
+  // ── Subscribe to a user's channel + load history ───────────────────────────
+  const subscribeToUser = useCallback((walletAddress: string) => {
+    const ably = ablyRef.current;
+    if (!ably) return;
+    if (subsRef.current.has(walletAddress)) return; // already subscribed
 
-      const channelName = `kapogian-support:${walletAddress.toLowerCase()}`;
-      const channel = ably.channels.get(channelName);
-      channelsRef.current.set(walletAddress, channel);
+    const channelName = `kapogian-support:${walletAddress.toLowerCase()}`;
+    const channel = ably.channels.get(channelName);
 
-      // ── Load history with async/await ─────────────────────────────────────
-      const loadHistory = async () => {
-        try {
-          await channel.attach();
-          if (ably.connection.state !== "connected") return; // closed before attach finished
-          const page = await channel.history({ limit: 100, direction: "forwards" });
-          const historical: SupportMessage[] = page.items
-            .filter((msg) => msg.name === "user-message" || msg.name === "admin-message")
-            .map((msg) => ({
-              id: msg.id ?? `hist-${Date.now()}-${Math.random()}`,
-              text: msg.data.text,
-              sender: (msg.name === "admin-message" ? "admin" : "user") as "admin" | "user",
-              timestamp: msg.data.timestamp ?? (msg as any).timestamp ?? Date.now(),
-            }));
+    const subState: UserSubState = {
+      channel,
+      historyLoaded: false,
+      liveBuffer: [],
+    };
+    subsRef.current.set(walletAddress, subState);
 
-          if (historical.length > 0) {
-            setConversations((prev) => {
-              const next = new Map(prev);
-              const conv = next.get(walletAddress) ?? {
-                walletAddress,
-                messages: [],
-                unread: 0,
-                lastActivity: Date.now(),
-              };
-              const existingIds = new Set(conv.messages.map((m) => m.id));
-              const merged = [
-                ...conv.messages,
-                ...historical.filter((m) => !existingIds.has(m.id)),
-              ].sort((a, b) => a.timestamp - b.timestamp);
-              const lastTs = merged[merged.length - 1]?.timestamp ?? conv.lastActivity;
-              next.set(walletAddress, {
-                ...conv,
-                messages: merged,
-                lastActivity: lastTs,
-              });
-              return next;
-            });
-          }
-        } catch (e) {
-          // Silently ignore "Connection closed" — happens during Strict Mode unmount
-          if ((e as any)?.code !== 80017) console.warn("History load failed:", e);
-        }
+    // Ensure a conversation entry exists immediately (empty) so the sidebar
+    // shows the user right away
+    setConversations((prev) => {
+      if (prev.has(walletAddress)) return prev;
+      const next = new Map(prev);
+      next.set(walletAddress, {
+        walletAddress,
+        messages: [],
+        unread: 0,
+        lastActivity: Date.now(),
+      });
+      return next;
+    });
+
+    // ── Subscribe BEFORE history so no live messages are dropped ─────────────
+    channel.subscribe("user-message", (msg) => {
+      const incoming: SupportMessage = {
+        id: msg.id ?? `live-user-${Date.now()}`,
+        clientMsgId: msg.data.clientMsgId,
+        text: msg.data.text,
+        sender: "user",
+        timestamp: msg.data.timestamp ?? Date.now(),
       };
-      loadHistory();
 
-      // ── Live: new user messages ───────────────────────────────────────────
-      channel.subscribe("user-message", (msg) => {
-        const newMsg: SupportMessage = {
-          id: msg.id ?? `${Date.now()}`,
-          text: msg.data.text,
-          sender: "user",
-          timestamp: msg.data.timestamp ?? Date.now(),
+      const sub = subsRef.current.get(walletAddress);
+      if (!sub) return;
+
+      if (!sub.historyLoaded) {
+        sub.liveBuffer.push(incoming);
+        return;
+      }
+
+      const isActive = activeWalletRef.current === walletAddress;
+
+      setConversations((prev) => {
+        const next = new Map(prev);
+        const conv = next.get(walletAddress) ?? {
+          walletAddress,
+          messages: [],
+          unread: 0,
+          lastActivity: Date.now(),
         };
+        const merged = mergeMessage(conv.messages, incoming);
+        if (merged === conv.messages) return prev; // no change
+        next.set(walletAddress, {
+          ...conv,
+          messages: merged,
+          unread: isActive ? 0 : conv.unread + 1,
+          lastActivity: incoming.timestamp,
+        });
+        return next;
+      });
+    });
+
+    // ── Load history, then flush the live buffer ──────────────────────────────
+    const CLOSED_CODES = new Set([80017, 80000, 90001]);
+
+    const loadHistory = async () => {
+      try {
+        // Wait until the connection is actually up before attaching
+        await new Promise<void>((resolve, reject) => {
+          if (ably.connection.state === "connected") return resolve();
+          if (ably.connection.state === "closed" ||
+              ably.connection.state === "failed") {
+            return reject(Object.assign(new Error("Connection closed"), { code: 80017 }));
+          }
+          ably.connection.once("connected", () => resolve());
+          ably.connection.once("failed", () =>
+            reject(Object.assign(new Error("Connection failed"), { code: 80000 })),
+          );
+          ably.connection.once("closed", () =>
+            reject(Object.assign(new Error("Connection closed"), { code: 80017 })),
+          );
+        });
+
+        await channel.attach();
+        if (ably.connection.state === "closed") return;
+
+        const page = await channel.history({ limit: 100, direction: "forwards" });
+
+        const historical: SupportMessage[] = page.items
+          .filter((m) => m.name === "user-message" || m.name === "admin-message")
+          .map((m) => ({
+            id: m.id ?? `hist-${Date.now()}-${Math.random()}`,
+            clientMsgId: m.data.clientMsgId,
+            text: m.data.text,
+            sender: (m.name === "admin-message" ? "admin" : "user") as
+              | "admin"
+              | "user",
+            timestamp: m.data.timestamp ?? (m as any).timestamp ?? Date.now(),
+          }))
+          .sort((a, b) => a.timestamp - b.timestamp);
+
+        const sub = subsRef.current.get(walletAddress);
+        if (!sub) return;
+
+        // Merge history + buffered live messages, then mark as loaded
         setConversations((prev) => {
           const next = new Map(prev);
           const conv = next.get(walletAddress) ?? {
@@ -147,46 +350,62 @@ export function AdminMessagesTab() {
             unread: 0,
             lastActivity: Date.now(),
           };
-          // Deduplicate (history replay can overlap with live)
-          if (conv.messages.some((m) => m.id === newMsg.id)) return prev;
-          setActiveWallet((currentActive) => {
-            const isActive = currentActive === walletAddress;
-            next.set(walletAddress, {
-              ...conv,
-              messages: [...conv.messages, newMsg],
-              unread: isActive ? 0 : conv.unread + 1,
-              lastActivity: Date.now(),
-            });
-            return currentActive;
+
+          let merged = historical;
+          for (const live of sub.liveBuffer) {
+            merged = mergeMessage(merged, live);
+          }
+          sub.liveBuffer = [];
+          sub.historyLoaded = true;
+
+          const lastTs =
+            merged[merged.length - 1]?.timestamp ?? conv.lastActivity;
+          next.set(walletAddress, {
+            ...conv,
+            messages: merged,
+            lastActivity: lastTs,
           });
           return next;
         });
-      });
+      } catch (e: any) {
+        const code = e?.code ?? e?.statusCode;
+        // Silently ignore closed-connection errors (React Strict Mode, unmount mid-load)
+        if (!CLOSED_CODES.has(code)) console.warn("History load failed:", e);
 
-      // Ensure conversation entry exists even before history loads
-      setConversations((prev) => {
-        if (prev.has(walletAddress)) return prev;
-        const next = new Map(prev);
-        next.set(walletAddress, {
-          walletAddress,
-          messages: [],
-          unread: 0,
-          lastActivity: Date.now(),
-        });
-        return next;
-      });
-    },
-    [],
-  );
+        // Still mark as loaded so buffered live messages aren't stuck forever
+        const sub = subsRef.current.get(walletAddress);
+        if (sub) {
+          setConversations((prev) => {
+            const next = new Map(prev);
+            const conv = next.get(walletAddress);
+            if (!conv) return prev;
+            let merged = conv.messages;
+            for (const live of sub.liveBuffer) {
+              merged = mergeMessage(merged, live);
+            }
+            sub.liveBuffer = [];
+            sub.historyLoaded = true;
+            next.set(walletAddress, { ...conv, messages: merged });
+            return next;
+          });
+        }
+      }
+    };
 
-  // ── Select conversation → clear unread ────────────────────────────────────
+    loadHistory();
+  }, []);
+
+  // ── Select conversation ────────────────────────────────────────────────────
   const selectConversation = (walletAddress: string) => {
     setActiveWallet(walletAddress);
     setConversations((prev) => {
       const next = new Map(prev);
       const conv = next.get(walletAddress);
-      if (conv) next.set(walletAddress, { ...conv, unread: 0 });
-      return next;
+      if (conv && conv.unread > 0) {
+        next.set(walletAddress, { ...conv, unread: 0 });
+        return next;
+      }
+      return prev;
     });
     setTimeout(() => {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -194,45 +413,56 @@ export function AdminMessagesTab() {
     }, 50);
   };
 
-  // ── Send reply ────────────────────────────────────────────────────────────
+  // ── Send reply ─────────────────────────────────────────────────────────────
   const handleSendReply = useCallback(async () => {
     const text = replyInput.trim();
     if (!text || !activeWallet || sending) return;
 
-    const channel = channelsRef.current.get(activeWallet);
-    if (!channel) return;
+    const sub = subsRef.current.get(activeWallet);
+    if (!sub) return;
 
     setSending(true);
-    const msgId = `admin-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    const clientMsgId = `cmid-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const timestamp = Date.now();
 
-    // Optimistic
-    const optimistic: SupportMessage = { id: msgId, text, sender: "admin", timestamp };
+    const optimistic: SupportMessage = {
+      id: `optimistic-${clientMsgId}`,
+      clientMsgId,
+      text,
+      sender: "admin",
+      timestamp,
+    };
+
     setConversations((prev) => {
       const next = new Map(prev);
       const conv = next.get(activeWallet);
-      if (conv)
-        next.set(activeWallet, {
-          ...conv,
-          messages: [...conv.messages, optimistic],
-          lastActivity: Date.now(),
-        });
+      if (!conv) return prev;
+      next.set(activeWallet, {
+        ...conv,
+        messages: [...conv.messages, optimistic],
+        lastActivity: timestamp,
+      });
       return next;
     });
     setReplyInput("");
 
     try {
-      await channel.publish("admin-message", { text, timestamp });
+      await sub.channel.publish("admin-message", {
+        text,
+        timestamp,
+        clientMsgId,
+      });
     } catch {
-      // Rollback on failure
+      // Roll back optimistic bubble
       setConversations((prev) => {
         const next = new Map(prev);
         const conv = next.get(activeWallet);
-        if (conv)
-          next.set(activeWallet, {
-            ...conv,
-            messages: conv.messages.filter((m) => m.id !== msgId),
-          });
+        if (!conv) return prev;
+        next.set(activeWallet, {
+          ...conv,
+          messages: conv.messages.filter((m) => m.id !== optimistic.id),
+        });
         return next;
       });
       setReplyInput(text);
@@ -253,6 +483,39 @@ export function AdminMessagesTab() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [conversations, activeWallet]);
 
+  // ── Remove a conversation (clears from state + localStorage) ─────────────
+  const removeConversation = (walletAddress: string) => {
+    // Remove from state
+    setConversations((prev) => {
+      const next = new Map(prev);
+      next.delete(walletAddress);
+      return next;
+    });
+    // Clear active if it was this wallet
+    if (activeWalletRef.current === walletAddress) {
+      setActiveWallet(null);
+    }
+    // Unsubscribe the channel
+    const sub = subsRef.current.get(walletAddress);
+    if (sub) {
+      sub.channel.unsubscribe();
+      subsRef.current.delete(walletAddress);
+    }
+    // Remove from localStorage
+    try {
+      const LS_KEY = "kapogian_admin_known_wallets";
+      const existing: string[] = JSON.parse(
+        localStorage.getItem(LS_KEY) ?? "[]",
+      );
+      localStorage.setItem(
+        LS_KEY,
+        JSON.stringify(existing.filter((w) => w !== walletAddress)),
+      );
+    } catch {
+      // ignore
+    }
+  };
+
   const totalUnread = Array.from(conversations.values()).reduce(
     (sum, c) => sum + c.unread,
     0,
@@ -264,14 +527,16 @@ export function AdminMessagesTab() {
 
   return (
     <div className="flex gap-6 h-[calc(100vh-220px)] min-h-[500px]">
-      {/* ── Left: Conversation List ───────────────────────────────────────── */}
+      {/* ── Left: Conversation List ─────────────────────────────────────────── */}
       <div className="w-[300px] flex-shrink-0 flex flex-col gap-3">
         <div className="bg-white border-4 border-black rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden h-full flex flex-col">
           {/* Header */}
           <div className="bg-black text-white px-4 py-3 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
               <Inbox size={16} className="text-white" />
-              <span className="font-black text-sm uppercase tracking-tight">Inbox</span>
+              <span className="font-black text-sm uppercase tracking-tight">
+                Inbox
+              </span>
               {totalUnread > 0 && (
                 <span className="w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center">
                   {totalUnread > 9 ? "9+" : totalUnread}
@@ -292,7 +557,9 @@ export function AdminMessagesTab() {
                   <MessageCircle size={20} className="text-slate-300" />
                 </div>
                 <div>
-                  <p className="font-black text-slate-300 text-xs uppercase">No messages yet</p>
+                  <p className="font-black text-slate-300 text-xs uppercase">
+                    No messages yet
+                  </p>
                   <p className="text-[10px] text-slate-300 mt-1 leading-tight">
                     Users will appear here automatically when they send a message
                   </p>
@@ -300,31 +567,37 @@ export function AdminMessagesTab() {
               </div>
             ) : (
               sortedConvs.map((conv) => (
-                <button
+                <div
                   key={conv.walletAddress}
-                  onClick={() => selectConversation(conv.walletAddress)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 border-b border-slate-100 text-left hover:bg-slate-50 transition-colors ${
-                    activeWallet === conv.walletAddress ? "bg-black text-white hover:bg-black" : ""
+                  className={`group relative flex items-center gap-3 px-4 py-3 border-b-2 border-slate-100 cursor-pointer transition-all ${
+                    activeWallet === conv.walletAddress
+                      ? "bg-black text-white"
+                      : "hover:bg-yellow-400 hover:border-yellow-400"
                   }`}
+                  onClick={() => selectConversation(conv.walletAddress)}
                 >
                   <div
                     className={`w-9 h-9 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                       activeWallet === conv.walletAddress
                         ? "border-white/30 bg-white/10"
-                        : "border-slate-200 bg-slate-100"
+                        : "border-slate-200 bg-slate-100 group-hover:border-yellow-600 group-hover:bg-yellow-200"
                     }`}
                   >
                     <User
                       size={14}
                       className={
-                        activeWallet === conv.walletAddress ? "text-white" : "text-slate-400"
+                        activeWallet === conv.walletAddress
+                          ? "text-white"
+                          : "text-slate-400 group-hover:text-black"
                       }
                     />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p
                       className={`font-black text-xs truncate uppercase ${
-                        activeWallet === conv.walletAddress ? "text-white" : "text-slate-800"
+                        activeWallet === conv.walletAddress
+                          ? "text-white"
+                          : "text-slate-800 group-hover:text-black"
                       }`}
                     >
                       {shortAddr(conv.walletAddress)}
@@ -334,26 +607,42 @@ export function AdminMessagesTab() {
                         className={`text-[10px] font-semibold truncate mt-0.5 ${
                           activeWallet === conv.walletAddress
                             ? "text-white/50"
-                            : "text-slate-400"
+                            : "text-slate-400 group-hover:text-black/60"
                         }`}
                       >
                         {conv.messages[conv.messages.length - 1].text}
                       </p>
                     )}
                   </div>
-                  {conv.unread > 0 && (
+                  {conv.unread > 0 ? (
                     <span className="w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center flex-shrink-0">
                       {conv.unread > 9 ? "9+" : conv.unread}
                     </span>
+                  ) : (
+                    // Close button — visible on hover, removes conversation
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeConversation(conv.walletAddress);
+                      }}
+                      title="Remove conversation"
+                      className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${
+                        activeWallet === conv.walletAddress
+                          ? "bg-white/20 hover:bg-white/40 text-white"
+                          : "bg-black/20 hover:bg-red-500 hover:text-white text-black"
+                      }`}
+                    >
+                      <X size={10} />
+                    </button>
                   )}
-                </button>
+                </div>
               ))
             )}
           </div>
         </div>
       </div>
 
-      {/* ── Right: Chat Window ────────────────────────────────────────────── */}
+      {/* ── Right: Chat Window ──────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col bg-white border-4 border-black rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
         {!activeConv ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center p-8">
@@ -386,7 +675,9 @@ export function AdminMessagesTab() {
               </div>
               <div className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-full flex-shrink-0">
                 <ShieldCheck size={11} className="text-green-400" />
-                <span className="text-[9px] font-black uppercase text-white/60">Admin</span>
+                <span className="text-[9px] font-black uppercase text-white/60">
+                  Admin
+                </span>
               </div>
             </div>
 
@@ -406,7 +697,9 @@ export function AdminMessagesTab() {
                 activeConv.messages.map((msg) => (
                   <div
                     key={msg.id}
-                    className={`flex ${msg.sender === "admin" ? "justify-end" : "justify-start"}`}
+                    className={`flex ${
+                      msg.sender === "admin" ? "justify-end" : "justify-start"
+                    }`}
                   >
                     <div
                       className={`max-w-[70%] px-4 py-2.5 rounded-2xl text-sm font-semibold leading-snug ${
@@ -428,7 +721,9 @@ export function AdminMessagesTab() {
                       <p>{msg.text}</p>
                       <p
                         className={`text-[9px] mt-1 font-mono ${
-                          msg.sender === "admin" ? "text-white/40 text-right" : "text-slate-400"
+                          msg.sender === "admin"
+                            ? "text-white/40 text-right"
+                            : "text-slate-400"
                         }`}
                       >
                         {new Date(msg.timestamp).toLocaleTimeString([], {
@@ -473,30 +768,81 @@ export function AdminMessagesTab() {
   );
 }
 
-// ─── Hook: total unread count for nav badge ───────────────────────────────────
+// ─── Hook: unread count for the nav badge ─────────────────────────────────────
+//
+// Previously this created a *second* Ably connection, missing all history and
+// double-counting messages.  Now it simply counts unread from the shared
+// conversations state managed by AdminMessagesTab — but since that component
+// lives on the same page we can't share state across component boundaries
+// without a context.  The cleanest solution that requires zero refactoring of
+// the parent page is to keep a lightweight singleton that listens on the inbox
+// channel only (not per-user channels) and increments once per new user-message
+// event.  It resets to 0 whenever the admin navigates to the Messages tab
+// (the parent page already does setMainTab("messages") which you can use to
+// call resetAdminUnread below).
+//
+// If you later move to a Context/Zustand store you can just re-export the
+// conversations unread total directly.
+
+let _unreadListeners: Array<(n: number) => void> = [];
+let _unreadCount = 0;
+let _ablyInstance: Ably.Realtime | null = null;
+let _subscribedWallets = new Set<string>();
+
+function _subscribeWalletForUnread(ably: Ably.Realtime, walletAddress: string) {
+  if (_subscribedWallets.has(walletAddress)) return;
+  _subscribedWallets.add(walletAddress);
+  const ch = ably.channels.get(
+    `kapogian-support:${walletAddress.toLowerCase()}`,
+  );
+  ch.subscribe("user-message", () => {
+    _unreadCount += 1;
+    _unreadListeners.forEach((fn) => fn(_unreadCount));
+  });
+}
+
+function _bootUnreadSingleton() {
+  if (_ablyInstance) return;
+  const ably = new Ably.Realtime({ key: ABLY_KEY });
+  _ablyInstance = ably;
+
+  const inbox = ably.channels.get("kapogian-support-inbox");
+
+  // Live: new users announcing themselves
+  inbox.subscribe("user-connected", (msg) => {
+    const { walletAddress } = msg.data as { walletAddress: string };
+    if (walletAddress) _subscribeWalletForUnread(ably, walletAddress);
+  });
+
+  // History: rediscover all previously known users after page reload
+  const loadHistory = async () => {
+    try {
+      await inbox.attach();
+      const page = await inbox.history({ limit: 100, direction: "backwards" });
+      for (const item of page.items) {
+        const wallet = (item.data as { walletAddress?: string })?.walletAddress;
+        if (wallet) _subscribeWalletForUnread(ably, wallet);
+      }
+    } catch {
+      // Non-critical — unread badge just won't reflect pre-reload users
+    }
+  };
+  loadHistory();
+}
+
+export function resetAdminUnread() {
+  _unreadCount = 0;
+  _unreadListeners.forEach((fn) => fn(0));
+}
+
 export function useAdminUnreadCount(): number {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(_unreadCount);
 
   useEffect(() => {
-    const ably = new Ably.Realtime({ key: ABLY_KEY });
-    const subscribedWallets = new Set<string>();
-    const inboxChannel = ably.channels.get("kapogian-support-inbox");
-
-    inboxChannel.subscribe("user-connected", (msg) => {
-      const { walletAddress } = msg.data as { walletAddress: string };
-      if (!walletAddress || subscribedWallets.has(walletAddress)) return;
-      subscribedWallets.add(walletAddress);
-      const ch = ably.channels.get(
-        `kapogian-support:${walletAddress.toLowerCase()}`,
-      );
-      ch.subscribe("user-message", () => {
-        setCount((c) => c + 1);
-      });
-    });
-
+    _bootUnreadSingleton();
+    _unreadListeners.push(setCount);
     return () => {
-      inboxChannel.unsubscribe();
-      ably.close();
+      _unreadListeners = _unreadListeners.filter((fn) => fn !== setCount);
     };
   }, []);
 

@@ -15,12 +15,42 @@ import {
 
 export interface SupportMessage {
   id: string;
+  /** clientMsgId is embedded in the payload so we can do exact echo-dedup */
+  clientMsgId?: string;
   text: string;
   sender: "user" | "admin";
   timestamp: number;
 }
 
 const ABLY_KEY = "YEbuRQ.r9odYA:eJmjank2w4vunEmM6HKLsKY557aJyRLPd8urztGykVs";
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Merge a new message into an existing array, deduplicating by:
+ *  1. Ably message id  (exact match — canonical)
+ *  2. clientMsgId      (our payload field — replaces the optimistic bubble)
+ */
+function mergeMessage(
+  prev: SupportMessage[],
+  incoming: SupportMessage,
+): SupportMessage[] {
+  // 1. Already present by Ably id?
+  if (incoming.id && prev.some((m) => m.id === incoming.id)) return prev;
+
+  // 2. Replace matching optimistic bubble by clientMsgId
+  if (incoming.clientMsgId) {
+    const idx = prev.findIndex(
+      (m) => m.id.startsWith("optimistic-") && m.clientMsgId === incoming.clientMsgId,
+    );
+    if (idx !== -1) {
+      const next = [...prev];
+      next[idx] = incoming;
+      return next;
+    }
+  }
+
+  return [...prev, incoming];
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -34,6 +64,11 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
 
   const ablyRef = useRef<Ably.Realtime | null>(null);
   const channelRef = useRef<Ably.RealtimeChannel | null>(null);
+  /** Prevents live-subscription handler from running before history is merged */
+  const historyLoadedRef = useRef(false);
+  /** Buffer for live messages that arrive before history finishes loading */
+  const liveBufferRef = useRef<SupportMessage[]>([]);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -41,10 +76,13 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
     ? `kapogian-support:${walletAddress.toLowerCase()}`
     : null;
 
+  // ── Boot Ably ───────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!channelName) return;
 
-    let destroyed = false; // guard against React Strict Mode double-invoke
+    let destroyed = false;
+    historyLoadedRef.current = false;
+    liveBufferRef.current = [];
 
     const ably = new Ably.Realtime({ key: ABLY_KEY });
     ablyRef.current = ably;
@@ -56,91 +94,113 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
     const channel = ably.channels.get(channelName);
     channelRef.current = channel;
 
-    // Announce to admin inbox so they can discover this user
+    // Announce to admin inbox
     const inboxChannel = ably.channels.get("kapogian-support-inbox");
     inboxChannel.publish("user-connected", { walletAddress });
 
-    // ── Load history so past messages survive page refresh ────────────────
-    const loadHistory = async () => {
-      try {
-        await channel.attach();
-        if (destroyed) return; // component unmounted while awaiting
-        const page = await channel.history({ limit: 100, direction: "forwards" });
-        if (destroyed) return;
-        const historical: SupportMessage[] = page.items
-          .filter((msg) => msg.name === "user-message" || msg.name === "admin-message")
-          .map((msg) => ({
-            id: msg.id ?? `hist-${Date.now()}-${Math.random()}`,
-            text: msg.data.text,
-            sender: (msg.name === "admin-message" ? "admin" : "user") as "admin" | "user",
-            timestamp: msg.data.timestamp ?? (msg as any).timestamp ?? Date.now(),
-          }));
-        if (historical.length > 0) {
-          setMessages(historical.sort((a, b) => a.timestamp - b.timestamp));
-        }
-      } catch (e) {
-        if (!destroyed) console.warn("History load failed:", e);
-      }
-    };
-    loadHistory();
-
-    // Subscribe to messages from admin
+    // ── Subscribe BEFORE history so we don't miss live messages ─────────────
+    // But buffer them until history is merged so we don't get duplicates.
     channel.subscribe("admin-message", (msg) => {
-      const newMsg: SupportMessage = {
-        id: msg.id ?? `${Date.now()}`,
+      if (destroyed) return;
+      const incoming: SupportMessage = {
+        id: msg.id ?? `live-admin-${Date.now()}`,
         text: msg.data.text,
         sender: "admin",
         timestamp: msg.data.timestamp ?? Date.now(),
       };
-      // Deduplicate against history
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === newMsg.id)) return prev;
-        return [...prev, newMsg];
-      });
+      if (!historyLoadedRef.current) {
+        liveBufferRef.current.push(incoming);
+        return;
+      }
+      setMessages((prev) => mergeMessage(prev, incoming));
       setUnreadCount((c) => c + 1);
     });
 
-    // Subscribe to echo of own messages — replace the optimistic bubble
-    // with the server-confirmed one (Ably assigns its own msg.id, so we
-    // match by text + approximate timestamp instead of ID)
     channel.subscribe("user-message", (msg) => {
-      setMessages((prev) => {
-        const echoText = msg.data.text;
-        const echoTs   = msg.data.timestamp ?? Date.now();
-
-        // Find the pending optimistic entry: same text, temp id starts with "user-"
-        const optimisticIdx = prev.findIndex(
-          (m) =>
-            m.sender === "user" &&
-            m.text === echoText &&
-            m.id.startsWith("user-") &&
-            Math.abs(m.timestamp - echoTs) < 10_000
-        );
-
-        if (optimisticIdx !== -1) {
-          // Swap the temp bubble for the confirmed one — no duplicate
-          const next = [...prev];
-          next[optimisticIdx] = {
-            id: msg.id ?? `echo-${Date.now()}`,
-            text: echoText,
-            sender: "user",
-            timestamp: echoTs,
-          };
-          return next;
-        }
-
-        // No matching optimistic — just append (edge case)
-        return [
-          ...prev,
-          {
-            id: msg.id ?? `${Date.now()}`,
-            text: echoText,
-            sender: "user",
-            timestamp: echoTs,
-          },
-        ];
-      });
+      if (destroyed) return;
+      const incoming: SupportMessage = {
+        id: msg.id ?? `live-user-${Date.now()}`,
+        clientMsgId: msg.data.clientMsgId,
+        text: msg.data.text,
+        sender: "user",
+        timestamp: msg.data.timestamp ?? Date.now(),
+      };
+      if (!historyLoadedRef.current) {
+        liveBufferRef.current.push(incoming);
+        return;
+      }
+      setMessages((prev) => mergeMessage(prev, incoming));
     });
+
+    // ── Load history, then flush the live buffer ─────────────────────────────
+    const CLOSED_CODES = new Set([80017, 80000, 90001]);
+
+    const loadHistory = async () => {
+      try {
+        // Wait until the connection is established before attaching/fetching
+        await new Promise<void>((resolve, reject) => {
+          if (destroyed) return resolve();
+          if (ably.connection.state === "connected") return resolve();
+          if (ably.connection.state === "closed" ||
+              ably.connection.state === "failed") {
+            return reject(Object.assign(new Error("Connection closed"), { code: 80017 }));
+          }
+          ably.connection.once("connected", () => resolve());
+          ably.connection.once("failed", () =>
+            reject(Object.assign(new Error("Connection failed"), { code: 80000 })),
+          );
+          ably.connection.once("closed", () =>
+            reject(Object.assign(new Error("Connection closed"), { code: 80017 })),
+          );
+        });
+        if (destroyed) return;
+
+        await channel.attach();
+        if (destroyed) return;
+
+        const page = await channel.history({ limit: 100, direction: "forwards" });
+        if (destroyed) return;
+
+        const historical: SupportMessage[] = page.items
+          .filter((m) => m.name === "user-message" || m.name === "admin-message")
+          .map((m) => ({
+            id: m.id ?? `hist-${Date.now()}-${Math.random()}`,
+            clientMsgId: m.data.clientMsgId,
+            text: m.data.text,
+            sender: (m.name === "admin-message" ? "admin" : "user") as "admin" | "user",
+            timestamp: m.data.timestamp ?? (m as any).timestamp ?? Date.now(),
+          }))
+          .sort((a, b) => a.timestamp - b.timestamp);
+
+        // Merge history, then flush any live messages that arrived during load
+        setMessages(() => {
+          let merged = historical;
+          for (const live of liveBufferRef.current) {
+            merged = mergeMessage(merged, live);
+          }
+          liveBufferRef.current = [];
+          historyLoadedRef.current = true;
+          return merged;
+        });
+      } catch (e: any) {
+        const code = e?.code ?? e?.statusCode;
+        // Silently ignore closed-connection errors (Strict Mode unmount, navigation)
+        if (!CLOSED_CODES.has(code) && !destroyed) {
+          console.warn("History load failed:", e);
+        }
+        // Always mark history as loaded so buffered live messages aren't stuck
+        if (!destroyed) {
+          historyLoadedRef.current = true;
+          setMessages(() => {
+            const flushed = liveBufferRef.current;
+            liveBufferRef.current = [];
+            return flushed;
+          });
+        }
+      }
+    };
+
+    loadHistory();
 
     return () => {
       destroyed = true;
@@ -149,12 +209,12 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
     };
   }, [channelName]);
 
-  // Scroll to bottom on new messages
+  // ── Scroll to bottom on new messages ────────────────────────────────────────
   useEffect(() => {
     if (open) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, open]);
 
-  // Clear unread when opened
+  // ── Clear unread when opened ─────────────────────────────────────────────────
   useEffect(() => {
     if (open) {
       setUnreadCount(0);
@@ -162,35 +222,45 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
     }
   }, [open]);
 
+  // ── Send ──────────────────────────────────────────────────────────────────────
   const handleSend = useCallback(async () => {
     const text = input.trim();
     if (!text || !channelRef.current || sending) return;
 
     setSending(true);
-    const msgId = `user-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    // Use a stable clientMsgId so the echo can replace the optimistic bubble exactly
+    const clientMsgId = `cmid-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const timestamp = Date.now();
 
-    // Optimistic
-    const optimistic: SupportMessage = { id: msgId, text, sender: "user", timestamp };
+    const optimistic: SupportMessage = {
+      id: `optimistic-${clientMsgId}`,
+      clientMsgId,
+      text,
+      sender: "user",
+      timestamp,
+    };
+
     setMessages((prev) => [...prev, optimistic]);
     setInput("");
 
     try {
-      // Re-announce on every send so admin discovers this user even if they
-      // weren't online when the drawer first opened
+      // Re-announce so admin discovers this user even if they missed the first ping
       if (ablyRef.current) {
         ablyRef.current.channels
           .get("kapogian-support-inbox")
           .publish("user-connected", { walletAddress });
       }
+
       await channelRef.current.publish("user-message", {
         text,
         timestamp,
+        clientMsgId,   // ← included in payload for echo-dedup
         walletAddress,
       });
     } catch {
-      // On failure, remove the optimistic message
-      setMessages((prev) => prev.filter((m) => m.id !== msgId));
+      // Roll back optimistic on failure
+      setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
       setInput(text);
     } finally {
       setSending(false);
@@ -239,7 +309,9 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
                 />
               </div>
               <div>
-                <p className="font-black text-sm uppercase tracking-tight leading-none">Kapogian Support</p>
+                <p className="font-black text-sm uppercase tracking-tight leading-none">
+                  Kapogian Support
+                </p>
                 <p className="text-[10px] font-bold text-white/40 mt-0.5">
                   {connected ? "Connected · replies in real-time" : "Connecting..."}
                 </p>
@@ -290,7 +362,9 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
                     <p>{msg.text}</p>
                     <p
                       className={`text-[9px] mt-1 font-mono ${
-                        msg.sender === "user" ? "text-white/40 text-right" : "text-slate-400"
+                        msg.sender === "user"
+                          ? "text-white/40 text-right"
+                          : "text-slate-400"
                       }`}
                     >
                       {new Date(msg.timestamp).toLocaleTimeString([], {
