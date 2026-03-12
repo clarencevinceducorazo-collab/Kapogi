@@ -157,19 +157,23 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
     : null;
 
   // ── Boot Ably ───────────────────────────────────────────────────────────────
+  // Guard against React Strict Mode double-invoke destroying WebRTC mid-call
+  const bootedChannelRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!channelName) return;
+    if (bootedChannelRef.current === channelName) return; // already booted for this wallet
+    bootedChannelRef.current = channelName;
 
-    let destroyed = false;
     historyLoadedRef.current = false;
     liveBufferRef.current = [];
 
     const ably = new Ably.Realtime({ key: ABLY_KEY });
     ablyRef.current = ably;
 
-    ably.connection.on("connected", () => { if (!destroyed) setConnected(true); });
-    ably.connection.on("disconnected", () => { if (!destroyed) setConnected(false); });
-    ably.connection.on("failed", () => { if (!destroyed) setConnected(false); });
+    ably.connection.on("connected", () => setConnected(true));
+    ably.connection.on("disconnected", () => setConnected(false));
+    ably.connection.on("failed", () => setConnected(false));
 
     const channel = ably.channels.get(channelName);
     channelRef.current = channel;
@@ -230,9 +234,10 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
 
     // ── WebRTC: user is the ANSWERER ─────────────────────────────────────────
     // Admin sends us the offer after we publish call-accepted
+    let answerSent = false;
     channel.subscribe("webrtc-offer", (msg) => {
-      if (destroyed) return;
-      // handleOffer: sets remote desc, creates answer, publishes webrtc-answer
+      if (answerSent) return; // prevent double-answer from duplicate messages
+      answerSent = true;
       webrtc.handleOffer(channel, msg.data.sdp).catch(console.error);
     });
 
@@ -298,13 +303,10 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
 
     loadHistory();
 
-    return () => {
-      destroyed = true;
-      if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
-      channel.unsubscribe();
-      ably.close();
-      webrtc.hangup();
-    };
+    // No cleanup return — intentional.
+    // Strict Mode cleanup would call webrtc.hangup() and ably.close() mid-call.
+    // The bootedChannelRef guard above ensures this only runs once per wallet.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelName]);
 
   // ── Scroll to bottom ──────────────────────────────────────────────────────

@@ -73,31 +73,30 @@ export function AdminMessagesTab() {
   const webrtc = useWebRTCCall();
 
   // ── Boot Ably ─────────────────────────────────────────────────────────────
+  // Use a ref-based init guard so React Strict Mode's double-invoke doesn't
+  // tear down the Ably connection or WebRTC peer connection mid-negotiation.
+  const bootedRef = useRef(false);
+
   useEffect(() => {
-    let destroyed = false;
+    if (bootedRef.current) return; // already booted — skip Strict Mode second run
+    bootedRef.current = true;
 
     const ably = new Ably.Realtime({ key: ABLY_KEY });
     ablyRef.current = ably;
 
-    ably.connection.on("connected", () => { if (!destroyed) setConnected(true); });
-    ably.connection.on("disconnected", () => { if (!destroyed) setConnected(false); });
-    ably.connection.on("failed", () => { if (!destroyed) setConnected(false); });
+    ably.connection.on("connected", () => setConnected(true));
+    ably.connection.on("disconnected", () => setConnected(false));
+    ably.connection.on("failed", () => setConnected(false));
 
     const inboxChannel = ably.channels.get("kapogian-support-inbox");
     inboxChannel.subscribe("user-connected", (msg) => {
-      if (destroyed) return;
       const { walletAddress } = msg.data as { walletAddress: string };
       if (walletAddress) subscribeToUser(walletAddress, ably);
     });
 
-    return () => {
-      destroyed = true;
-      channelsRef.current.forEach((ch) => ch.unsubscribe());
-      channelsRef.current.clear();
-      inboxChannel.unsubscribe();
-      ably.close();
-      webrtc.hangup();
-    };
+    // No cleanup — intentional. Strict Mode would destroy Ably + WebRTC
+    // mid-negotiation. The connection lives for the page lifetime.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Subscribe to user channel + history ───────────────────────────────────
@@ -169,11 +168,14 @@ export function AdminMessagesTab() {
       // ── WebRTC signaling ──────────────────────────────────────────────────
 
       // User accepted → we are the offerer: mic was already grabbed on button click
+      // Guard flag prevents double-firing from Strict Mode or duplicate subscriptions
+      let offerSent = false;
       channel.subscribe("call-accepted", () => {
         setCallState((prev) => {
           if (prev.status !== "calling" || prev.walletAddress !== walletAddress) return prev;
+          if (offerSent) return prev; // prevent double-offer
+          offerSent = true;
           const startedAt = Date.now();
-          // startAsOfferer will reuse the pre-warmed stream from handleInitiateCall
           webrtc.startAsOfferer(channel).catch(console.error);
           return { status: "active", walletAddress, startedAt };
         });
