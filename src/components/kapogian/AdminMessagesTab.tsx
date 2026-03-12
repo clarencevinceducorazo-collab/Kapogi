@@ -18,6 +18,8 @@ import {
   Clock,
 } from "lucide-react";
 
+import { useWebRTCCall } from "./usewebRTCCall";
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface SupportMessage {
@@ -215,6 +217,7 @@ export function AdminMessagesTab() {
   const subsRef = useRef<Map<string, UserSubState>>(new Map());
   const activeWalletRef = useRef<string | null>(null);
   const callTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const webrtc = useWebRTCCall();
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -365,17 +368,24 @@ export function AdminMessagesTab() {
     });
 
     // ── Call event subscriptions ──────────────────────────────────────────────
-    channel.subscribe("call-accepted", () => {
+    channel.subscribe("call-accepted", async () => {
       if (callTimeoutRef.current) { clearTimeout(callTimeoutRef.current); callTimeoutRef.current = null; }
       setCallState((prev) =>
         prev.status === "calling" && prev.walletAddress === walletAddress
           ? { status: "active", walletAddress, startedAt: Date.now() }
           : prev,
       );
+      // ── Start WebRTC as offerer ──
+      try {
+        await webrtc.startAsOfferer(channel);
+      } catch (e) {
+        console.warn("WebRTC offer failed:", e);
+      }
     });
 
     channel.subscribe("call-rejected", () => {
       if (callTimeoutRef.current) { clearTimeout(callTimeoutRef.current); callTimeoutRef.current = null; }
+      webrtc.hangup();
       setCallState((prev) =>
         (prev.status === "calling" || prev.status === "active") && prev.walletAddress === walletAddress
           ? { status: "rejected", walletAddress }
@@ -385,11 +395,21 @@ export function AdminMessagesTab() {
 
     channel.subscribe("call-ended", () => {
       if (callTimeoutRef.current) { clearTimeout(callTimeoutRef.current); callTimeoutRef.current = null; }
+      webrtc.hangup();
       setCallState((prev) =>
         prev.status === "active" && prev.walletAddress === walletAddress
           ? { status: "idle" }
           : prev,
       );
+    });
+
+    // ── WebRTC signaling ─────────────────────────────────────────────────────
+    channel.subscribe("webrtc-answer", (msg) => {
+      webrtc.handleAnswer(msg.data.sdp).catch(() => {});
+    });
+
+    channel.subscribe("webrtc-ice", (msg) => {
+      webrtc.handleIceCandidate(msg.data.candidate).catch(() => {});
     });
 
     // ── Load history ──────────────────────────────────────────────────────────
@@ -495,8 +515,9 @@ export function AdminMessagesTab() {
     if (sub) {
       try { await sub.channel.publish("call-ended", { from: "admin", timestamp: Date.now() }); } catch { }
     }
+    webrtc.hangup();
     setCallState({ status: "idle" });
-  }, [callState]);
+  }, [callState, webrtc]);
 
   // ── Dismiss rejected/missed banner ─────────────────────────────────────────
   const handleDismissCallBanner = useCallback(() => {
