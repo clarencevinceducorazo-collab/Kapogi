@@ -2,7 +2,6 @@
  * /api/pinata/upload
  * 
  * GET  -> returns a signed upload URL from Pinata (Browser-direct upload)
- *         Now supports ?group_id=... to upload directly into a Pinata Group.
  * POST -> uploads file to IPFS using server-side fetch (Fallback)
  */
 
@@ -17,30 +16,10 @@ export const maxDuration = 120; // allow long uploads
  * Creates a signed upload URL from Pinata via direct API call.
  * This avoids the need for the 'pinata' SDK module resolution at build time.
  */
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(req.url);
-    const group_id = searchParams.get("group_id");
-
     const jwt = process.env.PINATA_JWT;
     if (!jwt) throw new Error("PINATA_JWT is not configured on server.");
-
-    // Prepare signing body for Pinata V3
-    const signBody: any = {
-      capabilities: ["upload"],
-      expires: 120, // 2 minutes
-    };
-
-    // If group_id is provided, bind the upload to that group
-    if (group_id && group_id !== "none") {
-      signBody.group_id = group_id;
-      // We also add the group ID to metadata for easier client-side filtering in the list view
-      signBody.metadata = {
-        keyvalues: {
-          group: group_id
-        }
-      };
-    }
 
     const res = await fetch("https://api.pinata.cloud/v3/files/sign", {
       method: "POST",
@@ -48,7 +27,10 @@ export async function GET(req: NextRequest) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${jwt}`,
       },
-      body: JSON.stringify(signBody),
+      body: JSON.stringify({
+        capabilities: ["upload"],
+        expires: 120, // 2 minutes
+      }),
     });
 
     if (!res.ok) {
@@ -93,7 +75,7 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     console.error("❌ /api/pinata/upload error:", err.message || err);
     return NextResponse.json(
-      { error: err.message || "Internal server error during upload" },
+      { error: err.message || "Internal server error during uploads" },
       { status: 500 }
     );
   }
