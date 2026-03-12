@@ -168,11 +168,12 @@ export function AdminMessagesTab() {
 
       // ── WebRTC signaling ──────────────────────────────────────────────────
 
-      // User accepted → we are the offerer: get mic, create offer, send it
+      // User accepted → we are the offerer: mic was already grabbed on button click
       channel.subscribe("call-accepted", () => {
         setCallState((prev) => {
           if (prev.status !== "calling" || prev.walletAddress !== walletAddress) return prev;
           const startedAt = Date.now();
+          // startAsOfferer will reuse the pre-warmed stream from handleInitiateCall
           webrtc.startAsOfferer(channel).catch(console.error);
           return { status: "active", walletAddress, startedAt };
         });
@@ -238,13 +239,24 @@ export function AdminMessagesTab() {
     if (!activeWallet || callState.status !== "idle") return;
     const channel = channelsRef.current.get(activeWallet);
     if (!channel) return;
+
+    // Pre-warm: request mic permission here (button click = user gesture)
+    // Store on window so startAsOfferer (called from Ably handler) can reuse it
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      (window as any).__webrtcPrewarmStream = stream;
+    } catch {
+      alert("Microphone access is required to make a call.\nPlease allow microphone access in your browser settings and try again.");
+      return;
+    }
+
     setCallState({ status: "calling", walletAddress: activeWallet });
     try {
       await channel.publish("call-request", { timestamp: Date.now() });
     } catch {
       setCallState({ status: "idle" });
     }
-  }, [activeWallet, callState.status]);
+  }, [activeWallet, callState.status, webrtc]);
 
   // ── End / cancel call ──────────────────────────────────────────────────────
   const handleEndCall = useCallback(async () => {

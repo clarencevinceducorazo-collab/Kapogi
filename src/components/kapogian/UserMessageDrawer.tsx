@@ -206,13 +206,12 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
 
     // ── Call signaling ───────────────────────────────────────────────────────
 
-    // Admin is calling — show ringing modal and pre-warm PC
+    // Admin is calling — show ringing modal
+    // Do NOT call getUserMedia here — it's triggered by an Ably message, not a user gesture
     channel.subscribe("call-request", (msg) => {
       if (destroyed) return;
       setCallState((prev) => {
         if (prev.status !== "idle") return prev;
-        // Pre-warm answerer PC so it's ready when user taps Accept
-        webrtc.startAsAnswerer(channel).catch(() => {});
         return { status: "ringing" };
       });
       if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
@@ -324,11 +323,22 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
   // ── Accept call ───────────────────────────────────────────────────────────
   const handleAcceptCall = useCallback(async () => {
     if (ringTimeoutRef.current) { clearTimeout(ringTimeoutRef.current); ringTimeoutRef.current = null; }
+
+    // ── Grab mic HERE — this is a button click (user gesture) ─────────────
+    // getUserMedia MUST be called from a user gesture, not from an Ably handler
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      (window as any).__webrtcPrewarmStream = stream;
+    } catch {
+      alert("Microphone access is required to accept a voice call.\nPlease allow microphone access and try again.");
+      return;
+    }
+
     const startedAt = Date.now();
     setCallState({ status: "active", startedAt });
     setOpen(true);
     try {
-      // Tell admin we accepted — they will send the webrtc-offer in response
+      // Tell admin we accepted — they will now send the webrtc-offer
       await channelRef.current?.publish("call-accepted", { timestamp: startedAt });
     } catch { }
   }, []);

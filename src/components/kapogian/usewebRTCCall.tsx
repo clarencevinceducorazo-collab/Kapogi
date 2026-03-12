@@ -121,11 +121,32 @@ export function useWebRTCCall(): WebRTCCallHook {
   const startAsOfferer = useCallback(
     async (channel: Ably.RealtimeChannel) => {
       log("startAsOfferer: creating PC");
-      cleanup();
       channelRef.current = channel;
 
-      const stream = await getMic();
+      // Reuse the stream pre-warmed during the button click (handleInitiateCall)
+      // so we don't need to call getUserMedia again (which would fail outside gesture)
+      const prewarm = (startAsOfferer as any).__prewarmStream as MediaStream | undefined;
+      let stream = prewarm
+        ?? localStreamRef.current;
+
+      // Also check the global stash set by AdminMessagesTab
+      if (!stream || stream.getTracks().some((t) => t.readyState !== "live")) {
+        const globalStash = (window as any).__webrtcPrewarmStream as MediaStream | undefined;
+        if (globalStash?.getTracks().every((t) => t.readyState === "live")) {
+          stream = globalStash;
+        }
+      }
+
+      if (!stream || stream.getTracks().some((t) => t.readyState !== "live")) {
+        log("startAsOfferer: no pre-warmed stream, requesting mic");
+        stream = await getMic();
+      } else {
+        log("startAsOfferer: reusing pre-warmed mic stream");
+      }
       localStreamRef.current = stream;
+
+      // Close only the old PC, keep the stream
+      if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
 
       const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
       pcRef.current = pc;
@@ -181,13 +202,26 @@ export function useWebRTCCall(): WebRTCCallHook {
       // Close old PC but keep the pre-warmed stream
       if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
 
-      // Use pre-warmed stream or get a fresh one
-      let stream = localStreamRef.current;
+      // Use pre-warmed stream (set by handleAcceptCall button click) or local ref
+      let stream: MediaStream | null = localStreamRef.current;
+
+      // Check window stash set by the Accept button click
       if (!stream || stream.getTracks().some((t) => t.readyState !== "live")) {
-        log("handleOffer: no live stream, requesting mic");
-        stream = await getMic();
-        localStreamRef.current = stream;
+        const stash = (window as any).__webrtcPrewarmStream as MediaStream | undefined;
+        if (stash?.getTracks().every((t) => t.readyState === "live")) {
+          log("handleOffer: using window stash stream");
+          stream = stash;
+        }
       }
+
+      if (!stream || stream.getTracks().some((t) => t.readyState !== "live")) {
+        log("handleOffer: no pre-warmed stream available — mic will likely be denied");
+        log("handleOffer: make sure getUserMedia was called from a button click first");
+        stream = await getMic(); // last resort
+      } else {
+        log("handleOffer: reusing pre-warmed mic stream ✓");
+      }
+      localStreamRef.current = stream;
 
       const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
       pcRef.current = pc;
