@@ -522,7 +522,7 @@ export function AdminMessagesTab() {
               {activeConv.messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full gap-3 py-16 text-center">
                   <Circle size={32} className="text-slate-200" />
-                  <p className="font-black text-slate-300 text-sm uppercase">No messages yet</p>
+                  <p className="font-black text-slate-300 text-sm uppercase">No messages yet.</p>
                 </div>
               ) : activeConv.messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.sender === "admin" ? "justify-end" : "justify-start"}`}>
