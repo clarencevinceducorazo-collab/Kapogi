@@ -21,7 +21,6 @@ import {
   Copy,
   Calendar,
   HardDrive,
-  Pencil,
   Plus,
   Hash,
   Eye,
@@ -40,7 +39,7 @@ interface KapoFile {
   size: number;
   date: string;
   vis: 'public' | 'private';
-  group: string; // This will store the Group ID
+  group: string; // Stores Group ID (UUID)
   url: string;
 }
 
@@ -88,7 +87,7 @@ export default function KapogianStoragePage() {
   const [page, setPage] = useState<'files' | 'groups'>('files');
   const [activeTab, setActiveTab] = useState<'public' | 'private'>('public');
   const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'gif' | 'other'>('all');
-  const [groupFilter, setGroupFilter] = useState<string | null>(null); // Stores Group ID
+  const [groupFilter, setGroupFilter] = useState<string | null>(null); 
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('date-desc');
@@ -105,7 +104,7 @@ export default function KapogianStoragePage() {
   const [groupModalOpen, setGroupModalOpen] = useState(false);
   
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
-  const [uploadGroup, setUploadGroup] = useState(""); // Stores Group ID
+  const [uploadGroup, setUploadGroup] = useState(""); 
   const [uploadVis, setUploadVis] = useState<'public' | 'private'>('public');
 
   const [newGroupName, setNewGroupName] = useState("");
@@ -141,7 +140,7 @@ export default function KapogianStoragePage() {
           size: f.size || 0,
           date: f.date || new Date().toISOString(),
           vis: 'public', 
-          group: f.group || '', // This is the group ID from metadata
+          group: f.group || '', 
           url: f.url
         }));
         setFiles(parsedFiles);
@@ -274,7 +273,6 @@ export default function KapogianStoragePage() {
       const targetGroupId = uploadGroup || groupFilter || "";
       
       for (const file of pendingFiles) {
-        // Pass group_id to get a signed URL that includes the group and metadata
         const presignRes = await fetch(`/api/pinata/upload${targetGroupId ? `?group_id=${targetGroupId}` : ''}`);
         const { url } = await presignRes.json();
         const formData = new FormData();
@@ -319,7 +317,7 @@ export default function KapogianStoragePage() {
 
   return (
     <div className="bg-gradient-to-b from-amber-100 via-yellow-50 to-white text-slate-700 min-h-screen font-body selection:bg-blue-200 selection:text-pink-900">
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @keyframes blob-pulse { 0%,100%{transform:scale(1);opacity:.4} 50%{transform:scale(1.08);opacity:.6} }
         @keyframes card-in    { from{transform:translateY(18px) scale(.97);opacity:0} to{transform:translateY(0) scale(1);opacity:1} }
         .animate-blob { animation: blob-pulse 9s infinite; }
@@ -336,7 +334,10 @@ export default function KapogianStoragePage() {
         .tab-btn::after { content:''; position:absolute; bottom:0; left:0; width:0; height:3px; background:linear-gradient(90deg,#38bdf8,#3b82f6); border-radius:99px; transition:width .3s cubic-bezier(.34,1.56,.64,1); }
         .tab-btn.active { color:#1e293b; }
         .tab-btn.active::after { width:100%; }
-      `}</style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #bae6fd; border-radius: 10px; }
+      ` }} />
 
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute top-6 left-6 w-80 h-80 bg-sky-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" />
