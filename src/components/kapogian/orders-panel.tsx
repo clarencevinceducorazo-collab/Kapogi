@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import {
   LoaderCircle,
@@ -17,6 +17,10 @@ import {
   MapPin,
   Sparkles,
   LayoutGrid,
+  RefreshCw,
+  PartyPopper,
+  PackageCheck,
+  MapPinned,
 } from "lucide-react";
 import { suiClient } from "@/lib/sui";
 import { CONTRACT_ADDRESSES, MODULES, ORDER_STATUS, mistToSui } from "@/lib/constants";
@@ -56,6 +60,15 @@ interface ShopOrder {
 type Order = NftOrder | ShopOrder;
 type Tab = "all" | "nft" | "shop";
 
+// ─── Success Modal Types ──────────────────────────────────────────────────────
+
+type SuccessModalType = "shipped" | "tracking" | "delivered" | null;
+
+interface SuccessModalData {
+  type: SuccessModalType;
+  order: Order | null;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getStatusInfo(status: number) {
@@ -77,7 +90,140 @@ function getTrackingUrl(carrier: string, trackingNumber: string) {
   return `https://t.17track.net/en#nums=${trackingNumber}`;
 }
 
+// ─── Success Modal ────────────────────────────────────────────────────────────
+
+function SuccessModal({
+  data,
+  onClose,
+}: {
+  data: SuccessModalData;
+  onClose: () => void;
+}) {
+  if (!data.type || !data.order) return null;
+
+  const order = data.order;
+  const title  = order.kind === "nft"
+    ? ((order as NftOrder).character?.name ?? "Your Order")
+    : (order as ShopOrder).itemName;
+
+  const configs = {
+    shipped: {
+      icon: <Truck size={40} className="text-blue-500" />,
+      bg: "from-blue-50 to-cyan-50",
+      accent: "bg-blue-500",
+      ring: "ring-blue-200",
+      badge: "bg-blue-100 text-blue-700",
+      headline: "Order Shipped! 🚚",
+      body: "Your order is now in transit. You'll receive tracking updates as it makes its way to you.",
+      cta: null,
+    },
+    tracking: {
+      icon: <MapPinned size={40} className="text-teal-500" />,
+      bg: "from-teal-50 to-emerald-50",
+      accent: "bg-teal-500",
+      ring: "ring-teal-200",
+      badge: "bg-teal-100 text-teal-700",
+      headline: "Tracking Updated! 📦",
+      body: "Logistics information has been updated. You can now track your package in real time.",
+      cta:
+        order.trackingNumber && order.carrier
+          ? {
+              label: "Track Package",
+              url: getTrackingUrl(order.carrier, order.trackingNumber),
+            }
+          : null,
+    },
+    delivered: {
+      icon: <PartyPopper size={40} className="text-green-500" />,
+      bg: "from-green-50 to-lime-50",
+      accent: "bg-green-500",
+      ring: "ring-green-200",
+      badge: "bg-green-100 text-green-700",
+      headline: "Delivered! 🎉",
+      body: "Your order has been marked as delivered. We hope you enjoy your Kapogian gear!",
+      cta: null,
+    },
+  };
+
+  const cfg = configs[data.type];
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="absolute inset-0" onClick={onClose} />
+      <div
+        className={`relative bg-gradient-to-br ${cfg.bg} border-4 border-black rounded-[2.5rem] p-8 max-w-sm w-full shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] ring-4 ${cfg.ring} animate-in zoom-in-95 duration-300`}
+      >
+        {/* Decorative top bar */}
+        <div className={`absolute top-0 left-8 right-8 h-1.5 ${cfg.accent} rounded-b-full`} />
+
+        {/* Icon */}
+        <div className="flex justify-center mb-5 mt-2">
+          <div className="w-20 h-20 bg-white rounded-full border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center">
+            {cfg.icon}
+          </div>
+        </div>
+
+        {/* Text */}
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-black uppercase tracking-tight mb-2">{cfg.headline}</h2>
+          <div className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 ${cfg.badge}`}>
+            {title}
+          </div>
+          <p className="text-sm font-semibold text-slate-600 leading-relaxed">{cfg.body}</p>
+        </div>
+
+        {/* Tracking info if available */}
+        {data.type === "tracking" && order.trackingNumber && (
+          <div className="bg-white border-2 border-black rounded-2xl p-4 mb-4 text-center">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Tracking Number</p>
+            <p className="font-mono font-black text-slate-800 text-sm">{order.trackingNumber}</p>
+            {order.carrier && (
+              <p className="text-xs font-bold text-slate-500 mt-1">via {order.carrier}</p>
+            )}
+          </div>
+        )}
+
+        {/* CTA */}
+        <div className="flex flex-col gap-3">
+          {cfg.cta && (
+            <a
+              href={cfg.cta.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`w-full py-3 ${cfg.accent} text-white rounded-2xl font-black uppercase text-xs tracking-widest border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2 hover:opacity-90 transition-opacity`}
+            >
+              {cfg.cta.label} <ExternalLink size={13} />
+            </a>
+          )}
+          <button
+            onClick={onClose}
+            className="w-full py-3 bg-black text-white rounded-2xl font-black uppercase text-xs tracking-widest border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-slate-800 transition-colors"
+          >
+            Got it
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Live pulse indicator ─────────────────────────────────────────────────────
+
+function LiveBadge({ lastUpdated }: { lastUpdated: Date }) {
+  return (
+    <div className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+      <span className="relative flex h-2 w-2">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+      </span>
+      Live · {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+    </div>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
+
+const POLL_INTERVAL_MS = 15_000; // 15 seconds
 
 export function OrdersPanel({ account }: { account: any }) {
   const [nftOrders,  setNftOrders]  = useState<NftOrder[]>([]);
@@ -88,29 +234,95 @@ export function OrdersPanel({ account }: { account: any }) {
   const [errorShop, setErrorShop] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("all");
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [successModal, setSuccessModal] = useState<SuccessModalData>({ type: null, order: null });
+
+  // ── Change-detection refs ─────────────────────────────────────────────────
+  // Tracks the last-seen status per order. Seeded on first load, compared on polls.
+  const prevStatusMap  = useRef<Map<string, number>>(new Map());
+  // Tracks the last-seen tracking number per order.
+  const prevTrackingMap = useRef<Map<string, string>>(new Map());
+  // Deduplication: once a modal key has been shown, never show it again until
+  // the user explicitly refreshes (which clears this set).
+  // Key formats:
+  //   status change  → "<objectId>:status:<newStatus>"
+  //   tracking added → "<objectId>:tracking:<trackingNumber>"
+  const shownModalKeys = useRef<Set<string>>(new Set());
 
   // Lock background scroll when modal is open
   useEffect(() => {
-    if (selectedOrder) {
+    if (selectedOrder || successModal.type) {
       document.body.style.overflow = "hidden";
       return () => { document.body.style.overflow = ""; };
     }
-  }, [selectedOrder]);
+  }, [selectedOrder, successModal.type]);
 
   useEffect(() => {
     if (account?.address) {
-      loadNftOrders();
-      loadShopOrders();
+      loadNftOrders(true);
+      loadShopOrders(true);
     } else {
       setLoadingNft(false);
       setLoadingShop(false);
     }
   }, [account?.address]);
 
-  // ── NFT Ritual Orders ──────────────────────────────────────────────────────
-  const loadNftOrders = async () => {
+  // ── Polling ────────────────────────────────────────────────────────────────
+  useEffect(() => {
     if (!account?.address) return;
-    setLoadingNft(true);
+    const interval = setInterval(() => {
+      loadNftOrders(false);
+      loadShopOrders(false);
+    }, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [account?.address]);
+
+  // ── Unified change detector ────────────────────────────────────────────────
+  // Called after every silent poll (isInitial=false). Compares new order data
+  // against the last-seen state and fires at most ONE modal per unique event.
+  const detectChanges = useCallback((orders: Order[]) => {
+    for (const order of orders) {
+      const prevStatus   = prevStatusMap.current.get(order.objectId);
+      const currStatus   = order.status;
+      const prevTracking = prevTrackingMap.current.get(order.objectId) ?? "";
+      const currTracking = order.trackingNumber ?? "";
+
+      // ── Status change ────────────────────────────────────────────────────
+      if (prevStatus !== undefined && prevStatus !== currStatus) {
+        const key = `${order.objectId}:status:${currStatus}`;
+        if (!shownModalKeys.current.has(key)) {
+          shownModalKeys.current.add(key);
+          if (currStatus === ORDER_STATUS.SHIPPED) {
+            setSuccessModal({ type: "shipped", order });
+          } else if (currStatus === ORDER_STATUS.DELIVERED) {
+            setSuccessModal({ type: "delivered", order });
+          }
+        }
+      }
+
+      // ── Tracking number added/changed (while shipped) ────────────────────
+      if (
+        currStatus === ORDER_STATUS.SHIPPED &&
+        currTracking !== "" &&
+        prevTracking !== currTracking
+      ) {
+        const key = `${order.objectId}:tracking:${currTracking}`;
+        if (!shownModalKeys.current.has(key)) {
+          shownModalKeys.current.add(key);
+          setSuccessModal({ type: "tracking", order });
+        }
+      }
+
+      // Always advance the "last seen" values
+      prevStatusMap.current.set(order.objectId, currStatus);
+      prevTrackingMap.current.set(order.objectId, currTracking);
+    }
+  }, []);
+
+  // ── NFT Ritual Orders ──────────────────────────────────────────────────────
+  const loadNftOrders = async (isInitial = false) => {
+    if (!account?.address) return;
+    if (isInitial) setLoadingNft(true);
     setErrorNft("");
     try {
       let allReceiptIds: string[] = [];
@@ -137,7 +349,10 @@ export function OrdersPanel({ account }: { account: any }) {
       const userReceiptIds = allReceiptIds.filter(
         (_, idx) => allBuyerAddresses[idx] === account.address,
       );
-      if (userReceiptIds.length === 0) { setNftOrders([]); return; }
+      if (userReceiptIds.length === 0) {
+        setNftOrders([]);
+        return;
+      }
 
       const receipts = [];
       for (let i = 0; i < userReceiptIds.length; i += 50) {
@@ -176,19 +391,40 @@ export function OrdersPanel({ account }: { account: any }) {
           ]),
       );
 
-      setNftOrders(parsed.map((r) => ({ ...r, character: nftsMap.get(r.nftId) })) as NftOrder[]);
+      const final = parsed.map((r) => ({ ...r, character: nftsMap.get(r.nftId) })) as NftOrder[];
+
+      if (isInitial) {
+        // Seed maps silently — no modals on first load
+        final.forEach((o) => {
+          prevStatusMap.current.set(o.objectId, o.status);
+          prevTrackingMap.current.set(o.objectId, o.trackingNumber ?? "");
+        });
+      } else {
+        // Poll: detect changes, fire modal at most once per unique event
+        detectChanges(final);
+      }
+
+      setNftOrders(final);
+      setLastUpdated(new Date());
+
+      // Keep the open detail modal in sync with latest data
+      setSelectedOrder((prev) => {
+        if (!prev || prev.kind !== "nft") return prev;
+        const updated = final.find((o) => o.objectId === prev.objectId);
+        return updated ?? prev;
+      });
     } catch (err) {
       console.error("Failed to load NFT orders:", err);
-      setErrorNft("Failed to load ritual orders. Please try again.");
+      if (isInitial) setErrorNft("Failed to load ritual orders. Please try again.");
     } finally {
-      setLoadingNft(false);
+      if (isInitial) setLoadingNft(false);
     }
   };
 
   // ── Shop Orders ────────────────────────────────────────────────────────────
-  const loadShopOrders = async () => {
+  const loadShopOrders = async (isInitial = false) => {
     if (!account?.address) return;
-    setLoadingShop(true);
+    if (isInitial) setLoadingShop(true);
     setErrorShop("");
     try {
       const userAddr = account.address.toLowerCase();
@@ -201,7 +437,10 @@ export function OrdersPanel({ account }: { account: any }) {
 
       const registryFields = registryObj.data.content.fields as any;
       const receiptIds: string[] = registryFields.receipt_ids || [];
-      if (receiptIds.length === 0) { setShopOrders([]); return; }
+      if (receiptIds.length === 0) {
+        setShopOrders([]);
+        return;
+      }
 
       const receiptObjects = [];
       for (let i = 0; i < receiptIds.length; i += 50) {
@@ -253,13 +492,43 @@ export function OrdersPanel({ account }: { account: any }) {
         });
       }
 
-      setShopOrders(parsed.sort((a, b) => b.createdAt - a.createdAt));
+      const final = parsed.sort((a, b) => b.createdAt - a.createdAt);
+
+      if (isInitial) {
+        // Seed maps silently — no modals on first load
+        final.forEach((o) => {
+          prevStatusMap.current.set(o.objectId, o.status);
+          prevTrackingMap.current.set(o.objectId, o.trackingNumber ?? "");
+        });
+      } else {
+        // Poll: detect changes, fire modal at most once per unique event
+        detectChanges(final);
+      }
+
+      setShopOrders(final);
+      setLastUpdated(new Date());
+
+      // Keep the open detail modal in sync with latest data
+      setSelectedOrder((prev) => {
+        if (!prev || prev.kind !== "shop") return prev;
+        const updated = final.find((o) => o.objectId === prev.objectId);
+        return updated ?? prev;
+      });
     } catch (err) {
       console.error("Failed to load shop orders:", err);
-      setErrorShop("Sync failed. Gear manifests unavailable.");
+      if (isInitial) setErrorShop("Sync failed. Gear manifests unavailable.");
     } finally {
-      setLoadingShop(false);
+      if (isInitial) setLoadingShop(false);
     }
+  };
+
+  const handleManualRefresh = () => {
+    // Clear shown-modal deduplication so fresh changes after a manual refresh
+    // can surface as notifications again. Prev-state maps are NOT cleared so
+    // we still compare correctly against the latest known values.
+    shownModalKeys.current.clear();
+    loadNftOrders(false);
+    loadShopOrders(false);
   };
 
   // ── Derived list based on active tab ──────────────────────────────────────
@@ -285,14 +554,6 @@ export function OrdersPanel({ account }: { account: any }) {
         onClick={() => setSelectedOrder(order)}
         className="group bg-white border-4 border-slate-100 rounded-[2rem] p-4 flex flex-col sm:flex-row items-center gap-4 cursor-pointer hover:border-sky-200 transition-all hover:translate-x-1 shadow-sm"
       >
-        {/* Kind badge */}
-        <div className="absolute hidden sm:flex">
-          {isNft
-            ? <span className="sr-only">NFT Ritual</span>
-            : <span className="sr-only">Shop Order</span>
-          }
-        </div>
-
         <div className="w-20 h-20 rounded-2xl bg-slate-50 border-2 border-slate-100 overflow-hidden relative flex-shrink-0 shadow-inner">
           {thumb && (
             <Image
@@ -331,7 +592,7 @@ export function OrdersPanel({ account }: { account: any }) {
     );
   };
 
-  // ── Modal ─────────────────────────────────────────────────────────────────
+  // ── Detail Modal ──────────────────────────────────────────────────────────
   const renderModal = () => {
     if (!selectedOrder) return null;
     const isNft   = selectedOrder.kind === "nft";
@@ -342,6 +603,13 @@ export function OrdersPanel({ account }: { account: any }) {
     const tags    = isNft
       ? (selectedOrder.itemsSelected?.split(",").map((s) => s.trim()) ?? [])
       : selectedOrder.itemsSelected;
+
+    // Status stepper
+    const steps = [
+      { label: "Processing", icon: <Package size={14} />, status: ORDER_STATUS.PENDING },
+      { label: "In Transit", icon: <Truck size={14} />,   status: ORDER_STATUS.SHIPPED },
+      { label: "Delivered",  icon: <CheckCircle size={14} />, status: ORDER_STATUS.DELIVERED },
+    ];
 
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -392,11 +660,47 @@ export function OrdersPanel({ account }: { account: any }) {
             </div>
           </div>
 
+          {/* ── Status Stepper ── */}
+          <div className="mb-6 bg-slate-50 border-2 border-slate-100 rounded-2xl p-4">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1">
+              <Clock size={10} /> Order Progress
+            </p>
+            <div className="flex items-center gap-0">
+              {steps.map((step, i) => {
+                const isComplete = selectedOrder.status >= step.status;
+                const isActive   = selectedOrder.status === step.status;
+                return (
+                  <React.Fragment key={step.label}>
+                    <div className="flex flex-col items-center flex-shrink-0">
+                      <div
+                        className={`w-9 h-9 rounded-full border-2 flex items-center justify-center transition-all ${
+                          isComplete
+                            ? isActive
+                              ? "bg-black text-white border-black scale-110"
+                              : "bg-green-500 text-white border-green-600"
+                            : "bg-white text-slate-300 border-slate-200"
+                        }`}
+                      >
+                        {step.icon}
+                      </div>
+                      <span className={`text-[8px] font-black uppercase mt-1 text-center leading-tight ${isComplete ? "text-slate-700" : "text-slate-300"}`}>
+                        {step.label}
+                      </span>
+                    </div>
+                    {i < steps.length - 1 && (
+                      <div className={`flex-1 h-0.5 mx-1 mb-3 transition-all ${selectedOrder.status > step.status ? "bg-green-500" : "bg-slate-200"}`} />
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl">
               <p className="text-[9px] font-black text-slate-400 uppercase mb-1 flex items-center gap-1"><Clock size={10} /> Status</p>
-              <p className="font-bold text-slate-800 uppercase text-xs">{si.text}</p>
+              <p className={`font-bold uppercase text-xs flex items-center gap-1.5 ${si.textColor}`}>{si.icon} {si.text}</p>
             </div>
             <div className="bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl">
               <p className="text-[9px] font-black text-slate-400 uppercase mb-1 flex items-center gap-1"><Hash size={10} /> Paid</p>
@@ -404,10 +708,18 @@ export function OrdersPanel({ account }: { account: any }) {
             </div>
           </div>
 
-          {isNft && (
-            <div className="bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl mb-4">
-              <p className="text-[10px] font-black text-slate-400 uppercase mb-2 flex items-center gap-1"><MapPin size={10} /> Shipping To</p>
-              <p className="font-bold text-slate-700 text-sm italic">Verified Vault Address</p>
+          {/* Estimated delivery */}
+          {selectedOrder.estimatedDelivery > 0 && selectedOrder.status === ORDER_STATUS.SHIPPED && (
+            <div className="bg-blue-50 border-2 border-blue-100 p-4 rounded-2xl mb-4 flex items-center gap-3">
+              <Calendar size={16} className="text-blue-500 flex-shrink-0" />
+              <div>
+                <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Est. Delivery</p>
+                <p className="font-bold text-blue-800 text-sm">
+                  {new Date(selectedOrder.estimatedDelivery).toLocaleDateString("en-US", {
+                    weekday: "long", year: "numeric", month: "long", day: "numeric",
+                  })}
+                </p>
+              </div>
             </div>
           )}
 
@@ -416,23 +728,42 @@ export function OrdersPanel({ account }: { account: any }) {
             <div className="bg-blue-50 border-4 border-blue-100 p-6 rounded-3xl relative overflow-hidden">
               <Truck className="absolute -right-4 -bottom-4 w-32 h-32 opacity-10" />
               <p className="text-xs font-black text-blue-400 uppercase mb-3 tracking-widest">Live Logistics</p>
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
-                <div className="text-center sm:text-left">
-                  <p className="text-lg font-black text-blue-800 uppercase leading-none">{selectedOrder.carrier}</p>
-                  <p className="text-[10px] font-mono font-bold text-blue-600 mt-2 uppercase truncate">{selectedOrder.trackingNumber}</p>
+
+              {selectedOrder.trackingNumber ? (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
+                  <div className="text-center sm:text-left">
+                    <p className="text-lg font-black text-blue-800 uppercase leading-none">{selectedOrder.carrier}</p>
+                    <p className="text-[10px] font-mono font-bold text-blue-600 mt-2 uppercase truncate">{selectedOrder.trackingNumber}</p>
+                    {selectedOrder.estimatedDelivery > 0 && (
+                      <p className="text-[9px] text-blue-400 font-bold mt-1">
+                        Est. {new Date(selectedOrder.estimatedDelivery).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => {
+                      const url = getTrackingUrl(selectedOrder.carrier, selectedOrder.trackingNumber);
+                      if (url) window.open(url, "_blank");
+                    }}
+                    className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-2xl shadow-lg border-2 border-blue-400 transition-all flex items-center justify-center gap-2 font-black uppercase text-[10px]"
+                  >
+                    Track <ExternalLink size={14} />
+                  </button>
                 </div>
-                <button
-                  onClick={() => {
-                    const url = isNft
-                      ? getTrackingUrl(selectedOrder.carrier, selectedOrder.trackingNumber)
-                      : `https://t.17track.net/en#nums=${selectedOrder.trackingNumber}`;
-                    if (url) window.open(url, "_blank");
-                  }}
-                  className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-2xl shadow-lg border-2 border-blue-400 transition-all flex items-center justify-center gap-2 font-black uppercase text-[10px]"
-                >
-                  Track <ExternalLink size={14} />
-                </button>
-              </div>
+              ) : (
+                <div className="relative z-10 flex items-center gap-3">
+                  <LoaderCircle className="animate-spin text-blue-300 flex-shrink-0" size={18} />
+                  <p className="italic text-blue-500 font-bold text-xs uppercase tracking-tight">
+                    Tracking info being prepared...
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : selectedOrder.status === ORDER_STATUS.DELIVERED ? (
+            <div className="text-center py-8 bg-green-50 rounded-3xl border-2 border-green-200">
+              <PackageCheck className="mx-auto mb-2 text-green-500" size={32} />
+              <p className="font-black text-green-700 text-sm uppercase tracking-tight">Package Delivered!</p>
+              <p className="text-xs text-green-500 font-bold mt-1">Thank you for your order 🎉</p>
             </div>
           ) : (
             <div className="text-center py-10 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
@@ -457,33 +788,47 @@ export function OrdersPanel({ account }: { account: any }) {
   // ── Main render ───────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
-      {/* ── Tab bar ──────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-2xl w-fit">
-        {(
-          [
-            { id: "all",  label: "All",           icon: <LayoutGrid  size={13} />, count: nftOrders.length + shopOrders.length },
-            { id: "nft",  label: "NFT Rituals",   icon: <Sparkles    size={13} />, count: nftOrders.length                     },
-            { id: "shop", label: "Shop Orders",   icon: <ShoppingBag size={13} />, count: shopOrders.length                    },
-          ] as const
-        ).map((tab) => (
+      {/* ── Tab bar + live indicator ─────────────────────────────────────── */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-2xl w-fit">
+          {(
+            [
+              { id: "all",  label: "All",           icon: <LayoutGrid  size={13} />, count: nftOrders.length + shopOrders.length },
+              { id: "nft",  label: "NFT Rituals",   icon: <Sparkles    size={13} />, count: nftOrders.length                     },
+              { id: "shop", label: "Shop Orders",   icon: <ShoppingBag size={13} />, count: shopOrders.length                    },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wide transition-all whitespace-nowrap ${
+                activeTab === tab.id
+                  ? "bg-white shadow-sm text-slate-800 border-2 border-slate-200"
+                  : "text-slate-400 hover:text-slate-600"
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+              <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-black ${
+                activeTab === tab.id ? "bg-slate-100 text-slate-500" : "bg-slate-200 text-slate-400"
+              }`}>
+                {tab.count}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Live badge + manual refresh */}
+        <div className="flex items-center gap-3">
+          <LiveBadge lastUpdated={lastUpdated} />
           <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wide transition-all whitespace-nowrap ${
-              activeTab === tab.id
-                ? "bg-white shadow-sm text-slate-800 border-2 border-slate-200"
-                : "text-slate-400 hover:text-slate-600"
-            }`}
+            onClick={handleManualRefresh}
+            className="w-8 h-8 rounded-xl bg-slate-100 border-2 border-slate-200 flex items-center justify-center text-slate-400 hover:bg-sky-50 hover:text-sky-500 hover:border-sky-200 transition-all"
+            title="Refresh now"
           >
-            {tab.icon}
-            {tab.label}
-            <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-black ${
-              activeTab === tab.id ? "bg-slate-100 text-slate-500" : "bg-slate-200 text-slate-400"
-            }`}>
-              {tab.count}
-            </span>
+            <RefreshCw size={13} />
           </button>
-        ))}
+        </div>
       </div>
 
       {/* ── Body ─────────────────────────────────────────────────────────── */}
@@ -518,7 +863,14 @@ export function OrdersPanel({ account }: { account: any }) {
         </div>
       )}
 
+      {/* Detail modal */}
       {renderModal()}
+
+      {/* Success modal */}
+      <SuccessModal
+        data={successModal}
+        onClose={() => setSuccessModal({ type: null, order: null })}
+      />
     </div>
   );
 }
