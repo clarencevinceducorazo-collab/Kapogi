@@ -43,6 +43,7 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@splidejs/react-splide": "^0.7.12",
     "@tanstack/react-query": "^5.51.1",
+    "ably": "^2.19.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",

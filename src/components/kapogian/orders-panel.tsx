@@ -25,6 +25,7 @@ import {
 import { suiClient } from "@/lib/sui";
 import { CONTRACT_ADDRESSES, MODULES, ORDER_STATUS, mistToSui } from "@/lib/constants";
 import { getIPFSGatewayUrl } from "@/lib/pinata";
+import { UserMessageDrawer } from "@/components/kapogian/UserMessageDrawer";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -238,15 +239,8 @@ export function OrdersPanel({ account }: { account: any }) {
   const [successModal, setSuccessModal] = useState<SuccessModalData>({ type: null, order: null });
 
   // ── Change-detection refs ─────────────────────────────────────────────────
-  // Tracks the last-seen status per order. Seeded on first load, compared on polls.
   const prevStatusMap  = useRef<Map<string, number>>(new Map());
-  // Tracks the last-seen tracking number per order.
   const prevTrackingMap = useRef<Map<string, string>>(new Map());
-  // Deduplication: once a modal key has been shown, never show it again until
-  // the user explicitly refreshes (which clears this set).
-  // Key formats:
-  //   status change  → "<objectId>:status:<newStatus>"
-  //   tracking added → "<objectId>:tracking:<trackingNumber>"
   const shownModalKeys = useRef<Set<string>>(new Set());
 
   // Lock background scroll when modal is open
@@ -278,8 +272,6 @@ export function OrdersPanel({ account }: { account: any }) {
   }, [account?.address]);
 
   // ── Unified change detector ────────────────────────────────────────────────
-  // Called after every silent poll (isInitial=false). Compares new order data
-  // against the last-seen state and fires at most ONE modal per unique event.
   const detectChanges = useCallback((orders: Order[]) => {
     for (const order of orders) {
       const prevStatus   = prevStatusMap.current.get(order.objectId);
@@ -287,7 +279,6 @@ export function OrdersPanel({ account }: { account: any }) {
       const prevTracking = prevTrackingMap.current.get(order.objectId) ?? "";
       const currTracking = order.trackingNumber ?? "";
 
-      // ── Status change ────────────────────────────────────────────────────
       if (prevStatus !== undefined && prevStatus !== currStatus) {
         const key = `${order.objectId}:status:${currStatus}`;
         if (!shownModalKeys.current.has(key)) {
@@ -300,7 +291,6 @@ export function OrdersPanel({ account }: { account: any }) {
         }
       }
 
-      // ── Tracking number added/changed (while shipped) ────────────────────
       if (
         currStatus === ORDER_STATUS.SHIPPED &&
         currTracking !== "" &&
@@ -313,7 +303,6 @@ export function OrdersPanel({ account }: { account: any }) {
         }
       }
 
-      // Always advance the "last seen" values
       prevStatusMap.current.set(order.objectId, currStatus);
       prevTrackingMap.current.set(order.objectId, currTracking);
     }
@@ -394,20 +383,17 @@ export function OrdersPanel({ account }: { account: any }) {
       const final = parsed.map((r) => ({ ...r, character: nftsMap.get(r.nftId) })) as NftOrder[];
 
       if (isInitial) {
-        // Seed maps silently — no modals on first load
         final.forEach((o) => {
           prevStatusMap.current.set(o.objectId, o.status);
           prevTrackingMap.current.set(o.objectId, o.trackingNumber ?? "");
         });
       } else {
-        // Poll: detect changes, fire modal at most once per unique event
         detectChanges(final);
       }
 
       setNftOrders(final);
       setLastUpdated(new Date());
 
-      // Keep the open detail modal in sync with latest data
       setSelectedOrder((prev) => {
         if (!prev || prev.kind !== "nft") return prev;
         const updated = final.find((o) => o.objectId === prev.objectId);
@@ -495,20 +481,17 @@ export function OrdersPanel({ account }: { account: any }) {
       const final = parsed.sort((a, b) => b.createdAt - a.createdAt);
 
       if (isInitial) {
-        // Seed maps silently — no modals on first load
         final.forEach((o) => {
           prevStatusMap.current.set(o.objectId, o.status);
           prevTrackingMap.current.set(o.objectId, o.trackingNumber ?? "");
         });
       } else {
-        // Poll: detect changes, fire modal at most once per unique event
         detectChanges(final);
       }
 
       setShopOrders(final);
       setLastUpdated(new Date());
 
-      // Keep the open detail modal in sync with latest data
       setSelectedOrder((prev) => {
         if (!prev || prev.kind !== "shop") return prev;
         const updated = final.find((o) => o.objectId === prev.objectId);
@@ -523,9 +506,6 @@ export function OrdersPanel({ account }: { account: any }) {
   };
 
   const handleManualRefresh = () => {
-    // Clear shown-modal deduplication so fresh changes after a manual refresh
-    // can surface as notifications again. Prev-state maps are NOT cleared so
-    // we still compare correctly against the latest known values.
     shownModalKeys.current.clear();
     loadNftOrders(false);
     loadShopOrders(false);
@@ -604,7 +584,6 @@ export function OrdersPanel({ account }: { account: any }) {
       ? (selectedOrder.itemsSelected?.split(",").map((s) => s.trim()) ?? [])
       : selectedOrder.itemsSelected;
 
-    // Status stepper
     const steps = [
       { label: "Processing", icon: <Package size={14} />, status: ORDER_STATUS.PENDING },
       { label: "In Transit", icon: <Truck size={14} />,   status: ORDER_STATUS.SHIPPED },
@@ -871,6 +850,9 @@ export function OrdersPanel({ account }: { account: any }) {
         data={successModal}
         onClose={() => setSuccessModal({ type: null, order: null })}
       />
+
+      {/* ── Support Chat Drawer ───────────────────────────────────────────── */}
+      <UserMessageDrawer walletAddress={account?.address ?? ""} />
     </div>
   );
 }

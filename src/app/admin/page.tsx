@@ -41,6 +41,7 @@ import {
   AlertTriangle,
   ShoppingBag,
   ArrowRightLeft,
+  MessageCircle,
 } from "lucide-react";
 import { Transaction } from "@mysten/sui/transactions";
 import {
@@ -95,6 +96,7 @@ import type {
   ShippingInfo as ShopShippingInfo,
 } from "@/lib/shopTypes";
 import { ShopItemSection } from "@/components/kapogian/ShopItemSection";
+import { AdminMessagesTab, useAdminUnreadCount } from "@/components/kapogian/AdminMessagesTab";
 
 declare global {
   namespace JSX {
@@ -884,8 +886,6 @@ function SuperAdminPanel({
   const [newBundlePriceSui, setNewBundlePriceSui] = useState("");
   const [updatingMintPrice, setUpdatingMintPrice] = useState(false);
   const [updatingBundlePrice, setUpdatingBundlePrice] = useState(false);
-
-  // Transfer SuperAdminCap state
   const [transferRecipient, setTransferRecipient] = useState("");
   const [transferring, setTransferring] = useState(false);
   const [transferArmed, setTransferArmed] = useState(false);
@@ -920,13 +920,11 @@ function SuperAdminPanel({
     }
   };
 
-  // ── Transfer SuperAdminCap ──
   const handleTransferSuperAdmin = async () => {
     if (!transferRecipient.startsWith("0x")) {
       onToast("Invalid recipient address.", "error");
       return;
     }
-    // Double-confirm pattern: first click arms it, second click fires
     if (!transferArmed) {
       setTransferArmed(true);
       onToast("Click Transfer again to confirm. This is IRREVERSIBLE!", "info");
@@ -963,8 +961,6 @@ function SuperAdminPanel({
     }
     const addrToAdd = newAdminAddr.trim();
     setAddingAdmin(true);
-  
-    // ✅ Optimistic update — show immediately
     setRegistry((prev) =>
       prev
         ? {
@@ -976,7 +972,6 @@ function SuperAdminPanel({
         : prev,
     );
     setNewAdminAddr("");
-  
     try {
       await superAdminAddAdmin({
         superAdminCapId: superCapId,
@@ -985,7 +980,6 @@ function SuperAdminPanel({
       });
       onToast("Admin added!", "success");
     } catch (e: any) {
-      // ↩️ Rollback if tx fails
       setRegistry((prev) =>
         prev
           ? { ...prev, admins: prev.admins.filter((a) => a !== addrToAdd) }
@@ -1002,15 +996,12 @@ function SuperAdminPanel({
       setAddingAdmin(false);
     }
   };
-  
+
   const handleRemoveAdmin = async (addr: string) => {
     setRemovingAdmin(addr);
-  
-    // ✅ Optimistic update — remove immediately
     setRegistry((prev) =>
       prev ? { ...prev, admins: prev.admins.filter((a) => a !== addr) } : prev,
     );
-  
     try {
       await superAdminRemoveAdmin({
         superAdminCapId: superCapId,
@@ -1019,7 +1010,6 @@ function SuperAdminPanel({
       });
       onToast("Admin removed.", "success");
     } catch {
-      // ↩️ Rollback if tx fails
       setRegistry((prev) =>
         prev ? { ...prev, admins: [...prev.admins, addr] } : prev,
       );
@@ -1157,7 +1147,6 @@ function SuperAdminPanel({
           </button>
         </div>
 
-        {/* Cap ID bar */}
         {superCapId && (
           <div className="px-6 py-2 bg-yellow-50 border-b-2 border-yellow-200 flex items-center gap-2">
             <Crown size={12} className="text-yellow-600" />
@@ -1177,7 +1166,7 @@ function SuperAdminPanel({
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* ── Transfer SuperAdminCap ── */}
+            {/* Transfer SuperAdminCap */}
             <section className="border-4 border-rose-400 rounded-2xl p-5 bg-rose-50">
               <div className="flex items-center gap-2 mb-3">
                 <ArrowRightLeft size={18} className="text-rose-600" />
@@ -1235,7 +1224,7 @@ function SuperAdminPanel({
               )}
             </section>
 
-            {/* ── Mint Pause ── */}
+            {/* Mint Pause */}
             <section
               className={`border-4 rounded-2xl p-5 ${registry?.mintPaused ? "border-red-500 bg-red-50" : "border-black bg-white"}`}
             >
@@ -1294,7 +1283,7 @@ function SuperAdminPanel({
               </button>
             </section>
 
-            {/* ── Admin Whitelist ── */}
+            {/* Admin Whitelist */}
             <section className="border-4 border-black rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-4">
                 <ShieldCheck size={18} />
@@ -1316,10 +1305,7 @@ function SuperAdminPanel({
                       key={addr}
                       className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"
                     >
-                      <User
-                        size={12}
-                        className="text-slate-400 flex-shrink-0"
-                      />
+                      <User size={12} className="text-slate-400 flex-shrink-0" />
                       <span
                         className="font-mono text-xs font-bold text-slate-600 flex-1 truncate"
                         title={addr}
@@ -1362,7 +1348,7 @@ function SuperAdminPanel({
               </div>
             </section>
 
-            {/* ── Treasury ── */}
+            {/* Treasury */}
             <div className="border-2 border-slate-200 rounded-2xl p-5">
               <div className="flex items-center gap-3 mb-3">
                 <Wallet size={18} />
@@ -1402,7 +1388,7 @@ function SuperAdminPanel({
               </div>
             </div>
 
-            {/* ── Pricing ── */}
+            {/* Pricing */}
             <div className="border-2 border-slate-200 rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-4">
                 <DollarSign size={18} />
@@ -1502,7 +1488,7 @@ function SuperAdminPanel({
   );
 }
 
-// ─── Shop shipping decryption (RSA-OAEP or base64 fallback) ─────────────────
+// ─── Shop shipping decryption ─────────────────────────────────────────────────
 
 function shopHexToBytes(hex: string): Uint8Array {
   const clean = hex.replace(/^0x/, "");
@@ -1524,7 +1510,6 @@ async function decryptShopShippingInfo(
   encryptedString: string,
   adminPrivateKey: string,
 ): Promise<ShopShippingInfo> {
-  // ── Strategy 1: base64 fallback (plain JSON, no key needed) ──────────────
   try {
     const decoded = JSON.parse(atob(encryptedString));
     if (
@@ -1532,7 +1517,6 @@ async function decryptShopShippingInfo(
       typeof decoded === "object" &&
       (decoded.fullName || decoded.full_name)
     ) {
-      // normalise legacy snake_case just in case
       if (!decoded.fullName && decoded.full_name) {
         return {
           fullName: decoded.full_name ?? "",
@@ -1562,7 +1546,6 @@ async function decryptShopShippingInfo(
     /* not base64 JSON, try RSA */
   }
 
-  // ── Strategy 2: RSA-OAEP hex payload ─────────────────────────────────────
   if (!adminPrivateKey.trim()) {
     throw new Error(
       "Admin private key required to decrypt RSA-encrypted payload.",
@@ -1712,41 +1695,19 @@ function ShopOrdersTab({
 
   return (
     <div className="space-y-6">
-      {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          {
-            label: "Pending",
-            count: stats.pending,
-            bg: "bg-yellow-400",
-            icon: <Clock size={22} />,
-            iconStyle: { width: 40 },
-          },
-          {
-            label: "Shipped",
-            count: stats.shipped,
-            bg: "bg-blue-400 text-white",
-            icon: <Truck size={22} />,
-          },
-          {
-            label: "Delivered",
-            count: stats.delivered,
-            bg: "bg-green-400 text-white",
-            icon: <CheckCircle size={22} />,
-          },
+          { label: "Pending",   count: stats.pending,   bg: "bg-yellow-400",         icon: <Clock size={22} />       },
+          { label: "Shipped",   count: stats.shipped,   bg: "bg-blue-400 text-white", icon: <Truck size={22} />       },
+          { label: "Delivered", count: stats.delivered, bg: "bg-green-400 text-white",icon: <CheckCircle size={22} /> },
         ].map(({ label, count, bg, icon }) => (
           <BrutalCard key={label}>
             <div className="flex items-center gap-3">
-              <div
-                className={`${bg} p-2 rounded-xl border-2 border-black`}
-                style={typeof iconStyle !== "undefined" ? iconStyle : {}}
-              >
+              <div className={`${bg} p-2 rounded-xl border-2 border-black`}>
                 {icon}
               </div>
               <div>
-                <p className="text-xs font-black uppercase text-slate-400">
-                  {label}
-                </p>
+                <p className="text-xs font-black uppercase text-slate-400">{label}</p>
                 <p className="text-3xl font-black">{count}</p>
               </div>
             </div>
@@ -1754,13 +1715,11 @@ function ShopOrdersTab({
         ))}
       </div>
 
-      {/* Two-column layout: Shipping Payload (left) + Key/Table (right) */}
       <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 items-start">
-        {/* ── LEFT: Shipping Payload Card ── */}
         <BrutalCard
           noPadding
-          className="flex flex-col shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sticky top-4 mt-"
-          style={{ minHeight: "600px" }}
+          className="flex flex-col shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sticky top-4"
+          style={{ minHeight: "600px" } as React.CSSProperties}
         >
           <div className="p-4 bg-slate-900 text-white flex justify-between items-center rounded-t-2xl">
             <h3 className="font-black uppercase text-base tracking-widest flex items-center gap-2">
@@ -1797,7 +1756,6 @@ function ShopOrdersTab({
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Order banner */}
                 {selectedShopReceipt && (
                   <div className="flex gap-4 p-4 bg-blue-50 border-4 border-blue-200 rounded-2xl relative">
                     <div className="absolute -top-2 -right-2 bg-black text-white px-2 py-0.5 text-[9px] font-black uppercase rounded border border-white">
@@ -1842,19 +1800,10 @@ function ShopOrdersTab({
                   </div>
                 )}
 
-                {/* Shipping fields */}
                 <div className="space-y-4">
                   {[
-                    {
-                      label: "Consignee",
-                      icon: <User size={11} />,
-                      value: decryptedInfo.fullName,
-                    },
-                    {
-                      label: "Email",
-                      icon: <Mail size={11} />,
-                      value: decryptedInfo.email,
-                    },
+                    { label: "Consignee", icon: <User size={11} />,  value: decryptedInfo.fullName },
+                    { label: "Email",     icon: <Mail size={11} />,  value: decryptedInfo.email    },
                   ].map(({ label, icon, value }) =>
                     value ? (
                       <div key={label} className="space-y-1.5">
@@ -1910,9 +1859,7 @@ function ShopOrdersTab({
           </div>
         </BrutalCard>
 
-        {/* ── RIGHT: Key + Table ── */}
         <div className="space-y-6">
-          {/* Key */}
           <BrutalCard>
             <div className="flex items-center gap-2 mb-1">
               <LockKeyhole className="text-slate-400" size={18} />
@@ -1934,13 +1881,10 @@ function ShopOrdersTab({
                 onChange={(e) => setAdminKey(e.target.value)}
                 className="w-full bg-slate-50 border-4 border-black rounded-2xl px-3 py-1 font-mono text-xs placeholder:text-slate-300 outline-none resize-none"
               />
-              <Key
-                className="absolute right-3 top-1 text-slate-300"
-                size={18}
-              />
+              <Key className="absolute right-3 top-1 text-slate-300" size={18} />
             </div>
           </BrutalCard>
-          {/* Table */}
+
           <BrutalCard
             noPadding
             className="shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-visible"
@@ -2171,9 +2115,7 @@ function ShopOrdersTab({
             )}
           </BrutalCard>
         </div>
-        {/* end right column */}
       </div>
-      {/* end 2-col grid */}
 
       {/* Tracking Modal */}
       {trackingOpen && (
@@ -2287,7 +2229,12 @@ export default function AdminPage() {
     "pending" | "shipped" | "delivered"
   >("pending");
   const [superAdminPanelOpen, setSuperAdminPanelOpen] = useState(false);
-  const [mainTab, setMainTab] = useState<"nft" | "shop">("nft");
+
+  // ── mainTab now includes "messages" ──────────────────────────────────────
+  const [mainTab, setMainTab] = useState<"nft" | "shop" | "messages">("nft");
+
+  // ── Unread badge for Messages tab ─────────────────────────────────────────
+  const adminUnread = useAdminUnreadCount();
 
   const [trackingModalOpen, setTrackingModalOpen] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
@@ -2448,7 +2395,6 @@ export default function AdminPage() {
       return;
     }
     try {
-      // EthCrypto requires a 64-char hex key with no 0x prefix
       const sanitizedKey = adminPrivateKey.trim().replace(/^0x/i, "");
       const decryptedInfo = await decryptShippingInfo(
         receipt.encryptedShippingInfo,
@@ -2646,7 +2592,7 @@ export default function AdminPage() {
       </nav>
 
       <main className="max-w-[1600px] mx-auto p-6 space-y-8">
-        {/* Main section tabs */}
+        {/* ── Main section tabs (NFT Orders / Shop Orders / Messages) ── */}
         <div className="flex items-center gap-1 bg-white border-4 border-black rounded-2xl p-1.5 w-fit shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <button
             onClick={() => setMainTab("nft")}
@@ -2659,6 +2605,18 @@ export default function AdminPage() {
             className={`flex items-center gap-2 h-10 px-5 rounded-xl font-black text-sm uppercase tracking-tight transition-all ${mainTab === "shop" ? "bg-black text-white shadow-[2px_2px_0px_0px_rgba(59,130,246,0.6)]" : "text-slate-500 hover:bg-slate-50"}`}
           >
             <ShoppingBag size={16} /> Shop Orders
+          </button>
+          {/* ── Messages tab with unread badge ── */}
+          <button
+            onClick={() => setMainTab("messages")}
+            className={`relative flex items-center gap-2 h-10 px-5 rounded-xl font-black text-sm uppercase tracking-tight transition-all ${mainTab === "messages" ? "bg-black text-white shadow-[2px_2px_0px_0px_rgba(59,130,246,0.6)]" : "text-slate-500 hover:bg-slate-50"}`}
+          >
+            <MessageCircle size={16} /> Messages
+            {adminUnread > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 bg-red-500 text-white rounded text-[9px] font-black">
+                {adminUnread}
+              </span>
+            )}
           </button>
         </div>
 
@@ -3171,6 +3129,9 @@ export default function AdminPage() {
 
         {/* ── Shop Orders ── */}
         {mainTab === "shop" && <ShopOrdersTab onToast={showToast} />}
+
+        {/* ── Messages ── */}
+        {mainTab === "messages" && <AdminMessagesTab />}
       </main>
 
       {/* NFT Tracking Modal */}
