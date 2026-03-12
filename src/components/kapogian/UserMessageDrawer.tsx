@@ -13,6 +13,7 @@ import {
   PhoneOff,
   PhoneCall,
 } from "lucide-react";
+import { useWebRTCCall } from "./useWebRTCCall";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,19 +31,14 @@ type UserCallState =
   | { status: "active"; startedAt: number };
 
 const ABLY_KEY = "YEbuRQ.r9odYA:eJmjank2w4vunEmM6HKLsKY557aJyRLPd8urztGykVs";
-const RING_TIMEOUT_MS = 30_000; // dismiss ringing if no cancel arrives after 30 s
+const RING_TIMEOUT_MS = 30_000;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function mergeMessage(
-  prev: SupportMessage[],
-  incoming: SupportMessage,
-): SupportMessage[] {
+function mergeMessage(prev: SupportMessage[], incoming: SupportMessage): SupportMessage[] {
   if (incoming.id && prev.some((m) => m.id === incoming.id)) return prev;
   if (incoming.clientMsgId) {
-    const idx = prev.findIndex(
-      (m) => m.id.startsWith("optimistic-") && m.clientMsgId === incoming.clientMsgId,
-    );
+    const idx = prev.findIndex((m) => m.id.startsWith("optimistic-") && m.clientMsgId === incoming.clientMsgId);
     if (idx !== -1) {
       const next = [...prev];
       next[idx] = incoming;
@@ -67,14 +63,7 @@ function CallTimer({ startedAt }: { startedAt: number }) {
 
 // ─── Incoming Call Modal ──────────────────────────────────────────────────────
 
-function IncomingCallModal({
-  onAccept,
-  onReject,
-}: {
-  onAccept: () => void;
-  onReject: () => void;
-}) {
-  // Animate the phone icon
+function IncomingCallModal({ onAccept, onReject }: { onAccept: () => void; onReject: () => void }) {
   const [ring, setRing] = useState(true);
   useEffect(() => {
     const id = setInterval(() => setRing((v) => !v), 600);
@@ -83,48 +72,28 @@ function IncomingCallModal({
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative bg-white border-4 border-black rounded-[2.5rem] p-8 max-w-xs w-full shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] animate-in zoom-in-95 duration-300 text-center">
-        {/* Decorative pulse rings */}
+      <div className="bg-white border-4 border-black rounded-[2.5rem] p-8 max-w-xs w-full shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] text-center animate-in zoom-in-95 duration-300">
         <div className="flex justify-center mb-6 relative">
           <span className="absolute w-24 h-24 rounded-full bg-green-200 animate-ping opacity-40" />
           <span className="absolute w-20 h-20 rounded-full bg-green-300 animate-ping opacity-30 [animation-delay:150ms]" />
-          <div
-            className={`relative w-16 h-16 rounded-full border-4 border-black flex items-center justify-center transition-transform duration-300 ${
-              ring ? "bg-green-400 scale-110" : "bg-green-500 scale-100"
-            }`}
-          >
+          <div className={`relative w-16 h-16 rounded-full border-4 border-black flex items-center justify-center transition-transform duration-300 ${ring ? "bg-green-400 scale-110" : "bg-green-500 scale-100"}`}>
             <PhoneCall size={28} className="text-black" />
           </div>
         </div>
-
-        {/* Text */}
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-          Incoming Call
-        </p>
-        <h2 className="text-xl font-black uppercase tracking-tight text-slate-900 mb-1">
-          Kapogian Support
-        </h2>
-        <p className="text-sm font-semibold text-slate-500 mb-8">
-          An admin wants to speak with you
-        </p>
-
-        {/* Buttons */}
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Incoming Call</p>
+        <h2 className="text-xl font-black uppercase tracking-tight text-slate-900 mb-1">Kapogian Support</h2>
+        <p className="text-sm font-semibold text-slate-500 mb-8">An admin wants to speak with you</p>
         <div className="flex gap-4 justify-center">
-          {/* Reject */}
           <button
             onClick={onReject}
             className="w-16 h-16 rounded-full bg-red-500 border-4 border-black flex flex-col items-center justify-center gap-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-red-400 active:translate-y-0.5 active:shadow-none transition-all"
-            aria-label="Reject call"
           >
             <PhoneOff size={22} className="text-white" />
             <span className="text-[8px] font-black text-white uppercase">Decline</span>
           </button>
-
-          {/* Accept */}
           <button
             onClick={onAccept}
             className="w-16 h-16 rounded-full bg-green-500 border-4 border-black flex flex-col items-center justify-center gap-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-green-400 active:translate-y-0.5 active:shadow-none transition-all"
-            aria-label="Accept call"
           >
             <Phone size={22} className="text-white" />
             <span className="text-[8px] font-black text-white uppercase">Accept</span>
@@ -135,48 +104,25 @@ function IncomingCallModal({
   );
 }
 
-// ─── Active Call Overlay (inside drawer) ─────────────────────────────────────
+// ─── Active Call Overlay ──────────────────────────────────────────────────────
 
-function ActiveCallOverlay({
-  startedAt,
-  onEndCall,
-}: {
-  startedAt: number;
-  onEndCall: () => void;
-}) {
+function ActiveCallOverlay({ startedAt, onEndCall }: { startedAt: number; onEndCall: () => void }) {
   return (
     <div className="absolute inset-0 z-10 bg-black/95 flex flex-col items-center justify-center gap-5 rounded-b-[2rem]">
-      {/* Animated waveform dots */}
       <div className="flex items-end gap-1.5 h-10">
         {[0, 1, 2, 3, 4].map((i) => (
-          <span
-            key={i}
-            className="w-1.5 rounded-full bg-green-400 animate-bounce"
-            style={{
-              height: `${16 + (i % 3) * 12}px`,
-              animationDelay: `${i * 100}ms`,
-              animationDuration: "0.8s",
-            }}
-          />
+          <span key={i} className="w-1.5 rounded-full bg-green-400 animate-bounce"
+            style={{ height: `${16 + (i % 3) * 12}px`, animationDelay: `${i * 100}ms`, animationDuration: "0.8s" }} />
         ))}
       </div>
-
       <div className="text-center">
-        <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">
-          Call Active
-        </p>
-        <p className="text-3xl font-black text-green-400">
-          <CallTimer startedAt={startedAt} />
-        </p>
-        <p className="text-xs font-semibold text-white/40 mt-1">
-          Kapogian Support
-        </p>
+        <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Call Active</p>
+        <p className="text-3xl font-black text-green-400"><CallTimer startedAt={startedAt} /></p>
+        <p className="text-xs font-semibold text-white/40 mt-1">Kapogian Support</p>
       </div>
-
       <button
         onClick={onEndCall}
         className="w-16 h-16 rounded-full bg-red-500 border-4 border-black flex flex-col items-center justify-center gap-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-red-400 active:translate-y-0.5 active:shadow-none transition-all mt-2"
-        aria-label="End call"
       >
         <PhoneOff size={22} className="text-white" />
         <span className="text-[8px] font-black text-white uppercase">End</span>
@@ -201,9 +147,10 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
   const historyLoadedRef = useRef(false);
   const liveBufferRef = useRef<SupportMessage[]>([]);
   const ringTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const webrtc = useWebRTCCall();
 
   const channelName = walletAddress
     ? `kapogian-support:${walletAddress.toLowerCase()}`
@@ -227,7 +174,6 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
     const channel = ably.channels.get(channelName);
     channelRef.current = channel;
 
-    // Announce presence to admin
     const inboxChannel = ably.channels.get("kapogian-support-inbox");
     inboxChannel.publish("user-connected", { walletAddress });
 
@@ -258,29 +204,43 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
       setMessages((prev) => mergeMessage(prev, incoming));
     });
 
-    // ── Call subscriptions ───────────────────────────────────────────────────
+    // ── Call signaling ───────────────────────────────────────────────────────
 
+    // Admin is calling — show ringing modal and pre-warm PC
     channel.subscribe("call-request", (msg) => {
       if (destroyed) return;
-      // Only show the ringing modal if we're not already in a call
       setCallState((prev) => {
         if (prev.status !== "idle") return prev;
+        // Pre-warm answerer PC so it's ready when user taps Accept
+        webrtc.startAsAnswerer(channel).catch(() => {});
         return { status: "ringing" };
       });
-
-      // Auto-dismiss ringing after timeout (in case admin cancels without us knowing)
       if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
       ringTimeoutRef.current = setTimeout(() => {
-        if (!destroyed) {
-          setCallState((prev) => (prev.status === "ringing" ? { status: "idle" } : prev));
-        }
+        if (!destroyed) setCallState((prev) => prev.status === "ringing" ? { status: "idle" } : prev);
       }, RING_TIMEOUT_MS);
     });
 
+    // Admin cancelled or hung up
     channel.subscribe("call-ended", () => {
       if (destroyed) return;
       if (ringTimeoutRef.current) { clearTimeout(ringTimeoutRef.current); ringTimeoutRef.current = null; }
+      webrtc.hangup();
       setCallState({ status: "idle" });
+    });
+
+    // ── WebRTC: user is the ANSWERER ─────────────────────────────────────────
+    // Admin sends us the offer after we publish call-accepted
+    channel.subscribe("webrtc-offer", (msg) => {
+      if (destroyed) return;
+      // handleOffer: sets remote desc, creates answer, publishes webrtc-answer
+      webrtc.handleOffer(channel, msg.data.sdp).catch(console.error);
+    });
+
+    // ICE candidates from admin
+    channel.subscribe("webrtc-ice", (msg) => {
+      if (destroyed) return;
+      webrtc.handleIceCandidate(msg.data.candidate).catch(console.error);
     });
 
     // ── Load history ─────────────────────────────────────────────────────────
@@ -293,7 +253,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
           if (ably.connection.state === "connected") return resolve();
           if (ably.connection.state === "closed" || ably.connection.state === "failed")
             return reject(Object.assign(new Error("closed"), { code: 80017 }));
-          ably.connection.once("connected", () => resolve());
+          ably.connection.once("connected", resolve);
           ably.connection.once("failed", () => reject(Object.assign(new Error("failed"), { code: 80000 })));
           ably.connection.once("closed", () => reject(Object.assign(new Error("closed"), { code: 80017 })));
         });
@@ -344,15 +304,16 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
       if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
       channel.unsubscribe();
       ably.close();
+      webrtc.hangup();
     };
   }, [channelName]);
 
-  // ── Scroll to bottom ─────────────────────────────────────────────────────────
+  // ── Scroll to bottom ──────────────────────────────────────────────────────
   useEffect(() => {
     if (open) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, open]);
 
-  // ── Clear unread on open ─────────────────────────────────────────────────────
+  // ── Clear unread on open ──────────────────────────────────────────────────
   useEffect(() => {
     if (open) {
       setUnreadCount(0);
@@ -360,36 +321,38 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
     }
   }, [open]);
 
-  // ── Accept call ──────────────────────────────────────────────────────────────
+  // ── Accept call ───────────────────────────────────────────────────────────
   const handleAcceptCall = useCallback(async () => {
     if (ringTimeoutRef.current) { clearTimeout(ringTimeoutRef.current); ringTimeoutRef.current = null; }
     const startedAt = Date.now();
     setCallState({ status: "active", startedAt });
-    // Open the drawer so user can see the active call overlay
     setOpen(true);
     try {
+      // Tell admin we accepted — they will send the webrtc-offer in response
       await channelRef.current?.publish("call-accepted", { timestamp: startedAt });
     } catch { }
   }, []);
 
-  // ── Reject call ──────────────────────────────────────────────────────────────
+  // ── Reject call ───────────────────────────────────────────────────────────
   const handleRejectCall = useCallback(async () => {
     if (ringTimeoutRef.current) { clearTimeout(ringTimeoutRef.current); ringTimeoutRef.current = null; }
+    webrtc.hangup();
     setCallState({ status: "idle" });
     try {
       await channelRef.current?.publish("call-rejected", { timestamp: Date.now() });
     } catch { }
-  }, []);
+  }, [webrtc]);
 
-  // ── End call (user-initiated) ────────────────────────────────────────────────
+  // ── End call ──────────────────────────────────────────────────────────────
   const handleEndCall = useCallback(async () => {
+    webrtc.hangup();
     setCallState({ status: "idle" });
     try {
       await channelRef.current?.publish("call-ended", { from: "user", timestamp: Date.now() });
     } catch { }
-  }, []);
+  }, [webrtc]);
 
-  // ── Send message ─────────────────────────────────────────────────────────────
+  // ── Send message ──────────────────────────────────────────────────────────
   const handleSend = useCallback(async () => {
     const text = input.trim();
     if (!text || !channelRef.current || sending) return;
@@ -398,7 +361,6 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
     const clientMsgId = `cmid-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const timestamp = Date.now();
     const optimistic: SupportMessage = { id: `optimistic-${clientMsgId}`, clientMsgId, text, sender: "user", timestamp };
-
     setMessages((prev) => [...prev, optimistic]);
     setInput("");
 
@@ -423,28 +385,19 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
 
   return (
     <>
-      {/* ── Incoming Call Modal (rendered above everything) ── */}
+      {/* Incoming call modal */}
       {callState.status === "ringing" && (
-        <IncomingCallModal
-          onAccept={handleAcceptCall}
-          onReject={handleRejectCall}
-        />
+        <IncomingCallModal onAccept={handleAcceptCall} onReject={handleRejectCall} />
       )}
 
-      {/* ── FAB Button ── */}
+      {/* FAB */}
       <button
         onClick={() => setOpen((v) => !v)}
         className="fixed bottom-6 right-6 z-[90] w-14 h-14 bg-black text-white rounded-full border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.25)] flex items-center justify-center hover:scale-105 transition-transform"
-        aria-label="Open support chat"
       >
-        {/* Show pulsing green phone if call is active */}
         {callState.status === "active" ? (
           <Phone size={22} className="text-green-400 animate-pulse" />
-        ) : open ? (
-          <X size={22} />
-        ) : (
-          <MessageCircle size={22} />
-        )}
+        ) : open ? <X size={22} /> : <MessageCircle size={22} />}
         {!open && unreadCount > 0 && callState.status === "idle" && (
           <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 border-2 border-white rounded-full text-[10px] font-black flex items-center justify-center">
             {unreadCount > 9 ? "9+" : unreadCount}
@@ -452,7 +405,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
         )}
       </button>
 
-      {/* ── Drawer ── */}
+      {/* Drawer */}
       {open && (
         <div className="fixed bottom-24 right-6 z-[90] w-[360px] max-w-[calc(100vw-3rem)] flex flex-col bg-white border-4 border-black rounded-[2rem] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200">
           {/* Header */}
@@ -462,41 +415,26 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
                 <div className="w-9 h-9 bg-white/10 rounded-full border-2 border-white/20 flex items-center justify-center">
                   <ShieldCheck size={16} className="text-white" />
                 </div>
-                <span
-                  className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-black ${
-                    connected ? "bg-green-400" : "bg-slate-500"
-                  }`}
-                />
+                <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-black ${connected ? "bg-green-400" : "bg-slate-500"}`} />
               </div>
               <div>
-                <p className="font-black text-sm uppercase tracking-tight leading-none">
-                  Kapogian Support
-                </p>
+                <p className="font-black text-sm uppercase tracking-tight leading-none">Kapogian Support</p>
                 <p className="text-[10px] font-bold text-white/40 mt-0.5">
                   {callState.status === "active"
-                    ? "📞 Call in progress"
-                    : connected
-                    ? "Connected · replies in real-time"
-                    : "Connecting..."}
+                    ? <span className="text-green-400">📞 <CallTimer startedAt={callState.startedAt} /></span>
+                    : connected ? "Connected · replies in real-time" : "Connecting..."}
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => setOpen(false)}
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 hover:text-white transition-colors"
-            >
+            <button onClick={() => setOpen(false)} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 hover:text-white transition-colors">
               <ChevronDown size={16} />
             </button>
           </div>
 
-          {/* Message area (relative so the active-call overlay can be absolute) */}
+          {/* Message area */}
           <div className="relative flex-1 overflow-y-auto p-4 space-y-3 min-h-[280px] max-h-[380px] bg-[#fdfcfa]">
-            {/* ── Active call overlay ── */}
             {callState.status === "active" && (
-              <ActiveCallOverlay
-                startedAt={callState.startedAt}
-                onEndCall={handleEndCall}
-              />
+              <ActiveCallOverlay startedAt={callState.startedAt} onEndCall={handleEndCall} />
             )}
 
             {messages.length === 0 ? (
@@ -504,32 +442,20 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
                 <div className="w-14 h-14 bg-slate-100 rounded-full border-2 border-slate-200 flex items-center justify-center">
                   <MessageCircle size={24} className="text-slate-300" />
                 </div>
-                <div>
-                  <p className="font-black text-slate-500 text-sm uppercase tracking-tight">Send us a message</p>
-                  <p className="text-xs text-slate-400 font-semibold mt-1">We'll respond as soon as possible</p>
+                <p className="font-black text-slate-500 text-sm uppercase tracking-tight">Send us a message</p>
+                <p className="text-xs text-slate-400 font-semibold">We'll respond as soon as possible</p>
+              </div>
+            ) : messages.map((msg) => (
+              <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[78%] px-3.5 py-2.5 rounded-2xl text-sm font-semibold leading-snug ${msg.sender === "user" ? "bg-black text-white rounded-br-sm" : "bg-white border-2 border-slate-200 text-slate-800 rounded-bl-sm"}`}>
+                  {msg.sender === "admin" && <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Kapogian Admin</p>}
+                  <p>{msg.text}</p>
+                  <p className={`text-[9px] mt-1 font-mono ${msg.sender === "user" ? "text-white/40 text-right" : "text-slate-400"}`}>
+                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </p>
                 </div>
               </div>
-            ) : (
-              messages.map((msg) => (
-                <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-[78%] px-3.5 py-2.5 rounded-2xl text-sm font-semibold leading-snug ${
-                      msg.sender === "user"
-                        ? "bg-black text-white rounded-br-sm"
-                        : "bg-white border-2 border-slate-200 text-slate-800 rounded-bl-sm"
-                    }`}
-                  >
-                    {msg.sender === "admin" && (
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Kapogian Admin</p>
-                    )}
-                    <p>{msg.text}</p>
-                    <p className={`text-[9px] mt-1 font-mono ${msg.sender === "user" ? "text-white/40 text-right" : "text-slate-400"}`}>
-                      {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
+            ))}
             <div ref={bottomRef} />
           </div>
 
@@ -548,7 +474,6 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
               onClick={handleSend}
               disabled={!input.trim() || sending || !connected}
               className="w-10 h-10 rounded-2xl bg-black text-white border-2 border-black flex items-center justify-center disabled:opacity-40 hover:bg-slate-800 transition-colors flex-shrink-0"
-              aria-label="Send message"
             >
               {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
             </button>
