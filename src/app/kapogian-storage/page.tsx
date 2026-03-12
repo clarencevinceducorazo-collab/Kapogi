@@ -102,6 +102,8 @@ export default function KapogianStoragePage() {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [uploadGroup, setUploadGroup] = useState(""); 
   const [uploadVis, setUploadVis] = useState<'public' | 'private'>('public');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupEmoji, setNewGroupEmoji] = useState("📁");
@@ -253,9 +255,11 @@ export default function KapogianStoragePage() {
   // ✅ Same pattern as generate page — POST with FormData directly to server
   const handleUpload = async () => {
     if (pendingFiles.length === 0) return addToast('No files selected', 'error');
-    setIsLoadingFiles(true);
+    setIsUploading(true);
+    setUploadProgress(0);
     try {
-      for (const file of pendingFiles) {
+      for (let i = 0; i < pendingFiles.length; i++) {
+        const file = pendingFiles[i];
         const uploadForm = new FormData();
         uploadForm.append("file", file, file.name);
         uploadForm.append("name", file.name);
@@ -267,23 +271,27 @@ export default function KapogianStoragePage() {
           const err = await uploadRes.json().catch(() => ({}));
           throw new Error(err.error || "IPFS upload failed");
         }
+        setUploadProgress(Math.round(((i + 1) / pendingFiles.length) * 100));
       }
       await fetchFiles();
       setUploadModalOpen(false);
       setPendingFiles([]);
       setUploadGroup("");
+      setUploadProgress(0);
       addToast(`${pendingFiles.length} file${pendingFiles.length > 1 ? 's' : ''} uploaded!`, 'success');
     } catch (err: any) {
       addToast(err.message || "Upload failed", "error");
     } finally {
-      setIsLoadingFiles(false);
+      setIsUploading(false);
     }
   };
 
   const closeUploadModal = () => {
+    if (isUploading) return; // prevent closing while uploading
     setUploadModalOpen(false);
     setPendingFiles([]);
     setUploadGroup("");
+    setUploadProgress(0);
   };
 
   const deleteFile = async (id: string) => {
@@ -568,25 +576,72 @@ export default function KapogianStoragePage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closeUploadModal} />
           <div className="modal-box relative bg-white border-4 border-black rounded-[3rem] p-8 max-w-lg w-full shadow-[12px_12px_0_0_rgba(0,0,0,1)]">
+
+            {/* Loading overlay */}
+            {isUploading && (
+              <div className="absolute inset-0 z-10 bg-white/90 backdrop-blur-sm rounded-[3rem] flex flex-col items-center justify-center gap-6">
+                <div className="w-20 h-20 bg-indigo-50 rounded-[2rem] border-4 border-indigo-400 flex items-center justify-center shadow-lg">
+                  <LoaderCircle className="animate-spin text-indigo-500" size={40} />
+                </div>
+                <div className="text-center">
+                  <p className="text-xl font-black uppercase tracking-tight text-slate-800 italic">Deploying to IPFS...</p>
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                    {pendingFiles.length > 1 ? `${uploadProgress}% — please wait` : 'Pinning your asset'}
+                  </p>
+                </div>
+                {pendingFiles.length > 1 && (
+                  <div className="w-48 h-3 bg-slate-100 rounded-full border-2 border-slate-200 overflow-hidden">
+                    <div
+                      className="h-full bg-indigo-500 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-2xl font-black text-slate-800 uppercase italic tracking-tight">Upload Asset</h3>
-              <button onClick={closeUploadModal} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-red-500 hover:text-white transition-all shadow-sm">✕</button>
+              <button onClick={closeUploadModal} disabled={isUploading} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-red-500 hover:text-white transition-all shadow-sm disabled:opacity-30">✕</button>
             </div>
+
+            {/* Drop zone */}
             <div
-              id="drop-zone"
-              onClick={() => document.getElementById('file-input-up')?.click()}
-              className="border-4 border-dashed border-sky-100 rounded-[2.5rem] p-10 text-center mb-6 hover:border-sky-400 hover:bg-sky-50 transition-all cursor-pointer group"
+              onClick={() => !isUploading && document.getElementById('file-input-up')?.click()}
+              className={cn(
+                "border-4 border-dashed rounded-[2.5rem] p-6 text-center mb-6 transition-all",
+                isUploading ? "border-indigo-200 bg-indigo-50 cursor-not-allowed" : "border-sky-100 hover:border-sky-400 hover:bg-sky-50 cursor-pointer group"
+              )}
             >
-              <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">🚀</div>
               {pendingFiles.length === 0 ? (
-                <p className="font-black text-slate-500 text-sm uppercase tracking-widest">Browse Files</p>
+                <>
+                  <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">🚀</div>
+                  <p className="font-black text-slate-500 text-sm uppercase tracking-widest">Browse Files</p>
+                  <p className="text-[10px] text-slate-300 font-bold mt-1">Click to select one or more files</p>
+                </>
               ) : (
-                <div className="space-y-1">
-                  <p className="font-black text-sky-500 text-sm uppercase tracking-widest">{pendingFiles.length} file{pendingFiles.length > 1 ? 's' : ''} selected</p>
-                  <div className="max-h-24 overflow-y-auto space-y-0.5 mt-2">
-                    {pendingFiles.map((f, i) => (
-                      <p key={i} className="text-[10px] text-slate-400 font-mono truncate">{f.name}</p>
-                    ))}
+                <div>
+                  <p className="font-black text-sky-500 text-sm uppercase tracking-widest mb-4">
+                    {pendingFiles.length} file{pendingFiles.length > 1 ? 's' : ''} selected — click to change
+                  </p>
+                  {/* Image previews grid */}
+                  <div className="grid grid-cols-3 gap-3">
+                    {pendingFiles.map((f, i) => {
+                      const isImage = f.type.startsWith('image/');
+                      const previewUrl = isImage ? URL.createObjectURL(f) : null;
+                      return (
+                        <div key={i} className="relative group/preview">
+                          <div className="aspect-square rounded-2xl border-2 border-slate-100 overflow-hidden bg-slate-50 flex items-center justify-center">
+                            {previewUrl ? (
+                              <img src={previewUrl} alt={f.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-3xl">{emoF(f.name)}</span>
+                            )}
+                          </div>
+                          <p className="text-[9px] font-mono text-slate-400 truncate mt-1 text-center">{f.name}</p>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -598,16 +653,17 @@ export default function KapogianStoragePage() {
                 onChange={(e) => setPendingFiles(Array.from(e.target.files || []))}
               />
             </div>
+
             <div className="grid grid-cols-2 gap-3 mb-6">
               <div>
                 <label className="block text-[10px] font-black text-slate-400 mb-1 uppercase tracking-widest ml-2">Visibility</label>
-                <select value={uploadVis} onChange={(e) => setUploadVis(e.target.value as any)} className="w-full h-12 bg-sky-50 border-2 border-sky-100 rounded-2xl px-4 font-bold text-slate-700 text-sm outline-none focus:border-sky-400">
+                <select value={uploadVis} onChange={(e) => setUploadVis(e.target.value as any)} disabled={isUploading} className="w-full h-12 bg-sky-50 border-2 border-sky-100 rounded-2xl px-4 font-bold text-slate-700 text-sm outline-none focus:border-sky-400 disabled:opacity-50">
                   <option value="public">🌐 Public</option><option value="private">🔒 Private</option>
                 </select>
               </div>
               <div>
                 <label className="block text-[10px] font-black text-slate-400 mb-1 uppercase tracking-widest ml-2">Group</label>
-                <select value={uploadGroup || groupFilter || ""} onChange={(e) => setUploadGroup(e.target.value)} className="w-full h-12 bg-sky-50 border-2 border-sky-100 rounded-2xl px-4 font-bold text-slate-700 text-sm outline-none focus:border-sky-400">
+                <select value={uploadGroup || groupFilter || ""} onChange={(e) => setUploadGroup(e.target.value)} disabled={isUploading} className="w-full h-12 bg-sky-50 border-2 border-sky-100 rounded-2xl px-4 font-bold text-slate-700 text-sm outline-none focus:border-sky-400 disabled:opacity-50">
                   <option value="">No Group</option>
                   {groups.map(g => (
                     <option key={g.id} value={g.id}>{g.emoji} {g.name}</option>
@@ -615,12 +671,16 @@ export default function KapogianStoragePage() {
                 </select>
               </div>
             </div>
+
             <button
               onClick={handleUpload}
-              disabled={pendingFiles.length === 0}
+              disabled={pendingFiles.length === 0 || isUploading}
               className="w-full py-5 bg-black text-white rounded-[2rem] font-black uppercase tracking-[0.2em] text-sm shadow-[6px_6px_0_0_#0ea5e9] hover:bg-slate-800 transition-all active:translate-y-1 flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <Upload size={20} /> Deploy to IPFS
+              {isUploading
+                ? <><LoaderCircle size={20} className="animate-spin" /> Uploading...</>
+                : <><Upload size={20} /> Deploy to IPFS</>
+              }
             </button>
           </div>
         </div>
