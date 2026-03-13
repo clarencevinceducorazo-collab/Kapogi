@@ -24,12 +24,12 @@ import {
   Plus,
   Hash,
   Eye,
-  MoreVertical
+
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/kapogian/page-header';
 import { PageFooter } from '@/components/kapogian/page-footer';
-
+import { StorageGate } from '@/components/kapogian/StorageGate';
 interface KapoFile {
   id: string;
   name: string;
@@ -80,6 +80,7 @@ const GROUP_EMOJIS = ['📁', '🛍️', '🎞️', '🖼️', '🎨', '🔥', '
 
 export default function KapogianStoragePage() {
   const [mounted, setMounted] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
   const [page, setPage] = useState<'files' | 'groups'>('files');
   const [activeTab, setActiveTab] = useState<'public' | 'private'>('public');
   const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'gif' | 'other'>('all');
@@ -318,6 +319,9 @@ export default function KapogianStoragePage() {
   };
 
   if (!mounted) return null;
+  if (!unlocked) {
+    return <StorageGate onUnlocked={() => setUnlocked(true)} />;
+  }
 
   return (
     <div className="bg-gradient-to-b from-amber-100 via-yellow-50 to-white text-slate-700 min-h-screen font-body selection:bg-blue-200 selection:text-pink-900">
@@ -353,8 +357,7 @@ export default function KapogianStoragePage() {
       <div className="relative z-10 flex min-h-screen pt-20">
         <aside className="sidebar fixed top-20 left-0 h-[calc(100vh-5rem)] w-52 z-40 flex flex-col py-7 px-3 hidden lg:flex">
           <div className="flex items-center gap-2.5 px-3 mb-7">
-            <span className="text-3xl animate-bounce inline-block leading-none">🪅</span>
-            <div>
+<img src="/images/KapogianLogo.webp" alt="Kapogian" className="w-8 h-8 object-contain" />              <div>
               <div className="text-[11px] font-black text-slate-800 uppercase tracking-tight leading-none">KAPOGIAN</div>
               <div className="text-[10px] font-extrabold text-sky-400 tracking-widest uppercase mt-0.5">STORAGE</div>
             </div>
