@@ -5,6 +5,7 @@ import * as Ably from "ably";
 import {
   MessageCircle, Send, Loader2, User, ShieldCheck,
   Inbox, Circle, Phone, PhoneOff, PhoneCall, PhoneMissed,
+  Bot, BotOff, Sparkles,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -14,6 +15,7 @@ interface SupportMessage {
   text: string;
   sender: "user" | "admin";
   timestamp: number;
+  isAI?: boolean;
 }
 
 interface Conversation {
@@ -41,7 +43,7 @@ const ICE_SERVERS: RTCIceServer[] = [
 
 const shortAddr = (a: string) => a.length > 10 ? `${a.slice(0, 6)}...${a.slice(-4)}` : a;
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── CallTimer ────────────────────────────────────────────────────────────────
 
 function CallTimer({ startedAt }: { startedAt: number }) {
   const [elapsed, setElapsed] = useState(0);
@@ -66,100 +68,103 @@ export function AdminMessagesTab() {
   const [sending, setSending]             = useState(false);
   const [callState, setCallState]         = useState<AdminCallState>({ status: "idle" });
 
-  // Ably refs
-  const ablyRef    = useRef<Ably.Realtime | null>(null);
-  const channelsRef = useRef<Map<string, Ably.RealtimeChannel>>(new Map());
-  const bottomRef  = useRef<HTMLDivElement>(null);
-  const inputRef   = useRef<HTMLInputElement>(null);
+  // ── AI Mode ───────────────────────────────────────────────────────────────
+  const [aiMode, setAiMode]         = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("kapogian_ai_mode") === "true";
+  });
+  const [aiThinking, setAiThinking] = useState<string | null>(null);
+  const aiModeRef = useRef(aiMode);
+  useEffect(() => {
+    aiModeRef.current = aiMode;
+    localStorage.setItem("kapogian_ai_mode", String(aiMode));
+  }, [aiMode]);
 
-  // WebRTC refs — all inlined, no hook
+  // Keep refs in sync with state
+  useEffect(() => { conversationsRef.current = conversations; }, [conversations]);
+  useEffect(() => { activeWalletRef.current = activeWallet; }, [activeWallet]);
+
+  // Ably refs
+  const ablyRef          = useRef<Ably.Realtime | null>(null);
+  const channelsRef      = useRef<Map<string, Ably.RealtimeChannel>>(new Map());
+  const bottomRef        = useRef<HTMLDivElement>(null);
+  const inputRef         = useRef<HTMLInputElement>(null);
+  // Mirrors of state — always current inside Ably callbacks (no stale closures)
+  const conversationsRef = useRef<Map<string, Conversation>>(new Map());
+  const activeWalletRef  = useRef<string | null>(null);
+  // Dedup: which wallets have an AI call already in-flight
+  const aiInFlightRef    = useRef<Set<string>>(new Set());
+
+  // WebRTC refs
   const pcRef          = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteAudio    = useRef<HTMLAudioElement | null>(null);
   const iceBufRef      = useRef<RTCIceCandidateInit[]>([]);
-  const sigChannelRef  = useRef<Ably.RealtimeChannel | null>(null); // channel for current call
-
-  // One-time boot guard
-  const bootedRef = useRef(false);
+  const bootedRef      = useRef(false);
 
   // ── WebRTC teardown ────────────────────────────────────────────────────
   const hangup = useCallback(() => {
-    pcRef.current?.close();
-    pcRef.current = null;
-    localStreamRef.current?.getTracks().forEach((t) => t.stop());
-    localStreamRef.current = null;
+    pcRef.current?.close(); pcRef.current = null;
+    localStreamRef.current?.getTracks().forEach((t) => t.stop()); localStreamRef.current = null;
     if (remoteAudio.current) { remoteAudio.current.srcObject = null; remoteAudio.current = null; }
     iceBufRef.current = [];
-    sigChannelRef.current = null;
-    console.log("[RTC-admin] hangup");
   }, []);
 
-  // ── Build offerer PC and create offer ─────────────────────────────────
-  // mic is already granted before calling this (from button click)
+  // ── Build offerer PC ──────────────────────────────────────────────────
   const startCall = useCallback(async (ch: Ably.RealtimeChannel, mic: MediaStream) => {
-    console.log("[RTC-admin] startCall: building PC");
-
-    pcRef.current?.close();
-    pcRef.current = null;
-    iceBufRef.current = [];
-
+    pcRef.current?.close(); pcRef.current = null; iceBufRef.current = [];
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
     pcRef.current = pc;
-    sigChannelRef.current = ch;
-
-    // Add local mic
-    mic.getTracks().forEach((t) => {
-      console.log("[RTC-admin] adding track:", t.kind);
-      pc.addTrack(t, mic);
-    });
-
-    // Remote audio
+    mic.getTracks().forEach((t) => pc.addTrack(t, mic));
     pc.ontrack = (evt) => {
-      console.log("[RTC-admin] ontrack:", evt.track.kind);
       const stream = evt.streams[0] ?? new MediaStream([evt.track]);
-      if (!remoteAudio.current) {
-        const a = new Audio();
-        a.autoplay = true;
-        a.setAttribute("playsinline", "true");
-        remoteAudio.current = a;
-      }
+      if (!remoteAudio.current) { const a = new Audio(); a.autoplay = true; a.setAttribute("playsinline","true"); remoteAudio.current = a; }
       remoteAudio.current.srcObject = stream;
-      remoteAudio.current.play()
-        .then(() => console.log("[RTC-admin] remote audio ✓"))
-        .catch(() => {
-          const retry = () => { remoteAudio.current?.play().catch(() => {}); document.removeEventListener("click", retry); };
-          document.addEventListener("click", retry, { once: true });
-        });
+      remoteAudio.current.play().catch(() => {
+        const retry = () => { remoteAudio.current?.play().catch(()=>{}); document.removeEventListener("click", retry); };
+        document.addEventListener("click", retry, { once: true });
+      });
     };
-
-    // Send ICE to user
-    pc.onicecandidate = ({ candidate }) => {
-      if (candidate) ch.publish("webrtc-ice", { candidate: candidate.toJSON() }).catch(console.error);
-    };
-
-    pc.oniceconnectionstatechange = () => {
-      console.log("[RTC-admin] ICE:", pc.iceConnectionState);
-      if (pc.iceConnectionState === "failed") pc.restartIce();
-    };
-    pc.onconnectionstatechange = () => console.log("[RTC-admin] conn:", pc.connectionState);
-
-    // Create and publish offer
+    pc.onicecandidate = ({ candidate }) => { if (candidate) ch.publish("webrtc-ice", { candidate: candidate.toJSON() }).catch(()=>{}); };
+    pc.oniceconnectionstatechange = () => { if (pc.iceConnectionState === "failed") pc.restartIce(); };
     const offer = await pc.createOffer({ offerToReceiveAudio: true });
     await pc.setLocalDescription(offer);
-    console.log("[RTC-admin] publishing webrtc-offer");
     await ch.publish("webrtc-offer", { sdp: pc.localDescription });
+    for (const c of iceBufRef.current) { if (pc.remoteDescription) await pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{}); }
+  }, []);
 
-    // Flush any ICE that arrived before remote desc
-    // (unlikely for offerer but just in case)
-    for (const c of iceBufRef.current) {
-      if (pc.remoteDescription) await pc.addIceCandidate(new RTCIceCandidate(c)).catch(console.error);
+  // ── AI auto-reply ─────────────────────────────────────────────────────────
+  const triggerAIReply = useCallback(async (walletAddress: string) => {
+    // Guards: AI mode off, or already an in-flight call for this wallet
+    if (!aiModeRef.current) return;
+    if (aiInFlightRef.current.has(walletAddress)) return;
+
+    // Read the latest messages directly from the ref (always current)
+    const conv = conversationsRef.current.get(walletAddress);
+    if (!conv || conv.messages.length === 0) return;
+
+    aiInFlightRef.current.add(walletAddress);
+    setAiThinking(walletAddress);
+    try {
+      const res = await fetch("/api/ai-reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walletAddress, messages: conv.messages }),
+      });
+      if (!res.ok) console.warn("[AI Reply] non-OK response:", res.status);
+      // Reply is published by the API route via Ably REST and arrives
+      // through the admin-message subscription below — no extra work needed here.
+    } catch (e) {
+      console.warn("[AI Reply] fetch failed:", e);
+    } finally {
+      aiInFlightRef.current.delete(walletAddress);
+      setAiThinking(null);
     }
   }, []);
 
-  // ── Subscribe to a user's channel ─────────────────────────────────────
+  // ── Subscribe to a user channel ───────────────────────────────────────
   const subscribeToUser = useCallback((walletAddress: string, ablyInst: Ably.Realtime) => {
     if (channelsRef.current.has(walletAddress)) return;
-
     const channelName = `kapogian-support:${walletAddress.toLowerCase()}`;
     const ch = ablyInst.channels.get(channelName);
     channelsRef.current.set(walletAddress, ch);
@@ -176,9 +181,9 @@ export function AdminMessagesTab() {
             text: m.data.text,
             sender: (m.name === "admin-message" ? "admin" : "user") as "admin" | "user",
             timestamp: m.data.timestamp ?? (m as any).timestamp ?? Date.now(),
+            isAI: m.data.isAI ?? false,
           }))
           .sort((a, b) => a.timestamp - b.timestamp);
-
         if (historical.length > 0) {
           setConversations((prev) => {
             const next = new Map(prev);
@@ -192,120 +197,106 @@ export function AdminMessagesTab() {
       } catch (e) { if ((e as any)?.code !== 80017) console.warn("history failed:", e); }
     })();
 
-    // Live chat
+    // Live user messages
     ch.subscribe("user-message", (msg) => {
       const newMsg: SupportMessage = {
         id: msg.id ?? `${Date.now()}`,
         text: msg.data.text, sender: "user",
         timestamp: msg.data.timestamp ?? Date.now(),
       };
+
+      // Deduplicate
+      const existing = conversationsRef.current.get(walletAddress);
+      if (existing?.messages.some((m) => m.id === newMsg.id)) return;
+
+      // Update state — pure, no side-effects inside the updater
       setConversations((prev) => {
         const next = new Map(prev);
         const conv = next.get(walletAddress) ?? { walletAddress, messages: [], unread: 0, lastActivity: Date.now() };
         if (conv.messages.some((m) => m.id === newMsg.id)) return prev;
-        setActiveWallet((cur) => {
-          next.set(walletAddress, {
-            ...conv,
-            messages: [...conv.messages, newMsg],
-            unread: cur === walletAddress ? 0 : conv.unread + 1,
-            lastActivity: Date.now(),
-          });
-          return cur;
+        const isActive = activeWalletRef.current === walletAddress;
+        next.set(walletAddress, {
+          ...conv,
+          messages: [...conv.messages, newMsg],
+          unread: isActive ? 0 : conv.unread + 1,
+          lastActivity: Date.now(),
         });
+        return next;
+      });
+
+      // Trigger AI reply OUTSIDE the updater — after state has settled
+      if (aiModeRef.current) {
+        setTimeout(() => triggerAIReply(walletAddress), 300);
+      }
+    });
+
+    // Live admin messages (incl. AI replies published by the API route)
+    ch.subscribe("admin-message", (msg) => {
+      const newMsg: SupportMessage = {
+        id: msg.id ?? `admin-${Date.now()}`,
+        text: msg.data.text, sender: "admin",
+        timestamp: msg.data.timestamp ?? Date.now(),
+        isAI: msg.data.isAI ?? false,
+      };
+      setConversations((prev) => {
+        const next = new Map(prev);
+        const conv = next.get(walletAddress) ?? { walletAddress, messages: [], unread: 0, lastActivity: Date.now() };
+        if (conv.messages.some((m) => m.id === newMsg.id)) return prev;
+        if (msg.data.clientMsgId && conv.messages.some((m) => (m as any).clientMsgId === msg.data.clientMsgId)) return prev;
+        next.set(walletAddress, { ...conv, messages: [...conv.messages, newMsg], lastActivity: newMsg.timestamp });
         return next;
       });
     });
 
-    // ── Call signaling ─────────────────────────────────────────────────
-    // User accepted → now we build the PC and send the offer
-    // Guard against duplicate call-accepted events
+    // Call signaling
     let offerSent = false;
     ch.subscribe("call-accepted", () => {
-      console.log("[RTC-admin] call-accepted from", walletAddress);
-      if (offerSent) { console.log("[RTC-admin] duplicate call-accepted, ignoring"); return; }
-
+      if (offerSent) return;
       setCallState((prev) => {
         if (prev.status !== "calling" || prev.walletAddress !== walletAddress) return prev;
         offerSent = true;
         const mic = localStreamRef.current;
-        if (!mic) { console.error("[RTC-admin] no mic stream available!"); return prev; }
+        if (!mic) return prev;
         startCall(ch, mic).catch(console.error);
         return { status: "active", walletAddress, startedAt: Date.now() };
       });
     });
-
     ch.subscribe("call-rejected", () => {
-      console.log("[RTC-admin] call-rejected by", walletAddress);
-      setCallState((prev) => {
-        if (prev.status === "calling" && prev.walletAddress === walletAddress) {
-          hangup(); return { status: "idle" };
-        }
-        return prev;
-      });
+      setCallState((prev) => { if (prev.status === "calling" && prev.walletAddress === walletAddress) { hangup(); return { status: "idle" }; } return prev; });
     });
-
     ch.subscribe("call-ended", () => {
-      console.log("[RTC-admin] call-ended by", walletAddress);
-      setCallState((prev) => {
-        if (prev.status !== "idle" && prev.walletAddress === walletAddress) {
-          hangup(); return { status: "idle" };
-        }
-        return prev;
-      });
+      setCallState((prev) => { if (prev.status !== "idle" && prev.walletAddress === walletAddress) { hangup(); return { status: "idle" }; } return prev; });
     });
-
-    // Receive answer from user
     ch.subscribe("webrtc-answer", (msg) => {
-      console.log("[RTC-admin] webrtc-answer received");
       const pc = pcRef.current;
-      if (!pc) { console.warn("[RTC-admin] no PC for answer"); return; }
-      if (pc.signalingState !== "have-local-offer") {
-        console.warn("[RTC-admin] wrong signaling state for answer:", pc.signalingState);
-        return;
-      }
+      if (!pc || pc.signalingState !== "have-local-offer") return;
       pc.setRemoteDescription(new RTCSessionDescription(msg.data.sdp as RTCSessionDescriptionInit))
-        .then(async () => {
-          console.log("[RTC-admin] remote desc set ✓");
-          for (const c of iceBufRef.current) {
-            await pc.addIceCandidate(new RTCIceCandidate(c)).catch(console.error);
-          }
-          iceBufRef.current = [];
-        })
+        .then(async () => { for (const c of iceBufRef.current) await pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{}); iceBufRef.current = []; })
         .catch(console.error);
     });
-
-    // Receive ICE from user
     ch.subscribe("webrtc-ice", (msg) => {
-      const candidate = msg.data.candidate as RTCIceCandidateInit;
       const pc = pcRef.current;
-      if (!pc || !pc.remoteDescription) {
-        iceBufRef.current.push(candidate);
-        return;
-      }
-      pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(console.error);
+      if (!pc || !pc.remoteDescription) { iceBufRef.current.push(msg.data.candidate); return; }
+      pc.addIceCandidate(new RTCIceCandidate(msg.data.candidate)).catch(()=>{});
     });
 
-    // Register conversation
     setConversations((prev) => {
       if (prev.has(walletAddress)) return prev;
       const next = new Map(prev);
       next.set(walletAddress, { walletAddress, messages: [], unread: 0, lastActivity: Date.now() });
       return next;
     });
-  }, [hangup, startCall]);
+  }, [hangup, startCall, triggerAIReply]);
 
-  // ── Boot Ably (once) ───────────────────────────────────────────────────
+  // ── Boot Ably ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (bootedRef.current) return;
     bootedRef.current = true;
-
     const ably = new Ably.Realtime({ key: ABLY_KEY });
     ablyRef.current = ably;
-
     ably.connection.on("connected",    () => setConnected(true));
     ably.connection.on("disconnected", () => setConnected(false));
     ably.connection.on("failed",       () => setConnected(false));
-
     ably.channels.get("kapogian-support-inbox").subscribe("user-connected", (msg) => {
       const { walletAddress } = msg.data as { walletAddress: string };
       if (walletAddress) subscribeToUser(walletAddress, ably);
@@ -313,44 +304,29 @@ export function AdminMessagesTab() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Initiate call (button click → mic here) ───────────────────────────
+  // ── Call handlers ─────────────────────────────────────────────────────────
   const handleInitiateCall = useCallback(async () => {
     if (!activeWallet || callState.status !== "idle") return;
     const ch = channelsRef.current.get(activeWallet);
     if (!ch) return;
-
-    // Mic MUST be from button click (user gesture)
     let mic: MediaStream;
-    try {
-      mic = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-      console.log("[RTC-admin] mic granted ✓");
-    } catch {
-      alert("Microphone access is required to make a call.\nPlease allow mic access in your browser settings.");
-      return;
-    }
-
+    try { mic = await navigator.mediaDevices.getUserMedia({ audio: true, video: false }); }
+    catch { alert("Microphone access is required.\nPlease allow mic access in your browser settings."); return; }
     localStreamRef.current = mic;
     setCallState({ status: "calling", walletAddress: activeWallet });
-
-    try {
-      await ch.publish("call-request", { timestamp: Date.now() });
-      console.log("[RTC-admin] published call-request");
-    } catch {
-      hangup();
-      setCallState({ status: "idle" });
-    }
+    try { await ch.publish("call-request", { timestamp: Date.now() }); }
+    catch { hangup(); setCallState({ status: "idle" }); }
   }, [activeWallet, callState.status, hangup]);
 
   const handleEndCall = useCallback(async () => {
     if (callState.status === "idle") return;
     const wallet = callState.walletAddress;
-    hangup();
-    setCallState({ status: "idle" });
+    hangup(); setCallState({ status: "idle" });
     const ch = channelsRef.current.get(wallet);
-    if (ch) await ch.publish("call-ended", { from: "admin", timestamp: Date.now() }).catch(() => {});
+    if (ch) await ch.publish("call-ended", { from: "admin", timestamp: Date.now() }).catch(()=>{});
   }, [callState, hangup]);
 
-  // ── Send message ──────────────────────────────────────────────────────
+  // ── Send message ──────────────────────────────────────────────────────────
   const handleSendReply = useCallback(async () => {
     const text = replyInput.trim();
     if (!text || !activeWallet || sending) return;
@@ -361,18 +337,15 @@ export function AdminMessagesTab() {
     const timestamp = Date.now();
     const optimistic: SupportMessage = { id: msgId, text, sender: "admin", timestamp };
     setConversations((prev) => {
-      const next = new Map(prev);
-      const conv = next.get(activeWallet);
+      const next = new Map(prev); const conv = next.get(activeWallet);
       if (conv) next.set(activeWallet, { ...conv, messages: [...conv.messages, optimistic], lastActivity: Date.now() });
       return next;
     });
     setReplyInput("");
-    try {
-      await ch.publish("admin-message", { text, timestamp });
-    } catch {
+    try { await ch.publish("admin-message", { text, timestamp }); }
+    catch {
       setConversations((prev) => {
-        const next = new Map(prev);
-        const conv = next.get(activeWallet);
+        const next = new Map(prev); const conv = next.get(activeWallet);
         if (conv) next.set(activeWallet, { ...conv, messages: conv.messages.filter((m) => m.id !== msgId) });
         return next;
       });
@@ -383,16 +356,15 @@ export function AdminMessagesTab() {
   const selectConversation = (wallet: string) => {
     setActiveWallet(wallet);
     setConversations((prev) => {
-      const next = new Map(prev);
-      const conv = next.get(wallet);
-      if (conv) next.set(wallet, { ...conv, unread: 0 });
-      return next;
+      const next = new Map(prev); const conv = next.get(wallet);
+      if (conv) next.set(wallet, { ...conv, unread: 0 }); return next;
     });
     setTimeout(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); inputRef.current?.focus(); }, 50);
   };
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [conversations, activeWallet]);
 
+  // ── Derived ───────────────────────────────────────────────────────────────
   const totalUnread  = Array.from(conversations.values()).reduce((s, c) => s + c.unread, 0);
   const sortedConvs  = Array.from(conversations.values()).sort((a, b) => b.lastActivity - a.lastActivity);
   const activeConv   = activeWallet ? conversations.get(activeWallet) : null;
@@ -405,6 +377,8 @@ export function AdminMessagesTab() {
       {/* ── Left: Inbox ─────────────────────────────────────────────────── */}
       <div className="w-[300px] flex-shrink-0 flex flex-col gap-3">
         <div className="bg-white border-4 border-black rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden h-full flex flex-col">
+
+          {/* Header with AI toggle */}
           <div className="bg-black text-white px-4 py-3 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
               <Inbox size={16} />
@@ -413,8 +387,34 @@ export function AdminMessagesTab() {
                 <span className="w-5 h-5 bg-red-500 text-[9px] font-black rounded-full flex items-center justify-center">{totalUnread > 9 ? "9+" : totalUnread}</span>
               )}
             </div>
-            <div className={`w-2 h-2 rounded-full ${connected ? "bg-green-400" : "bg-slate-500"}`} />
+            <div className="flex items-center gap-2">
+              {/* AI Mode Toggle */}
+              <button
+                onClick={() => setAiMode((v) => !v)}
+                title={aiMode ? "AI auto-reply ON — click to disable" : "AI auto-reply OFF — click to enable"}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 transition-all text-[9px] font-black uppercase ${
+                  aiMode
+                    ? "bg-purple-500 border-purple-300 text-white shadow-[0_0_8px_rgba(168,85,247,0.6)]"
+                    : "bg-white/10 border-white/20 text-white/50 hover:bg-white/20"
+                }`}
+              >
+                {aiMode ? <Bot size={11} /> : <BotOff size={11} />}
+                {aiMode ? "AI On" : "AI Off"}
+              </button>
+              <div className={`w-2 h-2 rounded-full ${connected ? "bg-green-400" : "bg-slate-500"}`} />
+            </div>
           </div>
+
+          {/* AI mode info strip */}
+          {aiMode && (
+            <div className="bg-purple-50 border-b-2 border-purple-100 px-3 py-2 flex items-center gap-2 flex-shrink-0">
+              <Sparkles size={11} className="text-purple-500 flex-shrink-0" />
+              <p className="text-[10px] font-semibold text-purple-600 leading-tight">
+                Llama 3.3 auto-replies when you're away
+              </p>
+            </div>
+          )}
+
           <div className="overflow-y-auto flex-1">
             {sortedConvs.length === 0 ? (
               <div className="p-8 flex flex-col items-center gap-3 text-center h-full justify-center">
@@ -422,25 +422,38 @@ export function AdminMessagesTab() {
                 <p className="font-black text-slate-300 text-xs uppercase">No messages yet</p>
                 <p className="text-[10px] text-slate-300 leading-tight">Users appear automatically when they message</p>
               </div>
-            ) : sortedConvs.map((conv) => (
-              <button key={conv.walletAddress} onClick={() => selectConversation(conv.walletAddress)}
-                className={`w-full flex items-center gap-3 px-4 py-3 border-b border-slate-100 text-left hover:bg-slate-50 transition-colors ${activeWallet === conv.walletAddress ? "bg-black text-white hover:bg-black" : ""}`}>
-                <div className={`w-9 h-9 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${activeWallet === conv.walletAddress ? "border-white/30 bg-white/10" : "border-slate-200 bg-slate-100"}`}>
-                  <User size={14} className={activeWallet === conv.walletAddress ? "text-white" : "text-slate-400"} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`font-black text-xs truncate uppercase ${activeWallet === conv.walletAddress ? "text-white" : "text-slate-800"}`}>{shortAddr(conv.walletAddress)}</p>
-                  {conv.messages.length > 0 && (
-                    <p className={`text-[10px] font-semibold truncate mt-0.5 ${activeWallet === conv.walletAddress ? "text-white/50" : "text-slate-400"}`}>
-                      {conv.messages.at(-1)!.text}
-                    </p>
+            ) : sortedConvs.map((conv) => {
+              const isAiWorking = aiThinking === conv.walletAddress;
+              return (
+                <button key={conv.walletAddress} onClick={() => selectConversation(conv.walletAddress)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 border-b border-slate-100 text-left hover:bg-slate-50 transition-colors ${activeWallet === conv.walletAddress ? "bg-black text-white hover:bg-black" : ""}`}>
+                  <div className={`w-9 h-9 rounded-full border-2 flex items-center justify-center flex-shrink-0 relative ${activeWallet === conv.walletAddress ? "border-white/30 bg-white/10" : "border-slate-200 bg-slate-100"}`}>
+                    <User size={14} className={activeWallet === conv.walletAddress ? "text-white" : "text-slate-400"} />
+                    {isAiWorking && (
+                      <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-purple-500 rounded-full border-2 border-white flex items-center justify-center">
+                        <Sparkles size={7} className="text-white animate-pulse" />
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`font-black text-xs truncate uppercase ${activeWallet === conv.walletAddress ? "text-white" : "text-slate-800"}`}>{shortAddr(conv.walletAddress)}</p>
+                    {isAiWorking ? (
+                      <p className="text-[10px] font-semibold text-purple-400 mt-0.5 flex items-center gap-1">
+                        {[0,1,2].map((i) => <span key={i} className="inline-block w-1 h-1 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />)}
+                        AI typing
+                      </p>
+                    ) : conv.messages.length > 0 ? (
+                      <p className={`text-[10px] font-semibold truncate mt-0.5 ${activeWallet === conv.walletAddress ? "text-white/50" : "text-slate-400"}`}>
+                        {conv.messages.at(-1)!.text}
+                      </p>
+                    ) : null}
+                  </div>
+                  {conv.unread > 0 && (
+                    <span className="w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center flex-shrink-0">{conv.unread > 9 ? "9+" : conv.unread}</span>
                   )}
-                </div>
-                {conv.unread > 0 && (
-                  <span className="w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center flex-shrink-0">{conv.unread > 9 ? "9+" : conv.unread}</span>
-                )}
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -458,9 +471,7 @@ export function AdminMessagesTab() {
           <>
             {/* Header */}
             <div className="bg-black text-white px-5 py-4 flex items-center gap-3 flex-shrink-0">
-              <div className="w-10 h-10 bg-white/10 rounded-full border-2 border-white/20 flex items-center justify-center">
-                <User size={16} />
-              </div>
+              <div className="w-10 h-10 bg-white/10 rounded-full border-2 border-white/20 flex items-center justify-center"><User size={16} /></div>
               <div className="flex-1 min-w-0">
                 <p className="font-black text-sm uppercase tracking-tight">{shortAddr(activeConv.walletAddress)}</p>
                 <p className="text-[10px] font-mono text-white/40 mt-0.5 truncate">{activeConv.walletAddress}</p>
@@ -471,12 +482,12 @@ export function AdminMessagesTab() {
                   <span className="text-[9px] font-black uppercase text-white/60">Admin</span>
                 </div>
                 {callState.status === "idle" ? (
-                  <button onClick={handleInitiateCall} disabled={!connected} title="Start voice call"
+                  <button onClick={handleInitiateCall} disabled={!connected}
                     className="w-9 h-9 rounded-full bg-green-500 border-2 border-green-400 flex items-center justify-center hover:bg-green-400 disabled:opacity-40 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,0.4)]">
                     <Phone size={15} className="text-white" />
                   </button>
                 ) : (
-                  <button onClick={handleEndCall} title={isCalling ? "Cancel call" : "End call"}
+                  <button onClick={handleEndCall}
                     className="w-9 h-9 rounded-full bg-red-500 border-2 border-red-400 flex items-center justify-center hover:bg-red-400 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,0.4)] animate-pulse">
                     {isCalling ? <PhoneMissed size={15} className="text-white" /> : <PhoneOff size={15} className="text-white" />}
                   </button>
@@ -484,36 +495,35 @@ export function AdminMessagesTab() {
               </div>
             </div>
 
-            {/* Active call banner */}
+            {/* Call banners */}
             {isCallActive && (
               <div className="bg-green-500 border-b-2 border-green-600 px-5 py-2 flex items-center justify-between flex-shrink-0">
                 <div className="flex items-center gap-2">
                   <div className="flex items-end gap-0.5 h-4">
-                    {[0,1,2,3,4].map((i) => (
-                      <span key={i} className="w-1 rounded-full bg-white animate-bounce"
-                        style={{ height: `${8 + (i % 3) * 5}px`, animationDelay: `${i * 80}ms`, animationDuration: "0.7s" }} />
-                    ))}
+                    {[0,1,2,3,4].map((i) => <span key={i} className="w-1 rounded-full bg-white animate-bounce" style={{ height: `${8+(i%3)*5}px`, animationDelay: `${i*80}ms`, animationDuration: "0.7s" }} />)}
                   </div>
-                  <span className="text-white font-black text-xs uppercase">
-                    Call active · <CallTimer startedAt={(callState as any).startedAt} />
-                  </span>
+                  <span className="text-white font-black text-xs uppercase">Call active · <CallTimer startedAt={(callState as any).startedAt} /></span>
                 </div>
-                <button onClick={handleEndCall} className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full">
-                  <PhoneOff size={11} /> End
-                </button>
+                <button onClick={handleEndCall} className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full"><PhoneOff size={11} /> End</button>
+              </div>
+            )}
+            {isCalling && (
+              <div className="bg-yellow-400 border-b-2 border-yellow-500 px-5 py-2 flex items-center justify-between flex-shrink-0">
+                <div className="flex items-center gap-2"><PhoneCall size={14} className="text-black animate-pulse" /><span className="text-black font-black text-xs uppercase">Calling user...</span></div>
+                <button onClick={handleEndCall} className="flex items-center gap-1.5 bg-black/10 hover:bg-black/20 text-black text-[10px] font-black uppercase px-3 py-1 rounded-full"><PhoneMissed size={11} /> Cancel</button>
               </div>
             )}
 
-            {/* Calling banner */}
-            {isCalling && (
-              <div className="bg-yellow-400 border-b-2 border-yellow-500 px-5 py-2 flex items-center justify-between flex-shrink-0">
-                <div className="flex items-center gap-2">
-                  <PhoneCall size={14} className="text-black animate-pulse" />
-                  <span className="text-black font-black text-xs uppercase">Calling user...</span>
+            {/* AI thinking banner */}
+            {aiThinking === activeWallet && (
+              <div className="bg-purple-50 border-b-2 border-purple-200 px-5 py-2.5 flex items-center gap-2.5 flex-shrink-0">
+                <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0">
+                  <Sparkles size={12} className="text-white animate-pulse" />
                 </div>
-                <button onClick={handleEndCall} className="flex items-center gap-1.5 bg-black/10 hover:bg-black/20 text-black text-[10px] font-black uppercase px-3 py-1 rounded-full">
-                  <PhoneMissed size={11} /> Cancel
-                </button>
+                <span className="text-purple-700 font-black text-[10px] uppercase">AI is composing a reply</span>
+                <div className="flex items-center gap-0.5 ml-1">
+                  {[0,1,2].map((i) => <span key={i} className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: `${i*150}ms` }} />)}
+                </div>
               </div>
             )}
 
@@ -526,9 +536,14 @@ export function AdminMessagesTab() {
                 </div>
               ) : activeConv.messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.sender === "admin" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[70%] px-4 py-2.5 rounded-2xl text-sm font-semibold leading-snug ${msg.sender === "admin" ? "bg-black text-white rounded-br-sm" : "bg-white border-2 border-slate-200 text-slate-800 rounded-bl-sm shadow-sm"}`}>
-                    {msg.sender === "user"  && <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">User</p>}
-                    {msg.sender === "admin" && <p className="text-[9px] font-black text-white/40 uppercase tracking-widest mb-1">You (Admin)</p>}
+                  <div className={`max-w-[70%] px-4 py-2.5 rounded-2xl text-sm font-semibold leading-snug ${
+                    msg.sender === "admin"
+                      ? msg.isAI ? "bg-purple-600 text-white rounded-br-sm" : "bg-black text-white rounded-br-sm"
+                      : "bg-white border-2 border-slate-200 text-slate-800 rounded-bl-sm shadow-sm"
+                  }`}>
+                    {msg.sender === "user"                && <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">User</p>}
+                    {msg.sender === "admin" && msg.isAI  && <p className="text-[9px] font-black text-purple-200 uppercase tracking-widest mb-1 flex items-center gap-1"><Sparkles size={8} /> AI Assistant</p>}
+                    {msg.sender === "admin" && !msg.isAI && <p className="text-[9px] font-black text-white/40 uppercase tracking-widest mb-1">You (Admin)</p>}
                     <p>{msg.text}</p>
                     <p className={`text-[9px] mt-1 font-mono ${msg.sender === "admin" ? "text-white/40 text-right" : "text-slate-400"}`}>
                       {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -557,7 +572,7 @@ export function AdminMessagesTab() {
   );
 }
 
-// ─── Unread count hook for nav badge ─────────────────────────────────────────
+// ─── Unread count hook ────────────────────────────────────────────────────────
 
 export function useAdminUnreadCount(): number {
   const [count, setCount] = useState(0);
