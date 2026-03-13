@@ -33,6 +33,7 @@ export interface SupportMessage {
   sender: "user" | "admin";
   timestamp: number;
   isAI?: boolean;
+  button?: { label: string; emoji: string; url: string } | null;
 }
 
 type UserCallState =
@@ -254,6 +255,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
         sender: "admin",
         timestamp: msg.data.timestamp ?? Date.now(),
         isAI: msg.data.isAI ?? false,
+        button: msg.data.button ?? null,
       };
       if (!historyLoadedRef.current) { liveBufferRef.current.push(incoming); return; }
       setMessages((prev) => mergeMessage(prev, incoming));
@@ -359,6 +361,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
             sender: (m.name === "admin-message" ? "admin" : "user") as "admin" | "user",
             timestamp: m.data.timestamp ?? (m as any).timestamp ?? Date.now(),
             isAI: m.data.isAI ?? false,
+            button: m.data.button ?? null,
           }))
           .sort((a, b) => a.timestamp - b.timestamp);
 
@@ -602,25 +605,48 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
             ) : (
               messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-[78%] px-3.5 py-2.5 rounded-2xl text-sm font-semibold leading-snug ${
-                      msg.sender === "user"
-                        ? "bg-black text-white rounded-br-sm"
-                        : msg.isAI
-                        ? "bg-purple-600 text-white rounded-bl-sm"
-                        : "bg-white border-2 border-slate-200 text-slate-800 rounded-bl-sm"
-                    }`}
-                  >
-                    {msg.sender === "admin" && msg.isAI && (
-                      <p className="text-[9px] font-black text-purple-400 uppercase tracking-widest mb-1">✦ AI Assistant</p>
+                  <div className="max-w-[80%] flex flex-col gap-1.5">
+                    <div
+                      className={`px-3.5 py-2.5 rounded-2xl text-sm font-semibold leading-snug ${
+                        msg.sender === "user"
+                          ? "bg-black text-white rounded-br-sm"
+                          : msg.isAI
+                          ? "bg-purple-600 text-white rounded-bl-sm"
+                          : "bg-white border-2 border-slate-200 text-slate-800 rounded-bl-sm"
+                      }`}
+                    >
+                      {msg.sender === "admin" && msg.isAI && (
+                        <p className="text-[9px] font-black text-purple-300 uppercase tracking-widest mb-1">✦ AI Assistant</p>
+                      )}
+                      {msg.sender === "admin" && !msg.isAI && (
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Kapogian Admin</p>
+                      )}
+                      <p>{msg.text}</p>
+                      <p className={`text-[9px] mt-1 font-mono ${msg.sender === "user" ? "text-white/40 text-right" : msg.isAI ? "text-purple-300/60" : "text-slate-400"}`}>
+                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    </div>
+
+                    {/* ── Navigation Button (attached to AI message) ── */}
+                    {msg.button && (
+                      <a
+                        href={msg.button.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2.5 bg-white border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 rounded-2xl px-4 py-3 transition-all group shadow-sm"
+                      >
+                        <span className="text-xl leading-none">{msg.button.emoji}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-black text-slate-800 group-hover:text-purple-700 transition-colors">
+                            {msg.button.label}
+                          </p>
+                          <p className="text-[9px] font-mono text-slate-400 truncate mt-0.5">
+                            {msg.button.url}
+                          </p>
+                        </div>
+                        <span className="text-slate-300 group-hover:text-purple-400 transition-colors text-lg">↗</span>
+                      </a>
                     )}
-                  {msg.sender === "admin" && !msg.isAI && (
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Kapogian Admin</p>
-                    )}
-                    <p>{msg.text}</p>
-                    <p className={`text-[9px] mt-1 font-mono ${msg.sender === "user" ? "text-white/40 text-right" : "text-slate-400"}`}>
-                      {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </p>
                   </div>
                 </div>
               ))
