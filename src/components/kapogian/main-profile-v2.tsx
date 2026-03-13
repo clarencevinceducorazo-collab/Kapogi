@@ -65,12 +65,9 @@ import {
 import { toast } from "@/hooks/use-toast";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ──────────────────────────────────────────────────────────────
-// DATA STRUCTURES (High-fidelity game badge style icons)
-// ──────────────────────────────────────────────────────────────
+// DATA STRUCTURES
 // ─────────────────────────────────────────────────────────────────────────────
 
-// RANK_DATA: Defines all possible player ranks, their icons, colors, and requirements
 const RANK_DATA = [
   {
     mmr: 0,
@@ -278,8 +275,6 @@ const RANK_DATA = [
   },
 ];
 
-// Predefined Tailwind Styles for Ranks to avoid dynamic generation issues
-// RANK_STYLE_MAP: Maps rank names to Tailwind style classes for consistent UI
 const RANK_STYLE_MAP: Record<
   string,
   { border: string; bg: string; text: string; selectBorder: string }
@@ -392,7 +387,6 @@ const RANK_STYLE_MAP: Record<
 // REQUIREMENT TYPE HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 
-// REQ_TYPE_LABEL: Maps achievement requirement types to human-readable labels
 const REQ_TYPE_LABEL: Record<number, string> = {
   0: "Total MMR",
   1: "Best MMR",
@@ -400,7 +394,6 @@ const REQ_TYPE_LABEL: Record<number, string> = {
   3: "Admin Grant",
 };
 
-// getPlayerValueForReq: Returns the player's value for a given achievement requirement type
 function getPlayerValueForReq(
   reqType: number,
   totalMmr: number,
@@ -413,14 +406,13 @@ function getPlayerValueForReq(
   return 0;
 }
 
-// isAchievementEligible: Checks if a player is eligible for an achievement based on stats
 function isAchievementEligible(
   ach: AchievementDef,
   totalMmr: number,
   bestMmr: number,
   summons: number,
 ): boolean {
-  if (ach.requirementType === 3) return false; // admin granted — needs a grant object
+  if (ach.requirementType === 3) return false;
   const playerVal = getPlayerValueForReq(
     ach.requirementType,
     totalMmr,
@@ -434,7 +426,6 @@ function isAchievementEligible(
 // PROPS
 // ─────────────────────────────────────────────────────────────────────────────
 
-// MainProfileV2Props: Props for the main profile component
 interface MainProfileV2Props {
   characters: any[];
   account: any;
@@ -452,13 +443,14 @@ interface MainProfileV2Props {
   pendingGrants: AchievementGrant[];
   achievementsLoading: boolean;
   onAchievementsRefresh: () => Promise<void>;
+  // ✦ Wallet card slot — rendered between Social Identity and Profile Actions
+  walletCard?: React.ReactNode;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
-// MainProfileV2: Main profile component rendering stats, achievements, collections, and orders
 export function MainProfileV2({
   characters,
   account,
@@ -475,11 +467,10 @@ export function MainProfileV2({
   pendingGrants,
   achievementsLoading,
   onAchievementsRefresh,
+  walletCard, // ← destructured here
 }: MainProfileV2Props) {
-  // Blockchain transaction hook
   const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
 
-  // Social identity binding state
   const [bindingStatus, setBindingStatus] = useState<{
     bound: boolean;
     x_username?: string;
@@ -488,47 +479,35 @@ export function MainProfileV2({
   const [unbinding, setUnbinding] = useState(false);
   const [selectedBadge, setSelectedBadge] = useState<any | null>(null);
   const [showGallery, setShowGallery] = useState(false);
-
-  // Initialise PlayerStats
-  // Achievement profile initialization state
   const [initializing, setInitializing] = useState(false);
   const [initError, setInitError] = useState("");
-
-  // Claim state
-  // Achievement claim state
   const [claimingId, setClaimingId] = useState<string | null>(null);
 
-  // Current selected character
   const currentCharacter = characters[index];
   const attrs = currentCharacter?.attributes ?? {};
   const shortAddr = account?.address ? formatAddress(account.address) : "0x...";
 
-  // Description text for current character
   const descriptionText =
     currentCharacter?.description ??
     "This spirit's origin is shrouded in mystery...";
-  // Split description into sentences for scrollable display
   const sentences = useMemo(() => {
     if (!descriptionText) return [] as string[];
-    const m = descriptionText.match(/[^.!?]+[.!?]+[\])'"`’”]*|.+$/g);
+    const m = descriptionText.match(/[^.!?]+[.!?]+[\])'"`'"]*|.+$/g);
     return (m || [descriptionText]).map((s) => s.trim());
   }, [descriptionText]);
   const showScrollableDescription = sentences.length > 5;
 
-  // Total MMR across all owned characters
   const totalMmr = useMemo(
     () => characters.reduce((acc, c) => acc + c.mmr, 0),
     [characters],
   );
 
-  // Set of unlocked achievement IDs
   const unlockedIds = useMemo(() => {
     const s = new Set<string>();
     playerStats?.unlocked.forEach((u) => s.add(u.achievementId));
     return s;
   }, [playerStats]);
 
-  // Set of owned rank titles
   const ownedRankTitles = useMemo(() => {
     const titles = new Set<string>();
     characters.forEach((c) => {
@@ -537,7 +516,6 @@ export function MainProfileV2({
     return titles;
   }, [characters]);
 
-  // Fetch social identity binding status on account change
   useEffect(() => {
     if (account?.address) {
       setLoadingBinding(true);
@@ -548,7 +526,6 @@ export function MainProfileV2({
     }
   }, [account?.address]);
 
-  // Initialize achievement profile on-chain
   const handleInitialize = async () => {
     setInitializing(true);
     setInitError("");
@@ -566,7 +543,6 @@ export function MainProfileV2({
     }
   };
 
-  // Claim an achievement on-chain
   const handleClaim = async (ach: AchievementDef) => {
     if (!playerStats) return;
     setClaimingId(ach.objectId);
@@ -591,7 +567,6 @@ export function MainProfileV2({
     }
   };
 
-  // Claim a granted achievement on-chain
   const handleClaimGrant = async (grant: AchievementGrant) => {
     if (!playerStats) return;
     setClaimingId(grant.objectId);
@@ -610,7 +585,6 @@ export function MainProfileV2({
     }
   };
 
-  // Unbind social identity from account
   const handleUnbind = async () => {
     if (!account?.address) return;
     setUnbinding(true);
@@ -636,7 +610,6 @@ export function MainProfileV2({
     }
   };
 
-  // Navigation items for profile tabs
   const navItems = [
     {
       id: "Stats",
@@ -668,7 +641,6 @@ export function MainProfileV2({
     },
   ];
 
-  // Character visual traits for display
   const traits = [
     {
       label: "Style",
@@ -693,7 +665,6 @@ export function MainProfileV2({
     { label: "Held", value: attrs.heldItem, icon: "solar:cup-linear" },
   ].filter((t) => t.value);
 
-  // Render the Badges tab (achievements, gallery, grants)
   const renderBadgesTab = () => {
     if (achievementsLoading) {
       return (
@@ -774,9 +745,7 @@ export function MainProfileV2({
               />
             </button>
             <button
-              onClick={() => {
-                setShowGallery((v) => !v);
-              }}
+              onClick={() => setShowGallery((v) => !v)}
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all border-2",
                 showGallery
@@ -785,13 +754,9 @@ export function MainProfileV2({
               )}
             >
               {showGallery ? (
-                <>
-                  <Grid3X3 size={14} /> Hide Gallery
-                </>
+                <><Grid3X3 size={14} /> Hide Gallery</>
               ) : (
-                <>
-                  <Trophy size={14} /> View Gallery
-                </>
+                <><Trophy size={14} /> View Gallery</>
               )}
             </button>
           </div>
@@ -832,65 +797,29 @@ export function MainProfileV2({
           <div>
             <section className="mb-2">
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
-                <iconify-icon
-                  icon="fluent-emoji:glowing-star"
-                  class="text-sm"
-                />{" "}
-                On-Chain Ranks
+                <iconify-icon icon="fluent-emoji:glowing-star" class="text-sm" /> On-Chain Ranks
               </h4>
-              <div
-                className={cn(
-                  "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4",
-                  RANK_DATA.length > 4 ? "max-h-96 overflow-auto p-2" : "",
-                )}
-              >
+              <div className={cn("grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4", RANK_DATA.length > 4 ? "max-h-96 overflow-auto p-2" : "")}>
                 {RANK_DATA.map((rank) => (
                   <BadgeCard
                     key={rank.title}
                     item={rank}
                     isUnlocked={ownedRankTitles.has(rank.title)}
                     showRequirement
-                    onClick={() =>
-                      setSelectedBadge({
-                        ...rank,
-                        isUnlocked: ownedRankTitles.has(rank.title),
-                        type: "rank",
-                      })
-                    }
+                    onClick={() => setSelectedBadge({ ...rank, isUnlocked: ownedRankTitles.has(rank.title), type: "rank" })}
                   />
                 ))}
               </div>
             </section>
-
             <section>
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1 flex items-center gap-2">
-                <iconify-icon icon="fluent-emoji:trophy" class="text-sm" />{" "}
-                On-Chain Achievements
+                <iconify-icon icon="fluent-emoji:trophy" class="text-sm" /> On-Chain Achievements
               </h4>
-              <div
-                className={cn(
-                  "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4",
-                  allAchievements.length > 4
-                    ? "max-h-96 overflow-auto p-2"
-                    : "",
-                )}
-              >
+              <div className={cn("grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4", allAchievements.length > 4 ? "max-h-96 overflow-auto p-2" : "")}>
                 {allAchievements.map((ach) => {
                   const earned = unlockedIds.has(ach.objectId);
-                  const eligible =
-                    !earned &&
-                    isAchievementEligible(
-                      ach,
-                      totalMmr,
-                      bestMmrNum,
-                      summonsCount,
-                    );
-                  const playerVal = getPlayerValueForReq(
-                    ach.requirementType,
-                    totalMmr,
-                    bestMmrNum,
-                    summonsCount,
-                  );
+                  const eligible = !earned && isAchievementEligible(ach, totalMmr, bestMmrNum, summonsCount);
+                  const playerVal = getPlayerValueForReq(ach.requirementType, totalMmr, bestMmrNum, summonsCount);
                   return (
                     <OnChainAchievementCard
                       key={ach.objectId}
@@ -900,18 +829,7 @@ export function MainProfileV2({
                       playerVal={playerVal}
                       claiming={claimingId === ach.objectId}
                       onClaim={() => handleClaim(ach)}
-                      onClick={() =>
-                        setSelectedBadge({
-                          ...ach,
-                          title: ach.name,
-                          desc: ach.description,
-                          icon: "fluent-emoji:trophy",
-                          gradient: "linear-gradient(135deg,#4f46e5,#818cf8)",
-                          color: "#6366f1",
-                          isUnlocked: earned,
-                          type: "onchain",
-                        })
-                      }
+                      onClick={() => setSelectedBadge({ ...ach, title: ach.name, desc: ach.description, icon: "fluent-emoji:trophy", gradient: "linear-gradient(135deg,#4f46e5,#818cf8)", color: "#6366f1", isUnlocked: earned, type: "onchain" })}
                     />
                   );
                 })}
@@ -923,82 +841,39 @@ export function MainProfileV2({
             {ownedRankTitles.size > 0 && (
               <section className="mb-8">
                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
-                  <iconify-icon icon="fluent-emoji:star" class="text-sm" /> Rank
-                  Badges
+                  <iconify-icon icon="fluent-emoji:star" class="text-sm" /> Rank Badges
                 </h4>
-                <div
-                  className={cn(
-                    "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4",
-                    ownedRankTitles.size > 4
-                      ? "max-h-96 overflow-auto p-2"
-                      : "",
-                  )}
-                >
-                  {RANK_DATA.filter((r) => ownedRankTitles.has(r.title)).map(
-                    (rank) => (
-                      <BadgeCard
-                        key={rank.title}
-                        item={rank}
-                        isUnlocked={true}
-                        onClick={() =>
-                          setSelectedBadge({
-                            ...rank,
-                            isUnlocked: true,
-                            type: "rank",
-                          })
-                        }
-                      />
-                    ),
-                  )}
+                <div className={cn("grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4", ownedRankTitles.size > 4 ? "max-h-96 overflow-auto p-2" : "")}>
+                  {RANK_DATA.filter((r) => ownedRankTitles.has(r.title)).map((rank) => (
+                    <BadgeCard
+                      key={rank.title}
+                      item={rank}
+                      isUnlocked={true}
+                      onClick={() => setSelectedBadge({ ...rank, isUnlocked: true, type: "rank" })}
+                    />
+                  ))}
                 </div>
               </section>
             )}
-
             <section>
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
-                <iconify-icon icon="fluent-emoji:magic-wand" class="text-sm" />{" "}
-                Claimed Achievements
+                <iconify-icon icon="fluent-emoji:magic-wand" class="text-sm" /> Claimed Achievements
               </h4>
-              {playerStats.unlocked.length === 0 &&
-              ownedRankTitles.size === 0 ? (
+              {playerStats.unlocked.length === 0 && ownedRankTitles.size === 0 ? (
                 <EmptyBadges
                   msg="No achievements claimed yet"
                   sub={`You have ${allAchievements.length} achievements to explore. Open the Gallery to see what you can earn!`}
                 />
               ) : playerStats.unlocked.length === 0 ? null : (
-                <div
-                  className={cn(
-                    "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4",
-                    playerStats.unlocked.length > 4
-                      ? "max-h-96 overflow-auto p-2"
-                      : "",
-                  )}
-                >
+                <div className={cn("grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4", playerStats.unlocked.length > 4 ? "max-h-96 overflow-auto p-2" : "")}>
                   {playerStats.unlocked.map((u) => {
-                    const achDef = allAchievements.find(
-                      (a) => a.objectId === u.achievementId,
-                    );
+                    const achDef = allAchievements.find((a) => a.objectId === u.achievementId);
                     return (
                       <EarnedAchievementCard
                         key={u.achievementId}
                         unlocked={u}
                         achDef={achDef}
-                        onClick={() =>
-                          setSelectedBadge({
-                            title: u.achievementName,
-                            desc:
-                              achDef?.description ??
-                              "Claimed on-chain achievement.",
-                            icon: "fluent-emoji:trophy",
-                            gradient: "linear-gradient(135deg,#4f46e5,#818cf8)",
-                            color: "#6366f1",
-                            rarity: REQ_TYPE_LABEL[u.requirementType],
-                            isUnlocked: true,
-                            type: "onchain",
-                            badgeUrl: achDef?.badgeUrl,
-                            claimedAt: u.claimedAt,
-                          })
-                        }
+                        onClick={() => setSelectedBadge({ title: u.achievementName, desc: achDef?.description ?? "Claimed on-chain achievement.", icon: "fluent-emoji:trophy", gradient: "linear-gradient(135deg,#4f46e5,#818cf8)", color: "#6366f1", rarity: REQ_TYPE_LABEL[u.requirementType], isUnlocked: true, type: "onchain", badgeUrl: achDef?.badgeUrl, claimedAt: u.claimedAt })}
                       />
                     );
                   })}
@@ -1011,177 +886,137 @@ export function MainProfileV2({
     );
   };
 
-  // Main render: profile layout, tabs, and modal
+  // ─── Main render ───────────────────────────────────────────────────────────
   return (
     <div className="w-full max-w-6xl mx-auto font-body relative z-20">
       <style jsx global>{`
         .kpg-fx-aurora {
-          background: linear-gradient(
-            90deg,
-            #a78bfa,
-            #60a5fa,
-            #34d399,
-            #f472b6,
-            #fbbf24,
-            #a78bfa
-          );
+          background: linear-gradient(90deg,#a78bfa,#60a5fa,#34d399,#f472b6,#fbbf24,#a78bfa);
           background-size: 500% auto;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           animation: kpg-auroraFlow 3s linear infinite;
-          filter: drop-shadow(0 0 10px rgba(167, 139, 250, 0.4));
+          filter: drop-shadow(0 0 10px rgba(167,139,250,0.4));
         }
-        @keyframes kpg-auroraFlow {
-          to {
-            background-position: 500% center;
-          }
-        }
-        .kpg-card-inner {
-          transition:
-            transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-            box-shadow 0.2s ease;
-        }
-        .kpg-badge-card:hover .kpg-card-inner {
-          transform: translateY(-4px) scale(1.02);
-        }
-        .kpg-conic-spin {
-          animation: kpg-spin 3s linear infinite;
-        }
-        @keyframes kpg-spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-        .kpg-shimmer-btn {
-          position: relative;
-          overflow: hidden;
-        }
-        .kpg-shimmer-btn::after {
-          content: "";
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 50%;
-          height: 100%;
-          background: linear-gradient(
-            to right,
-            transparent,
-            rgba(255, 255, 255, 0.4),
-            transparent
-          );
-          transform: skewX(-20deg);
-          animation: kpg-shine 3s infinite;
-        }
-        @keyframes kpg-shine {
-          0% {
-            left: -100%;
-          }
-          100% {
-            left: 200%;
-          }
-        }
+        @keyframes kpg-auroraFlow { to { background-position: 500% center; } }
+        .kpg-card-inner { transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease; }
+        .kpg-badge-card:hover .kpg-card-inner { transform: translateY(-4px) scale(1.02); }
+        .kpg-conic-spin { animation: kpg-spin 3s linear infinite; }
+        @keyframes kpg-spin { to { transform: rotate(360deg); } }
+        .kpg-shimmer-btn { position: relative; overflow: hidden; }
+        .kpg-shimmer-btn::after { content:""; position:absolute; top:0; left:-100%; width:50%; height:100%; background:linear-gradient(to right,transparent,rgba(255,255,255,0.4),transparent); transform:skewX(-20deg); animation:kpg-shine 3s infinite; }
+        @keyframes kpg-shine { 0%{left:-100%} 100%{left:200%} }
       `}</style>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start z-30">
-        <div className="lg:col-span-4 flex flex-col gap-6">
-          <div className="bg-white rounded-[2.5rem] p-6 border-4 border-slate-100 shadow-[0_12px_0_0_rgba(226,232,240,1)] text-center relative overflow-hidden">
-            <div className="absolute -top-16 -left-16 w-32 aspect-square bg-pink-50 rounded-full z-10"></div>
-            <div className="relative">
-              <div className="mb-4">
-                <h2 className="text-3xl tracking-tight font-semibold text-slate-800 uppercase font-headline z-30">
-                  {currentCharacter?.name || "Kapogian"}
-                </h2>
-                <div className="inline-flex items-center justify-center gap-2 bg-slate-50 border-2 border-slate-100 px-4 py-1.5 rounded-full text-slate-500 text-sm font-semibold mt-2 shadow-sm">
-                  <Wallet size={14} />
-                  {shortAddr}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+
+        {/* ═══════════════════════════════════════════════════════════════
+            LEFT COLUMN — always visible, same on every tab
+            1. Compact identity card (avatar + name + wallet)
+            2. Token Balances (walletCard prop)
+            3. Social Identity
+            4. Profile Actions (nav)
+        ════════════════════════════════════════════════════════════════ */}
+        <div className="lg:col-span-4 flex flex-col gap-4">
+
+          {/* 1 ── Compact identity card */}
+          <div className="bg-white rounded-[2rem] border-4 border-slate-100 shadow-[0_8px_0_0_rgba(226,232,240,1)] overflow-hidden">
+            {/* Gradient banner */}
+            <div className="h-16 ">
+            </div>
+            {/* User icon overlapping banner + info */}
+            <div className="px-5 pb-4">
+              <div className="flex items-end gap-4 -mt-8 mb-3">
+                {/* Generic user avatar */}
+                <div className="w-16 h-16 rounded-2xl border-4 border-white shadow-lg bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center flex-shrink-0">
+                  <iconify-icon icon="solar:user-circle-bold" class="text-4xl text-indigo-400" />
+                </div>
+                <div className="pb-1 min-w-0">
+                  <p className="font-black text-slate-800 text-base uppercase tracking-tight truncate leading-tight">
+                    {account?.label || account?.name || "Kapogian User"}
+                  </p>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                    Sui Wallet
+                  </p>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-sky-100 to-indigo-50 rounded-[2rem] aspect-square flex items-center justify-center border-4 border-sky-200 mb-2 shadow-inner relative overflow-hidden z-30">
-                {currentCharacter?.imageUrl ? (
-                  <Image
-                    src={currentCharacter.imageUrl}
-                    alt={currentCharacter.name}
-                    fill
-                    className="object-contain p-4 hover:scale-110 transition-transform duration-300"
-                  />
-                ) : (
-                  <iconify-icon
-                    icon="solar:ghost-smile-linear"
-                    class="text-8xl text-sky-400 drop-shadow-md"
-                  />
-                )}
+              {/* Full wallet address row */}
+              <div className="flex items-center gap-2 bg-slate-50 border-2 border-slate-100 rounded-xl px-3 py-2">
+                <Wallet size={13} className="text-slate-400 flex-shrink-0" />
+                <span className="text-xs font-mono font-semibold text-slate-500 truncate">
+                  {account?.address || shortAddr}
+                </span>
+                <span className="ml-auto text-[9px] font-black uppercase tracking-widest text-slate-300 flex-shrink-0">
+                  SUI
+                </span>
               </div>
             </div>
           </div>
 
+          {/* 2 ── Token Balances (injected from profile-page.tsx) */}
+          {walletCard}
+
+          {/* 3 ── Social Identity */}
           <div className="bg-white rounded-[2rem] p-5 border-4 border-slate-100 shadow-[0_8px_0_0_rgba(226,232,240,1)]">
-            <h3 className="text-sm tracking-wide font-semibold text-slate-400 uppercase mb-4 px-2 flex items-center gap-2 z-20">
-              <Twitter size={14} className="text-blue-400" /> Social Identity
+            <h3 className="text-xs tracking-widest font-black text-slate-400 uppercase mb-3 flex items-center gap-2">
+              <Twitter size={13} className="text-blue-400" /> Social Identity
             </h3>
             {loadingBinding ? (
-              <div className="p-4 flex items-center justify-center">
-                <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+              <div className="p-3 flex items-center justify-center">
+                <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : bindingStatus?.bound ? (
-              <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-4 space-y-4">
+              <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-4 space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white border-2 border-blue-200 flex items-center justify-center shadow-sm">
-                    <Twitter size={18} className="text-blue-500" />
+                  <div className="w-9 h-9 rounded-full bg-white border-2 border-blue-200 flex items-center justify-center shadow-sm flex-shrink-0">
+                    <Twitter size={16} className="text-blue-500" />
                   </div>
-                  <div className="overflow-hidden text-left">
-                    <p className="font-black text-blue-600 truncate text-sm leading-none mb-1">
+                  <div className="overflow-hidden">
+                    <p className="font-black text-blue-600 truncate text-sm leading-none mb-0.5">
                       @{bindingStatus.x_username}
                     </p>
                     <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-1">
-                      X Account Linked{" "}
-                      <CheckCircle size={10} className="text-green-500" />
+                      Linked <CheckCircle size={9} className="text-green-500" />
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={handleUnbind}
                   disabled={unbinding}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 bg-white border-2 border-red-100 rounded-xl text-xs font-black text-red-500 uppercase tracking-widest hover:bg-red-50 hover:border-red-200 transition-all shadow-sm active:translate-y-0.5 disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 py-2 bg-white border-2 border-red-100 rounded-xl text-xs font-black text-red-500 uppercase tracking-widest hover:bg-red-50 transition-all disabled:opacity-50"
                 >
-                  {unbinding ? (
-                    <LoaderCircle size={14} className="animate-spin" />
-                  ) : (
-                    <Unlink size={14} />
-                  )}
+                  {unbinding ? <LoaderCircle size={13} className="animate-spin" /> : <Unlink size={13} />}
                   Unbind
                 </button>
               </div>
             ) : (
               <Link href="/identity">
-                <button className="w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-4 flex items-center gap-3 hover:bg-white hover:border-blue-300 transition-all group">
-                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
-                    <UserPlus size={18} />
+                <button className="w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-3 flex items-center gap-3 hover:bg-white hover:border-blue-300 transition-all group">
+                  <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors flex-shrink-0">
+                    <UserPlus size={16} />
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-bold text-slate-600">
-                      Link X Account
-                    </p>
-                    <p className="text-[10px] font-semibold text-slate-400">
-                      Earn extra rewards & status
-                    </p>
+                    <p className="text-sm font-bold text-slate-600">Link X Account</p>
+                    <p className="text-[10px] font-semibold text-slate-400">Earn extra rewards</p>
                   </div>
-                  <ChevronRight size={16} className="ml-auto text-slate-300" />
+                  <ChevronRight size={15} className="ml-auto text-slate-300" />
                 </button>
               </Link>
             )}
           </div>
 
+          {/* 4 ── Profile Actions nav */}
           <div className="bg-white rounded-[2rem] p-5 border-4 border-slate-100 shadow-[0_8px_0_0_rgba(226,232,240,1)]">
-            <h3 className="text-sm tracking-wide font-semibold text-slate-400 uppercase mb-4 px-2 flex items-center gap-2 z-20">
+            <h3 className="text-xs tracking-widest font-black text-slate-400 uppercase mb-3 flex items-center gap-2">
               <iconify-icon icon="solar:user-id-linear" /> Profile Actions
             </h3>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               {navItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id as any)}
                   className={cn(
-                    "w-full px-5 py-3 rounded-2xl font-semibold text-left flex items-center justify-between transition-all border-2",
+                    "w-full px-4 py-3 rounded-2xl font-semibold text-left flex items-center justify-between transition-all border-2",
                     item.color,
                     activeTab === item.id
                       ? "translate-y-[4px] shadow-none"
@@ -1189,279 +1024,172 @@ export function MainProfileV2({
                   )}
                 >
                   <span className="flex items-center gap-3">
-                    <item.icon size={20} /> {item.label}
+                    <item.icon size={18} /> {item.label}
                   </span>
-                  <ChevronRightIcon size={16} />
+                  <ChevronRightIcon size={15} />
                 </button>
               ))}
             </div>
           </div>
+
         </div>
 
+        {/* ═══════════════════════════════════════════════════════════════
+            RIGHT COLUMN — content changes per tab
+        ════════════════════════════════════════════════════════════════ */}
         <div className="lg:col-span-8 flex flex-col gap-6">
-          <div className="relative z-20">
-            <h3 className="text-lg tracking-wide font-semibold text-slate-600 mb-3 px-2 flex items-center gap-2 uppercase">
-              <iconify-icon
-                icon="solar:gamepad-linear"
-                class="text-indigo-500"
-              />{" "}
-              Player Hub
-            </h3>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard
-                label="Best MMR"
-                value={bestMmrNum.toLocaleString()}
-                icon="solar:medal-star-circle-linear"
-                theme="yellow"
-              />
-              <StatCard
-                label="Avg MMR"
-                value={avgMmrNum.toLocaleString()}
-                icon="solar:chart-square-linear"
-                theme="orange"
-              />
-              <StatCard
-                label="Summons"
-                value={summonsCount}
-                icon="solar:magic-stick-3-linear"
-                theme="purple"
-              />
-              <StatCard
-                label="Lineage"
-                value={topLineages[0] || "Ancient"}
-                icon="solar:crown-linear"
-                theme="pink"
-              />
-            </div>
+
+          {/* Player Hub stat cards — always visible */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <StatCard label="Best MMR" value={bestMmrNum.toLocaleString()} icon="solar:medal-star-circle-linear" theme="yellow" />
+            <StatCard label="Avg MMR" value={avgMmrNum.toLocaleString()} icon="solar:chart-square-linear" theme="orange" />
+            <StatCard label="Summons" value={summonsCount} icon="solar:magic-stick-3-linear" theme="purple" />
+            <StatCard label="Lineage" value={topLineages[0] || "Ancient"} icon="solar:crown-linear" theme="pink" />
           </div>
 
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border-4 border-slate-100 shadow-[0_12px_0_0_rgba(226,232,240,1)] flex-grow min-h-[600px]">
+          {/* Tab content panel */}
+          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border-4 border-slate-100 shadow-[0_12px_0_0_rgba(226,232,240,1)] flex-grow min-h-[560px]">
+
+            {/* ── STATS TAB ────────────────────────────────────────────── */}
             {activeTab === "Stats" && (
-              <div className="animate-in fade-in duration-500 space-y-6 relative z-20">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1 pb-1 border-b border-slate-100 border-dashed">
-                  <div>
-                    <h3 className="text-lg tracking-tight font-semibold text-slate-800 flex items-center gap-2">
-                      Current Loadout
-                    </h3>
-                    <div className="flex flex-wrap items-center gap-2 mt-1">
-                      <ProfileBadge
-                        label={`Rank: ${attrs.rank || "Spirit Seed"}`}
-                        icon="solar:stars-linear"
-                        theme="indigo"
+              <div className="animate-in fade-in duration-500 space-y-6">
+
+                {/* Character hero — image + loadout header side by side */}
+                <div className="flex gap-5 pb-5 border-b-2 border-slate-100 border-dashed">
+                  {/* Character image */}
+                  <div className="w-32 h-32 flex-shrink-0 rounded-[1.5rem] bg-gradient-to-br from-sky-100 to-indigo-100 border-4 border-sky-200 shadow-inner relative overflow-hidden">
+                    {currentCharacter?.imageUrl ? (
+                      <Image
+                        src={currentCharacter.imageUrl}
+                        alt={currentCharacter.name}
+                        fill
+                        className="object-contain p-2 hover:scale-110 transition-transform duration-300"
                       />
-                      <ProfileBadge
-                        label={`Lineage: ${attrs.lineage || "Unknown"}`}
-                        icon="solar:crown-linear"
-                        theme="emerald"
-                      />
-                      <ProfileBadge
-                        label={`Style: ${attrs.clothingStyle || "Classic"}`}
-                        icon="solar:glasses-linear"
-                        theme="rose"
-                      />
-                    </div>
+                    ) : (
+                      <iconify-icon icon="solar:ghost-smile-linear" class="text-6xl text-sky-400 absolute inset-0 m-auto" />
+                    )}
                   </div>
-                  <div className="bg-yellow-100 border border-yellow-300 px-3 py-1 rounded-lg flex items-center gap-2 shadow-sm">
-                    <div className="bg-white w-12 aspect-square rounded-full flex items-center justify-center border-2 border-yellow-200 shadow-sm">
-                      <iconify-icon
-                        icon="solar:cup-star-linear"
-                        class="text-lg text-yellow-500"
-                      />
+
+                  {/* Loadout info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div>
+                        <h3 className="text-lg font-black uppercase tracking-tight text-slate-800 leading-tight">
+                          {currentCharacter?.name || "Kapogian"}
+                        </h3>
+                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Current Loadout</p>
+                      </div>
+                      {/* MMR badge */}
+                      <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl px-3 py-1.5 flex-shrink-0 shadow-sm">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-yellow-600 leading-none mb-0.5">MMR</p>
+                        <p className="text-lg font-black text-yellow-700 leading-none">
+                          {(currentCharacter?.mmr ?? 0).toLocaleString()}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-[10px] font-semibold text-yellow-700 uppercase tracking-wider mb-0.5">
-                        Global MMR
-                      </p>
-                      <p className="text-xl font-semibold text-yellow-800 tracking-tight leading-none">
-                        {(currentCharacter?.mmr ?? 0).toLocaleString()}
-                      </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      <ProfileBadge label={`Rank: ${attrs.rank || "Spirit Seed"}`} icon="solar:stars-linear" theme="indigo" />
+                      <ProfileBadge label={`Lineage: ${attrs.lineage || "Unknown"}`} icon="solar:crown-linear" theme="emerald" />
+                      <ProfileBadge label={`Style: ${attrs.clothingStyle || "Classic"}`} icon="solar:glasses-linear" theme="rose" />
                     </div>
                   </div>
                 </div>
 
+                {/* Spirit Lore */}
                 <div className="bg-slate-50 border-2 border-slate-100 p-4 rounded-xl relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-3 opacity-8">
+                  <div className="absolute top-0 right-0 p-3 opacity-5">
                     <BookOpen size={36} className="text-slate-400" />
                   </div>
-                  <h4 className="text-sm font-semibold text-slate-500 mb-2 flex items-center gap-2 uppercase tracking-wider relative z-10">
-                    <iconify-icon
-                      icon="solar:notes-linear"
-                      class="text-indigo-500"
-                    />{" "}
-                    Spirit Lore
+                  <h4 className="text-xs font-black text-slate-400 mb-2 flex items-center gap-2 uppercase tracking-widest">
+                    <iconify-icon icon="solar:notes-linear" class="text-indigo-500" /> Spirit Lore
                   </h4>
-                  <div
-                    className={cn(
-                      "relative z-10",
-                      showScrollableDescription
-                        ? "max-h-[9rem] overflow-auto pr-2"
-                        : "",
-                    )}
-                  >
-                    <p className="text-slate-600 font-medium leading-relaxed italic">
-                      {descriptionText}
-                    </p>
+                  <div className={cn(showScrollableDescription ? "max-h-[9rem] overflow-auto pr-2" : "")}>
+                    <p className="text-slate-600 font-medium leading-relaxed italic text-sm">{descriptionText}</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="space-y-6">
-                    <h4 className="text-sm font-semibold text-slate-500 mb-1 flex items-center gap-2 uppercase tracking-wider">
+                {/* Skills + Territory */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-5">
+                    <h4 className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-widest">
                       <iconify-icon icon="solar:star-fall-linear" /> Core Skills
                     </h4>
-                    <SkillBar
-                      label="Cuteness"
-                      value={attrs.cuteness || 0}
-                      color="from-pink-400 to-pink-500"
-                      icon="solar:heart-angle-linear"
-                    />
-                    <SkillBar
-                      label="Confidence"
-                      value={attrs.confidence || 0}
-                      color="from-sky-400 to-sky-500"
-                      icon="solar:fire-square-linear"
-                    />
-                    <SkillBar
-                      label="Tili Factor"
-                      value={attrs.tiliFactor || 0}
-                      color="from-yellow-400 to-yellow-500"
-                      icon="solar:bolt-linear"
-                    />
+                    <SkillBar label="Cuteness" value={attrs.cuteness || 0} color="from-pink-400 to-pink-500" icon="solar:heart-angle-linear" />
+                    <SkillBar label="Confidence" value={attrs.confidence || 0} color="from-sky-400 to-sky-500" icon="solar:fire-square-linear" />
+                    <SkillBar label="Tili Factor" value={attrs.tiliFactor || 0} color="from-yellow-400 to-yellow-500" icon="solar:bolt-linear" />
                   </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-slate-500 mb-2 flex items-center gap-2 uppercase tracking-wider">
-                      <iconify-icon icon="solar:map-point-linear" /> Territory
-                      Info
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-widest">
+                      <iconify-icon icon="solar:map-point-linear" /> Territory Info
                     </h4>
-                    <div className="flex flex-col gap-6">
-                      <TerritoryRow
-                        label="Luzon"
-                        value={attrs.luzon || 0}
-                        theme="blue"
-                      />
-                      <TerritoryRow
-                        label="Visayas"
-                        value={attrs.visayas || 0}
-                        theme="teal"
-                      />
-                      <TerritoryRow
-                        label="Mindanao"
-                        value={attrs.mindanao || 0}
-                        theme="rose"
-                      />
-                    </div>
+                    <TerritoryRow label="Luzon" value={attrs.luzon || 0} theme="blue" />
+                    <TerritoryRow label="Visayas" value={attrs.visayas || 0} theme="teal" />
+                    <TerritoryRow label="Mindanao" value={attrs.mindanao || 0} theme="rose" />
                   </div>
                 </div>
 
-                <div className="pt-4 border-t-2 border-slate-100 border-dashed">
-                  <h4 className="text-sm font-semibold text-slate-500 mb-8 flex items-center gap-2 uppercase tracking-wider">
-                    <iconify-icon
-                      icon="solar:t-shirt-linear"
-                      class="text-orange-500"
-                    />{" "}
-                    Visual Traits
-                  </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                    {traits.map((trait) => (
-                      <div
-                        key={trait.label}
-                        className="flex items-center gap-3 px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg hover:bg-slate-100 transition-colors"
-                      >
-                        <iconify-icon
-                          icon={trait.icon}
-                          class="text-xl text-slate-400"
-                        />
-                        <div className="flex flex-col overflow-hidden text-left">
-                          <span className="text-[10px] text-slate-400 uppercase font-black leading-tight">
-                            {trait.label}
-                          </span>
-                          <span className="text-xs text-slate-700 font-bold truncate">
-                            {trait.value}
-                          </span>
+                {/* Visual Traits */}
+                {traits.length > 0 && (
+                  <div className="pt-4 border-t-2 border-slate-100 border-dashed">
+                    <h4 className="text-xs font-black text-slate-400 mb-3 flex items-center gap-2 uppercase tracking-widest">
+                      <iconify-icon icon="solar:t-shirt-linear" class="text-orange-500" /> Visual Traits
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                      {traits.map((trait) => (
+                        <div key={trait.label} className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100 transition-colors">
+                          <iconify-icon icon={trait.icon} class="text-lg text-slate-400 flex-shrink-0" />
+                          <div className="flex flex-col overflow-hidden">
+                            <span className="text-[9px] text-slate-400 uppercase font-black leading-tight">{trait.label}</span>
+                            <span className="text-xs text-slate-700 font-bold truncate">{trait.value}</span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
 
+            {/* ── BADGES TAB ───────────────────────────────────────────── */}
             {activeTab === "Badges" && renderBadgesTab()}
 
+            {/* ── COLLECTIONS TAB ──────────────────────────────────────── */}
             {activeTab === "Collections" && (
               <div className="animate-in slide-in-from-bottom-4 duration-500">
                 <h3 className="text-2xl tracking-tight font-semibold text-slate-800 mb-6 flex items-center gap-2">
-                  <Grid3X3 className="text-pink-500" /> My Collection (
-                  {characters.length})
+                  <Grid3X3 className="text-pink-500" /> My Collection ({characters.length})
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {characters.map((c, i) => {
                     const rankName = c.attributes?.rank || "Spirit Seed";
                     const isSelected = index === i;
-                    const style =
-                      RANK_STYLE_MAP[rankName] || RANK_STYLE_MAP["Spirit Seed"];
-
+                    const style = RANK_STYLE_MAP[rankName] || RANK_STYLE_MAP["Spirit Seed"];
                     const isAscendant = rankName === "Kapogian Ascendant";
                     const isMythic = rankName === "Master Rancher";
-                    const isLegend =
-                      rankName === "Cultural Icon" ||
-                      rankName === "Generational Tycoon";
-
+                    const isLegend = rankName === "Cultural Icon" || rankName === "Generational Tycoon";
                     return (
                       <div
                         key={c.objectId}
-                        onClick={() => {
-                          setIndex(i);
-                          setActiveTab("Stats");
-                        }}
+                        onClick={() => { setIndex(i); setActiveTab("Stats"); }}
                         className={cn(
                           "group relative rounded-[2rem] p-1 cursor-pointer transition-all hover:scale-105 overflow-hidden border-4",
                           isSelected
-                            ? isAscendant
-                              ? "border-transparent bg-white shadow-xl scale-105 z-10"
-                              : `${style.selectBorder} ${style.bg} shadow-lg scale-105 z-10`
-                            : isAscendant
-                              ? "border-transparent bg-white shadow-md"
-                              : `${style.border} bg-white hover:border-slate-300`,
+                            ? isAscendant ? "border-transparent bg-white shadow-xl scale-105 z-10" : `${style.selectBorder} ${style.bg} shadow-lg scale-105 z-10`
+                            : isAscendant ? "border-transparent bg-white shadow-md" : `${style.border} bg-white hover:border-slate-300`,
                         )}
                       >
-                        {/* Special background effects based on rank tier */}
-                        {isAscendant && (
-                          <div className="absolute inset-[-100%] bg-gradient-to-r from-indigo-500 via-pink-500 to-amber-500 kpg-conic-spin z-0" />
-                        )}
-                        {isMythic && (
-                          <div className="absolute inset-[-100%] bg-gradient-to-r from-purple-400 via-indigo-400 to-purple-400 kpg-conic-spin opacity-40 z-0" />
-                        )}
-                        {isLegend && (
-                          <div className="absolute inset-0 bg-gradient-to-tr from-red-100 via-transparent to-yellow-100 opacity-50 z-0" />
-                        )}
-
+                        {isAscendant && <div className="absolute inset-[-100%] bg-gradient-to-r from-indigo-500 via-pink-500 to-amber-500 kpg-conic-spin z-0" />}
+                        {isMythic && <div className="absolute inset-[-100%] bg-gradient-to-r from-purple-400 via-indigo-400 to-purple-400 kpg-conic-spin opacity-40 z-0" />}
+                        {isLegend && <div className="absolute inset-0 bg-gradient-to-tr from-red-100 via-transparent to-yellow-100 opacity-50 z-0" />}
                         <div className="relative z-10 bg-white rounded-[1.7rem] p-2 h-full flex flex-col">
-                          <div
-                            className={cn(
-                              "aspect-square relative rounded-2xl overflow-hidden bg-white mb-2 transition-colors border-2",
-                              isSelected ? style.border : "border-slate-50",
-                            )}
-                          >
-                            <Image
-                              src={c.imageUrl}
-                              alt={c.name}
-                              fill
-                              className="object-contain p-2"
-                            />
+                          <div className={cn("aspect-square relative rounded-2xl overflow-hidden bg-white mb-2 transition-colors border-2", isSelected ? style.border : "border-slate-50")}>
+                            <Image src={c.imageUrl} alt={c.name} fill className="object-contain p-2" />
                           </div>
                           <div className="text-center flex-grow flex flex-col justify-center">
-                            <p
-                              className={cn(
-                                "text-[11px] font-black truncate uppercase px-1 leading-tight",
-                                isAscendant ? "kpg-fx-aurora" : style.text,
-                              )}
-                            >
+                            <p className={cn("text-[11px] font-black truncate uppercase px-1 leading-tight", isAscendant ? "kpg-fx-aurora" : style.text)}>
                               {c.name}
                             </p>
-                            <p className="text-[9px] font-black text-slate-400 mt-0.5">
-                              MMR: {c.mmr}
-                            </p>
+                            <p className="text-[9px] font-black text-slate-400 mt-0.5">MMR: {c.mmr}</p>
                           </div>
                         </div>
                       </div>
@@ -1471,202 +1199,70 @@ export function MainProfileV2({
               </div>
             )}
 
+            {/* ── ORDERS TAB ───────────────────────────────────────────── */}
             {activeTab === "Orders" && (
               <div className="animate-in slide-in-from-bottom-4 duration-500">
                 <OrdersPanel account={account} />
               </div>
             )}
-          </div>
-        </div>
-      </div>
+
+          </div>{/* end tab panel */}
+        </div>{/* end right col */}
+      </div>{/* end grid */}
 
       {selectedBadge && (
-        <BadgeDetailModal
-          badge={selectedBadge}
-          isOpen={!!selectedBadge}
-          onClose={() => setSelectedBadge(null)}
-        />
+        <BadgeDetailModal badge={selectedBadge} isOpen={!!selectedBadge} onClose={() => setSelectedBadge(null)} />
       )}
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ON-CHAIN ACHIEVEMENT CARDS
+// SUB-COMPONENTS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function OnChainAchievementCard({
-  earned,
-  eligible,
-  playerVal,
-  claiming,
-  onClaim,
-  onClick,
-  ach,
-}: {
-  ach: AchievementDef;
-  earned: boolean;
-  eligible: boolean;
-  playerVal: number;
-  claiming: boolean;
-  onClaim: () => void;
-  onClick: () => void;
-}) {
+function OnChainAchievementCard({ earned, eligible, playerVal, claiming, onClaim, onClick, ach }: { ach: AchievementDef; earned: boolean; eligible: boolean; playerVal: number; claiming: boolean; onClaim: () => void; onClick: () => void }) {
   return (
-    <div
-      className={cn(
-        "kpg-badge-card relative overflow-visible cursor-pointer select-none transition-all duration-300",
-        !earned && !eligible && "opacity-60 grayscale-[0.4]",
-      )}
-    >
-      <div
-        className={cn(
-          "kpg-card-inner p-4 border-2 rounded-[2rem] flex flex-col items-center gap-3 relative overflow-hidden",
-          earned
-            ? "bg-white border-indigo-200 shadow-[0_4px_0_0_rgba(199,210,254,1)]"
-            : eligible
-              ? "bg-indigo-50 border-dashed border-indigo-300"
-              : "bg-slate-50 border-dashed border-slate-200",
-        )}
-        onClick={onClick}
-      >
-        {/* Subtle Pattern */}
+    <div className={cn("kpg-badge-card relative overflow-visible cursor-pointer select-none transition-all duration-300", !earned && !eligible && "opacity-60 grayscale-[0.4]")}>
+      <div className={cn("kpg-card-inner p-4 border-2 rounded-[2rem] flex flex-col items-center gap-3 relative overflow-hidden", earned ? "bg-white border-indigo-200 shadow-[0_4px_0_0_rgba(199,210,254,1)]" : eligible ? "bg-indigo-50 border-dashed border-indigo-300" : "bg-slate-50 border-dashed border-slate-200")} onClick={onClick}>
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
-
-        {earned && (
-          <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-gradient-to-br from-indigo-500 to-sky-500" />
-        )}
-
+        {earned && <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-gradient-to-br from-indigo-500 to-sky-500" />}
         <div className="relative w-14 h-14 flex items-center justify-center">
-          <div
-            className={cn(
-              "w-14 h-14 rounded-full flex items-center justify-center border-2 overflow-hidden relative z-10",
-              earned
-                ? "bg-white shadow-md border-indigo-200"
-                : "bg-slate-100 border-slate-300",
-            )}
-          >
-            {ach.badgeUrl ? (
-              <img
-                src={ach.badgeUrl}
-                alt={ach.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <iconify-icon
-                icon={
-                  earned
-                    ? "fluent-emoji:trophy"
-                    : eligible
-                      ? "fluent-emoji:lock-unlocked"
-                      : "fluent-emoji:lock"
-                }
-                style={{
-                  fontSize: "28px",
-                }}
-              />
-            )}
+          <div className={cn("w-14 h-14 rounded-full flex items-center justify-center border-2 overflow-hidden relative z-10", earned ? "bg-white shadow-md border-indigo-200" : "bg-slate-100 border-slate-300")}>
+            {ach.badgeUrl ? <img src={ach.badgeUrl} alt={ach.name} className="w-full h-full object-cover" /> : <iconify-icon icon={earned ? "fluent-emoji:trophy" : eligible ? "fluent-emoji:lock-unlocked" : "fluent-emoji:lock"} style={{ fontSize: "28px" }} />}
           </div>
-          {earned && (
-            <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-white flex items-center justify-center shadow-sm z-20">
-              <CheckCircle size={10} className="text-white" />
-            </div>
-          )}
+          {earned && <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-white flex items-center justify-center shadow-sm z-20"><CheckCircle size={10} className="text-white" /></div>}
         </div>
-
         <div className="text-center space-y-1 w-full relative z-10">
-          <p
-            className={cn(
-              "text-[10px] font-black uppercase tracking-tighter truncate w-full px-1",
-              earned ? "text-slate-800" : "text-slate-500",
-            )}
-          >
-            {ach.name}
-          </p>
-          <div className="text-[8px] font-bold px-2 py-0.5 rounded-full border inline-block bg-slate-50 text-slate-500 border-slate-100">
-            {ach.requirementType === 3
-              ? "Admin Grant"
-              : `${REQ_TYPE_LABEL[ach.requirementType]}: ${ach.threshold.toLocaleString()}`}
-          </div>
+          <p className={cn("text-[10px] font-black uppercase tracking-tighter truncate w-full px-1", earned ? "text-slate-800" : "text-slate-500")}>{ach.name}</p>
+          <div className="text-[8px] font-bold px-2 py-0.5 rounded-full border inline-block bg-slate-50 text-slate-500 border-slate-100">{ach.requirementType === 3 ? "Admin Grant" : `${REQ_TYPE_LABEL[ach.requirementType]}: ${ach.threshold.toLocaleString()}`}</div>
         </div>
-
         {eligible && !earned && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onClaim();
-            }}
-            disabled={claiming}
-            className="w-full h-7 flex items-center justify-center gap-1 bg-indigo-500 text-white rounded-xl font-black text-[9px] uppercase tracking-wider border-2 border-indigo-700 shadow-[0_3px_0_0_#3730a3] active:translate-y-0.5 active:shadow-none disabled:opacity-50 transition-all relative z-10"
-          >
-            {claiming ? (
-              <LoaderCircle size={10} className="animate-spin" />
-            ) : (
-              <>
-                <Zap size={10} /> Claim
-              </>
-            )}
+          <button onClick={(e) => { e.stopPropagation(); onClaim(); }} disabled={claiming} className="w-full h-7 flex items-center justify-center gap-1 bg-indigo-500 text-white rounded-xl font-black text-[9px] uppercase tracking-wider border-2 border-indigo-700 shadow-[0_3px_0_0_#3730a3] active:translate-y-0.5 active:shadow-none disabled:opacity-50 transition-all relative z-10">
+            {claiming ? <LoaderCircle size={10} className="animate-spin" /> : <><Zap size={10} /> Claim</>}
           </button>
         )}
-
-        {!earned && !eligible && ach.requirementType !== 3 && (
-          <div className="w-full text-center text-[8px] font-bold text-slate-400 uppercase relative z-10">
-            {playerVal.toLocaleString()} / {ach.threshold.toLocaleString()}
-          </div>
-        )}
+        {!earned && !eligible && ach.requirementType !== 3 && <div className="w-full text-center text-[8px] font-bold text-slate-400 uppercase relative z-10">{playerVal.toLocaleString()} / {ach.threshold.toLocaleString()}</div>}
       </div>
     </div>
   );
 }
 
-function EarnedAchievementCard({
-  unlocked,
-  achDef,
-  onClick,
-}: {
-  unlocked: UnlockedAchievement;
-  achDef: AchievementDef | undefined;
-  onClick: () => void;
-}) {
-  const date = new Date(unlocked.claimedAt).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+function EarnedAchievementCard({ unlocked, achDef, onClick }: { unlocked: UnlockedAchievement; achDef: AchievementDef | undefined; onClick: () => void }) {
+  const date = new Date(unlocked.claimedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   return (
-    <div
-      className="kpg-badge-card relative overflow-visible cursor-pointer select-none"
-      onClick={onClick}
-    >
+    <div className="kpg-badge-card relative overflow-visible cursor-pointer select-none" onClick={onClick}>
       <div className="kpg-card-inner p-4 border-2 border-indigo-200 rounded-[2rem] flex flex-col items-center gap-3 bg-white shadow-[0_4px_0_0_rgba(199,210,254,1)] relative overflow-hidden">
-        {/* Subtle Pattern */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
-        {/* Subtle Underlay */}
         <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-gradient-to-br from-indigo-500 to-sky-500" />
-
         <div className="relative w-14 h-14 z-10">
           <div className="w-14 h-14 rounded-full bg-white border-2 border-indigo-200 shadow-md flex items-center justify-center overflow-hidden">
-            {achDef?.badgeUrl ? (
-              <img
-                src={achDef.badgeUrl}
-                alt={unlocked.achievementName}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <iconify-icon
-                icon="fluent-emoji:trophy"
-                style={{ fontSize: "28px" }}
-              />
-            )}
+            {achDef?.badgeUrl ? <img src={achDef.badgeUrl} alt={unlocked.achievementName} className="w-full h-full object-cover" /> : <iconify-icon icon="fluent-emoji:trophy" style={{ fontSize: "28px" }} />}
           </div>
-          <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-white flex items-center justify-center shadow-sm">
-            <CheckCircle size={10} className="text-white" />
-          </div>
+          <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-white flex items-center justify-center shadow-sm"><CheckCircle size={10} className="text-white" /></div>
         </div>
         <div className="text-center space-y-1 w-full relative z-10">
-          <p className="text-[10px] font-black uppercase tracking-tighter truncate w-full px-1 text-slate-800">
-            {unlocked.achievementName}
-          </p>
+          <p className="text-[10px] font-black uppercase tracking-tighter truncate w-full px-1 text-slate-800">{unlocked.achievementName}</p>
           <p className="text-[8px] font-bold text-slate-400">{date}</p>
         </div>
       </div>
@@ -1678,112 +1274,34 @@ function EmptyBadges({ msg, sub }: { msg: string; sub: string }) {
   return (
     <div className="col-span-full py-20 text-center bg-slate-50 rounded-3xl border-4 border-dashed border-slate-100">
       <Sparkles className="mx-auto mb-4 text-slate-200" size={48} />
-      <p className="font-black uppercase text-slate-400 tracking-widest text-sm">
-        {msg}
-      </p>
+      <p className="font-black uppercase text-slate-400 tracking-widest text-sm">{msg}</p>
       <p className="text-xs font-bold text-slate-300 mt-1">{sub}</p>
     </div>
   );
 }
 
-function BadgeCard({
-  item,
-  isUnlocked,
-  isCurrent,
-  showRequirement,
-  onClick,
-}: {
-  item: any;
-  isUnlocked: boolean;
-  isCurrent?: boolean;
-  showRequirement?: boolean;
-  onClick: () => void;
-}) {
+function BadgeCard({ item, isUnlocked, isCurrent, showRequirement, onClick }: { item: any; isUnlocked: boolean; isCurrent?: boolean; showRequirement?: boolean; onClick: () => void }) {
   return (
-    <div
-      onClick={onClick}
-      className={cn(
-        "kpg-badge-card relative p-0 overflow-visible cursor-pointer select-none transition-all duration-300",
-        !isUnlocked && "opacity-60 grayscale-[0.5]",
-      )}
-    >
-      <div
-        className={cn(
-          "kpg-card-inner p-5 border-2 rounded-[2rem] flex flex-col items-center gap-3 relative overflow-hidden h-full",
-          isCurrent
-            ? "bg-white border-transparent shadow-xl"
-            : isUnlocked
-              ? "bg-white border-slate-100 shadow-sm"
-              : "bg-slate-50 border-dashed border-slate-200",
-        )}
-      >
-        {/* Themed Background Underlay */}
-        {isUnlocked && (
-          <div
-            className="absolute inset-0 opacity-[0.1] pointer-events-none transition-opacity"
-            style={{
-              background: item.gradient || "none",
-            }}
-          />
-        )}
-
-        {/* Pattern overlay */}
+    <div onClick={onClick} className={cn("kpg-badge-card relative p-0 overflow-visible cursor-pointer select-none transition-all duration-300", !isUnlocked && "opacity-60 grayscale-[0.5]")}>
+      <div className={cn("kpg-card-inner p-5 border-2 rounded-[2rem] flex flex-col items-center gap-3 relative overflow-hidden h-full", isCurrent ? "bg-white border-transparent shadow-xl" : isUnlocked ? "bg-white border-slate-100 shadow-sm" : "bg-slate-50 border-dashed border-slate-200")}>
+        {isUnlocked && <div className="absolute inset-0 opacity-[0.1] pointer-events-none transition-opacity" style={{ background: item.gradient || "none" }} />}
         <div className="absolute inset-0 opacity-[0.04] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
-
         {isCurrent && (
           <>
             <div className="absolute inset-[-2px] rounded-[2rem] bg-gradient-to-r from-indigo-500 via-pink-500 to-amber-500 kpg-conic-spin z-[-1]" />
-            <div
-              className="absolute inset-[-10px] rounded-[3rem] opacity-20 blur-xl z-[-2]"
-              style={{ backgroundColor: item.color }}
-            />
+            <div className="absolute inset-[-10px] rounded-[3rem] opacity-20 blur-xl z-[-2]" style={{ backgroundColor: item.color }} />
           </>
         )}
-
         <div className="relative w-16 h-16 flex items-center justify-center z-10">
-          <div
-            className={cn(
-              "w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all",
-              isUnlocked
-                ? "bg-white shadow-md"
-                : "bg-slate-200 border-slate-300",
-            )}
-            style={isUnlocked ? { borderColor: `${item.color}44` } : {}}
-          >
+          <div className={cn("w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all", isUnlocked ? "bg-white shadow-md" : "bg-slate-200 border-slate-300")} style={isUnlocked ? { borderColor: `${item.color}44` } : {}}>
             <iconify-icon icon={item.icon} style={{ fontSize: "28px" }} />
           </div>
-          {isCurrent && (
-            <div className="absolute -top-1 -right-1 bg-yellow-400 text-black text-[8px] font-black px-2 py-0.5 rounded-full border-2 border-white shadow-sm uppercase">
-              Now
-            </div>
-          )}
+          {isCurrent && <div className="absolute -top-1 -right-1 bg-yellow-400 text-black text-[8px] font-black px-2 py-0.5 rounded-full border-2 border-white shadow-sm uppercase">Now</div>}
         </div>
         <div className="text-center space-y-1 relative z-10">
-          <p
-            className={cn(
-              "text-[10px] font-black uppercase tracking-tighter truncate w-24",
-              isUnlocked ? "text-slate-800" : "text-slate-400",
-            )}
-          >
-            {item.title}
-          </p>
-          <div
-            className={cn(
-              "text-[8px] font-bold px-2 py-0.5 rounded-full border inline-block",
-              isUnlocked
-                ? "bg-slate-50 text-slate-500 border-slate-100"
-                : "bg-slate-100 text-slate-400 border-slate-200",
-            )}
-          >
-            {showRequirement || !isUnlocked
-              ? item.mmr !== undefined
-                ? `${item.mmr} MMR`
-                : item.requiredMmr !== undefined
-                  ? `${item.requiredMmr} MMR`
-                  : item.requiredDays !== undefined
-                    ? `${item.requiredDays} Days`
-                    : `${item.requiredCount} ${item.category === "Collection" ? "NFTs" : item.category === "Streak" ? "Days" : "Pulls"}`
-              : item.rarity || "Unlocked"}
+          <p className={cn("text-[10px] font-black uppercase tracking-tighter truncate w-24", isUnlocked ? "text-slate-800" : "text-slate-400")}>{item.title}</p>
+          <div className={cn("text-[8px] font-bold px-2 py-0.5 rounded-full border inline-block", isUnlocked ? "bg-slate-50 text-slate-500 border-slate-100" : "bg-slate-100 text-slate-400 border-slate-200")}>
+            {showRequirement || !isUnlocked ? item.mmr !== undefined ? `${item.mmr} MMR` : item.requiredMmr !== undefined ? `${item.requiredMmr} MMR` : item.requiredDays !== undefined ? `${item.requiredDays} Days` : `${item.requiredCount} ${item.category === "Collection" ? "NFTs" : item.category === "Streak" ? "Days" : "Pulls"}` : item.rarity || "Unlocked"}
           </div>
         </div>
       </div>
@@ -1791,132 +1309,44 @@ function BadgeCard({
   );
 }
 
-function BadgeDetailModal({
-  badge,
-  isOpen,
-  onClose,
-}: {
-  badge: any;
-  isOpen: boolean;
-  onClose: () => void;
-}) {
-  const reqText =
-    badge.mmr !== undefined
-      ? `${badge.mmr} MMR`
-      : badge.requiredMmr !== undefined
-        ? `${badge.requiredMmr} MMR`
-        : badge.requiredDays !== undefined
-          ? `${badge.requiredDays} Consecutive Days`
-          : badge.threshold !== undefined
-            ? `${badge.threshold.toLocaleString()} ${REQ_TYPE_LABEL[badge.requirementType] ?? ""}`
-            : badge.requiredCount !== undefined
-              ? `${badge.requiredCount} ${badge.category === "Collection" ? "Owned NFTs" : "Summons"}`
-              : "";
-
+function BadgeDetailModal({ badge, isOpen, onClose }: { badge: any; isOpen: boolean; onClose: () => void }) {
+  const reqText = badge.mmr !== undefined ? `${badge.mmr} MMR` : badge.requiredMmr !== undefined ? `${badge.requiredMmr} MMR` : badge.requiredDays !== undefined ? `${badge.requiredDays} Consecutive Days` : badge.threshold !== undefined ? `${badge.threshold.toLocaleString()} ${REQ_TYPE_LABEL[badge.requirementType] ?? ""}` : badge.requiredCount !== undefined ? `${badge.requiredCount} ${badge.category === "Collection" ? "Owned NFTs" : "Summons"}` : "";
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        hideCloseButton
-        className="max-w-md w-full p-0 bg-transparent border-none shadow-none !rounded-[2.5rem]"
-      >
+      <DialogContent hideCloseButton className="max-w-md w-full p-0 bg-transparent border-none shadow-none !rounded-[2.5rem]">
         <DialogHeader className="sr-only">
           <DialogTitle>{badge.title}</DialogTitle>
           <DialogDescription>{badge.desc}</DialogDescription>
         </DialogHeader>
         <div className="w-full bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border-4 border-slate-50">
           <div className="p-8 text-center relative overflow-hidden">
-            <div
-              className="absolute inset-0 opacity-5 pointer-events-none"
-              style={{ background: badge.gradient }}
-            />
+            <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ background: badge.gradient }} />
             <div className="relative z-10">
               <div className="w-24 h-24 mx-auto mb-6 relative">
-                <div
-                  className="absolute inset-[-10px] rounded-full blur-xl opacity-30 animate-pulse"
-                  style={{ backgroundColor: badge.color }}
-                />
-                <div
-                  className="w-24 h-24 rounded-full bg-white border-4 flex items-center justify-center shadow-xl overflow-hidden"
-                  style={{ borderColor: `${badge.color}22` }}
-                >
-                  {badge.badgeUrl ? (
-                    <img
-                      src={badge.badgeUrl}
-                      alt={badge.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <iconify-icon
-                      icon={badge.icon || "fluent-emoji:trophy"}
-                      style={{
-                        fontSize: "48px",
-                      }}
-                    />
-                  )}
+                <div className="absolute inset-[-10px] rounded-full blur-xl opacity-30 animate-pulse" style={{ backgroundColor: badge.color }} />
+                <div className="w-24 h-24 rounded-full bg-white border-4 flex items-center justify-center shadow-xl overflow-hidden" style={{ borderColor: `${badge.color}22` }}>
+                  {badge.badgeUrl ? <img src={badge.badgeUrl} alt={badge.title} className="w-full h-full object-cover" /> : <iconify-icon icon={badge.icon || "fluent-emoji:trophy"} style={{ fontSize: "48px" }} />}
                 </div>
               </div>
               <div className="mb-4">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1 block">
-                  {badge.tier || badge.category || "Achievement"} Milestone
-                </span>
-                <h2
-                  className={cn(
-                    "text-3xl font-headline tracking-tight",
-                    badge.fx === "fx-aurora" ? "kpg-fx-aurora" : "",
-                  )}
-                  style={badge.fx !== "fx-aurora" ? { color: badge.color } : {}}
-                >
-                  {badge.title}
-                </h2>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1 block">{badge.tier || badge.category || "Achievement"} Milestone</span>
+                <h2 className={cn("text-3xl font-headline tracking-tight", badge.fx === "fx-aurora" ? "kpg-fx-aurora" : "")} style={badge.fx !== "fx-aurora" ? { color: badge.color } : {}}>{badge.title}</h2>
               </div>
-              <p className="text-slate-500 font-medium leading-relaxed mb-6 px-4">
-                {badge.desc || "Unlocked by your verified on-chain activity."}
-              </p>
-              {badge.claimedAt && (
-                <p className="text-xs font-bold text-indigo-400 mb-4">
-                  Claimed{" "}
-                  {new Date(badge.claimedAt).toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
-              )}
+              <p className="text-slate-500 font-medium leading-relaxed mb-6 px-4">{badge.desc || "Unlocked by your verified on-chain activity."}</p>
+              {badge.claimedAt && <p className="text-xs font-bold text-indigo-400 mb-4">Claimed {new Date(badge.claimedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>}
               <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
                 <div className="px-4 py-1.5 rounded-full bg-slate-50 border-2 border-slate-100 flex items-center gap-2">
-                  {badge.isUnlocked ? (
-                    <ShieldCheck className="w-4 h-4 text-green-500" />
-                  ) : (
-                    <Lock className="w-4 h-4 text-slate-300" />
-                  )}
-                  <span className="text-xs font-bold text-slate-600 uppercase">
-                    {badge.isUnlocked
-                      ? "Unlocked"
-                      : reqText
-                        ? `Requires ${reqText}`
-                        : "Locked"}
-                  </span>
+                  {badge.isUnlocked ? <ShieldCheck className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-slate-300" />}
+                  <span className="text-xs font-bold text-slate-600 uppercase">{badge.isUnlocked ? "Unlocked" : reqText ? `Requires ${reqText}` : "Locked"}</span>
                 </div>
                 {badge.rarity && (
                   <div className="px-4 py-1.5 rounded-full bg-slate-50 border-2 border-slate-100 flex items-center gap-2">
-                    <iconify-icon
-                      icon="solar:users-group-rounded-linear"
-                      class="text-indigo-400"
-                    />
-                    <span className="text-xs font-bold text-slate-600 uppercase">
-                      {badge.rarity} Tier
-                    </span>
+                    <iconify-icon icon="solar:users-group-rounded-linear" class="text-indigo-400" />
+                    <span className="text-xs font-bold text-slate-600 uppercase">{badge.rarity} Tier</span>
                   </div>
                 )}
               </div>
-              <button
-                onClick={onClose}
-                className="w-full py-4 rounded-2xl text-white font-black uppercase tracking-widest text-sm kpg-shimmer-btn shadow-lg transition-transform active:scale-95"
-                style={{
-                  background:
-                    badge.gradient || "linear-gradient(135deg,#4f46e5,#818cf8)",
-                }}
-              >
+              <button onClick={onClose} className="w-full py-4 rounded-2xl text-white font-black uppercase tracking-widest text-sm kpg-shimmer-btn shadow-lg transition-transform active:scale-95" style={{ background: badge.gradient || "linear-gradient(135deg,#4f46e5,#818cf8)" }}>
                 Awesome! 🎉
               </button>
             </div>
@@ -1927,188 +1357,82 @@ function BadgeDetailModal({
   );
 }
 
-function StatCard({
-  label,
-  value,
-  icon,
-  theme,
-}: {
-  label: string;
-  value: string | number;
-  icon: string;
-  theme: string;
-}) {
+function StatCard({ label, value, icon, theme }: { label: string; value: string | number; icon: string; theme: string }) {
   const colors: Record<string, string> = {
-    yellow:
-      "border-yellow-100 shadow-[0_6px_0_0_rgba(254,240,138,1)] bg-yellow-100 text-yellow-500 border-yellow-200",
-    orange:
-      "border-orange-100 shadow-[0_6px_0_0_rgba(255,237,213,1)] bg-orange-100 text-orange-500 border-orange-200",
-    purple:
-      "border-purple-100 shadow-[0_6px_0_0_rgba(243,232,255,1)] bg-purple-100 text-purple-500 border-purple-200",
+    yellow: "border-yellow-100 shadow-[0_6px_0_0_rgba(254,240,138,1)] bg-yellow-100 text-yellow-500 border-yellow-200",
+    orange: "border-orange-100 shadow-[0_6px_0_0_rgba(255,237,213,1)] bg-orange-100 text-orange-500 border-orange-200",
+    purple: "border-purple-100 shadow-[0_6px_0_0_rgba(243,232,255,1)] bg-purple-100 text-purple-500 border-purple-200",
     pink: "border-pink-100 shadow-[0_6px_0_0_rgba(252,231,243,1)] bg-pink-100 text-pink-500 border-pink-200",
   };
   const c = colors[theme].split(" ");
   return (
-    <div
-      className={cn(
-        "bg-white rounded-3xl p-4 border-4 flex flex-col items-center text-center hover:-translate-y-1 transition-transform",
-        c.slice(0, 2).join(" "),
-      )}
-    >
-      <div
-        className={cn(
-          "w-12 aspect-square rounded-2xl flex items-center justify-center mb-2 border-2",
-          c.slice(2).join(" "),
-        )}
-      >
+    <div className={cn("bg-white rounded-3xl p-4 border-4 flex flex-col items-center text-center hover:-translate-y-1 transition-transform", c.slice(0, 2).join(" "))}>
+      <div className={cn("w-12 aspect-square rounded-2xl flex items-center justify-center mb-2 border-2", c.slice(2).join(" "))}>
         <iconify-icon icon={icon} class="text-2xl" />
       </div>
-      <span className="text-xs text-slate-500 font-semibold mb-1 uppercase">
-        {label}
-      </span>
-      <span className="text-xl tracking-tight font-semibold text-slate-800">
-        {value}
-      </span>
+      <span className="text-xs text-slate-500 font-semibold mb-1 uppercase">{label}</span>
+      <span className="text-xl tracking-tight font-semibold text-slate-800">{value}</span>
     </div>
   );
 }
 
-function ProfileBadge({
-  label,
-  icon,
-  theme,
-}: {
-  label: string;
-  icon: string;
-  theme: string;
-}) {
+function ProfileBadge({ label, icon, theme }: { label: string; icon: string; theme: string }) {
   const themes: Record<string, string> = {
     indigo: "bg-indigo-50 text-indigo-600 border-indigo-200",
     emerald: "bg-emerald-50 text-emerald-600 border-emerald-200",
     rose: "bg-rose-50 text-rose-600 border-rose-200",
   };
   return (
-    <span
-      className={cn(
-        "px-2 py-0.5 rounded-full text-xs font-semibold border-2 flex items-center gap-1 shadow-sm",
-        themes[theme],
-      )}
-    >
+    <span className={cn("px-2 py-0.5 rounded-full text-xs font-semibold border-2 flex items-center gap-1 shadow-sm", themes[theme])}>
       <iconify-icon icon={icon} class="text-xs mr-1" /> {label}
     </span>
   );
 }
 
-function SkillBar({
-  label,
-  value,
-  color,
-  icon,
-}: {
-  label: string;
-  value: number;
-  color: string;
-  icon: string;
-}) {
+function SkillBar({ label, value, color, icon }: { label: string; value: number; color: string; icon: string }) {
   return (
     <div className="text-left">
       <div className="flex justify-between text-sm font-semibold mb-1">
         <span className="text-slate-700 flex items-center gap-1.5">
-          <iconify-icon
-            icon={icon}
-            class={cn("text-base", color.split(" ")[1])}
-          />{" "}
-          {label}
+          <iconify-icon icon={icon} class={cn("text-base", color.split(" ")[1])} /> {label}
         </span>
-        <span
-          className={cn(
-            "px-2 py-0.5 rounded-xl text-[10px] border",
-            color.split(" ")[1].replace("text-", "bg-").replace("500", "100"),
-            color.split(" ")[1].replace("text-", "text-").replace("500", "600"),
-            color
-              .split(" ")[1]
-              .replace("text-", "border-")
-              .replace("500", "200"),
-          )}
-        >
+        <span className={cn("px-2 py-0.5 rounded-xl text-[10px] border", color.split(" ")[1].replace("text-", "bg-").replace("500", "100"), color.split(" ")[1].replace("text-", "text-").replace("500", "600"), color.split(" ")[1].replace("text-", "border-").replace("500", "200"))}>
           {value}%
         </span>
       </div>
       <div className="w-full bg-slate-100 rounded-full h-4 border border-slate-200 p-0.5 shadow-inner overflow-hidden">
-        <div
-          className={cn(
-            "bg-gradient-to-r h-full rounded-full relative transition-all duration-700",
-            color,
-          )}
-          style={{ width: `${Math.min(100, value)}%`, height: "100%" }}
-        >
-          <div className="absolute inset-0 bg-white/20 w-full transform -skew-x-12 translate-x-[-100%] animate-[shimmer_2s_infinite]"></div>
+        <div className={cn("bg-gradient-to-r h-full rounded-full relative transition-all duration-700", color)} style={{ width: `${Math.min(100, value)}%`, height: "100%" }}>
+          <div className="absolute inset-0 bg-white/20 w-full transform -skew-x-12 translate-x-[-100%] animate-[shimmer_2s_infinite]" />
         </div>
       </div>
     </div>
   );
 }
 
-function TerritoryRow({
-  label,
-  value,
-  theme,
-}: {
-  label: string;
-  value: number;
-  theme: "blue" | "teal" | "rose";
-}) {
+function TerritoryRow({ label, value, theme }: { label: string; value: number; theme: "blue" | "teal" | "rose" }) {
   const themes = {
     blue: "bg-blue-50 border-blue-100 shadow-[0_4px_0_0_rgba(219,234,254,1)] icon-bg:bg-blue-200 icon:text-blue-600 icon-border:border-blue-300 text:text-blue-800 badge:text-blue-600 badge-border:border-blue-200",
     teal: "bg-teal-50 border-teal-100 shadow-[0_4px_0_0_rgba(204,251,241,1)] icon-bg:bg-teal-200 icon:text-teal-600 icon-border:border-teal-300 text:text-teal-800 badge:text-teal-600 badge-border:border-teal-200",
     rose: "bg-rose-50 border-rose-100 shadow-[0_4px_0_0_rgba(255,228,230,1)] icon-bg:bg-rose-200 icon:text-rose-600 icon-border:border-rose-300 text:text-rose-800 badge:text-rose-600 badge-border:border-rose-200",
   };
-  const c = themes[theme].split(" ").reduce(
-    (acc, curr) => {
-      const [k, v] = curr.split(":");
-      if (v) acc[k] = v;
-      else acc["base"] = (acc["base"] || "") + " " + curr;
-      return acc;
-    },
-    {} as Record<string, string>,
-  );
-
+  const c = themes[theme].split(" ").reduce((acc, curr) => {
+    const [k, v] = curr.split(":");
+    if (v) acc[k] = v;
+    else acc["base"] = (acc["base"] || "") + " " + curr;
+    return acc;
+  }, {} as Record<string, string>);
   return (
-    <div
-      className={cn(
-        "border p-2 rounded-lg flex items-center justify-between transition-all",
-        c["base"],
-      )}
-    >
+    <div className={cn("border p-2 rounded-lg flex items-center justify-between transition-all", c["base"])}>
       <div className="flex items-center gap-3">
-        <div
-          className={cn(
-            "w-8 h-8 rounded-full flex items-center justify-center border",
-            c["icon-bg"],
-            c["icon-border"],
-          )}
-        >
-          <iconify-icon
-            icon={
-              label === "Visayas" ? "solar:flag-2-linear" : "solar:flag-linear"
-            }
-            class={c["icon"]}
-          />
+        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center border", c["icon-bg"], c["icon-border"])}>
+          <iconify-icon icon={label === "Visayas" ? "solar:flag-2-linear" : "solar:flag-linear"} class={c["icon"]} />
         </div>
         <div className="flex flex-col">
           <span className={cn("font-black text-sm", c["text"])}>{label}</span>
           <span className="text-[11px] text-slate-400">Territory</span>
         </div>
       </div>
-      <span
-        className={cn(
-          "bg-white px-2 py-0.5 rounded-md text-sm font-semibold border shadow-sm",
-          c["badge"],
-          c["badge-border"],
-        )}
-      >
-        {value}%
-      </span>
+      <span className={cn("bg-white px-2 py-0.5 rounded-md text-sm font-semibold border shadow-sm", c["badge"], c["badge-border"])}>{value}%</span>
     </div>
   );
 }
