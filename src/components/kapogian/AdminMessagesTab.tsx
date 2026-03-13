@@ -5,7 +5,7 @@ import * as Ably from "ably";
 import {
   MessageCircle, Send, Loader2, User, ShieldCheck,
   Inbox, Circle, Phone, PhoneOff, PhoneCall, PhoneMissed,
-  Bot, BotOff, Sparkles,
+  Bot, BotOff, Sparkles, Link2, Cpu, Plus, Trash2, LayoutGrid, ChevronDown, ChevronUp,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -29,6 +29,29 @@ type AdminCallState =
   | { status: "idle" }
   | { status: "calling";  walletAddress: string }
   | { status: "active";   walletAddress: string; startedAt: number };
+
+// ─── Quick Button types ──────────────────────────────────────────────────────
+
+export interface QuickButton {
+  id: string;
+  label: string;
+  /** "link" opens a URL in new tab and sends a message; "ai" sends a query to AI */
+  type: "link" | "ai";
+  value: string;   // URL for link, question text for ai
+  emoji?: string;
+}
+
+const PRESET_BUTTONS: Omit<QuickButton, "id">[] = [
+  { label: "Generate & Mint",   type: "link", value: "/generate",       emoji: "⚡" },
+  { label: "Kapo Shop",         type: "link", value: "/shop",           emoji: "🛍️" },
+  { label: "Discord Server",    type: "link", value: "https://discord.gg/kapogian", emoji: "💬" },
+  { label: "View Roadmap",      type: "link", value: "/roadmap",        emoji: "🗺️" },
+  { label: "How many mints?",   type: "ai",   value: "How many total Kapogian NFTs have been minted so far?", emoji: "🔢" },
+  { label: "My Orders",         type: "ai",   value: "Can you help me check the status of my order?",        emoji: "📦" },
+  { label: "Shop Items",        type: "ai",   value: "What items are currently available in the Kapo Shop?", emoji: "🧾" },
+];
+
+const QB_STORAGE_KEY = "kapogian_quick_buttons";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -68,6 +91,18 @@ export function AdminMessagesTab() {
   const [sending, setSending]             = useState(false);
   const [callState, setCallState]         = useState<AdminCallState>({ status: "idle" });
 
+  // ── Quick Buttons state ──────────────────────────────────────────────────
+  const [quickButtons, setQuickButtons] = useState<QuickButton[]>(() => {
+    if (typeof window === "undefined") return [];
+    try { return JSON.parse(localStorage.getItem(QB_STORAGE_KEY) ?? "[]"); } catch { return []; }
+  });
+  const [showQBPanel, setShowQBPanel] = useState(false);
+  const [newBtnLabel, setNewBtnLabel] = useState("");
+  const [newBtnType, setNewBtnType]   = useState<"link" | "ai">("link");
+  const [newBtnValue, setNewBtnValue] = useState("");
+  const [newBtnEmoji, setNewBtnEmoji] = useState("");
+  const quickButtonsRef = useRef<QuickButton[]>([]);
+
   // ── AI Mode ───────────────────────────────────────────────────────────────
   const [aiMode, setAiMode]         = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
@@ -79,6 +114,23 @@ export function AdminMessagesTab() {
     aiModeRef.current = aiMode;
     localStorage.setItem("kapogian_ai_mode", String(aiMode));
   }, [aiMode]);
+
+  // Sync quickButtons: persist + broadcast to all user channels
+  useEffect(() => {
+    quickButtonsRef.current = quickButtons;
+    localStorage.setItem(QB_STORAGE_KEY, JSON.stringify(quickButtons));
+    // Broadcast to all currently-subscribed user channels via Ably
+    const ably = ablyRef.current;
+    if (!ably) return;
+    const payload = { buttons: quickButtons };
+    // Broadcast on inbox channel so UserDrawer can pick it up globally
+    ably.channels.get("kapogian-support-inbox").publish("quick-buttons-update", payload).catch(() => {});
+    // Also push to each open per-user channel so they get it even if drawer is open
+    channelsRef.current.forEach((ch) => {
+      ch.publish("quick-buttons-update", payload).catch(() => {});
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quickButtons]);
 
   // Keep refs in sync with state
   useEffect(() => { conversationsRef.current = conversations; }, [conversations]);
@@ -131,6 +183,31 @@ export function AdminMessagesTab() {
     await pc.setLocalDescription(offer);
     await ch.publish("webrtc-offer", { sdp: pc.localDescription });
     for (const c of iceBufRef.current) { if (pc.remoteDescription) await pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{}); }
+  }, []);
+
+  // ── Quick Button helpers ──────────────────────────────────────────────────
+  const addQuickButton = useCallback(() => {
+    if (!newBtnLabel.trim() || !newBtnValue.trim()) return;
+    const btn: QuickButton = {
+      id: `qb-${Date.now()}`,
+      label: newBtnLabel.trim(),
+      type: newBtnType,
+      value: newBtnValue.trim(),
+      emoji: newBtnEmoji.trim() || undefined,
+    };
+    setQuickButtons((prev) => [...prev, btn]);
+    setNewBtnLabel(""); setNewBtnValue(""); setNewBtnEmoji("");
+  }, [newBtnLabel, newBtnType, newBtnValue, newBtnEmoji]);
+
+  const removeQuickButton = useCallback((id: string) => {
+    setQuickButtons((prev) => prev.filter((b) => b.id !== id));
+  }, []);
+
+  const addPreset = useCallback((preset: Omit<QuickButton, "id">) => {
+    setQuickButtons((prev) => {
+      if (prev.some((b) => b.label === preset.label)) return prev;
+      return [...prev, { ...preset, id: `qb-${Date.now()}-${Math.random().toString(36).slice(2)}` }];
+    });
   }, []);
 
   // ── AI auto-reply ─────────────────────────────────────────────────────────
@@ -388,6 +465,19 @@ export function AdminMessagesTab() {
               )}
             </div>
             <div className="flex items-center gap-2">
+              {/* Quick Buttons Panel Toggle */}
+              <button
+                onClick={() => setShowQBPanel((v) => !v)}
+                title="Manage quick reply buttons"
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 transition-all text-[9px] font-black uppercase ${
+                  showQBPanel
+                    ? "bg-cyan-500 border-cyan-300 text-white"
+                    : "bg-white/10 border-white/20 text-white/50 hover:bg-white/20"
+                }`}
+              >
+                <LayoutGrid size={11} />
+                Buttons
+              </button>
               {/* AI Mode Toggle */}
               <button
                 onClick={() => setAiMode((v) => !v)}
@@ -412,6 +502,85 @@ export function AdminMessagesTab() {
               <p className="text-[10px] font-semibold text-purple-600 leading-tight">
                 Llama 3.3 auto-replies when you're away
               </p>
+            </div>
+          )}
+
+          {/* ── Quick Buttons Panel ── */}
+          {showQBPanel && (
+            <div className="border-b-2 border-slate-100 bg-slate-50 flex-shrink-0 max-h-[420px] overflow-y-auto">
+              <div className="p-3 space-y-3">
+                {/* Presets */}
+                <div>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Presets</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {PRESET_BUTTONS.map((preset) => {
+                      const already = quickButtons.some((b) => b.label === preset.label);
+                      return (
+                        <button key={preset.label} onClick={() => addPreset(preset)} disabled={already}
+                          className={`flex items-center gap-1 px-2.5 py-1 rounded-full border-2 text-[9px] font-black transition-all ${
+                            already ? "bg-slate-100 border-slate-200 text-slate-300 cursor-not-allowed"
+                                     : "bg-white border-slate-200 text-slate-600 hover:border-black hover:bg-black hover:text-white"
+                          }`}>
+                          {preset.emoji} {preset.label}
+                          {!already && <Plus size={9} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Active buttons list */}
+                {quickButtons.length > 0 && (
+                  <div>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Active Buttons ({quickButtons.length})</p>
+                    <div className="space-y-1.5">
+                      {quickButtons.map((btn) => (
+                        <div key={btn.id} className="flex items-center gap-2 bg-white border-2 border-slate-100 rounded-xl px-3 py-2">
+                          <span className="text-sm">{btn.emoji || (btn.type === "link" ? "🔗" : "🤖")}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-black text-slate-800 truncate">{btn.label}</p>
+                            <p className="text-[9px] text-slate-400 truncate font-mono">{btn.value}</p>
+                          </div>
+                          <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border ${
+                            btn.type === "link" ? "bg-blue-50 text-blue-500 border-blue-200" : "bg-purple-50 text-purple-500 border-purple-200"
+                          }`}>{btn.type}</span>
+                          <button onClick={() => removeQuickButton(btn.id)}
+                            className="w-6 h-6 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
+                            <Trash2 size={11} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Add new button form */}
+                <div className="bg-white border-2 border-dashed border-slate-200 rounded-xl p-3 space-y-2">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Add Custom Button</p>
+                  <div className="flex gap-2">
+                    <input value={newBtnEmoji} onChange={(e) => setNewBtnEmoji(e.target.value)}
+                      placeholder="😊" maxLength={4}
+                      className="w-10 h-8 text-center border-2 border-slate-200 rounded-lg text-sm outline-none focus:border-black" />
+                    <input value={newBtnLabel} onChange={(e) => setNewBtnLabel(e.target.value)}
+                      placeholder="Button label..." maxLength={40}
+                      className="flex-1 h-8 border-2 border-slate-200 rounded-lg px-2 text-xs font-semibold outline-none focus:border-black" />
+                  </div>
+                  <div className="flex gap-2">
+                    <select value={newBtnType} onChange={(e) => setNewBtnType(e.target.value as "link" | "ai")}
+                      className="h-8 border-2 border-slate-200 rounded-lg px-2 text-xs font-black outline-none focus:border-black bg-white">
+                      <option value="link">🔗 Link</option>
+                      <option value="ai">🤖 AI Query</option>
+                    </select>
+                    <input value={newBtnValue} onChange={(e) => setNewBtnValue(e.target.value)}
+                      placeholder={newBtnType === "link" ? "https://... or /page" : "Question for AI..."}
+                      className="flex-1 h-8 border-2 border-slate-200 rounded-lg px-2 text-xs font-semibold outline-none focus:border-black" />
+                  </div>
+                  <button onClick={addQuickButton} disabled={!newBtnLabel.trim() || !newBtnValue.trim()}
+                    className="w-full h-8 bg-black text-white rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 disabled:opacity-40 hover:bg-slate-800 transition-colors">
+                    <Plus size={12} /> Add Button
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
