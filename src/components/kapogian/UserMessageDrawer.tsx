@@ -18,6 +18,14 @@ import { useWebRTCCall } from "./useWebRTCCall";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export interface QuickButton {
+  id: string;
+  label: string;
+  type: "link" | "ai";
+  value: string;
+  emoji?: string;
+}
+
 export interface SupportMessage {
   id: string;
   clientMsgId?: string;
@@ -199,6 +207,8 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
   const [sending, setSending] = useState(false);
   const [callState, setCallState] = useState<UserCallState>({ status: "idle" });
 
+  const [quickButtons, setQuickButtons] = useState<QuickButton[]>([]);
+
   const ablyRef = useRef<Ably.Realtime | null>(null);
   const channelRef = useRef<Ably.RealtimeChannel | null>(null);
   const historyLoadedRef = useRef(false);
@@ -301,6 +311,21 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
     channel.subscribe("webrtc-ice", (msg) => {
       if (destroyed) return;
       webrtc.handleIceCandidate(msg.data.candidate).catch(() => {});
+    });
+
+    // ── Quick buttons — listen on inbox channel ─────────────────────────────
+    const inboxForButtons = ably.channels.get("kapogian-support-inbox");
+    inboxForButtons.subscribe("quick-buttons-update", (msg) => {
+      if (destroyed) return;
+      const buttons = msg.data?.buttons;
+      if (Array.isArray(buttons)) setQuickButtons(buttons);
+    });
+
+    // Also listen on the per-user channel in case admin publishes there
+    channel.subscribe("quick-buttons-update", (msg) => {
+      if (destroyed) return;
+      const buttons = msg.data?.buttons;
+      if (Array.isArray(buttons)) setQuickButtons(buttons);
     });
 
     // ── Load history ─────────────────────────────────────────────────────────
@@ -441,6 +466,45 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
     }
   }, [input, sending, walletAddress]);
 
+  // ── Quick button tap handler ─────────────────────────────────────────────
+  const handleQuickButton = useCallback(async (btn: QuickButton) => {
+    if (btn.type === "link") {
+      // Open link in new tab
+      window.open(btn.value.startsWith("http") ? btn.value : btn.value, "_blank", "noopener");
+      // Also send a message so admin knows what user clicked
+      const text = `${btn.emoji ? btn.emoji + " " : ""}${btn.label}`;
+      const fakeInput = text;
+      if (!channelRef.current || sending) return;
+      setSending(true);
+      const clientMsgId = `cmid-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const timestamp = Date.now();
+      const optimistic: SupportMessage = { id: `optimistic-${clientMsgId}`, clientMsgId, text: fakeInput, sender: "user", timestamp };
+      setMessages((prev) => [...prev, optimistic]);
+      try {
+        if (ablyRef.current) ablyRef.current.channels.get("kapogian-support-inbox").publish("user-connected", { walletAddress });
+        await channelRef.current.publish("user-message", { text: fakeInput, timestamp, clientMsgId, walletAddress });
+      } catch {
+        setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+      } finally { setSending(false); }
+    } else {
+      // AI query — just send as a regular user message, AI will reply
+      const text = btn.value;
+      if (!channelRef.current || sending) return;
+      setSending(true);
+      const clientMsgId = `cmid-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const timestamp = Date.now();
+      const optimistic: SupportMessage = { id: `optimistic-${clientMsgId}`, clientMsgId, text, sender: "user", timestamp };
+      setMessages((prev) => [...prev, optimistic]);
+      setOpen(true);
+      try {
+        if (ablyRef.current) ablyRef.current.channels.get("kapogian-support-inbox").publish("user-connected", { walletAddress });
+        await channelRef.current.publish("user-message", { text, timestamp, clientMsgId, walletAddress });
+      } catch {
+        setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+      } finally { setSending(false); }
+    }
+  }, [sending, walletAddress]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
@@ -563,6 +627,31 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
             )}
             <div ref={bottomRef} />
           </div>
+
+          {/* ── Quick Buttons Strip ── */}
+          {quickButtons.length > 0 && (
+            <div className="px-3 pt-2.5 pb-1 border-t-2 border-slate-100 bg-white flex-shrink-0">
+              <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1">Quick Actions</p>
+              <div className="flex gap-1.5 flex-wrap">
+                {quickButtons.map((btn) => (
+                  <button
+                    key={btn.id}
+                    onClick={() => handleQuickButton(btn)}
+                    disabled={sending || !connected}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-[10px] font-black transition-all disabled:opacity-40 ${
+                      btn.type === "link"
+                        ? "bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100 hover:border-sky-400"
+                        : "bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 hover:border-purple-400"
+                    }`}
+                  >
+                    {btn.emoji && <span className="text-sm leading-none">{btn.emoji}</span>}
+                    {btn.label}
+                    {btn.type === "link" && <span className="text-[8px] opacity-50">↗</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Input */}
           <div className="flex gap-2 p-3 border-t-2 border-slate-100 bg-white flex-shrink-0">
