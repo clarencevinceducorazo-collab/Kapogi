@@ -21,7 +21,7 @@ import { useWebRTCCall } from "./useWebRTCCall";
 export interface QuickButton {
   id: string;
   label: string;
-  type: "link" | "ai";
+  type: "link" | "Kapogian Support";
   value: string;
   emoji?: string;
 }
@@ -526,7 +526,11 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
         ) : open ? (
           <X size={22} />
         ) : (
-          <MessageCircle size={22} />
+            <img 
+    src="/images/KapogianLogo.webp" 
+    alt="Kapogian Logo"
+    className="w-5 h-5 object-contain"
+  />
         )}
         {!open && unreadCount > 0 && callState.status === "idle" && (
           <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 border-2 border-white rounded-full text-[10px] font-black flex items-center justify-center">
@@ -540,9 +544,13 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
           <div className="bg-black text-white px-5 py-4 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="w-9 h-9 bg-white/10 rounded-full border-2 border-white/20 flex items-center justify-center">
-                  <ShieldCheck size={16} className="text-white" />
-                </div>
+               <div className="w-9 h-9 bg-white/10 rounded-full border-2 border-white/20 flex items-center justify-center">
+  <img 
+    src="/images/KapogianLogo.webp" 
+    alt="Kapogian Logo"
+    className="w-5 h-5 object-contain"
+  />
+</div>
                 <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-black ${connected ? "bg-green-400" : "bg-slate-500"}`} />
               </div>
               <div>
@@ -572,7 +580,11 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full py-10 gap-3 text-center">
                 <div className="w-14 h-14 bg-slate-100 rounded-full border-2 border-slate-200 flex items-center justify-center">
-                  <MessageCircle size={24} className="text-slate-300" />
+                    <img 
+    src="/images/KapogianLogo.webp" 
+    alt="Kapogian Logo"
+    className="w-5 h-5 object-contain"
+  />
                 </div>
                 <div>
                   <p className="font-black text-slate-500 text-sm uppercase tracking-tight">Send us a message</p>
@@ -591,7 +603,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
                         : "bg-white border-2 border-slate-200 text-slate-800 rounded-bl-sm"
                     }`}>
                       {msg.sender === "admin" && msg.isAI && (
-                        <p className="text-[9px] font-black text-purple-300 uppercase tracking-widest mb-1">✦ AI Assistant</p>
+                        <p className="text-[9px] font-black text-purple-300 uppercase tracking-widest mb-1">✦ Kapogian Support</p>
                       )}
                       {msg.sender === "admin" && !msg.isAI && (
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Kapogian Admin</p>
@@ -641,7 +653,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
                   <span className={`text-[9px] font-black uppercase tracking-widest mr-1 ${
                     adminTyping.isAI ? "text-purple-500" : "text-slate-400"
                   }`}>
-                    {adminTyping.isAI ? "✦ AI" : "Admin"}
+                    {adminTyping.isAI ? "✦ Kapogian Support" : "Admin"}
                   </span>
                   {[0, 1, 2].map((i) => (
                     <span key={i}
