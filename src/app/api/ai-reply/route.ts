@@ -403,6 +403,22 @@ export async function POST(req: NextRequest) {
       content: m.text,
     }));
 
+    // ── Ably helper ────────────────────────────────────────────────────────
+    const channelName = `kapogian-support:${walletAddress.toLowerCase()}`;
+    const [keyName, keySecret] = ABLY_KEY.split(":");
+    const ablyAuthHeader = "Basic " + Buffer.from(`${keyName}:${keySecret}`).toString("base64");
+
+    const ablyPublish = async (eventName: string, data: object) => {
+      await fetch(`https://rest.ably.io/channels/${encodeURIComponent(channelName)}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": ablyAuthHeader },
+        body: JSON.stringify({ name: eventName, data }),
+      });
+    };
+
+    // Signal AI is typing
+    await ablyPublish("admin-typing", { isTyping: true, isAI: true });
+
     let rawContent = "";
     let usedLabel  = "";
 
@@ -416,6 +432,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (!rawContent) {
+      // Stop typing indicator before returning error
+      await ablyPublish("admin-typing", { isTyping: false, isAI: true });
       console.error("[ai-reply] All Groq keys failed. Support is temporarily unavailable.");
       return NextResponse.json(
         { error: "AI support is temporarily unavailable. Please try again in a moment." },
@@ -446,22 +464,22 @@ export async function POST(req: NextRequest) {
     }
 
     if (!replyText) {
+      await ablyPublish("admin-typing", { isTyping: false, isAI: true });
       return NextResponse.json({ error: "AI returned empty text" }, { status: 500 });
     }
 
     const timestamp   = Date.now();
     const clientMsgId = `ai-${timestamp}-${Math.random().toString(36).slice(2)}`;
-    const channelName = `kapogian-support:${walletAddress.toLowerCase()}`;
 
-    const [keyName, keySecret] = ABLY_KEY.split(":");
+    // Stop typing indicator, then send the reply
+    await ablyPublish("admin-typing", { isTyping: false, isAI: true });
+
+    // ── Publish reply to Ably ──────────────────────────────────────────────
     const ablyRes = await fetch(
       `https://rest.ably.io/channels/${encodeURIComponent(channelName)}/messages`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Basic " + Buffer.from(`${keyName}:${keySecret}`).toString("base64"),
-        },
+        headers: { "Content-Type": "application/json", "Authorization": ablyAuthHeader },
         body: JSON.stringify({
           name: "admin-message",
           data: {
