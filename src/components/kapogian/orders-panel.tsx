@@ -767,6 +767,8 @@ export function OrdersPanel({ account }: { account: any }) {
   // ── Main render ───────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
+      {/* Support Chat Drawer at the very top */}
+      <UserMessageDrawer walletAddress={account?.address ?? ""} />
       {/* ── Tab bar + live indicator ─────────────────────────────────────── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-2xl w-fit">
@@ -851,8 +853,7 @@ export function OrdersPanel({ account }: { account: any }) {
         onClose={() => setSuccessModal({ type: null, order: null })}
       />
 
-      {/* ── Support Chat Drawer ───────────────────────────────────────────── */}
-      <UserMessageDrawer walletAddress={account?.address ?? ""} />
+      {/* ...existing code... */}
     </div>
   );
 }
