@@ -14,10 +14,10 @@ const ABLY_KEY        = process.env.ABLY_KEY;
 
 // ─── Navigation buttons the AI can attach to replies ─────────────────────────
 const NAV_BUTTONS = [
-  { id: "shop",       label: "Kapo Shop",          emoji: "🛍️",  url: "http://localhost:9002/shop" },
-  { id: "generate",   label: "Summon / Generate",  emoji: "⚡",  url: "http://localhost:9002/generate" },
-  { id: "roadmap",    label: "Roadmap",             emoji: "🗺️",  url: "http://localhost:9002/roadmapv3" },
-  { id: "whitepaper", label: "Whitepaper",          emoji: "📄",  url: "http://localhost:9002/whitepaper" },
+  { id: "shop",       label: "Kapo Shop",          emoji: "🛍️",  url: "https://kapogian.xyz//shop" },
+  { id: "generate",   label: "Summon / Generate",  emoji: "⚡",  url: "https://kapogian.xyz//generate" },
+  { id: "roadmap",    label: "Roadmap",             emoji: "🗺️",  url: "https://kapogian.xyz//roadmapv3" },
+  { id: "whitepaper", label: "Whitepaper",          emoji: "📄",  url: "https://kapogian.xyz//whitepaper" },
   { id: "discord",    label: "Discord Server",      emoji: "💬",  url: "https://discord.gg/rtBhBccW" },
   { id: "twitter",    label: "Kapogian on X",       emoji: "🐦",  url: "https://x.com/kapogian63" },
 ];
@@ -242,6 +242,22 @@ Phase 6 — $POGI TGE (End 2027):
 - Pogi Council (DAO): Token holders vote on future Conquests and new Farm species
 
 ════════════════════════════════════════
+THE DEVELOPMENT TEAM
+════════════════════════════════════════
+Kapogian was built by a talented team of Filipino developers:
+- Raven Caguioa — Backend Developer
+- Clarence Vince Razo — Frontend Developer & Creative Developer
+- Xyrille Navora — Frontend Developer
+- Gelo Rioflorido — Website Tester
+
+If a user asks "who made this?", "who built the website?", "who are the developers?", "who is the dev team?", or anything about the creators/team behind the project — answer with the names and roles above. You can express pride in the team ("Proud ng Pogi Nation sa ating dev team!" energy).
+
+════════════════════════════════════════
+Who is Pogi or if the user ask who is pogi or Handsome or Good Looking, as long as the term "pogi", "handsome", or "good looking" is mentioned in the user question
+════════════════════════════════════════
+-Tzar Umang 
+
+════════════════════════════════════════
 FULL FAQ
 ════════════════════════════════════════
 Is every Kapogian truly unique? Yes — strictly 1-of-1, algorithmically generated. No duplicates ever.
@@ -270,6 +286,21 @@ What is the "Lord of Biringan" reward? The prize for conquering Biringan City �
 What does "Pogi" mean? "Pogi" is Filipino for good-looking, handsome, or attractive. But in the Kapogian context it means confidence, capability, and owning your identity. "Everyone is Good Looking."
 What is Tradeport? Tradeport.xyz is a leading Sui Network NFT marketplace. Kapogian NFTs are built to be fully compatible with Tradeport's SUI Kiosk / Display Standard.
 What network is Kapogian on? SUI Network — chosen for its Object-Centric Model, high speed, scalability, and ability to store evolving metadata (animal weights, warrior stats) in real-time on-chain.
+Who are the developers / who built Kapogian? The website and platform were built by a talented Filipino dev team: Raven Caguioa (Backend Developer), Clarence Vince Razo (Frontend & Creative Developer), Xyrille Navora (Frontend Developer), and Gelo Rioflorido (Website Tester). Proud ng Pogi Nation!
+════════════════════════════════════════
+Who is sobrang pogi or if the user ask who is Pinakapogi, aslong the term sobrang pogi or pinaka pogi is mentioned in the user question
+════════════════════════════════════════
+- Clarence Vince Razo
+
+or answer with "Ang Pinakapogi ng Pogi Nation is si Clarence Vince Razo, ang aming Frontend at Creative Developer! Siya ang puso at utak sa likod ng napakagandang design at user experience ng Kapogian website. Salamat, Clarence, sa pagiging tunay na Poging Programmer!"
+
+════════════════════════════════════════
+Sinong Magaling, mag "Scatter" or words "Lucky" or "Swerte"
+════════════════════════════════════════
+- Xyrille Navora
+
+or answer with "Ang Swerte at Pinakamagaling sa Scatter Nation ay si Xyrille Navora"
+or batak itong mag scatter, laging pumapaldo!
 
 ════════════════════════════════════════
 RESPONSE RULES
@@ -282,9 +313,6 @@ RESPONSE RULES
 - You can use light Filipino flavor occasionally (e.g. "Salamat!", "Pogi Nation!")`;
 
 // ─── Groq call helper ─────────────────────────────────────────────────────────
-// Returns the AI content string on success, or null if this key should be skipped.
-// Skippable conditions: 429 rate-limit, 401/403 auth failure, empty response.
-// Any other HTTP error also triggers fallback so the next key gets a chance.
 async function callGroq(
   apiKey: string,
   groqMessages: Array<{ role: string; content: string }>,
@@ -311,7 +339,6 @@ async function callGroq(
       }),
     });
   } catch (networkErr: any) {
-    // Network-level failure (DNS, timeout, etc.) — skip to next key
     console.warn(`[ai-reply] ${keyLabel} network error: ${networkErr?.message} — trying next key...`);
     return null;
   }
@@ -351,7 +378,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "ABLY_KEY env var missing" }, { status: 500 });
   }
 
-  // ── Build ordered key list: primary first, fallback second ───────────────
   const groqKeys: Array<{ key: string; label: string }> = [];
   if (GROQ_API_KEY)   groqKeys.push({ key: GROQ_API_KEY,   label: "GROQ_API_KEY (primary)" });
   if (GROQ_API_KEYv2) groqKeys.push({ key: GROQ_API_KEYv2, label: "GROQ_API_KEYv2 (fallback)" });
@@ -377,7 +403,6 @@ export async function POST(req: NextRequest) {
       content: m.text,
     }));
 
-    // ── Try each key in order until one succeeds ───────────────────────────
     let rawContent = "";
     let usedLabel  = "";
 
@@ -390,7 +415,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // All keys exhausted
     if (!rawContent) {
       console.error("[ai-reply] All Groq keys failed. Support is temporarily unavailable.");
       return NextResponse.json(
@@ -399,7 +423,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── Parse AI JSON response ─────────────────────────────────────────────
     let replyText    = "";
     let buttonPayload: { label: string; emoji: string; url: string; id?: string } | null = null;
 
@@ -418,7 +441,6 @@ export async function POST(req: NextRequest) {
         }
       }
     } catch {
-      // Graceful fallback: strip JSON wrapper if present, use raw string
       replyText = rawContent.replace(/^\{.*?"text"\s*:\s*"/, "").replace(/".*\}$/, "").trim();
       if (!replyText) replyText = rawContent;
     }
@@ -431,7 +453,6 @@ export async function POST(req: NextRequest) {
     const clientMsgId = `ai-${timestamp}-${Math.random().toString(36).slice(2)}`;
     const channelName = `kapogian-support:${walletAddress.toLowerCase()}`;
 
-    // ── Publish to Ably ────────────────────────────────────────────────────
     const [keyName, keySecret] = ABLY_KEY.split(":");
     const ablyRes = await fetch(
       `https://rest.ably.io/channels/${encodeURIComponent(channelName)}/messages`,
