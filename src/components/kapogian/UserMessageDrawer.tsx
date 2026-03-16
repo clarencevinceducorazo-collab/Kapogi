@@ -21,7 +21,7 @@ import { useWebRTCCall } from "./useWebRTCCall";
 export interface QuickButton {
   id: string;
   label: string;
-  type: "link" | "ai";
+  type: "link" | "Kapogian Support";
   value: string;
   emoji?: string;
 }
@@ -645,7 +645,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
                       }`}
                     >
                       {msg.sender === "admin" && msg.isAI && (
-                        <p className="text-[9px] font-black text-purple-300 uppercase tracking-widest mb-1">✦ AI Assistant</p>
+                        <p className="text-[9px] font-black text-purple-300 uppercase tracking-widest mb-1">✦ Kapogian Support</p>
                       )}
                       {msg.sender === "admin" && !msg.isAI && (
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Kapogian Admin</p>
@@ -687,7 +687,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
                   adminTyping.isAI ? "bg-purple-100 border-2 border-purple-200" : "bg-white border-2 border-slate-200 shadow-sm"
                 }`}>
                   {adminTyping.isAI
-                    ? <span className="text-[9px] font-black text-purple-500 uppercase tracking-widest mr-1">✦ AI</span>
+                    ? <span className="text-[9px] font-black text-purple-500 uppercase tracking-widest mr-1">✦ Kapogian Support</span>
                     : <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mr-1">Admin</span>
                   }
                   {[0,1,2].map((i) => (
