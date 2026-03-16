@@ -23,7 +23,7 @@ export function StorageGate({ onUnlocked }: StorageGateProps) {
   const client = useSuiClient();
 
   const ADMIN_CAP_ID = process.env.NEXT_PUBLIC_SUPER_ADMIN_CAP_ID!;
-  const SECRET = process.env.NEXT_PUBLIC_STORAGE_PASSWORD!;
+  const SECRET = "kapogian2026"
 
   // Auto-check when wallet connects
   useEffect(() => {
