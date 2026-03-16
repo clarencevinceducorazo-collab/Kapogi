@@ -36,18 +36,20 @@ You MUST respond ONLY with a valid JSON object. No markdown, no prose outside JS
 Schema:
 {
   "text": "Your short reply here",
-  "button": null | { "id": "<one of the button IDs below>" }
+  "buttons": [] | [{ "id": "<button id>" }, { "id": "<button id>" }]
 }
 
+Note: "buttons" is always an array. Use [] for no buttons, or include 1-2 button objects.
+
 Button routing rules:
-- User asks WHERE something is, HOW to get there, or asks for a link → include the relevant button
-- User asks about the shop / merch / buy items / hoodie / shirt / mug / where to buy / how to get merch → button id: "shop"
-- User asks about generating, summoning, minting, how to get an NFT, character creation → button id: "generate"
-- User asks about roadmap / future plans / phases / timeline / what's next → button id: "roadmap"
-- User asks about whitepaper / docs / litepaper / how it works in depth → button id: "whitepaper"
-- User asks about Discord / community / server / Pogi Nation chat → button id: "discord"
-- User asks about Twitter / X / social media / follow → button id: "twitter"
-- For everything else (order status, general info, how-to, game, farm, token) → button: null
+- User asks about the shop / merch / buy / hoodie / shirt / mug → include { "id": "shop" }
+- User asks about generating, summoning, minting, how to get an NFT → include { "id": "generate" }
+- User asks WHERE to buy merch / how to get merch (two ways exist) → include BOTH: [{ "id": "shop" }, { "id": "generate" }]
+- User asks about roadmap / future plans / phases → include { "id": "roadmap" }
+- User asks about whitepaper / docs / litepaper → include { "id": "whitepaper" }
+- User asks about Discord / community / server → include { "id": "discord" }
+- User asks about Twitter / X / social media → include { "id": "twitter" }
+- For everything else (order status, general info, game, farm, token) → buttons: []
 
 ════════════════════════════════════════
 WHAT KAPOGIAN IS
@@ -206,7 +208,7 @@ RESPONSE RULES
 ════════════════════════════════════════
 - Keep replies SHORT: 1-3 sentences max (use a numbered list only for "how to" multi-step answers)
 - Be warm, on-brand ("Stay Pogi!" energy), light Filipino flavor ok
-- ALWAYS return valid JSON with "text" and "button" fields
+- ALWAYS return valid JSON with "text" and "buttons" fields (buttons is always an array)
 - When asked about buying/getting any merch item, ALWAYS mention BOTH ways (Shop + Mint route) briefly
 - For account-specific order issues, say a human admin will follow up
 - If unrelated to Kapogian, politely decline`;
@@ -351,21 +353,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "AI temporarily unavailable" }, { status: 503 });
     }
 
-    let replyText    = "";
-    let buttonPayload: { label: string; emoji: string; url: string; id?: string } | null = null;
+    let replyText     = "";
+    let buttonsPayload: Array<{ label: string; emoji: string; url: string; id: string }> = [];
 
     try {
-      const parsed = JSON.parse(rawContent) as { text: string; button?: { id: string } | null };
+      const parsed = JSON.parse(rawContent) as {
+        text: string;
+        buttons?: Array<{ id: string }> | null;
+        // backwards compat: some responses may still use singular "button"
+        button?: { id: string } | null;
+      };
       replyText = parsed.text?.trim() ?? "";
-      if (parsed.button?.id) {
-        const match = NAV_BUTTONS.find((b) => b.id === parsed.button!.id);
-        if (match) buttonPayload = { label: match.label, emoji: match.emoji, url: match.url, id: match.id };
-      }
+
+      // Support both "buttons" array (new) and "button" singular (old)
+      const rawButtons = parsed.buttons ?? (parsed.button ? [parsed.button] : []);
+      buttonsPayload = (rawButtons ?? [])
+        .map((b) => {
+          const match = NAV_BUTTONS.find((n) => n.id === b?.id);
+          return match ? { label: match.label, emoji: match.emoji, url: match.url, id: match.id } : null;
+        })
+        .filter((b): b is { label: string; emoji: string; url: string; id: string } => b !== null);
     } catch {
       replyText = rawContent;
     }
 
     if (!replyText) {
+      await ablyPublish("admin-typing", { isTyping: false, isAI: true });
       return NextResponse.json({ error: "Empty AI response" }, { status: 500 });
     }
 
@@ -385,7 +398,7 @@ export async function POST(req: NextRequest) {
         },
         body: JSON.stringify({
           name: "admin-message",
-          data: { text: replyText, timestamp, clientMsgId, isAI: true, button: buttonPayload ?? undefined },
+          data: { text: replyText, timestamp, clientMsgId, isAI: true, buttons: buttonsPayload },
         }),
       },
     );
@@ -396,8 +409,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Ably error: ${ablyRes.status}` }, { status: 502 });
     }
 
-    console.log(`[ai-reply] ✓ ${walletAddress.slice(0,8)}... via ${usedLabel} | button: ${buttonPayload?.id ?? "none"}`);
-    return NextResponse.json({ ok: true, reply: replyText, button: buttonPayload });
+    console.log(`[ai-reply] ✓ ${walletAddress.slice(0,8)}... via ${usedLabel} | buttons: [${buttonsPayload.map(b=>b.id).join(",")||"none"}]`);
+    return NextResponse.json({ ok: true, reply: replyText, buttons: buttonsPayload });
 
   } catch (error: any) {
     console.error("[ai-reply] Error:", error?.message ?? error);

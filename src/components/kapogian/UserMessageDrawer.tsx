@@ -33,6 +33,8 @@ export interface SupportMessage {
   sender: "user" | "admin";
   timestamp: number;
   isAI?: boolean;
+  buttons?: Array<{ label: string; emoji: string; url: string; id?: string }> | null;
+  /** @deprecated use buttons array */
   button?: { label: string; emoji: string; url: string } | null;
 }
 
@@ -195,6 +197,10 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
   const [callState, setCallState] = useState<UserCallState>({ status: "idle" });
   const [quickButtons, setQuickButtons] = useState<QuickButton[]>([]);
 
+  // Typing indicators
+  const [adminTyping, setAdminTyping] = useState<{ isTyping: boolean; isAI: boolean }>({ isTyping: false, isAI: false });
+  const userTypingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const ablyRef          = useRef<Ably.Realtime | null>(null);
   const channelRef       = useRef<Ably.RealtimeChannel | null>(null);
   const historyLoadedRef = useRef(false);
@@ -237,6 +243,8 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
         sender:    "admin",
         timestamp: msg.data.timestamp ?? Date.now(),
         isAI:      msg.data.isAI ?? false,
+        // Support both new "buttons" array and legacy "button" singular
+        buttons:   msg.data.buttons ?? (msg.data.button ? [msg.data.button] : null),
         button:    msg.data.button ?? null,
       };
       if (!historyLoadedRef.current) { liveBufferRef.current.push(incoming); return; }
@@ -295,6 +303,20 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
       if (Array.isArray(msg.data?.buttons)) setQuickButtons(msg.data.buttons);
     });
 
+    // Admin / AI typing indicator
+    channel.subscribe("admin-typing", (msg) => {
+      if (destroyed) return;
+      const isTyping: boolean = msg.data?.isTyping ?? false;
+      const isAI: boolean     = msg.data?.isAI ?? false;
+      setAdminTyping({ isTyping, isAI });
+      // Auto-clear after 4s in case the stop event is missed
+      if (isTyping) {
+        setTimeout(() => {
+          if (!destroyed) setAdminTyping((prev) => prev.isTyping ? { isTyping: false, isAI: false } : prev);
+        }, 4000);
+      }
+    });
+
     const CLOSED_CODES = new Set([80017, 80000, 90001]);
     const loadHistory = async () => {
       try {
@@ -321,6 +343,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
             sender:      (m.name === "admin-message" ? "admin" : "user") as "admin" | "user",
             timestamp:   m.data.timestamp ?? (m as any).timestamp ?? Date.now(),
             isAI:        m.data.isAI ?? false,
+            buttons:     m.data.buttons ?? (m.data.button ? [m.data.button] : null),
             button:      m.data.button ?? null,
           }))
           .sort((a, b) => a.timestamp - b.timestamp);
@@ -349,6 +372,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
     return () => {
       destroyed = true;
       if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
+      if (userTypingRef.current) clearTimeout(userTypingRef.current);
       channel.unsubscribe();
       ably.close();
       webrtc.hangup();
@@ -405,6 +429,9 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
 
     setMessages((prev) => [...prev, optimistic]);
     setInput("");
+    // Stop typing indicator immediately on send
+    if (userTypingRef.current) { clearTimeout(userTypingRef.current); userTypingRef.current = null; }
+    channelRef.current?.publish("typing", { isTyping: false }).catch(() => {});
 
     try {
       if (ablyRef.current) {
@@ -464,6 +491,18 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
       } finally { setSending(false); }
     }
   }, [sending, walletAddress]);
+
+  // Publish user typing indicator to admin
+  const handleInputChange = useCallback((val: string) => {
+    setInput(val);
+    const ch = channelRef.current;
+    if (!ch) return;
+    ch.publish("typing", { isTyping: true }).catch(() => {});
+    if (userTypingRef.current) clearTimeout(userTypingRef.current);
+    userTypingRef.current = setTimeout(() => {
+      ch.publish("typing", { isTyping: false }).catch(() => {});
+    }, 3000);
+  }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
@@ -566,25 +605,54 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </p>
                     </div>
-                    {msg.button && (
-                      <a
-                        href={msg.button.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2.5 bg-white border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 rounded-2xl px-4 py-3 transition-all group shadow-sm"
-                      >
-                        <span className="text-xl leading-none">{msg.button.emoji}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-black text-slate-800 group-hover:text-purple-700 transition-colors">{msg.button.label}</p>
-                          <p className="text-[9px] font-mono text-slate-400 truncate mt-0.5">{msg.button.url}</p>
-                        </div>
-                        <span className="text-slate-300 group-hover:text-purple-400 transition-colors text-lg">↗</span>
-                      </a>
+                    {/* Navigation buttons — supports 1 or 2 buttons */}
+                    {(msg.buttons && msg.buttons.length > 0) && (
+                      <div className="flex flex-col gap-2">
+                        {msg.buttons.map((btn, i) => (
+                          <a
+                            key={btn.id ?? i}
+                            href={btn.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2.5 bg-white border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 rounded-2xl px-4 py-3 transition-all group shadow-sm"
+                          >
+                            <span className="text-xl leading-none">{btn.emoji}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-black text-slate-800 group-hover:text-purple-700 transition-colors">{btn.label}</p>
+                              <p className="text-[9px] font-mono text-slate-400 truncate mt-0.5">{btn.url}</p>
+                            </div>
+                            <span className="text-slate-300 group-hover:text-purple-400 transition-colors text-lg">↗</span>
+                          </a>
+                        ))}
+                      </div>
                     )}
                   </div>
                 </div>
               ))
             )}
+            {/* Admin / AI typing bubble */}
+            {adminTyping.isTyping && (
+              <div className="flex justify-start">
+                <div className={`flex items-center gap-2 px-4 py-3 rounded-2xl rounded-bl-sm ${
+                  adminTyping.isAI
+                    ? "bg-purple-100 border-2 border-purple-200"
+                    : "bg-white border-2 border-slate-200 shadow-sm"
+                }`}>
+                  <span className={`text-[9px] font-black uppercase tracking-widest mr-1 ${
+                    adminTyping.isAI ? "text-purple-500" : "text-slate-400"
+                  }`}>
+                    {adminTyping.isAI ? "✦ AI" : "Admin"}
+                  </span>
+                  {[0, 1, 2].map((i) => (
+                    <span key={i}
+                      className={`w-2 h-2 rounded-full animate-bounce ${adminTyping.isAI ? "bg-purple-400" : "bg-slate-300"}`}
+                      style={{ animationDelay: `${i * 150}ms` }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div ref={bottomRef} />
           </div>
 
@@ -616,7 +684,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
             <input
               ref={inputRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => handleInputChange(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Type your concern..."
               maxLength={500}
