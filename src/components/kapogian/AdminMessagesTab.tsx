@@ -51,7 +51,21 @@ const PRESET_BUTTONS: Omit<QuickButton, "id">[] = [
   { label: "Shop Items",        type: "ai",   value: "What items are currently available in the Kapo Shop?", emoji: "🧾" },
 ];
 
-const QB_STORAGE_KEY = "kapogian_quick_buttons";
+const QB_STORAGE_KEY    = "kapogian_quick_buttons";
+const KNOWN_WALLETS_KEY = "kapogian_known_wallets";
+
+function loadKnownWallets(): string[] {
+  try { return JSON.parse(localStorage.getItem(KNOWN_WALLETS_KEY) ?? "[]"); } catch { return []; }
+}
+function saveKnownWallet(addr: string): void {
+  try {
+    const list = loadKnownWallets();
+    if (!list.includes(addr)) {
+      list.push(addr);
+      localStorage.setItem(KNOWN_WALLETS_KEY, JSON.stringify(list));
+    }
+  } catch {}
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -90,6 +104,7 @@ export function AdminMessagesTab() {
   const [connected, setConnected]         = useState(false);
   const [sending, setSending]             = useState(false);
   const [callState, setCallState]         = useState<AdminCallState>({ status: "idle" });
+  const [typingUsers, setTypingUsers]     = useState<Set<string>>(new Set());
 
   // ── Quick Buttons state ──────────────────────────────────────────────────
   const [quickButtons, setQuickButtons] = useState<QuickButton[]>(() => {
@@ -146,13 +161,17 @@ export function AdminMessagesTab() {
   const activeWalletRef  = useRef<string | null>(null);
   // Dedup: which wallets have an AI call already in-flight
   const aiInFlightRef    = useRef<Set<string>>(new Set());
+  // Cooldown: timestamp of last AI trigger per wallet — prevents rapid re-triggering
+  const aiLastTriggerRef = useRef<Map<string, number>>(new Map());
+  const AI_COOLDOWN_MS   = 4000; // min 4s between AI replies per wallet
 
   // WebRTC refs
   const pcRef          = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteAudio    = useRef<HTMLAudioElement | null>(null);
   const iceBufRef      = useRef<RTCIceCandidateInit[]>([]);
-  const bootedRef      = useRef(false);
+  const bootedRef          = useRef(false);
+  const adminTypingRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── WebRTC teardown ────────────────────────────────────────────────────
   const hangup = useCallback(() => {
@@ -212,21 +231,39 @@ export function AdminMessagesTab() {
 
   // ── AI auto-reply ─────────────────────────────────────────────────────────
   const triggerAIReply = useCallback(async (walletAddress: string) => {
-    // Guards: AI mode off, or already an in-flight call for this wallet
+    // Guard 1: AI mode off
     if (!aiModeRef.current) return;
+    // Guard 2: already in-flight for this wallet
     if (aiInFlightRef.current.has(walletAddress)) return;
+    // Guard 3: cooldown — don't fire again within AI_COOLDOWN_MS
+    const lastTrigger = aiLastTriggerRef.current.get(walletAddress) ?? 0;
+    if (Date.now() - lastTrigger < AI_COOLDOWN_MS) return;
 
     // Read the latest messages directly from the ref (always current)
     const conv = conversationsRef.current.get(walletAddress);
     if (!conv || conv.messages.length === 0) return;
 
+    // Guard 4: last message must be from user (not AI or admin)
+    const lastMsg = conv.messages[conv.messages.length - 1];
+    if (!lastMsg || lastMsg.sender !== "user") return;
+
+    // Guard 5: no AI reply in the last 3 messages (prevents greeting loop)
+    const recentMsgs = conv.messages.slice(-3);
+    const hasRecentAI = recentMsgs.some((m) => m.sender === "admin" && m.isAI);
+    if (hasRecentAI) return;
+
     aiInFlightRef.current.add(walletAddress);
+    aiLastTriggerRef.current.set(walletAddress, Date.now());
     setAiThinking(walletAddress);
     try {
       const res = await fetch("/api/ai-reply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletAddress, messages: conv.messages }),
+        body: JSON.stringify({
+          walletAddress,
+          // Pass isAI flag so the route can filter out AI replies from history
+          messages: conv.messages.map((m) => ({ sender: m.sender, text: m.text, isAI: m.isAI ?? false })),
+        }),
       });
       if (!res.ok) console.warn("[AI Reply] non-OK response:", res.status);
       // Reply is published by the API route via Ably REST and arrives
@@ -357,6 +394,20 @@ export function AdminMessagesTab() {
       pc.addIceCandidate(new RTCIceCandidate(msg.data.candidate)).catch(()=>{});
     });
 
+    // Typing indicator from user
+    ch.subscribe("typing", (msg) => {
+      const isTyping: boolean = msg.data?.isTyping ?? false;
+      setTypingUsers((prev) => {
+        const next = new Set(prev);
+        if (isTyping) next.add(walletAddress);
+        else next.delete(walletAddress);
+        return next;
+      });
+    });
+
+    // Persist this wallet so it appears in inbox after page refresh
+    if (typeof window !== "undefined") saveKnownWallet(walletAddress);
+
     setConversations((prev) => {
       if (prev.has(walletAddress)) return prev;
       const next = new Map(prev);
@@ -374,9 +425,17 @@ export function AdminMessagesTab() {
     ably.connection.on("connected",    () => setConnected(true));
     ably.connection.on("disconnected", () => setConnected(false));
     ably.connection.on("failed",       () => setConnected(false));
+    // Restore previously seen wallets from localStorage — show them in inbox on load
+    if (typeof window !== "undefined") {
+      loadKnownWallets().forEach((addr) => subscribeToUser(addr, ably));
+    }
+
     ably.channels.get("kapogian-support-inbox").subscribe("user-connected", (msg) => {
       const { walletAddress } = msg.data as { walletAddress: string };
-      if (walletAddress) subscribeToUser(walletAddress, ably);
+      if (walletAddress) {
+        saveKnownWallet(walletAddress);  // persist for future sessions
+        subscribeToUser(walletAddress, ably);
+      }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -403,6 +462,28 @@ export function AdminMessagesTab() {
     if (ch) await ch.publish("call-ended", { from: "admin", timestamp: Date.now() }).catch(()=>{});
   }, [callState, hangup]);
 
+  // ── Publish admin typing indicator ───────────────────────────────────────
+  const publishAdminTyping = useCallback((isTyping: boolean) => {
+    if (!activeWallet) return;
+    const ch = channelsRef.current.get(activeWallet);
+    if (!ch) return;
+    ch.publish("admin-typing", { isTyping, isAI: false }).catch(() => {});
+  }, [activeWallet]);
+
+  const handleReplyInputChange = useCallback((val: string) => {
+    setReplyInput(val);
+    if (!activeWallet) return;
+    const ch = channelsRef.current.get(activeWallet);
+    if (!ch) return;
+    // Send typing=true immediately
+    ch.publish("admin-typing", { isTyping: true, isAI: false }).catch(() => {});
+    // Auto-clear after 3s of no keystrokes
+    if (adminTypingRef.current) clearTimeout(adminTypingRef.current);
+    adminTypingRef.current = setTimeout(() => {
+      ch.publish("admin-typing", { isTyping: false, isAI: false }).catch(() => {});
+    }, 3000);
+  }, [activeWallet]);
+
   // ── Send message ──────────────────────────────────────────────────────────
   const handleSendReply = useCallback(async () => {
     const text = replyInput.trim();
@@ -419,6 +500,9 @@ export function AdminMessagesTab() {
       return next;
     });
     setReplyInput("");
+    // Clear typing indicator immediately on send
+    if (adminTypingRef.current) { clearTimeout(adminTypingRef.current); adminTypingRef.current = null; }
+    ch.publish("admin-typing", { isTyping: false, isAI: false }).catch(() => {});
     try { await ch.publish("admin-message", { text, timestamp }); }
     catch {
       setConversations((prev) => {
@@ -494,6 +578,26 @@ export function AdminMessagesTab() {
               <div className={`w-2 h-2 rounded-full ${connected ? "bg-green-400" : "bg-slate-500"}`} />
             </div>
           </div>
+
+          {/* Connected wallet count strip */}
+          {sortedConvs.length > 0 && (
+            <div className="bg-slate-50 border-b-2 border-slate-100 px-4 py-1.5 flex items-center justify-between flex-shrink-0">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                {sortedConvs.length} wallet{sortedConvs.length !== 1 ? "s" : ""} connected
+              </p>
+              <button
+                onClick={() => {
+                  if (!confirm("Clear all saved wallets from inbox? This cannot be undone.")) return;
+                  localStorage.removeItem(KNOWN_WALLETS_KEY);
+                  setConversations(new Map());
+                  setActiveWallet(null);
+                }}
+                className="text-[9px] font-black text-red-400 hover:text-red-600 uppercase tracking-widest transition-colors"
+              >
+                Clear All
+              </button>
+            </div>
+          )}
 
           {/* AI mode info strip */}
           {aiMode && (
@@ -611,6 +715,11 @@ export function AdminMessagesTab() {
                         {[0,1,2].map((i) => <span key={i} className="inline-block w-1 h-1 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />)}
                         AI typing
                       </p>
+                    ) : typingUsers.has(conv.walletAddress) ? (
+                      <p className="text-[10px] font-semibold text-emerald-400 mt-0.5 flex items-center gap-1">
+                        {[0,1,2].map((i) => <span key={i} className="inline-block w-1 h-1 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />)}
+                        typing...
+                      </p>
                     ) : conv.messages.length > 0 ? (
                       <p className={`text-[10px] font-semibold truncate mt-0.5 ${activeWallet === conv.walletAddress ? "text-white/50" : "text-slate-400"}`}>
                         {conv.messages.at(-1)!.text}
@@ -696,6 +805,18 @@ export function AdminMessagesTab() {
               </div>
             )}
 
+            {/* User typing banner */}
+            {activeWallet && typingUsers.has(activeWallet) && (
+              <div className="bg-emerald-50 border-b-2 border-emerald-100 px-5 py-2 flex items-center gap-2.5 flex-shrink-0">
+                <div className="flex items-center gap-0.5">
+                  {[0,1,2].map((i) => (
+                    <span key={i} className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: `${i*150}ms` }} />
+                  ))}
+                </div>
+                <span className="text-emerald-700 font-black text-[10px] uppercase tracking-wider">User is typing...</span>
+              </div>
+            )}
+
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-[#fdfcfa]">
               {activeConv.messages.length === 0 ? (
@@ -725,7 +846,7 @@ export function AdminMessagesTab() {
 
             {/* Reply input */}
             <div className="flex gap-3 p-4 border-t-2 border-slate-100 bg-white flex-shrink-0">
-              <input ref={inputRef} value={replyInput} onChange={(e) => setReplyInput(e.target.value)}
+              <input ref={inputRef} value={replyInput} onChange={(e) => handleReplyInputChange(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }}
                 placeholder="Reply to user..." maxLength={1000}
                 className="flex-1 h-11 rounded-2xl border-2 border-slate-200 px-4 text-sm font-semibold outline-none focus:border-black transition-colors bg-slate-50" />
