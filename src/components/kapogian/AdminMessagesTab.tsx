@@ -90,7 +90,6 @@ export function AdminMessagesTab() {
   const [connected, setConnected]         = useState(false);
   const [sending, setSending]             = useState(false);
   const [callState, setCallState]         = useState<AdminCallState>({ status: "idle" });
-  const [typingUsers, setTypingUsers]     = useState<Set<string>>(new Set());
 
   // ── Quick Buttons state ──────────────────────────────────────────────────
   const [quickButtons, setQuickButtons] = useState<QuickButton[]>(() => {
@@ -153,8 +152,7 @@ export function AdminMessagesTab() {
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteAudio    = useRef<HTMLAudioElement | null>(null);
   const iceBufRef      = useRef<RTCIceCandidateInit[]>([]);
-  const bootedRef          = useRef(false);
-  const adminTypingRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bootedRef      = useRef(false);
 
   // ── WebRTC teardown ────────────────────────────────────────────────────
   const hangup = useCallback(() => {
@@ -359,17 +357,6 @@ export function AdminMessagesTab() {
       pc.addIceCandidate(new RTCIceCandidate(msg.data.candidate)).catch(()=>{});
     });
 
-    // Typing indicator from user
-    ch.subscribe("typing", (msg) => {
-      const isTyping: boolean = msg.data?.isTyping ?? false;
-      setTypingUsers((prev) => {
-        const next = new Set(prev);
-        if (isTyping) next.add(walletAddress);
-        else next.delete(walletAddress);
-        return next;
-      });
-    });
-
     setConversations((prev) => {
       if (prev.has(walletAddress)) return prev;
       const next = new Map(prev);
@@ -416,28 +403,6 @@ export function AdminMessagesTab() {
     if (ch) await ch.publish("call-ended", { from: "admin", timestamp: Date.now() }).catch(()=>{});
   }, [callState, hangup]);
 
-  // ── Publish admin typing indicator ───────────────────────────────────────
-  const publishAdminTyping = useCallback((isTyping: boolean) => {
-    if (!activeWallet) return;
-    const ch = channelsRef.current.get(activeWallet);
-    if (!ch) return;
-    ch.publish("admin-typing", { isTyping, isAI: false }).catch(() => {});
-  }, [activeWallet]);
-
-  const handleReplyInputChange = useCallback((val: string) => {
-    setReplyInput(val);
-    if (!activeWallet) return;
-    const ch = channelsRef.current.get(activeWallet);
-    if (!ch) return;
-    // Send typing=true immediately
-    ch.publish("admin-typing", { isTyping: true, isAI: false }).catch(() => {});
-    // Auto-clear after 3s of no keystrokes
-    if (adminTypingRef.current) clearTimeout(adminTypingRef.current);
-    adminTypingRef.current = setTimeout(() => {
-      ch.publish("admin-typing", { isTyping: false, isAI: false }).catch(() => {});
-    }, 3000);
-  }, [activeWallet]);
-
   // ── Send message ──────────────────────────────────────────────────────────
   const handleSendReply = useCallback(async () => {
     const text = replyInput.trim();
@@ -454,9 +419,6 @@ export function AdminMessagesTab() {
       return next;
     });
     setReplyInput("");
-    // Clear typing indicator immediately on send
-    if (adminTypingRef.current) { clearTimeout(adminTypingRef.current); adminTypingRef.current = null; }
-    ch.publish("admin-typing", { isTyping: false, isAI: false }).catch(() => {});
     try { await ch.publish("admin-message", { text, timestamp }); }
     catch {
       setConversations((prev) => {
@@ -649,11 +611,6 @@ export function AdminMessagesTab() {
                         {[0,1,2].map((i) => <span key={i} className="inline-block w-1 h-1 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />)}
                         AI typing
                       </p>
-                    ) : typingUsers.has(conv.walletAddress) ? (
-                      <p className="text-[10px] font-semibold text-emerald-400 mt-0.5 flex items-center gap-1">
-                        {[0,1,2].map((i) => <span key={i} className="inline-block w-1 h-1 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />)}
-                        typing...
-                      </p>
                     ) : conv.messages.length > 0 ? (
                       <p className={`text-[10px] font-semibold truncate mt-0.5 ${activeWallet === conv.walletAddress ? "text-white/50" : "text-slate-400"}`}>
                         {conv.messages.at(-1)!.text}
@@ -739,18 +696,6 @@ export function AdminMessagesTab() {
               </div>
             )}
 
-            {/* User typing banner */}
-            {activeWallet && typingUsers.has(activeWallet) && (
-              <div className="bg-emerald-50 border-b-2 border-emerald-100 px-5 py-2 flex items-center gap-2.5 flex-shrink-0">
-                <div className="flex items-center gap-0.5">
-                  {[0,1,2].map((i) => (
-                    <span key={i} className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: `${i*150}ms` }} />
-                  ))}
-                </div>
-                <span className="text-emerald-700 font-black text-[10px] uppercase tracking-wider">User is typing...</span>
-              </div>
-            )}
-
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-[#fdfcfa]">
               {activeConv.messages.length === 0 ? (
@@ -780,7 +725,7 @@ export function AdminMessagesTab() {
 
             {/* Reply input */}
             <div className="flex gap-3 p-4 border-t-2 border-slate-100 bg-white flex-shrink-0">
-              <input ref={inputRef} value={replyInput} onChange={(e) => handleReplyInputChange(e.target.value)}
+              <input ref={inputRef} value={replyInput} onChange={(e) => setReplyInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }}
                 placeholder="Reply to user..." maxLength={1000}
                 className="flex-1 h-11 rounded-2xl border-2 border-slate-200 px-4 text-sm font-semibold outline-none focus:border-black transition-colors bg-slate-50" />
