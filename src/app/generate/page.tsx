@@ -989,7 +989,7 @@ export default function GeneratorPage() {
       holdingItemDescriptor = `holding ${attributes.heldItem}`;
     }
 
-    return `full body shot of a high quality, well-proportioned, anatomically correct cute ${bodyFatDescriptor} chibi pinoy character with two arms and two legs, of the ${lineage} lineage (${identityContext}), named ${name}, from ${originDesc}, with ${skinToneDescriptor}. The character has ${hairDescriptor} with ${hairColorDescription} hair. The character has ${facialHairDescriptor}, is wearing ${clothingDescriptor}, with ${eyewearDescriptor}, in a ${pose}, and is ${holdingItemDescriptor}, showing confident pose, smiling. Chibi character art, clean vector line art, cel-shaded, sticker style, 100% pure White background, PNG format.`;
+    return `full body shot of a high quality, well-proportioned, anatomically correct cute ${bodyFatDescriptor} chibi pinoy character with only two arms and two legs, of the ${lineage} lineage (${identityContext}), named ${name}, from ${originDesc}, with ${skinToneDescriptor}. The character has ${hairDescriptor} with ${hairColorDescription} hair. The character has ${facialHairDescriptor}, is wearing ${clothingDescriptor}, with ${eyewearDescriptor}, in a ${pose}, and is ${holdingItemDescriptor}, showing confident pose, smiling. Chibi character art, clean vector line art, cel-shaded, sticker style, 100% pure White background, PNG format.`;
   };
 
   const handleShuffle = () => {
