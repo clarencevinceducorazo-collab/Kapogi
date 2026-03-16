@@ -1,23 +1,21 @@
-// app/api/ai-reply/route.ts
-//
-// Uses plain fetch() for both Groq and Ably — zero extra dependencies.
-// Requires env vars in .env.local:
-//   GROQ_API_KEY=gsk_...         ← Primary Groq key
-//   GROQ_API_KEYv2=gsk_...       ← Fallback Groq key (used if primary hits rate limit or fails)
-//   ABLY_KEY=YEbuRQ.r9odYA:...
 
 import { NextRequest, NextResponse } from "next/server";
 
 const GROQ_API_KEY    = process.env.GROQ_API_KEY;
 const GROQ_API_KEYv2  = process.env.GROQ_API_KEYv2;
+const GROQ_API_KEYv3  = process.env.GROQ_API_KEYv3;
+const GROQ_API_KEYv4  = process.env.GROQ_API_KEYv4;
+const GROQ_API_KEYv5  = process.env.GROQ_API_KEYv5;
+const GROQ_API_KEYv6  = process.env.GROQ_API_KEYv6;
+const GROQ_API_KEYv7  = process.env.GROQ_API_KEYv7;
 const ABLY_KEY        = process.env.ABLY_KEY;
 
 // ─── Navigation buttons the AI can attach to replies ─────────────────────────
 const NAV_BUTTONS = [
-  { id: "shop",       label: "Kapo Shop",          emoji: "🛍️",  url: "https://kapogian.xyz//shop" },
-  { id: "generate",   label: "Summon / Generate",  emoji: "⚡",  url: "https://kapogian.xyz//generate" },
-  { id: "roadmap",    label: "Roadmap",             emoji: "🗺️",  url: "https://kapogian.xyz//roadmapv3" },
-  { id: "whitepaper", label: "Whitepaper",          emoji: "📄",  url: "https://kapogian.xyz//whitepaper" },
+  { id: "shop",       label: "Kapo Shop",          emoji: "🛍️",  url: "https://kapogian.xyz/shop" },
+  { id: "generate",   label: "Summon / Generate",  emoji: "⚡",  url: "https://kapogian.xyz/generate" },
+  { id: "roadmap",    label: "Roadmap",             emoji: "🗺️",  url: "https://kapogian.xyz/roadmapv3" },
+  { id: "whitepaper", label: "Whitepaper",          emoji: "📄",  url: "https://kapogian.xyz/whitepaper" },
   { id: "discord",    label: "Discord Server",      emoji: "💬",  url: "https://discord.gg/rtBhBccW" },
   { id: "twitter",    label: "Kapogian on X",       emoji: "🐦",  url: "https://x.com/kapogian63" },
 ];
@@ -242,22 +240,6 @@ Phase 6 — $POGI TGE (End 2027):
 - Pogi Council (DAO): Token holders vote on future Conquests and new Farm species
 
 ════════════════════════════════════════
-THE DEVELOPMENT TEAM
-════════════════════════════════════════
-Kapogian was built by a talented team of Filipino developers:
-- Raven Caguioa — Backend Developer
-- Clarence Vince Razo — Frontend Developer & Creative Developer
-- Xyrille Navora — Frontend Developer
-- Gelo Rioflorido — Website Tester
-
-If a user asks "who made this?", "who built the website?", "who are the developers?", "who is the dev team?", or anything about the creators/team behind the project — answer with the names and roles above. You can express pride in the team ("Proud ng Pogi Nation sa ating dev team!" energy).
-
-════════════════════════════════════════
-Who is Pogi or if the user ask who is pogi or Handsome or Good Looking, as long as the term "pogi", "handsome", or "good looking" is mentioned in the user question
-════════════════════════════════════════
--Tzar Umang 
-
-════════════════════════════════════════
 FULL FAQ
 ════════════════════════════════════════
 Is every Kapogian truly unique? Yes — strictly 1-of-1, algorithmically generated. No duplicates ever.
@@ -286,21 +268,6 @@ What is the "Lord of Biringan" reward? The prize for conquering Biringan City �
 What does "Pogi" mean? "Pogi" is Filipino for good-looking, handsome, or attractive. But in the Kapogian context it means confidence, capability, and owning your identity. "Everyone is Good Looking."
 What is Tradeport? Tradeport.xyz is a leading Sui Network NFT marketplace. Kapogian NFTs are built to be fully compatible with Tradeport's SUI Kiosk / Display Standard.
 What network is Kapogian on? SUI Network — chosen for its Object-Centric Model, high speed, scalability, and ability to store evolving metadata (animal weights, warrior stats) in real-time on-chain.
-Who are the developers / who built Kapogian? The website and platform were built by a talented Filipino dev team: Raven Caguioa (Backend Developer), Clarence Vince Razo (Frontend & Creative Developer), Xyrille Navora (Frontend Developer), and Gelo Rioflorido (Website Tester). Proud ng Pogi Nation!
-════════════════════════════════════════
-Who is sobrang pogi or if the user ask who is Pinakapogi, aslong the term sobrang pogi or pinaka pogi is mentioned in the user question
-════════════════════════════════════════
-- Clarence Vince Razo
-
-or answer with "Ang Pinakapogi ng Pogi Nation is si Clarence Vince Razo, ang aming Frontend at Creative Developer! Siya ang puso at utak sa likod ng napakagandang design at user experience ng Kapogian website. Salamat, Clarence, sa pagiging tunay na Poging Programmer!"
-
-════════════════════════════════════════
-Sinong Magaling, mag "Scatter" or words "Lucky" or "Swerte"
-════════════════════════════════════════
-- Xyrille Navora
-
-or answer with "Ang Swerte at Pinakamagaling sa Scatter Nation ay si Xyrille Navora"
-or batak itong mag scatter, laging pumapaldo!
 
 ════════════════════════════════════════
 RESPONSE RULES
@@ -339,58 +306,55 @@ async function callGroq(
       }),
     });
   } catch (networkErr: any) {
-    console.warn(`[ai-reply] ${keyLabel} network error: ${networkErr?.message} — trying next key...`);
+    console.warn(`[ai-reply] ${keyLabel} network error: ${networkErr?.message}`);
     return null;
   }
 
   if (res.status === 429) {
-    const errText = await res.text();
-    console.warn(`[ai-reply] ${keyLabel} hit rate limit (429): ${errText} — switching to fallback key...`);
+    console.warn(`[ai-reply] ${keyLabel} rate limit (429) — switching key...`);
     return null;
   }
-
   if (res.status === 401 || res.status === 403) {
-    const errText = await res.text();
-    console.warn(`[ai-reply] ${keyLabel} auth error (${res.status}): ${errText} — switching to fallback key...`);
+    console.warn(`[ai-reply] ${keyLabel} auth error (${res.status}) — switching key...`);
     return null;
   }
-
   if (!res.ok) {
-    const errText = await res.text();
-    console.error(`[ai-reply] ${keyLabel} unexpected error (${res.status}): ${errText} — switching to fallback key...`);
+    console.error(`[ai-reply] ${keyLabel} error (${res.status}) — switching key...`);
     return null;
   }
 
   const data    = await res.json();
   const content = data.choices?.[0]?.message?.content?.trim() ?? "";
-
   if (!content) {
-    console.warn(`[ai-reply] ${keyLabel} returned empty content — switching to fallback key...`);
+    console.warn(`[ai-reply] ${keyLabel} empty content — switching key...`);
     return null;
   }
-
   return content;
 }
 
 export async function POST(req: NextRequest) {
   if (!ABLY_KEY) {
-    console.error("[ai-reply] ABLY_KEY is not set in .env.local");
+    console.error("[ai-reply] ABLY_KEY is not set");
     return NextResponse.json({ error: "ABLY_KEY env var missing" }, { status: 500 });
   }
 
   const groqKeys: Array<{ key: string; label: string }> = [];
-  if (GROQ_API_KEY)   groqKeys.push({ key: GROQ_API_KEY,   label: "GROQ_API_KEY (primary)" });
-  if (GROQ_API_KEYv2) groqKeys.push({ key: GROQ_API_KEYv2, label: "GROQ_API_KEYv2 (fallback)" });
+  if (GROQ_API_KEY)   groqKeys.push({ key: GROQ_API_KEY,   label: "primary" });
+  if (GROQ_API_KEYv2) groqKeys.push({ key: GROQ_API_KEYv2, label: "fallback-v2" });
+  if (GROQ_API_KEYv3) groqKeys.push({ key: GROQ_API_KEYv3, label: "fallback-v3" });
+  if (GROQ_API_KEYv4) groqKeys.push({ key: GROQ_API_KEYv4, label: "fallback-v4" });
+  if (GROQ_API_KEYv5) groqKeys.push({ key: GROQ_API_KEYv5, label: "fallback-v5" });
+  if (GROQ_API_KEYv6) groqKeys.push({ key: GROQ_API_KEYv6, label: "fallback-v6" });
+  if (GROQ_API_KEYv7) groqKeys.push({ key: GROQ_API_KEYv7, label: "fallback-v7" });
 
   if (groqKeys.length === 0) {
-    console.error("[ai-reply] No Groq API keys configured in .env.local");
     return NextResponse.json({ error: "No Groq API keys configured" }, { status: 500 });
   }
 
   try {
     const body = await req.json() as {
       walletAddress: string;
-      messages: Array<{ sender: "user" | "admin"; text: string }>;
+      messages: Array<{ sender: "user" | "admin"; text: string; isAI?: boolean }>;
     };
 
     const { walletAddress, messages } = body;
@@ -398,25 +362,47 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing walletAddress or messages" }, { status: 400 });
     }
 
-    const groqMessages = messages.slice(-10).map((m) => ({
+    // Filter out AI messages — only send real user/human-admin exchanges to Groq
+    const humanMessages = messages.filter((m) => !m.isAI);
+
+    // Last message must be from user
+    const lastMsg = humanMessages[humanMessages.length - 1];
+    if (!lastMsg || lastMsg.sender !== "user") {
+      return NextResponse.json({ ok: true, skipped: true });
+    }
+
+    // Build Groq history — last 10, must start with user role
+    const recent = humanMessages.slice(-10);
+    const firstUser = recent.findIndex((m) => m.sender === "user");
+    const trimmed = firstUser > 0 ? recent.slice(firstUser) : recent;
+
+    const groqMessages = trimmed.map((m) => ({
       role: m.sender === "user" ? "user" : "assistant",
       content: m.text,
     }));
 
-    // ── Ably helper ────────────────────────────────────────────────────────
+    if (groqMessages.length === 0) {
+      return NextResponse.json({ ok: true, skipped: true });
+    }
+
+    console.log(`[ai-reply] Sending ${groqMessages.length} messages to Groq for ${walletAddress.slice(0,8)}...`);
+
+    // ── Ably publish helper ────────────────────────────────────────────────
     const channelName = `kapogian-support:${walletAddress.toLowerCase()}`;
     const [keyName, keySecret] = ABLY_KEY.split(":");
-    const ablyAuthHeader = "Basic " + Buffer.from(`${keyName}:${keySecret}`).toString("base64");
+    const ablyAuth = "Basic " + Buffer.from(`${keyName}:${keySecret}`).toString("base64");
 
     const ablyPublish = async (eventName: string, data: object) => {
-      await fetch(`https://rest.ably.io/channels/${encodeURIComponent(channelName)}/messages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": ablyAuthHeader },
-        body: JSON.stringify({ name: eventName, data }),
-      });
+      try {
+        await fetch(`https://rest.ably.io/channels/${encodeURIComponent(channelName)}/messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": ablyAuth },
+          body: JSON.stringify({ name: eventName, data }),
+        });
+      } catch { /* non-critical, ignore */ }
     };
 
-    // Signal AI is typing
+    // Signal AI is typing — user sees the bubble immediately
     await ablyPublish("admin-typing", { isTyping: true, isAI: true });
 
     let rawContent = "";
@@ -424,88 +410,65 @@ export async function POST(req: NextRequest) {
 
     for (const { key, label } of groqKeys) {
       const result = await callGroq(key, groqMessages, label);
-      if (result) {
-        rawContent = result;
-        usedLabel  = label;
-        break;
-      }
+      if (result) { rawContent = result; usedLabel = label; break; }
     }
 
     if (!rawContent) {
       // Stop typing indicator before returning error
       await ablyPublish("admin-typing", { isTyping: false, isAI: true });
-      console.error("[ai-reply] All Groq keys failed. Support is temporarily unavailable.");
-      return NextResponse.json(
-        { error: "AI support is temporarily unavailable. Please try again in a moment." },
-        { status: 503 },
-      );
+      return NextResponse.json({ error: "AI temporarily unavailable" }, { status: 503 });
     }
 
     let replyText    = "";
     let buttonPayload: { label: string; emoji: string; url: string; id?: string } | null = null;
 
     try {
-      const parsed = JSON.parse(rawContent) as {
-        text: string;
-        button?: { id: string } | null;
-      };
-
+      const parsed = JSON.parse(rawContent) as { text: string; button?: { id: string } | null };
       replyText = parsed.text?.trim() ?? "";
-
       if (parsed.button?.id) {
         const match = NAV_BUTTONS.find((b) => b.id === parsed.button!.id);
-        if (match) {
-          buttonPayload = { label: match.label, emoji: match.emoji, url: match.url, id: match.id };
-        }
+        if (match) buttonPayload = { label: match.label, emoji: match.emoji, url: match.url, id: match.id };
       }
     } catch {
-      replyText = rawContent.replace(/^\{.*?"text"\s*:\s*"/, "").replace(/".*\}$/, "").trim();
-      if (!replyText) replyText = rawContent;
+      replyText = rawContent;
     }
 
     if (!replyText) {
-      await ablyPublish("admin-typing", { isTyping: false, isAI: true });
-      return NextResponse.json({ error: "AI returned empty text" }, { status: 500 });
+      return NextResponse.json({ error: "Empty AI response" }, { status: 500 });
     }
 
     const timestamp   = Date.now();
     const clientMsgId = `ai-${timestamp}-${Math.random().toString(36).slice(2)}`;
 
-    // Stop typing indicator, then send the reply
+    // Stop typing — reply is about to arrive
     await ablyPublish("admin-typing", { isTyping: false, isAI: true });
 
-    // ── Publish reply to Ably ──────────────────────────────────────────────
     const ablyRes = await fetch(
       `https://rest.ably.io/channels/${encodeURIComponent(channelName)}/messages`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": ablyAuthHeader },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": ablyAuth,
+        },
         body: JSON.stringify({
           name: "admin-message",
-          data: {
-            text: replyText,
-            timestamp,
-            clientMsgId,
-            isAI: true,
-            button: buttonPayload ?? undefined,
-          },
+          data: { text: replyText, timestamp, clientMsgId, isAI: true, button: buttonPayload ?? undefined },
         }),
       },
     );
 
     if (!ablyRes.ok) {
       const errText = await ablyRes.text();
-      console.error("[ai-reply] Ably publish error:", ablyRes.status, errText);
-      return NextResponse.json({ error: `Ably publish error: ${ablyRes.status}` }, { status: 502 });
+      console.error("[ai-reply] Ably error:", ablyRes.status, errText);
+      return NextResponse.json({ error: `Ably error: ${ablyRes.status}` }, { status: 502 });
     }
 
-    console.log(
-      `[ai-reply] ✓ replied to ${walletAddress.slice(0, 8)}... via ${usedLabel} | button: ${buttonPayload?.id ?? "none"}`,
-    );
+    console.log(`[ai-reply] ✓ ${walletAddress.slice(0,8)}... via ${usedLabel} | button: ${buttonPayload?.id ?? "none"}`);
     return NextResponse.json({ ok: true, reply: replyText, button: buttonPayload });
 
   } catch (error: any) {
-    console.error("[ai-reply] Unexpected error:", error?.message ?? error);
+    console.error("[ai-reply] Error:", error?.message ?? error);
     return NextResponse.json({ error: String(error?.message ?? error) }, { status: 500 });
   }
 }
