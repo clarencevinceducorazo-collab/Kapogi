@@ -19,6 +19,13 @@ function getCurrentWallet(): string | null {
   } catch { return null; }
 }
 
+interface NotifButton {
+  label: string;
+  type:  "link" | "ai";
+  value: string;
+  emoji?: string;
+}
+
 interface NotificationPayload {
   id:        string;
   title:     string;
@@ -26,16 +33,15 @@ interface NotificationPayload {
   image:     string | null;
   timestamp: number;
   target:    string;
+  button?:   NotifButton | null;
 }
 
-// ─── Floating cloud/star decorations ─────────────────────────────────────────
+// ─── Floating decorations ─────────────────────────────────────────────────────
 function Deco() {
   return (
     <>
-      {/* Cloud puffs */}
       <span className="kapo-deco kapo-cloud1" aria-hidden>☁️</span>
       <span className="kapo-deco kapo-cloud2" aria-hidden>🌤️</span>
-      {/* Sparkle dots */}
       <span className="kapo-deco kapo-star1" aria-hidden>✦</span>
       <span className="kapo-deco kapo-star2" aria-hidden>✦</span>
       <span className="kapo-deco kapo-star3" aria-hidden>✦</span>
@@ -72,6 +78,20 @@ function NotifCard({
   }, [notif.id, onDismiss]);
 
   const isPersonal = notif.target !== "all";
+  const btn = notif.button;
+
+  const handleBtnClick = () => {
+    if (!btn) return;
+    if (btn.type === "link") {
+      const isExternal = btn.value.startsWith("http");
+      if (isExternal) {
+        window.open(btn.value, "_blank", "noreferrer");
+      } else {
+        window.location.href = btn.value;
+      }
+    }
+    dismiss();
+  };
 
   return (
     <>
@@ -87,7 +107,6 @@ function NotifCard({
           overflow: hidden;
           transition: opacity 0.4s cubic-bezier(.34,1.56,.64,1),
                       transform 0.4s cubic-bezier(.34,1.56,.64,1);
-          /* Sky glass card */
           background: linear-gradient(145deg,
             rgba(255,255,255,0.92) 0%,
             rgba(224,242,254,0.95) 50%,
@@ -99,17 +118,14 @@ function NotifCard({
             0 2px 8px rgba(14,165,233,0.15),
             inset 0 1px 0 rgba(255,255,255,0.9);
         }
+        .kapo-card.visible { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+        .kapo-card.hidden  { opacity: 0; transform: translateY(-20px) scale(0.92) rotate(-1deg); }
+        .kapo-card.leaving { opacity: 0; transform: translateY(-16px) scale(0.94) rotate(1deg); }
 
-        .kapo-card.visible   { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
-        .kapo-card.hidden    { opacity: 0; transform: translateY(-20px) scale(0.92) rotate(-1deg); }
-        .kapo-card.leaving   { opacity: 0; transform: translateY(-16px) scale(0.94) rotate(1deg); }
-
-        /* Animated rainbow top bar */
         .kapo-topbar {
           height: 5px;
           width: 100%;
-          background: linear-gradient(90deg,
-            #38bdf8, #818cf8, #f472b6, #fb923c, #facc15, #34d399, #38bdf8);
+          background: linear-gradient(90deg, #38bdf8, #818cf8, #f472b6, #fb923c, #facc15, #34d399, #38bdf8);
           background-size: 200% 100%;
           animation: kapo-slide 3s linear infinite;
         }
@@ -118,7 +134,6 @@ function NotifCard({
           100% { background-position: 200% 0%; }
         }
 
-        /* Bell icon bubble */
         .kapo-bell {
           width: 42px;
           height: 42px;
@@ -133,12 +148,11 @@ function NotifCard({
         }
         @keyframes kapo-wiggle {
           0%,100% { transform: rotate(-8deg) scale(1); }
-          25%      { transform: rotate(8deg) scale(1.05); }
-          50%      { transform: rotate(-4deg) scale(1); }
-          75%      { transform: rotate(6deg) scale(1.03); }
+          25%     { transform: rotate(8deg) scale(1.05); }
+          50%     { transform: rotate(-4deg) scale(1); }
+          75%     { transform: rotate(6deg) scale(1.03); }
         }
 
-        /* Label */
         .kapo-label {
           font-family: 'Fredoka', sans-serif;
           font-size: 10px;
@@ -152,7 +166,6 @@ function NotifCard({
           margin-bottom: 3px;
         }
 
-        /* Personal badge */
         .kapo-badge {
           background: linear-gradient(90deg, #f472b6, #c084fc);
           color: white;
@@ -164,7 +177,6 @@ function NotifCard({
           box-shadow: 0 2px 6px rgba(244,114,182,0.4);
         }
 
-        /* Title */
         .kapo-title {
           font-family: 'Fredoka', sans-serif;
           font-size: 15px;
@@ -173,7 +185,6 @@ function NotifCard({
           line-height: 1.25;
         }
 
-        /* Desc */
         .kapo-desc {
           font-size: 12px;
           font-weight: 600;
@@ -182,7 +193,6 @@ function NotifCard({
           margin-top: 6px;
         }
 
-        /* Close button */
         .kapo-close {
           width: 28px;
           height: 28px;
@@ -204,7 +214,44 @@ function NotifCard({
           transform: rotate(90deg) scale(1.1);
         }
 
-        /* Progress bar */
+        /* Action button */
+        .kapo-action-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          margin-top: 11px;
+          padding: 8px 16px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, #38bdf8, #818cf8);
+          color: white;
+          font-family: 'Fredoka', sans-serif;
+          font-size: 13px;
+          font-weight: 600;
+          text-decoration: none;
+          border: none;
+          cursor: pointer;
+          box-shadow: 0 3px 12px rgba(56,189,248,0.4), 0 0 0 2px rgba(255,255,255,0.6);
+          transition: transform 0.15s, box-shadow 0.15s;
+          width: 100%;
+          justify-content: center;
+        }
+        .kapo-action-btn:hover {
+          transform: translateY(-1px) scale(1.02);
+          box-shadow: 0 6px 18px rgba(56,189,248,0.5), 0 0 0 2px rgba(255,255,255,0.8);
+        }
+        .kapo-action-btn:active {
+          transform: translateY(0) scale(0.98);
+        }
+        .kapo-action-btn-emoji {
+          font-size: 15px;
+          line-height: 1;
+        }
+        .kapo-action-btn-arrow {
+          margin-left: auto;
+          font-size: 14px;
+          opacity: 0.8;
+        }
+
         .kapo-bar-track {
           height: 4px;
           background: rgba(186,230,253,0.6);
@@ -224,7 +271,6 @@ function NotifCard({
           to   { width: 0%; }
         }
 
-        /* Floating deco elements */
         .kapo-deco {
           position: absolute;
           pointer-events: none;
@@ -239,14 +285,13 @@ function NotifCard({
 
         @keyframes kapo-float {
           0%,100% { transform: translateY(0px); }
-          50%      { transform: translateY(-4px); }
+          50%     { transform: translateY(-4px); }
         }
         @keyframes kapo-twinkle {
           0%,100% { opacity: 0.3; transform: scale(0.8); }
-          50%      { opacity: 1;   transform: scale(1.3); }
+          50%     { opacity: 1;   transform: scale(1.3); }
         }
 
-        /* Subtle inner glow at bottom */
         .kapo-inner-glow {
           position: absolute;
           bottom: 0; left: 0; right: 0;
@@ -273,12 +318,10 @@ function NotifCard({
         <div style={{ padding: "14px 16px 14px" }}>
           {/* Header row */}
           <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
-            {/* Bell */}
             <div className="kapo-bell">
               <Bell size={17} color="white" strokeWidth={2.5} />
             </div>
 
-            {/* Text */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="kapo-label">
                 ✦ Kapogian
@@ -289,7 +332,6 @@ function NotifCard({
               <div className="kapo-title">{notif.title}</div>
             </div>
 
-            {/* Close */}
             <button className="kapo-close" onClick={dismiss} aria-label="Dismiss notification">
               <X size={12} strokeWidth={2.5} />
             </button>
@@ -302,7 +344,7 @@ function NotifCard({
               borderRadius: "14px",
               overflow: "hidden",
               border: "2px solid rgba(186,230,253,0.6)",
-              boxShadow: "0 4px 16px rgba(56,189,248,0.15)"
+              boxShadow: "0 4px 16px rgba(56,189,248,0.15)",
             }}>
               <img
                 src={notif.image}
@@ -315,6 +357,15 @@ function NotifCard({
           {/* Description */}
           {notif.desc && (
             <p className="kapo-desc">{notif.desc}</p>
+          )}
+
+          {/* Action button */}
+          {btn && (
+            <button className="kapo-action-btn" onClick={handleBtnClick}>
+              {btn.emoji && <span className="kapo-action-btn-emoji">{btn.emoji}</span>}
+              <span>{btn.label}</span>
+              <span className="kapo-action-btn-arrow">→</span>
+            </button>
           )}
 
           {/* Progress bar */}
@@ -342,15 +393,16 @@ export function GlobalNotification() {
       image:     data.image     ?? null,
       timestamp: data.timestamp ?? Date.now(),
       target:    data.target    ?? "all",
+      button:    data.button    ?? null,
     }]);
   }, []);
 
   useEffect(() => {
     const instances: Ably.Realtime[] = [];
 
+    // 1. Inbox — "all" broadcasts
     const ablyInbox = new Ably.Realtime({ key: ABLY_KEY });
     instances.push(ablyInbox);
-
     const inbox = ablyInbox.channels.get("kapogian-support-inbox");
     inbox.subscribe("broadcast-notification", (msg) => {
       const data   = msg.data as NotificationPayload;
@@ -359,8 +411,8 @@ export function GlobalNotification() {
       if (target === "all") addNotif(data, id);
     });
 
+    // 2. Personal channel
     const wallet = getCurrentWallet();
-
     if (wallet) {
       const ablyPersonal = new Ably.Realtime({ key: ABLY_KEY });
       instances.push(ablyPersonal);
@@ -372,6 +424,7 @@ export function GlobalNotification() {
           addNotif(data, id);
         });
     } else {
+      // 3. Wallet not yet connected — poll every 3s
       let personalAbly: Ably.Realtime | null = null;
       const intervalId = setInterval(() => {
         const w = getCurrentWallet();
