@@ -43,10 +43,13 @@ export interface QuickButton {
 }
 
 const PRESET_BUTTONS: Omit<QuickButton, "id">[] = [
-  { label: "Generate & Mint",   type: "link", value: "/generate",       emoji: "⚡" },
-  { label: "Kapo Shop",         type: "link", value: "/shop",           emoji: "🛍️" },
-  { label: "Discord Server",    type: "link", value: "https://discord.gg/kapogian", emoji: "💬" },
-  { label: "View Roadmap",      type: "link", value: "/roadmap",        emoji: "🗺️" },
+  { label: "Generate & Mint",   type: "link", value: "/generate",                    emoji: "⚡" },
+  { label: "Kapo Shop",         type: "link", value: "/shop",                        emoji: "🛍️" },
+  { label: "Discord Server",    type: "link", value: "https://discord.gg/kapogian",  emoji: "💬" },
+  { label: "View Roadmap",      type: "link", value: "/roadmap",                     emoji: "🗺️" },
+  { label: "Podium",            type: "link", value: "/podium",                      emoji: "🏆" },
+  { label: "My Profile",        type: "link", value: "/profile",                     emoji: "👤" },
+  { label: "Whitepaper",        type: "link", value: "/whitepaper",                  emoji: "📄" },
   { label: "How many mints?",   type: "ai",   value: "How many total Kapogian NFTs have been minted so far?", emoji: "🔢" },
   { label: "My Orders",         type: "ai",   value: "Can you help me check the status of my order?",        emoji: "📦" },
   { label: "Shop Items",        type: "ai",   value: "What items are currently available in the Kapo Shop?", emoji: "🧾" },
@@ -278,15 +281,20 @@ if (broadcastTarget === "all") {
       setIsBroadcasting(false);
     }
   }, [broadcastTitle, broadcastDesc, broadcastImage, broadcastTarget]);
+const handleBroadcastImage = useCallback(async (file: File) => {
+  try {
+    const compressed = await compressImage(file);
+    setBroadcastImage(compressed);
+    setBroadcastImageName(file.name);
 
-  const handleBroadcastImage = useCallback((file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setBroadcastImage(e.target?.result as string);
-      setBroadcastImageName(file.name);
-    };
-    reader.readAsDataURL(file);
-  }, []);
+    // Show size info in console so you can verify
+    const kb = Math.round((compressed.length * 3) / 4 / 1024);
+    console.log(`[Image] compressed to ~${kb}KB`);
+  } catch (e) {
+    console.error("[Image] compression failed:", e);
+    alert("Failed to process image. Please try a different file.");
+  }
+}, []);
 
   // ── AI auto-reply ─────────────────────────────────────────────────────────
   const triggerAIReply = useCallback(async (walletAddress: string) => {
@@ -1034,4 +1042,46 @@ export function useAdminUnreadCount(): number {
     return () => { inbox.unsubscribe(); ably.close(); };
   }, []);
   return count;
+}
+// Add this function near the top of AdminMessagesTab (outside the component)
+async function compressImage(file: File, maxSizeKB = 50): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement("canvas");
+
+      // Scale down to fit within maxSizeKB
+      let { width, height } = img;
+      const maxDim = 600; // max width or height in px
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height / width) * maxDim);
+          width = maxDim;
+        } else {
+          width = Math.round((width / height) * maxDim);
+          height = maxDim;
+        }
+      }
+
+      canvas.width  = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Try progressively lower quality until under maxSizeKB
+      let quality = 0.7;
+      let result  = canvas.toDataURL("image/jpeg", quality);
+
+      while (result.length > maxSizeKB * 1024 * 1.37 && quality > 0.1) {
+        quality -= 0.1;
+        result = canvas.toDataURL("image/jpeg", quality);
+      }
+
+      resolve(result);
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
 }
