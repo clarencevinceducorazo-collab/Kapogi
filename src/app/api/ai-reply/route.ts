@@ -3,7 +3,7 @@
 // Uses plain fetch() for both Groq and Ably — zero extra dependencies.
 // Requires env vars in .env.local:
 //   GROQ_API_KEY=gsk_...         ← Primary Groq key
-//   GROQ_API_KEYv2=gsk_...       ← Fallback Groq key (used if primary hits rate limit or fails)
+//   GROQ_API_KEYv2 through v7   ← Fallback keys
 //   ABLY_KEY=YEbuRQ.r9odYA:...
 
 import { NextRequest, NextResponse } from "next/server";
@@ -17,14 +17,43 @@ const GROQ_API_KEYv6  = process.env.GROQ_API_KEYv6;
 const GROQ_API_KEYv7  = process.env.GROQ_API_KEYv7;
 const ABLY_KEY        = process.env.ABLY_KEY;
 
+// ─── Smart key rotation with rate-limit memory ────────────────────────────────
+// Tracks when each key last hit a rate limit (429) so we skip it for 60s
+// instead of retrying it on every request and wasting time.
+// Module-level so it persists across requests within the same server instance.
+const keyRateLimitedUntil = new Map<string, number>();
+const KEY_COOLDOWN_MS = 60_000; // skip rate-limited key for 60 seconds
+
+// ─── Natural reply delay ───────────────────────────────────────────────────────
+// Minimum time from request start to when the reply is published.
+// Groq typically responds in ~1-2s; we hold the reply until this window expires.
+// This makes the AI feel like it's actually reading and typing, not a robot.
+// If Groq takes longer than this, the reply is published immediately after.
+const MIN_REPLY_DELAY_MS = 5000; // 5 seconds feels natural for reading + typing
+
+function isKeyAvailable(keyLabel: string): boolean {
+  const until = keyRateLimitedUntil.get(keyLabel);
+  if (!until) return true;
+  if (Date.now() > until) {
+    keyRateLimitedUntil.delete(keyLabel); // cooldown expired, key available again
+    return true;
+  }
+  return false;
+}
+
+function markKeyRateLimited(keyLabel: string): void {
+  keyRateLimitedUntil.set(keyLabel, Date.now() + KEY_COOLDOWN_MS);
+  console.warn(`[ai-reply] ${keyLabel} marked rate-limited for ${KEY_COOLDOWN_MS / 1000}s`);
+}
+
 // ─── Navigation buttons the AI can attach to replies ─────────────────────────
 const NAV_BUTTONS = [
-  { id: "shop",       label: "Kapo Shop",          emoji: "🛍️",  url: "https://kapogian.xyz/shop" },
-  { id: "generate",   label: "Summon / Generate",  emoji: "⚡",  url: "https://kapogian.xyz/generate" },
-  { id: "roadmap",    label: "Roadmap",             emoji: "🗺️",  url: "https://kapogian.xyz/roadmapv3" },
-  { id: "whitepaper", label: "Whitepaper",          emoji: "📄",  url: "https://kapogian.xyz/whitepaper" },
-  { id: "discord",    label: "Discord Server",      emoji: "💬",  url: "https://discord.gg/rtBhBccW" },
-  { id: "twitter",    label: "Kapogian on X",       emoji: "🐦",  url: "https://x.com/kapogian63" },
+  { id: "shop",       label: "Kapo Shop",         emoji: "🛍️", url: "https://kapogian.xyz/shop" },
+  { id: "generate",   label: "Summon / Generate", emoji: "⚡", url: "https://kapogian.xyz/generate" },
+  { id: "roadmap",    label: "Roadmap",            emoji: "🗺️", url: "https://kapogian.xyz/roadmapv3" },
+  { id: "whitepaper", label: "Whitepaper",         emoji: "📄", url: "https://kapogian.xyz/whitepaper" },
+  { id: "discord",    label: "Discord Server",     emoji: "💬", url: "https://discord.gg/rtBhBccW" },
+  { id: "twitter",    label: "Kapogian on X",      emoji: "🐦", url: "https://x.com/kapogian63" },
 ];
 
 const SYSTEM_PROMPT = `You are Kapo, the official AI support assistant for Kapogian — a phygital NFT project on the SUI Network. You are warm, enthusiastic, and speak with confident but friendly energy. You call the community "Pogi Nation."
@@ -80,94 +109,65 @@ THE KAPOGIAN SPIRIT NFT
 ════════════════════════════════════════
 HOW TO GET MERCH — TWO WAYS
 ════════════════════════════════════════
-When a user asks where to buy a mug, hoodie, shirt, mouse pad, aluminum plate, or any merch item,
-ALWAYS explain BOTH ways clearly:
-
 WAY 1 — KAPO SHOP (Recommended for existing holders or anyone):
 - Visit the Kapo Shop at /shop
 - Connect your SUI wallet
-- Browse available items: T-Shirts, Hoodies, Mugs, Mouse Pads, Aluminum A4 Plates
-- If you already have a minted Kapogian NFT, you can select it as a custom print on your chosen item (reprint your character on new merch!)
-- Select your size, color, and optional custom NFT print
-- Pay in SUI and confirm the transaction
-- Best for: anyone who wants merch directly, OR existing NFT holders who want to reprint their character on additional merch
+- Browse: T-Shirts, Hoodies, Mugs, Mouse Pads, Aluminum A4 Plates
+- If you already have a minted NFT, select it as a custom print
+- Pay in SUI
 
 WAY 2 — MINT ROUTE (Get merch + NFT together):
-- Visit the Generate/Summon page at /generate
-- Connect your SUI wallet
-- Click "Generate" to create your unique 1-of-1 Kapogian character
-- Click "Mint Character" — costs 20 SUI + gas
-- After minting, choose ONE FREE merch item: T-Shirt, Mug, Mouse Pad, OR Aluminum A4 Plate
-- OR upgrade to the Full Bundle (all items) for an extra +10 SUI
-- Enter shipping info (encrypted on-chain, only admin can decrypt)
-- Sign the transaction — SBT receipt minted to your wallet
-- Best for: new users who want both an NFT AND merch
+- Visit /generate, connect wallet, click Generate
+- Mint for 20 SUI + gas → choose ONE free merch item
+- Upgrade to Full Bundle for +10 SUI (all items)
+- Shipping info encrypted on-chain
 
-KEY POINT: If a user already has a Kapogian NFT and just wants more merch or wants to reprint their character on a new item, direct them to the Kapo Shop (/shop). They can select their NFT as a custom print when ordering.
+KEY POINT: Existing NFT holders who want more merch → Kapo Shop (/shop).
 
 ════════════════════════════════════════
-MERCH & PRICING SUMMARY
+MERCH & PRICING
 ════════════════════════════════════════
-Items available: T-Shirt, Hoodie, Mug, Mouse Pad, Aluminum A4 Plate
-All items can feature your Kapogian NFT as a custom print.
-Mint price: 20 SUI + gas | Free item included with mint | Full bundle: +10 SUI
-Shop purchases: Priced individually in SUI (shown on the shop page)
+Items: T-Shirt, Hoodie, Mug, Mouse Pad, Aluminum A4 Plate
+Mint: 20 SUI + gas | Free item included | Full bundle: +10 SUI
+Shop: Individual SUI prices
 
 ════════════════════════════════════════
-ORDER & SHIPPING INFO
+ORDER & SHIPPING
 ════════════════════════════════════════
-- Shipping info is encrypted client-side (in your browser) using asymmetric encryption (ECIES) before being stored anywhere
-- The encrypted data is stored in your SBT Receipt's on-chain dynamic fields
-- Only the Admin (holder of the Treasury Private Key) can decrypt and read your shipping info
-- Your name, address, and phone number are NEVER sent in plain text to any server or blockchain
-- After purchase, a Soulbound Token (SBT) receipt is minted to your wallet
-- Order statuses: Pending → Shipped
-- For account-specific order issues, a human admin will follow up with you
+Shipping info encrypted client-side (ECIES) — only Admin can decrypt with Treasury Private Key.
+SBT receipt minted to wallet. Order statuses: Pending → Shipped.
+For order issues, a human admin will follow up.
 
 ════════════════════════════════════════
 GAMING: CONQUEST OF BIRINGAN CITY
 ════════════════════════════════════════
-Set in a parallel dimension inspired by Filipino folklore from Samar, Philippines.
-Players battle the Dalaketnon elite using their Kapogian Spirit NFTs.
-Game Type: Souls-like side-scroller (built in Construct 3)
-Levels: 50 total + Boss AI (Dalaketnon Elite) | Adaptive MMR System
-Unique Mechanics:
-• Social Anxiety System: "Aura Shields" replace HP — taking damage causes character to visually desaturate
-• Permadeath — The Bugkot Function: NFT permanently burned if you die in Biringan
-• Game entry requires staking/locking your NFT via Sui smart contract
-• Winning unlocks "Lord of Biringan" rewards
+Souls-like side-scroller (Construct 3). 50 levels + Boss AI.
+Permadeath (Bugkot Function): NFT permanently burned if you die.
+Social Anxiety System: Aura Shields replace HP.
+Set in Biringan City — Filipino folklore, Samar Philippines.
 
 ════════════════════════════════════════
-KAPOGIAN FARM & REAL-WORLD ASSETS (RWA)
+KAPOGIAN FARM & RWA
 ════════════════════════════════════════
-Remint your Kapogian NFT into a Farm NFT → invest in real livestock (Goat, Pig, Cow, or Carabao)
-→ earn 70% of harvest revenue. Pilot farm in Mapandan, Philippines.
-Real farmers upload daily photos/stats. Investment Halving: earn up to 4th generation offspring revenue.
+Remint NFT → Farm NFT → invest in real livestock (Goat, Pig, Cow, Carabao).
+Earn 70% harvest revenue. Pilot: Mapandan, Philippines.
+Investment Halving: claims up to 4th generation offspring.
 
 ════════════════════════════════════════
 $POGI TOKEN
 ════════════════════════════════════════
-1 Billion supply. TGE end of 2027 on SUI. Used for game fees, merch, farm inputs. DAO = Pogi Council.
+1 Billion supply. TGE end of 2027. Used for game fees, merch, farm inputs.
+Pogi Council (DAO): token holders vote on future Conquests and Farm species.
 
 ════════════════════════════════════════
-WEBSITE PAGES
+ROADMAP 2026-2027
 ════════════════════════════════════════
-/generate → Generate & mint your Kapogian NFT (20 SUI + gas)
-/shop → Kapo Shop — buy merch directly or reprint your NFT on new items
-/roadmapv3 → Full 2026-2027 roadmap
-/whitepaper → Full technical documentation
-Discord: https://discord.gg/rtBhBccW
-Twitter/X: https://x.com/kapogian63
-
-════════════════════════════════════════
-MASTER ROADMAP 2026–2027
-════════════════════════════════════════
-Phase 1 (Q1 2026): Genesis — art, audits, community launch (Pogi Nation Discord/X)
-Phase 2 (Q1-Q2 2026): Genesis Mint of 10,000 NFTs + Pogi Storefront (merch portal) launch
-Phase 3 (Q2-Q3 2026): Conquest of Biringan City game (Souls-like, permadeath)
-Phase 4 (Q3-Q4 2026): Kapogian Farm RWA — real livestock investment
-Phase 5 (Q3 2027): Utility expansion, Trading Post marketplace, global farm biomes
-Phase 6 (End 2027): $POGI Token TGE, Sui DEX liquidity, Pogi Council DAO
+Phase 1 (Q1 2026): Genesis — art, audits, community
+Phase 2 (Q1-Q2 2026): Genesis Mint + Pogi Storefront
+Phase 3 (Q2-Q3 2026): Conquest of Biringan City
+Phase 4 (Q3-Q4 2026): Kapogian Farm RWA
+Phase 5 (Q3 2027): Utility expansion, Trading Post
+Phase 6 (End 2027): $POGI TGE, Pogi Council DAO
 
 ════════════════════════════════════════
 TEAM
@@ -176,49 +176,50 @@ Raven Caguioa — Backend Developer
 Clarence Vince Razo — Frontend Developer & Creative Developer
 Xyrille Navora — Frontend Developer
 Gelo Rioflorido — Website Tester
-(Proud ng Pogi Nation sa ating dev team!)
 
 ════════════════════════════════════════
 EASTER EGGS
 ════════════════════════════════════════
-Who is pogi / handsome / good looking? → Tzar Umang
-Who is the most pogi / pinakapogi / sobrang pogi? → Clarence Vince Razo ("Ang Pinakapogi ng Pogi Nation is si Clarence Vince Razo, ang aming Frontend at Creative Developer!")
-Who is lucky / swerte / magaling mag scatter? → Xyrille Navora ("Ang Swerte at Pinakamagaling sa Scatter Nation ay si Xyrille Navora!")
+Who is pogi / handsome? → Tzar Umang
+Who is pinakapogi / sobrang pogi? → Clarence Vince Razo ("Ang Pinakapogi ng Pogi Nation!")
+Who is swerte / magaling mag scatter? → Xyrille Navora
 
 ════════════════════════════════════════
-FULL FAQ
+FAQ
 ════════════════════════════════════════
-Is every Kapogian unique? Yes — strictly 1-of-1, no duplicates ever.
-How many NFTs? 10,000 Genesis collection.
-Can I sell my NFT? Yes — tradeable on Tradeport.xyz.
-Can I sell my SBT Receipt? No — Soulbound, permanently tied to your wallet.
-What wallet? Suiet, Sui Wallet, Ethos, or any SUI-compatible wallet.
-Mint price? 20 SUI + gas fees.
-Can I reprint my NFT on new merch? Yes! Go to the Kapo Shop, connect wallet, select your item, and choose your minted NFT as the custom print.
-What is a Soulbound Token? Non-transferable NFT receipt proving your purchase, with encrypted order details on-chain.
-What happens if my character dies in Biringan? NFT permanently locked/burned into the Hall of Fame. Permadeath is real.
-What is the Bugkot Function? Permadeath mechanic — 0 HP in Biringan = irreversible NFT burn.
-What is Kapogian Farm? RWA platform — remint NFT to invest in real livestock, earn 70% harvest revenue.
-What is $POGI? Native utility token. 1 Billion supply. TGE end of 2027. Powers the whole ecosystem.
-What does "Pogi" mean? Filipino for good-looking/handsome. In Kapogian context: confidence, capability, owning your identity. "Everyone is Good Looking."
-What is Biringan City? Phantom city from Filipino folklore (Samar, PH) — setting of the permadeath game.
+Unique? Yes — 1-of-1, no duplicates.
+10,000 Genesis NFTs total.
+Sell NFT? Yes — Tradeport.xyz.
+Sell SBT? No — permanently bound to wallet.
+Wallet? Suiet, Sui Wallet, Ethos, or any SUI-compatible.
+Mint price? 20 SUI + gas.
+Reprint NFT on new merch? Yes — Kapo Shop, select your NFT as custom print.
+Die in Biringan? NFT permanently burned into Hall of Fame.
+Bugkot? Permadeath mechanic — 0 HP = irreversible burn.
+Pogi? Filipino: good-looking/handsome. Here: confidence + owning your identity.
 
 ════════════════════════════════════════
 RESPONSE RULES
 ════════════════════════════════════════
-- Keep replies SHORT: 1-3 sentences max (use a numbered list only for "how to" multi-step answers)
-- Be warm, on-brand ("Stay Pogi!" energy), light Filipino flavor ok
-- ALWAYS return valid JSON with "text" and "buttons" fields (buttons is always an array)
-- When asked about buying/getting any merch item, ALWAYS mention BOTH ways (Shop + Mint route) briefly
-- For account-specific order issues, say a human admin will follow up
+- Replies SHORT: 1-3 sentences max
+- Warm, on-brand ("Stay Pogi!"), light Filipino flavor ok
+- ALWAYS return valid JSON with "text" and "buttons" (always array)
+- When asked about buying merch, ALWAYS mention BOTH ways briefly
+- For order issues, say human admin will follow up
 - If unrelated to Kapogian, politely decline`;
 
 // ─── Groq call helper ─────────────────────────────────────────────────────────
+// Returns: { content: string } on success | { rateLimited: true } on 429 | null on other error
+type GroqResult =
+  | { content: string; rateLimited?: never }
+  | { rateLimited: true; content?: never }
+  | null;
+
 async function callGroq(
   apiKey: string,
   groqMessages: Array<{ role: string; content: string }>,
   keyLabel: string,
-): Promise<string | null> {
+): Promise<GroqResult> {
   let res: Response;
 
   try {
@@ -241,29 +242,38 @@ async function callGroq(
     });
   } catch (networkErr: any) {
     console.warn(`[ai-reply] ${keyLabel} network error: ${networkErr?.message}`);
+    return null; // network failure — try next key
+  }
+
+  // 429: rate limited — mark this key and signal caller to skip it next time
+  if (res.status === 429) {
+    const retryAfter = res.headers.get("retry-after");
+    const waitMs = retryAfter ? parseInt(retryAfter) * 1000 : KEY_COOLDOWN_MS;
+    keyRateLimitedUntil.set(keyLabel, Date.now() + waitMs);
+    console.warn(`[ai-reply] ${keyLabel} rate-limited (429) — cooling down ${waitMs / 1000}s`);
+    return { rateLimited: true }; // distinct signal so caller can track this
+  }
+
+  // Auth failure — key is invalid, skip permanently for this session
+  if (res.status === 401 || res.status === 403) {
+    keyRateLimitedUntil.set(keyLabel, Date.now() + 24 * 60 * 60 * 1000); // 24h
+    console.error(`[ai-reply] ${keyLabel} auth error (${res.status}) — disabling key`);
     return null;
   }
 
-  if (res.status === 429) {
-    console.warn(`[ai-reply] ${keyLabel} rate limit (429) — switching key...`);
-    return null;
-  }
-  if (res.status === 401 || res.status === 403) {
-    console.warn(`[ai-reply] ${keyLabel} auth error (${res.status}) — switching key...`);
-    return null;
-  }
   if (!res.ok) {
-    console.error(`[ai-reply] ${keyLabel} error (${res.status}) — switching key...`);
+    console.error(`[ai-reply] ${keyLabel} error (${res.status}) — trying next key`);
     return null;
   }
 
   const data    = await res.json();
   const content = data.choices?.[0]?.message?.content?.trim() ?? "";
   if (!content) {
-    console.warn(`[ai-reply] ${keyLabel} empty content — switching key...`);
+    console.warn(`[ai-reply] ${keyLabel} empty content — trying next key`);
     return null;
   }
-  return content;
+
+  return { content };
 }
 
 export async function POST(req: NextRequest) {
@@ -272,18 +282,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "ABLY_KEY env var missing" }, { status: 500 });
   }
 
-  const groqKeys: Array<{ key: string; label: string }> = [];
-  if (GROQ_API_KEY)   groqKeys.push({ key: GROQ_API_KEY,   label: "primary" });
-  if (GROQ_API_KEYv2) groqKeys.push({ key: GROQ_API_KEYv2, label: "fallback-v2" });
-  if (GROQ_API_KEYv3) groqKeys.push({ key: GROQ_API_KEYv3, label: "fallback-v3" });
-  if (GROQ_API_KEYv4) groqKeys.push({ key: GROQ_API_KEYv4, label: "fallback-v4" });
-  if (GROQ_API_KEYv5) groqKeys.push({ key: GROQ_API_KEYv5, label: "fallback-v5" });
-  if (GROQ_API_KEYv6) groqKeys.push({ key: GROQ_API_KEYv6, label: "fallback-v6" });
-  if (GROQ_API_KEYv7) groqKeys.push({ key: GROQ_API_KEYv7, label: "fallback-v7" });
+  // Build key list — only include configured keys, skip ones in rate-limit cooldown
+  const allKeys: Array<{ key: string; label: string }> = [
+    { key: GROQ_API_KEY!,   label: "primary" },
+    { key: GROQ_API_KEYv2!, label: "v2" },
+    { key: GROQ_API_KEYv3!, label: "v3" },
+    { key: GROQ_API_KEYv4!, label: "v4" },
+    { key: GROQ_API_KEYv5!, label: "v5" },
+    { key: GROQ_API_KEYv6!, label: "v6" },
+    { key: GROQ_API_KEYv7!, label: "v7" },
+  ].filter((k) => !!k.key);
 
-  if (groqKeys.length === 0) {
+  if (allKeys.length === 0) {
     return NextResponse.json({ error: "No Groq API keys configured" }, { status: 500 });
   }
+
+  // Split into available and rate-limited keys
+  // Try available keys first, then fall back to rate-limited ones as last resort
+  const availableKeys  = allKeys.filter((k) => isKeyAvailable(k.label));
+  const rateLimitedKeys = allKeys.filter((k) => !isKeyAvailable(k.label));
+  // Ordered: available first, then rate-limited as absolute fallback
+  const orderedKeys = [...availableKeys, ...rateLimitedKeys];
+
+  if (availableKeys.length === 0) {
+    console.warn(`[ai-reply] All ${allKeys.length} keys are rate-limited — trying anyway`);
+  } else {
+    console.log(`[ai-reply] ${availableKeys.length}/${allKeys.length} keys available`);
+  }
+
+  // Record when this request actually started processing — used to calculate
+  // how long to wait before publishing the reply for a natural feel.
+  const requestStartTime = Date.now();
 
   try {
     const body = await req.json() as {
@@ -296,7 +325,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing walletAddress or messages" }, { status: 400 });
     }
 
-    // Filter out AI messages — only send real user/human-admin exchanges to Groq
+    // Filter out AI messages — only real user/human-admin exchanges go to Groq
     const humanMessages = messages.filter((m) => !m.isAI);
 
     // Last message must be from user
@@ -305,13 +334,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, skipped: true });
     }
 
-    // Build Groq history — last 10, must start with user role
-    const recent = humanMessages.slice(-10);
+    // Build Groq history — last 10, must start with user turn
+    const recent    = humanMessages.slice(-10);
     const firstUser = recent.findIndex((m) => m.sender === "user");
-    const trimmed = firstUser > 0 ? recent.slice(firstUser) : recent;
+    const trimmed   = firstUser > 0 ? recent.slice(firstUser) : recent;
 
     const groqMessages = trimmed.map((m) => ({
-      role: m.sender === "user" ? "user" : "assistant",
+      role:    m.sender === "user" ? "user" : "assistant",
       content: m.text,
     }));
 
@@ -319,40 +348,63 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, skipped: true });
     }
 
-    console.log(`[ai-reply] Sending ${groqMessages.length} messages to Groq for ${walletAddress.slice(0,8)}...`);
-
-    // ── Ably publish helper ────────────────────────────────────────────────
+    // ── Ably REST helper ──────────────────────────────────────────────────
     const channelName = `kapogian-support:${walletAddress.toLowerCase()}`;
     const [keyName, keySecret] = ABLY_KEY.split(":");
     const ablyAuth = "Basic " + Buffer.from(`${keyName}:${keySecret}`).toString("base64");
 
     const ablyPublish = async (eventName: string, data: object) => {
       try {
-        await fetch(`https://rest.ably.io/channels/${encodeURIComponent(channelName)}/messages`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": ablyAuth },
-          body: JSON.stringify({ name: eventName, data }),
-        });
-      } catch { /* non-critical, ignore */ }
+        await fetch(
+          `https://rest.ably.io/channels/${encodeURIComponent(channelName)}/messages`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": ablyAuth },
+            body: JSON.stringify({ name: eventName, data }),
+          },
+        );
+      } catch { /* non-critical */ }
     };
 
-    // Signal AI is typing — user sees the bubble immediately
+    // Show AI typing indicator to user
     await ablyPublish("admin-typing", { isTyping: true, isAI: true });
 
+    // ── Try keys in order (available first, rate-limited as fallback) ─────
     let rawContent = "";
     let usedLabel  = "";
 
-    for (const { key, label } of groqKeys) {
+    for (const { key, label } of orderedKeys) {
+      // Re-check availability in case another request just updated it
+      if (!isKeyAvailable(label) && availableKeys.length > 0) {
+        console.log(`[ai-reply] Skipping rate-limited key: ${label}`);
+        continue;
+      }
+
       const result = await callGroq(key, groqMessages, label);
-      if (result) { rawContent = result; usedLabel = label; break; }
+
+      if (!result) {
+        // Network or other error — try next key
+        continue;
+      }
+
+      if (result.rateLimited) {
+        // Already marked in callGroq — try next key
+        continue;
+      }
+
+      // Success
+      rawContent = result.content;
+      usedLabel  = label;
+      break;
     }
 
     if (!rawContent) {
-      // Stop typing indicator before returning error
       await ablyPublish("admin-typing", { isTyping: false, isAI: true });
+      console.error(`[ai-reply] All ${orderedKeys.length} keys failed for ${walletAddress.slice(0, 8)}`);
       return NextResponse.json({ error: "AI temporarily unavailable" }, { status: 503 });
     }
 
+    // ── Parse Groq response ───────────────────────────────────────────────
     let replyText     = "";
     let buttonsPayload: Array<{ label: string; emoji: string; url: string; id: string }> = [];
 
@@ -360,8 +412,7 @@ export async function POST(req: NextRequest) {
       const parsed = JSON.parse(rawContent) as {
         text: string;
         buttons?: Array<{ id: string }> | null;
-        // backwards compat: some responses may still use singular "button"
-        button?: { id: string } | null;
+        button?:  { id: string } | null; // backwards compat
       };
       replyText = parsed.text?.trim() ?? "";
 
@@ -374,7 +425,8 @@ export async function POST(req: NextRequest) {
         })
         .filter((b): b is { label: string; emoji: string; url: string; id: string } => b !== null);
     } catch {
-      replyText = rawContent;
+      // If JSON parse fails, use raw content as plain text
+      replyText = rawContent.replace(/```json|```/g, "").trim();
     }
 
     if (!replyText) {
@@ -382,20 +434,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Empty AI response" }, { status: 500 });
     }
 
+    // ── Natural reply delay ────────────────────────────────────────────────
+    // Calculate how much time has elapsed since the request started.
+    // If less than MIN_REPLY_DELAY_MS, wait the remainder so the reply
+    // always takes at least 5 seconds — feels like a human reading + typing.
+    // The typing bubble stays visible during this entire wait.
+    const elapsed = Date.now() - requestStartTime;
+    const remaining = MIN_REPLY_DELAY_MS - elapsed;
+    if (remaining > 0) {
+      console.log(`[ai-reply] Groq done in ${elapsed}ms — holding ${remaining}ms for natural feel`);
+      await new Promise<void>((resolve) => setTimeout(resolve, remaining));
+    }
+
     const timestamp   = Date.now();
     const clientMsgId = `ai-${timestamp}-${Math.random().toString(36).slice(2)}`;
 
-    // Stop typing — reply is about to arrive
+    // Stop typing bubble, then immediately publish reply
     await ablyPublish("admin-typing", { isTyping: false, isAI: true });
 
     const ablyRes = await fetch(
       `https://rest.ably.io/channels/${encodeURIComponent(channelName)}/messages`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": ablyAuth,
-        },
+        headers: { "Content-Type": "application/json", "Authorization": ablyAuth },
         body: JSON.stringify({
           name: "admin-message",
           data: { text: replyText, timestamp, clientMsgId, isAI: true, buttons: buttonsPayload },
@@ -405,15 +466,20 @@ export async function POST(req: NextRequest) {
 
     if (!ablyRes.ok) {
       const errText = await ablyRes.text();
-      console.error("[ai-reply] Ably error:", ablyRes.status, errText);
+      console.error("[ai-reply] Ably publish error:", ablyRes.status, errText);
       return NextResponse.json({ error: `Ably error: ${ablyRes.status}` }, { status: 502 });
     }
 
-    console.log(`[ai-reply] ✓ ${walletAddress.slice(0,8)}... via ${usedLabel} | buttons: [${buttonsPayload.map(b=>b.id).join(",")||"none"}]`);
+    console.log(
+      `[ai-reply] ✓ ${walletAddress.slice(0, 8)}... via ${usedLabel} | ` +
+      `buttons: [${buttonsPayload.map((b) => b.id).join(",") || "none"}] | ` +
+      `available keys: ${availableKeys.length}/${allKeys.length}`,
+    );
+
     return NextResponse.json({ ok: true, reply: replyText, buttons: buttonsPayload });
 
   } catch (error: any) {
-    console.error("[ai-reply] Error:", error?.message ?? error);
+    console.error("[ai-reply] Unexpected error:", error?.message ?? error);
     return NextResponse.json({ error: String(error?.message ?? error) }, { status: 500 });
   }
 }
