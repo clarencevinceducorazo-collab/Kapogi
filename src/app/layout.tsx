@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/Providers";
 import Script from "next/script";
 import { StartingScreen } from "@/components/kapogian/StartingScreen";
+import { GlobalNotification } from "@/components/kapogian/GlobalNotification";
 
 export const metadata: Metadata = {
   title: "Kapogian | Collectible Reality",
@@ -58,6 +59,7 @@ export default function RootLayout({
         <Script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js" strategy="afterInteractive" />
       </head>
       <body className="font-body bg-slate-950" suppressHydrationWarning={true}>
+        <GlobalNotification />
         <Providers>
           <StartingScreen />
           <div className="opacity-0 transition-opacity duration-500" id="main-content">
@@ -65,6 +67,7 @@ export default function RootLayout({
           </div>
           <Toaster />
         </Providers>
+        
       </body>
     </html>
   );
