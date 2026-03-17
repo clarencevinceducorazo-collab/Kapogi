@@ -425,26 +425,28 @@ export default function KapogianShop() {
             className="relative z-10 w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl border-4 border-black flex flex-col md:flex-row overflow-hidden animate-pop-in"
             style={{ maxHeight: "90vh" }}
           >
-            {/* Left panel */}
+            {/* Left panel — compact on mobile, sidebar on md+ */}
             <div
-              className="w-full md:w-64 flex-shrink-0 flex flex-col items-center justify-center p-8 relative overflow-hidden"
+              className="w-full h-44 md:h-auto md:w-56 flex-shrink-0 flex flex-row md:flex-col items-center justify-center gap-4 md:gap-0 px-5 py-3 md:p-6 relative overflow-hidden"
               style={{ backgroundColor: selectedItem.colorBg || "#f8fafc" }}
             >
               <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
-              <div className="relative z-10 w-60 h-54 bg-white rounded-3xl flex items-center justify-center shadow-xl border-4 border-black mb-5 animate-float overflow-hidden">
-                <Image src={selectedItem.imageAnimated} alt="preview" width={160} height={160} unoptimized className="object-contain" />
+              <div className="relative z-10 w-32 h-32 md:w-44 md:h-44 bg-white rounded-3xl flex items-center justify-center shadow-xl border-4 border-black md:mb-4 animate-float overflow-hidden flex-shrink-0">
+                <Image src={selectedItem.imageAnimated} alt="preview" width={120} height={120} unoptimized className="object-contain" />
               </div>
-              <div className="relative z-10 bg-black text-white text-[10px] font-black px-4 py-1.5 rounded-full mb-3 uppercase tracking-widest shadow-lg">
-                {ITEM_TYPE_LABELS[selectedItem.itemType]}
-              </div>
-              <h2 className="relative z-10 text-xl font-headline text-white tracking-tight text-center leading-tight mb-3 uppercase">
-                <span style={{ textShadow: "-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000" }}>
-                  {selectedItem.name}
-                </span>
-              </h2>
-              <div className="relative z-10 bg-sky-50 border-2 border-black rounded-xl p-3 flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                <iconify-icon icon="token-branded:sui" class="text-blue-500 text-2xl" />
-                <span className="font-black text-black text-xl">{mistToSui(Number(selectedItem.priceMist)).toFixed(3)}</span>
+              <div className="relative z-10 flex flex-col items-start md:items-center gap-2 min-w-0">
+                <div className="bg-black text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
+                  {ITEM_TYPE_LABELS[selectedItem.itemType]}
+                </div>
+                <h2 className="text-sm md:text-base font-headline text-white tracking-tight leading-tight uppercase">
+                  <span style={{ textShadow: "-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000" }}>
+                    {selectedItem.name}
+                  </span>
+                </h2>
+                <div className="bg-sky-50 border-2 border-black rounded-xl px-3 py-1.5 flex items-center gap-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                  <iconify-icon icon="token-branded:sui" class="text-blue-500 text-lg" />
+                  <span className="font-black text-black text-base">{mistToSui(Number(selectedItem.priceMist)).toFixed(3)}</span>
+                </div>
               </div>
             </div>
 
