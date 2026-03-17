@@ -5,6 +5,8 @@ import { Providers } from "@/components/Providers";
 import Script from "next/script";
 import { StartingScreen } from "@/components/kapogian/StartingScreen";
 import { GlobalNotification } from "@/components/kapogian/GlobalNotification";
+import { UserDrawerWrapper } from "@/components/kapogian/UserDrawerWrapper";
+
 
 export const metadata: Metadata = {
   title: "Kapogian | Collectible Reality",
@@ -62,6 +64,7 @@ export default function RootLayout({
         <GlobalNotification />
         <Providers>
           <StartingScreen />
+       <UserDrawerWrapper />
           <div className="opacity-0 transition-opacity duration-500" id="main-content">
             {children}
           </div>
