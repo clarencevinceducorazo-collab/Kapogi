@@ -199,11 +199,12 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
 
   // Typing indicators
   const [adminTyping, setAdminTyping] = useState<{ isTyping: boolean; isAI: boolean }>({ isTyping: false, isAI: false });
-  const userTypingRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const aiCooldownRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Blocks input for AI_COOLDOWN_MS after an AI reply arrives so the AI can
-  // always see a clean last-user-message before the cooldown resets.
-  const [aiCooldown, setAiCooldown] = useState(false);
+  const userTypingRef        = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Hard auto-clear ref: if admin-typing stop signal is ever missed (network drop,
+  // race condition, message arriving before subscription), this guarantees the
+  // input unlocks after MAX_AI_TYPING_MS. Prevents the "stuck locked forever" bug.
+  const adminTypingClearRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const MAX_AI_TYPING_MS     = 12_000; // 12s: server delay(3s) + Groq max(~8s) + buffer(1s)
 
   const ablyRef          = useRef<Ably.Realtime | null>(null);
   const channelRef       = useRef<Ably.RealtimeChannel | null>(null);
@@ -236,8 +237,10 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
     const channel = ably.channels.get(channelName);
     channelRef.current = channel;
 
+    // user-connected is published AFTER loadHistory() so subscriptions are
+    // fully attached before the admin gets notified and triggers AI replies.
+    // This prevents the race condition where AI replies arrive before subscriptions.
     const inboxChannel = ably.channels.get("kapogian-support-inbox");
-    inboxChannel.publish("user-connected", { walletAddress });
 
     channel.subscribe("admin-message", (msg) => {
       if (destroyed) return;
@@ -254,12 +257,11 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
       if (!historyLoadedRef.current) { liveBufferRef.current.push(incoming); return; }
       setMessages((prev) => mergeMessage(prev, incoming));
       setUnreadCount((c) => c + 1);
-      // If this was an AI reply, lock input for 2s so the AI cooldown
-      // on the admin side expires before the user can send again.
+      // Belt-and-suspenders: if admin-typing stop signal was missed for any reason,
+      // the message arrival itself clears the lock. Cancel the auto-clear timer too.
       if (incoming.isAI) {
-        setAiCooldown(true);
-        if (aiCooldownRef.current) clearTimeout(aiCooldownRef.current);
-        aiCooldownRef.current = setTimeout(() => setAiCooldown(false), 2500);
+        if (adminTypingClearRef.current) { clearTimeout(adminTypingClearRef.current); adminTypingClearRef.current = null; }
+        setAdminTyping({ isTyping: false, isAI: false });
       }
     });
 
@@ -320,30 +322,62 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
       const isTyping: boolean = msg.data?.isTyping ?? false;
       const isAI: boolean     = msg.data?.isAI ?? false;
       setAdminTyping({ isTyping, isAI });
-      // Auto-clear after 4s in case the stop event is missed
-      if (isTyping) {
-        setTimeout(() => {
-          if (!destroyed) setAdminTyping((prev) => prev.isTyping ? { isTyping: false, isAI: false } : prev);
-        }, 4000);
+
+      if (isTyping && isAI) {
+        // Start hard auto-clear — if the stop signal is ever missed due to
+        // network issues, Ably reconnect, or race conditions, this guarantees
+        // the input unlocks after MAX_AI_TYPING_MS.
+        if (adminTypingClearRef.current) clearTimeout(adminTypingClearRef.current);
+        adminTypingClearRef.current = setTimeout(() => {
+          if (!destroyed) {
+            console.warn("[Chat] admin-typing stop was never received — force-clearing lock");
+            setAdminTyping({ isTyping: false, isAI: false });
+          }
+        }, MAX_AI_TYPING_MS);
+      } else {
+        // Stop signal received — cancel the auto-clear
+        if (adminTypingClearRef.current) {
+          clearTimeout(adminTypingClearRef.current);
+          adminTypingClearRef.current = null;
+        }
       }
     });
 
     const CLOSED_CODES = new Set([80017, 80000, 90001]);
     const loadHistory = async () => {
       try {
-        await new Promise<void>((resolve, reject) => {
-          if (destroyed) return resolve();
-          if (ably.connection.state === "connected") return resolve();
-          if (ably.connection.state === "closed" || ably.connection.state === "failed")
-            return reject(Object.assign(new Error("closed"), { code: 80017 }));
-          ably.connection.once("connected", () => resolve());
-          ably.connection.once("failed",    () => reject(Object.assign(new Error("failed"), { code: 80000 })));
-          ably.connection.once("closed",    () => reject(Object.assign(new Error("closed"), { code: 80017 })));
-        });
+        // Wait for connected with a 5s local timeout — Ably's internal retry
+        // can take up to 15s which blocks the entire chat. If we can't connect
+        // within 5s, skip history and just show live messages.
+        await Promise.race([
+          new Promise<void>((resolve, reject) => {
+            if (destroyed) return resolve();
+            if (ably.connection.state === "connected") return resolve();
+            if (ably.connection.state === "closed" || ably.connection.state === "failed")
+              return reject(Object.assign(new Error("closed"), { code: 80017 }));
+            ably.connection.once("connected", () => resolve());
+            ably.connection.once("failed",    () => reject(Object.assign(new Error("failed"), { code: 80000 })));
+            ably.connection.once("closed",    () => reject(Object.assign(new Error("closed"), { code: 80017 })));
+          }),
+          new Promise<void>((_, reject) =>
+            setTimeout(() => reject(Object.assign(new Error("timeout"), { code: 90001 })), 5000)
+          ),
+        ]);
         if (destroyed) return;
-        await channel.attach();
+        // Also race channel.attach() and history() against a 5s timeout each
+        await Promise.race([
+          channel.attach(),
+          new Promise<void>((_, reject) =>
+            setTimeout(() => reject(Object.assign(new Error("attach timeout"), { code: 90001 })), 5000)
+          ),
+        ]);
         if (destroyed) return;
-        const page = await channel.history({ limit: 100, direction: "forwards" });
+        const page = await Promise.race([
+          channel.history({ limit: 100, direction: "forwards" }),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(Object.assign(new Error("history timeout"), { code: 90001 })), 5000)
+          ),
+        ]);
         if (destroyed) return;
         const historical: SupportMessage[] = page.items
           .filter((m) => m.name === "user-message" || m.name === "admin-message")
@@ -358,6 +392,8 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
             button:      m.data.button ?? null,
           }))
           .sort((a, b) => a.timestamp - b.timestamp);
+        // Check before flushing: if buffer has an AI message, clear the typing lock
+        const bufferHasAI = liveBufferRef.current.some((m) => m.isAI);
         setMessages(() => {
           let merged = historical;
           for (const live of liveBufferRef.current) merged = mergeMessage(merged, live);
@@ -365,16 +401,33 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
           historyLoadedRef.current = true;
           return merged;
         });
+        if (bufferHasAI) {
+          // AI reply was buffered while history loaded — typing lock must be cleared
+          if (adminTypingClearRef.current) { clearTimeout(adminTypingClearRef.current); adminTypingClearRef.current = null; }
+          setAdminTyping({ isTyping: false, isAI: false });
+        }
+        // Now that all subscriptions are attached and history is loaded,
+        // notify admin of our presence. This prevents AI replies arriving
+        // before we're ready to receive them.
+        if (!destroyed) inboxChannel.publish("user-connected", { walletAddress }).catch(() => {});
       } catch (e: any) {
         const code = e?.code ?? e?.statusCode;
         if (!CLOSED_CODES.has(code) && !destroyed) console.warn("History load failed:", e);
         if (!destroyed) {
           historyLoadedRef.current = true;
+          // Same: check if buffer has an AI message before flushing
+          const errorBufHasAI = liveBufferRef.current.some((m) => m.isAI);
           setMessages(() => {
             const flushed = liveBufferRef.current;
             liveBufferRef.current = [];
             return flushed;
           });
+          if (errorBufHasAI) {
+            if (adminTypingClearRef.current) { clearTimeout(adminTypingClearRef.current); adminTypingClearRef.current = null; }
+            setAdminTyping({ isTyping: false, isAI: false });
+          }
+          // Still notify admin even if history failed — just use live messages
+          if (!destroyed) inboxChannel.publish("user-connected", { walletAddress }).catch(() => {});
         }
       }
     };
@@ -384,7 +437,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
       destroyed = true;
       if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
       if (userTypingRef.current) clearTimeout(userTypingRef.current);
-      if (aiCooldownRef.current) clearTimeout(aiCooldownRef.current);
+      if (adminTypingClearRef.current) clearTimeout(adminTypingClearRef.current);
       channel.unsubscribe();
       ably.close();
       webrtc.hangup();
@@ -444,7 +497,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
   // ── Send message ──────────────────────────────────────────────────────────
   const handleSend = useCallback(async () => {
     const text = input.trim();
-    if (!text || !channelRef.current || sending || aiCooldown) return;
+    if (!text || !channelRef.current || sending || adminTyping.isAI) return;
 
     setSending(true);
     const clientMsgId = `cmid-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -481,14 +534,14 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
     } finally {
       setSending(false);
     }
-  }, [input, sending, walletAddress, aiCooldown]);
+  }, [input, sending, walletAddress, adminTyping.isAI]);
 
   // ── Quick button handler ───────────────────────────────────────────────────
   const handleQuickButton = useCallback(async (btn: QuickButton) => {
     if (btn.type === "link") {
       window.open(btn.value.startsWith("http") ? btn.value : btn.value, "_blank", "noopener");
       const text = `${btn.emoji ? btn.emoji + " " : ""}${btn.label}`;
-      if (!channelRef.current || sending || aiCooldown) return;
+      if (!channelRef.current || sending || adminTyping.isAI) return;
       setSending(true);
       const clientMsgId = `cmid-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const timestamp   = Date.now();
@@ -504,7 +557,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
       } finally { setSending(false); }
     } else {
       const text = btn.value;
-      if (!channelRef.current || sending || aiCooldown) return;
+      if (!channelRef.current || sending || adminTyping.isAI) return;
       setSending(true);
       const clientMsgId = `cmid-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const timestamp   = Date.now();
@@ -520,7 +573,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
         setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
       } finally { setSending(false); }
     }
-  }, [sending, walletAddress, aiCooldown]);
+  }, [sending, walletAddress, adminTyping.isAI]);
 
   // Publish user typing indicator to admin
   const handleInputChange = useCallback((val: string) => {
@@ -694,7 +747,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
                   <button
                     key={btn.id}
                     onClick={() => handleQuickButton(btn)}
-                    disabled={sending || !connected || aiCooldown}
+                    disabled={sending || !connected || adminTyping.isAI}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-[10px] font-black transition-all disabled:opacity-40 ${
                       btn.type === "link"
                         ? "bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100 hover:border-sky-400"
@@ -717,16 +770,16 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
                 value={input}
                 onChange={(e) => handleInputChange(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={aiCooldown ? "AI is replying, please wait..." : "Type your concern..."}
+                placeholder={adminTyping.isAI ? "Kapo is typing a reply..." : "Type your concern..."}
                 maxLength={500}
-                disabled={aiCooldown}
+                disabled={adminTyping.isAI}
                 className={`w-full h-10 rounded-2xl border-2 px-4 text-sm font-semibold outline-none transition-all bg-slate-50 ${
-                  aiCooldown
+                  adminTyping.isAI
                     ? "border-purple-200 bg-purple-50 text-slate-400 cursor-not-allowed placeholder:text-purple-300"
                     : "border-slate-200 focus:border-black"
                 }`}
               />
-              {aiCooldown && (
+              {adminTyping.isAI && (
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-0.5">
                   {[0,1,2].map(i => (
                     <span key={i} className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: `${i*150}ms` }} />
@@ -736,7 +789,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
             </div>
             <button
               onClick={handleSend}
-              disabled={!input.trim() || sending || !connected || aiCooldown}
+              disabled={!input.trim() || sending || !connected || adminTyping.isAI}
               className="w-10 h-10 rounded-2xl bg-black text-white border-2 border-black flex items-center justify-center disabled:opacity-40 hover:bg-slate-800 transition-colors flex-shrink-0"
               aria-label="Send message"
             >
