@@ -29,7 +29,9 @@ const KEY_COOLDOWN_MS = 60_000; // skip rate-limited key for 60 seconds
 // Groq typically responds in ~1-2s; we hold the reply until this window expires.
 // This makes the AI feel like it's actually reading and typing, not a robot.
 // If Groq takes longer than this, the reply is published immediately after.
-const MIN_REPLY_DELAY_MS = 5000; // 5 seconds feels natural for reading + typing
+const MIN_REPLY_DELAY_MS = 3000; // 3 seconds — natural but not frustratingly slow
+// NOTE: Total perceived time = Groq response time (~1-2s) + remaining delay.
+// With fast Groq: ~3s total. With slow Groq (~2.5s): ~3s total. Max ~3s always.
 
 function isKeyAvailable(keyLabel: string): boolean {
   const until = keyRateLimitedUntil.get(keyLabel);
