@@ -524,30 +524,62 @@ export function AdminMessagesTab() {
       <div className="w-[300px] flex-shrink-0 flex flex-col gap-3">
         <div className="bg-white border-4 border-black rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden h-full flex flex-col">
 
-          {/* Header */}
-          <div className="bg-black text-white px-4 py-3 flex items-center justify-between flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <Inbox size={16} />
-              <span className="font-black text-sm uppercase tracking-tight">Inbox</span>
-              {totalUnread > 0 && (
-                <span className="w-5 h-5 bg-red-500 text-[9px] font-black rounded-full flex items-center justify-center">{totalUnread > 9 ? "9+" : totalUnread}</span>
-              )}
+          {/* ── Header: two rows ── */}
+          <div className="bg-black text-white px-4 pt-3 pb-2 flex-shrink-0">
+            {/* Row 1: title + connection status */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Inbox size={15} />
+                <span className="font-black text-sm uppercase tracking-tight">Inbox</span>
+                {totalUnread > 0 && (
+                  <span className="w-5 h-5 bg-red-500 text-[9px] font-black rounded-full flex items-center justify-center">
+                    {totalUnread > 9 ? "9+" : totalUnread}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className={`w-2 h-2 rounded-full ${connected ? "bg-green-400" : "bg-slate-500"}`} />
+                <span className={`text-[9px] font-black uppercase ${connected ? "text-green-400" : "text-slate-500"}`}>
+                  {connected ? "Live" : "Off"}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setShowBroadcastPanel((v) => !v)} title="Send broadcast notification"
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 transition-all text-[9px] font-black uppercase ${showBroadcastPanel ? "bg-orange-500 border-orange-300 text-white" : "bg-white/10 border-white/20 text-white/50 hover:bg-white/20"}`}>
+            {/* Row 2: action buttons — full width, equal, always visible */}
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => { setShowBroadcastPanel((v) => !v); setShowQBPanel(false); }}
+                title="Send broadcast notification"
+                className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border-2 transition-all text-[9px] font-black uppercase ${
+                  showBroadcastPanel
+                    ? "bg-orange-500 border-orange-400 text-white"
+                    : "bg-white/10 border-white/20 text-white/70 hover:bg-white/20 hover:border-white/40"
+                }`}
+              >
                 <Bell size={11} /> Notify
               </button>
-              <button onClick={() => setShowQBPanel((v) => !v)} title="Manage quick reply buttons"
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 transition-all text-[9px] font-black uppercase ${showQBPanel ? "bg-cyan-500 border-cyan-300 text-white" : "bg-white/10 border-white/20 text-white/50 hover:bg-white/20"}`}>
+              <button
+                onClick={() => { setShowQBPanel((v) => !v); setShowBroadcastPanel(false); }}
+                title="Manage quick reply buttons"
+                className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border-2 transition-all text-[9px] font-black uppercase ${
+                  showQBPanel
+                    ? "bg-cyan-500 border-cyan-400 text-white"
+                    : "bg-white/10 border-white/20 text-white/70 hover:bg-white/20 hover:border-white/40"
+                }`}
+              >
                 <LayoutGrid size={11} /> Buttons
               </button>
-              <button onClick={() => setAiMode((v) => !v)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 transition-all text-[9px] font-black uppercase ${aiMode ? "bg-purple-500 border-purple-300 text-white shadow-[0_0_8px_rgba(168,85,247,0.6)]" : "bg-white/10 border-white/20 text-white/50 hover:bg-white/20"}`}>
+              <button
+                onClick={() => setAiMode((v) => !v)}
+                title={aiMode ? "AI auto-reply ON" : "AI auto-reply OFF"}
+                className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border-2 transition-all text-[9px] font-black uppercase ${
+                  aiMode
+                    ? "bg-purple-500 border-purple-400 text-white shadow-[0_0_8px_rgba(168,85,247,0.5)]"
+                    : "bg-white/10 border-white/20 text-white/70 hover:bg-white/20 hover:border-white/40"
+                }`}
+              >
                 {aiMode ? <Bot size={11} /> : <BotOff size={11} />}
                 {aiMode ? "AI On" : "AI Off"}
               </button>
-              <div className={`w-2 h-2 rounded-full ${connected ? "bg-green-400" : "bg-slate-500"}`} />
             </div>
           </div>
 
@@ -670,7 +702,7 @@ export function AdminMessagesTab() {
           {aiMode && (
             <div className="bg-purple-50 border-b-2 border-purple-100 px-3 py-2 flex items-center gap-2 flex-shrink-0">
               <Sparkles size={11} className="text-purple-500 flex-shrink-0" />
-              <p className="text-[10px] font-semibold text-purple-600 leading-tight">Kapogian Support v1 auto-replies when you're away</p>
+              <p className="text-[10px] font-semibold text-purple-600 leading-tight">Kapogian v1 auto-replies when you're away</p>
             </div>
           )}
 
