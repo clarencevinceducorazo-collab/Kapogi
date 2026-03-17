@@ -5,7 +5,7 @@ import * as Ably from "ably";
 import {
   MessageCircle, Send, Loader2, User, ShieldCheck,
   Inbox, Circle, Phone, PhoneOff, PhoneCall, PhoneMissed,
-  Bot, BotOff, Sparkles, Link2, Cpu, Plus, Trash2, LayoutGrid, ChevronDown, ChevronUp,
+  Bot, BotOff, Sparkles, Plus, Trash2, LayoutGrid,
   Bell, Image as ImageIcon, Send as SendIcon, X as XIcon,
 } from "lucide-react";
 
@@ -31,28 +31,27 @@ type AdminCallState =
   | { status: "calling";  walletAddress: string }
   | { status: "active";   walletAddress: string; startedAt: number };
 
-// ─── Quick Button types ──────────────────────────────────────────────────────
+// ─── Quick Button types ───────────────────────────────────────────────────────
 
 export interface QuickButton {
   id: string;
   label: string;
-  /** "link" opens a URL in new tab and sends a message; "ai" sends a query to AI */
   type: "link" | "ai";
-  value: string;   // URL for link, question text for ai
+  value: string;
   emoji?: string;
 }
 
 const PRESET_BUTTONS: Omit<QuickButton, "id">[] = [
-  { label: "Generate & Mint",   type: "link", value: "/generate",                    emoji: "⚡" },
-  { label: "Kapo Shop",         type: "link", value: "/shop",                        emoji: "🛍️" },
-  { label: "Discord Server",    type: "link", value: "https://discord.gg/kapogian",  emoji: "💬" },
-  { label: "View Roadmap",      type: "link", value: "/roadmap",                     emoji: "🗺️" },
-  { label: "Podium",            type: "link", value: "/podium",                      emoji: "🏆" },
-  { label: "My Profile",        type: "link", value: "/profile",                     emoji: "👤" },
-  { label: "Whitepaper",        type: "link", value: "/whitepaper",                  emoji: "📄" },
-  { label: "How many mints?",   type: "ai",   value: "How many total Kapogian NFTs have been minted so far?", emoji: "🔢" },
-  { label: "My Orders",         type: "ai",   value: "Can you help me check the status of my order?",        emoji: "📦" },
-  { label: "Shop Items",        type: "ai",   value: "What items are currently available in the Kapo Shop?", emoji: "🧾" },
+  { label: "Generate & Mint", type: "link", value: "/generate",                   emoji: "⚡" },
+  { label: "Kapo Shop",       type: "link", value: "/shop",                       emoji: "🛍️" },
+  { label: "Discord Server",  type: "link", value: "https://discord.gg/kapogian", emoji: "💬" },
+  { label: "View Roadmap",    type: "link", value: "/roadmap",                    emoji: "🗺️" },
+  { label: "Podium",          type: "link", value: "/podium",                     emoji: "🏆" },
+  { label: "My Profile",      type: "link", value: "/profile",                    emoji: "👤" },
+  { label: "Whitepaper",      type: "link", value: "/whitepaper",                 emoji: "📄" },
+  { label: "How many mints?", type: "ai",   value: "How many total Kapogian NFTs have been minted so far?", emoji: "🔢" },
+  { label: "My Orders",       type: "ai",   value: "Can you help me check the status of my order?",        emoji: "📦" },
+  { label: "Shop Items",      type: "ai",   value: "What items are currently available in the Kapo Shop?", emoji: "🧾" },
 ];
 
 const QB_STORAGE_KEY    = "kapogian_quick_buttons";
@@ -64,11 +63,38 @@ function loadKnownWallets(): string[] {
 function saveKnownWallet(addr: string): void {
   try {
     const list = loadKnownWallets();
-    if (!list.includes(addr)) {
-      list.push(addr);
-      localStorage.setItem(KNOWN_WALLETS_KEY, JSON.stringify(list));
-    }
+    if (!list.includes(addr)) { list.push(addr); localStorage.setItem(KNOWN_WALLETS_KEY, JSON.stringify(list)); }
   } catch {}
+}
+
+// ─── Image compression ───────────────────────────────────────────────────────
+
+async function compressImage(file: File, maxSizeKB = 50): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement("canvas");
+      let { width, height } = img;
+      const maxDim = 600;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) { height = Math.round((height / width) * maxDim); width = maxDim; }
+        else { width = Math.round((width / height) * maxDim); height = maxDim; }
+      }
+      canvas.width = width; canvas.height = height;
+      canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
+      let quality = 0.7;
+      let result  = canvas.toDataURL("image/jpeg", quality);
+      while (result.length > maxSizeKB * 1024 * 1.37 && quality > 0.1) {
+        quality -= 0.1;
+        result = canvas.toDataURL("image/jpeg", quality);
+      }
+      resolve(result);
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -110,7 +136,7 @@ export function AdminMessagesTab() {
   const [callState, setCallState]         = useState<AdminCallState>({ status: "idle" });
   const [typingUsers, setTypingUsers]     = useState<Set<string>>(new Set());
 
-  // ── Quick Buttons state ──────────────────────────────────────────────────
+  // ── Quick Buttons ─────────────────────────────────────────────────────────
   const [quickButtons, setQuickButtons] = useState<QuickButton[]>(() => {
     if (typeof window === "undefined") return [];
     try { return JSON.parse(localStorage.getItem(QB_STORAGE_KEY) ?? "[]"); } catch { return []; }
@@ -129,64 +155,55 @@ export function AdminMessagesTab() {
   });
   const [aiThinking, setAiThinking] = useState<string | null>(null);
 
-  // ── Broadcast Notification state ──────────────────────────────────────────
+  // ── Broadcast state ───────────────────────────────────────────────────────
   const [showBroadcastPanel, setShowBroadcastPanel] = useState(false);
   const [broadcastTitle, setBroadcastTitle]         = useState("");
   const [broadcastDesc, setBroadcastDesc]           = useState("");
-  const [broadcastImage, setBroadcastImage]         = useState<string | null>(null); // base64 data URL
+  const [broadcastImage, setBroadcastImage]         = useState<string | null>(null);
   const [broadcastImageName, setBroadcastImageName] = useState<string>("");
   const [isBroadcasting, setIsBroadcasting]         = useState(false);
-  const [broadcastTarget, setBroadcastTarget]       = useState<string>("all"); // "all" or wallet address
+  const [broadcastTarget, setBroadcastTarget]       = useState<string>("all");
+  const [broadcastButton, setBroadcastButton]       = useState<QuickButton | null>(null);
+
   const aiModeRef = useRef(aiMode);
   useEffect(() => {
     aiModeRef.current = aiMode;
     localStorage.setItem("kapogian_ai_mode", String(aiMode));
   }, [aiMode]);
 
-  // Sync quickButtons: persist + broadcast to all user channels
+  // Sync quickButtons
   useEffect(() => {
     quickButtonsRef.current = quickButtons;
     localStorage.setItem(QB_STORAGE_KEY, JSON.stringify(quickButtons));
-    // Broadcast to all currently-subscribed user channels via Ably
     const ably = ablyRef.current;
     if (!ably) return;
     const payload = { buttons: quickButtons };
-    // Broadcast on inbox channel so UserDrawer can pick it up globally
     ably.channels.get("kapogian-support-inbox").publish("quick-buttons-update", payload).catch(() => {});
-    // Also push to each open per-user channel so they get it even if drawer is open
-    channelsRef.current.forEach((ch) => {
-      ch.publish("quick-buttons-update", payload).catch(() => {});
-    });
+    channelsRef.current.forEach((ch) => { ch.publish("quick-buttons-update", payload).catch(() => {}); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quickButtons]);
 
-  // Keep refs in sync with state
   useEffect(() => { conversationsRef.current = conversations; }, [conversations]);
   useEffect(() => { activeWalletRef.current = activeWallet; }, [activeWallet]);
 
-  // Ably refs
+  // Refs
   const ablyRef          = useRef<Ably.Realtime | null>(null);
   const channelsRef      = useRef<Map<string, Ably.RealtimeChannel>>(new Map());
   const bottomRef        = useRef<HTMLDivElement>(null);
   const inputRef         = useRef<HTMLInputElement>(null);
-  // Mirrors of state — always current inside Ably callbacks (no stale closures)
   const conversationsRef = useRef<Map<string, Conversation>>(new Map());
   const activeWalletRef  = useRef<string | null>(null);
-  // Dedup: which wallets have an AI call already in-flight
   const aiInFlightRef    = useRef<Set<string>>(new Set());
-  // Cooldown: timestamp of last AI trigger per wallet — prevents rapid re-triggering
   const aiLastTriggerRef = useRef<Map<string, number>>(new Map());
-  const AI_COOLDOWN_MS   = 4000; // min 4s between AI replies per wallet
+  const AI_COOLDOWN_MS   = 4000;
+  const pcRef            = useRef<RTCPeerConnection | null>(null);
+  const localStreamRef   = useRef<MediaStream | null>(null);
+  const remoteAudio      = useRef<HTMLAudioElement | null>(null);
+  const iceBufRef        = useRef<RTCIceCandidateInit[]>([]);
+  const bootedRef        = useRef(false);
+  const adminTypingRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // WebRTC refs
-  const pcRef          = useRef<RTCPeerConnection | null>(null);
-  const localStreamRef = useRef<MediaStream | null>(null);
-  const remoteAudio    = useRef<HTMLAudioElement | null>(null);
-  const iceBufRef      = useRef<RTCIceCandidateInit[]>([]);
-  const bootedRef          = useRef(false);
-  const adminTypingRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // ── WebRTC teardown ────────────────────────────────────────────────────
+  // ── WebRTC ────────────────────────────────────────────────────────────────
   const hangup = useCallback(() => {
     pcRef.current?.close(); pcRef.current = null;
     localStreamRef.current?.getTracks().forEach((t) => t.stop()); localStreamRef.current = null;
@@ -194,7 +211,6 @@ export function AdminMessagesTab() {
     iceBufRef.current = [];
   }, []);
 
-  // ── Build offerer PC ──────────────────────────────────────────────────
   const startCall = useCallback(async (ch: Ably.RealtimeChannel, mic: MediaStream) => {
     pcRef.current?.close(); pcRef.current = null; iceBufRef.current = [];
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
@@ -220,13 +236,7 @@ export function AdminMessagesTab() {
   // ── Quick Button helpers ──────────────────────────────────────────────────
   const addQuickButton = useCallback(() => {
     if (!newBtnLabel.trim() || !newBtnValue.trim()) return;
-    const btn: QuickButton = {
-      id: `qb-${Date.now()}`,
-      label: newBtnLabel.trim(),
-      type: newBtnType,
-      value: newBtnValue.trim(),
-      emoji: newBtnEmoji.trim() || undefined,
-    };
+    const btn: QuickButton = { id: `qb-${Date.now()}`, label: newBtnLabel.trim(), type: newBtnType, value: newBtnValue.trim(), emoji: newBtnEmoji.trim() || undefined };
     setQuickButtons((prev) => [...prev, btn]);
     setNewBtnLabel(""); setNewBtnValue(""); setNewBtnEmoji("");
   }, [newBtnLabel, newBtnType, newBtnValue, newBtnEmoji]);
@@ -242,7 +252,7 @@ export function AdminMessagesTab() {
     });
   }, []);
 
-  // ── Broadcast Notification ────────────────────────────────────────────────
+  // ── Broadcast ─────────────────────────────────────────────────────────────
   const sendBroadcast = useCallback(async () => {
     if (!broadcastTitle.trim() && !broadcastDesc.trim()) return;
     const ably = ablyRef.current;
@@ -254,71 +264,57 @@ export function AdminMessagesTab() {
         desc:      broadcastDesc.trim(),
         image:     broadcastImage ?? null,
         timestamp: Date.now(),
-        // "all" means every user, otherwise a specific wallet address
         target:    broadcastTarget,
+        button:    broadcastButton
+          ? { label: broadcastButton.label, type: broadcastButton.type, value: broadcastButton.value, emoji: broadcastButton.emoji }
+          : null,
       };
 
-  // In sendBroadcast, replace the targeted block:
-if (broadcastTarget === "all") {
-  await ably.channels.get("kapogian-support-inbox")
-    .publish("broadcast-notification", payload);
-} else {
-  // ✅ Personal channel ONLY — no inbox publish for targeted sends
-  await ably.channels
-    .get(`kapogian-support:${broadcastTarget.toLowerCase()}`)
-    .publish("broadcast-notification", payload);
-}
+      if (broadcastTarget === "all") {
+        await ably.channels.get("kapogian-support-inbox").publish("broadcast-notification", payload);
+      } else {
+        await ably.channels.get(`kapogian-support:${broadcastTarget.toLowerCase()}`).publish("broadcast-notification", payload);
+      }
 
       setBroadcastTitle("");
       setBroadcastDesc("");
       setBroadcastImage(null);
       setBroadcastImageName("");
       setBroadcastTarget("all");
+      setBroadcastButton(null);
       setShowBroadcastPanel(false);
     } catch (e) {
       console.error("[Broadcast] failed:", e);
     } finally {
       setIsBroadcasting(false);
     }
-  }, [broadcastTitle, broadcastDesc, broadcastImage, broadcastTarget]);
-const handleBroadcastImage = useCallback(async (file: File) => {
-  try {
-    const compressed = await compressImage(file);
-    setBroadcastImage(compressed);
-    setBroadcastImageName(file.name);
+  }, [broadcastTitle, broadcastDesc, broadcastImage, broadcastTarget, broadcastButton]);
 
-    // Show size info in console so you can verify
-    const kb = Math.round((compressed.length * 3) / 4 / 1024);
-    console.log(`[Image] compressed to ~${kb}KB`);
-  } catch (e) {
-    console.error("[Image] compression failed:", e);
-    alert("Failed to process image. Please try a different file.");
-  }
-}, []);
+  const handleBroadcastImage = useCallback(async (file: File) => {
+    try {
+      const compressed = await compressImage(file);
+      setBroadcastImage(compressed);
+      setBroadcastImageName(file.name);
+      const kb = Math.round((compressed.length * 3) / 4 / 1024);
+      console.log(`[Image] compressed to ~${kb}KB`);
+    } catch (e) {
+      console.error("[Image] compression failed:", e);
+      alert("Failed to process image. Please try a different file.");
+    }
+  }, []);
 
   // ── AI auto-reply ─────────────────────────────────────────────────────────
   const triggerAIReply = useCallback(async (walletAddress: string) => {
-    // Guard 1: AI mode off
     if (!aiModeRef.current) return;
-    // Guard 2: already in-flight for this wallet
     if (aiInFlightRef.current.has(walletAddress)) return;
-    // Guard 3: cooldown — don't fire again within AI_COOLDOWN_MS
     const lastTrigger = aiLastTriggerRef.current.get(walletAddress) ?? 0;
     if (Date.now() - lastTrigger < AI_COOLDOWN_MS) return;
-
-    // Read the latest messages directly from the ref (always current)
     const conv = conversationsRef.current.get(walletAddress);
     if (!conv || conv.messages.length === 0) return;
-
-    // Guard 4: last message must be from user (not AI or admin)
     const lastMsg = conv.messages[conv.messages.length - 1];
     if (!lastMsg || lastMsg.sender !== "user") return;
-
-    // Guard 5: no AI reply in the last 3 messages (prevents greeting loop)
     const recentMsgs = conv.messages.slice(-3);
-    const hasRecentAI = recentMsgs.some((m) => m.sender === "admin" && m.isAI);
-    if (hasRecentAI) return;
-
+    if (recentMsgs.some((m) => m.sender === "admin" && m.isAI)) return;
     aiInFlightRef.current.add(walletAddress);
     aiLastTriggerRef.current.set(walletAddress, Date.now());
     setAiThinking(walletAddress);
@@ -326,15 +322,9 @@ const handleBroadcastImage = useCallback(async (file: File) => {
       const res = await fetch("/api/ai-reply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          walletAddress,
-          // Pass isAI flag so the route can filter out AI replies from history
-          messages: conv.messages.map((m) => ({ sender: m.sender, text: m.text, isAI: m.isAI ?? false })),
-        }),
+        body: JSON.stringify({ walletAddress, messages: conv.messages.map((m) => ({ sender: m.sender, text: m.text, isAI: m.isAI ?? false })) }),
       });
       if (!res.ok) console.warn("[AI Reply] non-OK response:", res.status);
-      // Reply is published by the API route via Ably REST and arrives
-      // through the admin-message subscription below — no extra work needed here.
     } catch (e) {
       console.warn("[AI Reply] fetch failed:", e);
     } finally {
@@ -343,27 +333,20 @@ const handleBroadcastImage = useCallback(async (file: File) => {
     }
   }, []);
 
-  // ── Subscribe to a user channel ───────────────────────────────────────
+  // ── Subscribe to user channel ─────────────────────────────────────────────
   const subscribeToUser = useCallback((walletAddress: string, ablyInst: Ably.Realtime) => {
     if (channelsRef.current.has(walletAddress)) return;
     const channelName = `kapogian-support:${walletAddress.toLowerCase()}`;
     const ch = ablyInst.channels.get(channelName);
     channelsRef.current.set(walletAddress, ch);
 
-    // History
     (async () => {
       try {
         await ch.attach();
         const page = await ch.history({ limit: 100, direction: "forwards" });
         const historical: SupportMessage[] = page.items
           .filter((m) => m.name === "user-message" || m.name === "admin-message")
-          .map((m) => ({
-            id: m.id ?? `hist-${Math.random()}`,
-            text: m.data.text,
-            sender: (m.name === "admin-message" ? "admin" : "user") as "admin" | "user",
-            timestamp: m.data.timestamp ?? (m as any).timestamp ?? Date.now(),
-            isAI: m.data.isAI ?? false,
-          }))
+          .map((m) => ({ id: m.id ?? `hist-${Math.random()}`, text: m.data.text, sender: (m.name === "admin-message" ? "admin" : "user") as "admin" | "user", timestamp: m.data.timestamp ?? (m as any).timestamp ?? Date.now(), isAI: m.data.isAI ?? false }))
           .sort((a, b) => a.timestamp - b.timestamp);
         if (historical.length > 0) {
           setConversations((prev) => {
@@ -378,47 +361,23 @@ const handleBroadcastImage = useCallback(async (file: File) => {
       } catch (e) { if ((e as any)?.code !== 80017) console.warn("history failed:", e); }
     })();
 
-    // Live user messages
     ch.subscribe("user-message", (msg) => {
-      const newMsg: SupportMessage = {
-        id: msg.id ?? `${Date.now()}`,
-        text: msg.data.text, sender: "user",
-        timestamp: msg.data.timestamp ?? Date.now(),
-      };
-
-      // Deduplicate
+      const newMsg: SupportMessage = { id: msg.id ?? `${Date.now()}`, text: msg.data.text, sender: "user", timestamp: msg.data.timestamp ?? Date.now() };
       const existing = conversationsRef.current.get(walletAddress);
       if (existing?.messages.some((m) => m.id === newMsg.id)) return;
-
-      // Update state — pure, no side-effects inside the updater
       setConversations((prev) => {
         const next = new Map(prev);
         const conv = next.get(walletAddress) ?? { walletAddress, messages: [], unread: 0, lastActivity: Date.now() };
         if (conv.messages.some((m) => m.id === newMsg.id)) return prev;
         const isActive = activeWalletRef.current === walletAddress;
-        next.set(walletAddress, {
-          ...conv,
-          messages: [...conv.messages, newMsg],
-          unread: isActive ? 0 : conv.unread + 1,
-          lastActivity: Date.now(),
-        });
+        next.set(walletAddress, { ...conv, messages: [...conv.messages, newMsg], unread: isActive ? 0 : conv.unread + 1, lastActivity: Date.now() });
         return next;
       });
-
-      // Trigger AI reply OUTSIDE the updater — after state has settled
-      if (aiModeRef.current) {
-        setTimeout(() => triggerAIReply(walletAddress), 300);
-      }
+      if (aiModeRef.current) setTimeout(() => triggerAIReply(walletAddress), 300);
     });
 
-    // Live admin messages (incl. AI replies published by the API route)
     ch.subscribe("admin-message", (msg) => {
-      const newMsg: SupportMessage = {
-        id: msg.id ?? `admin-${Date.now()}`,
-        text: msg.data.text, sender: "admin",
-        timestamp: msg.data.timestamp ?? Date.now(),
-        isAI: msg.data.isAI ?? false,
-      };
+      const newMsg: SupportMessage = { id: msg.id ?? `admin-${Date.now()}`, text: msg.data.text, sender: "admin", timestamp: msg.data.timestamp ?? Date.now(), isAI: msg.data.isAI ?? false };
       setConversations((prev) => {
         const next = new Map(prev);
         const conv = next.get(walletAddress) ?? { walletAddress, messages: [], unread: 0, lastActivity: Date.now() };
@@ -429,7 +388,6 @@ const handleBroadcastImage = useCallback(async (file: File) => {
       });
     });
 
-    // Call signaling
     let offerSent = false;
     ch.subscribe("call-accepted", () => {
       if (offerSent) return;
@@ -442,12 +400,8 @@ const handleBroadcastImage = useCallback(async (file: File) => {
         return { status: "active", walletAddress, startedAt: Date.now() };
       });
     });
-    ch.subscribe("call-rejected", () => {
-      setCallState((prev) => { if (prev.status === "calling" && prev.walletAddress === walletAddress) { hangup(); return { status: "idle" }; } return prev; });
-    });
-    ch.subscribe("call-ended", () => {
-      setCallState((prev) => { if (prev.status !== "idle" && prev.walletAddress === walletAddress) { hangup(); return { status: "idle" }; } return prev; });
-    });
+    ch.subscribe("call-rejected", () => { setCallState((prev) => { if (prev.status === "calling" && prev.walletAddress === walletAddress) { hangup(); return { status: "idle" }; } return prev; }); });
+    ch.subscribe("call-ended",   () => { setCallState((prev) => { if (prev.status !== "idle" && prev.walletAddress === walletAddress) { hangup(); return { status: "idle" }; } return prev; }); });
     ch.subscribe("webrtc-answer", (msg) => {
       const pc = pcRef.current;
       if (!pc || pc.signalingState !== "have-local-offer") return;
@@ -460,21 +414,12 @@ const handleBroadcastImage = useCallback(async (file: File) => {
       if (!pc || !pc.remoteDescription) { iceBufRef.current.push(msg.data.candidate); return; }
       pc.addIceCandidate(new RTCIceCandidate(msg.data.candidate)).catch(()=>{});
     });
-
-    // Typing indicator from user
     ch.subscribe("typing", (msg) => {
       const isTyping: boolean = msg.data?.isTyping ?? false;
-      setTypingUsers((prev) => {
-        const next = new Set(prev);
-        if (isTyping) next.add(walletAddress);
-        else next.delete(walletAddress);
-        return next;
-      });
+      setTypingUsers((prev) => { const next = new Set(prev); if (isTyping) next.add(walletAddress); else next.delete(walletAddress); return next; });
     });
 
-    // Persist this wallet so it appears in inbox after page refresh
     if (typeof window !== "undefined") saveKnownWallet(walletAddress);
-
     setConversations((prev) => {
       if (prev.has(walletAddress)) return prev;
       const next = new Map(prev);
@@ -492,17 +437,10 @@ const handleBroadcastImage = useCallback(async (file: File) => {
     ably.connection.on("connected",    () => setConnected(true));
     ably.connection.on("disconnected", () => setConnected(false));
     ably.connection.on("failed",       () => setConnected(false));
-    // Restore previously seen wallets from localStorage — show them in inbox on load
-    if (typeof window !== "undefined") {
-      loadKnownWallets().forEach((addr) => subscribeToUser(addr, ably));
-    }
-
+    if (typeof window !== "undefined") loadKnownWallets().forEach((addr) => subscribeToUser(addr, ably));
     ably.channels.get("kapogian-support-inbox").subscribe("user-connected", (msg) => {
       const { walletAddress } = msg.data as { walletAddress: string };
-      if (walletAddress) {
-        saveKnownWallet(walletAddress);  // persist for future sessions
-        subscribeToUser(walletAddress, ably);
-      }
+      if (walletAddress) { saveKnownWallet(walletAddress); subscribeToUser(walletAddress, ably); }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -514,7 +452,7 @@ const handleBroadcastImage = useCallback(async (file: File) => {
     if (!ch) return;
     let mic: MediaStream;
     try { mic = await navigator.mediaDevices.getUserMedia({ audio: true, video: false }); }
-    catch { alert("Microphone access is required.\nPlease allow mic access in your browser settings."); return; }
+    catch { alert("Microphone access is required."); return; }
     localStreamRef.current = mic;
     setCallState({ status: "calling", walletAddress: activeWallet });
     try { await ch.publish("call-request", { timestamp: Date.now() }); }
@@ -529,29 +467,16 @@ const handleBroadcastImage = useCallback(async (file: File) => {
     if (ch) await ch.publish("call-ended", { from: "admin", timestamp: Date.now() }).catch(()=>{});
   }, [callState, hangup]);
 
-  // ── Publish admin typing indicator ───────────────────────────────────────
-  const publishAdminTyping = useCallback((isTyping: boolean) => {
-    if (!activeWallet) return;
-    const ch = channelsRef.current.get(activeWallet);
-    if (!ch) return;
-    ch.publish("admin-typing", { isTyping, isAI: false }).catch(() => {});
-  }, [activeWallet]);
-
   const handleReplyInputChange = useCallback((val: string) => {
     setReplyInput(val);
     if (!activeWallet) return;
     const ch = channelsRef.current.get(activeWallet);
     if (!ch) return;
-    // Send typing=true immediately
     ch.publish("admin-typing", { isTyping: true, isAI: false }).catch(() => {});
-    // Auto-clear after 3s of no keystrokes
     if (adminTypingRef.current) clearTimeout(adminTypingRef.current);
-    adminTypingRef.current = setTimeout(() => {
-      ch.publish("admin-typing", { isTyping: false, isAI: false }).catch(() => {});
-    }, 3000);
+    adminTypingRef.current = setTimeout(() => { ch.publish("admin-typing", { isTyping: false, isAI: false }).catch(() => {}); }, 3000);
   }, [activeWallet]);
 
-  // ── Send message ──────────────────────────────────────────────────────────
   const handleSendReply = useCallback(async () => {
     const text = replyInput.trim();
     if (!text || !activeWallet || sending) return;
@@ -561,52 +486,45 @@ const handleBroadcastImage = useCallback(async (file: File) => {
     const msgId = `admin-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const timestamp = Date.now();
     const optimistic: SupportMessage = { id: msgId, text, sender: "admin", timestamp };
-    setConversations((prev) => {
-      const next = new Map(prev); const conv = next.get(activeWallet);
-      if (conv) next.set(activeWallet, { ...conv, messages: [...conv.messages, optimistic], lastActivity: Date.now() });
-      return next;
-    });
+    setConversations((prev) => { const next = new Map(prev); const conv = next.get(activeWallet); if (conv) next.set(activeWallet, { ...conv, messages: [...conv.messages, optimistic], lastActivity: Date.now() }); return next; });
     setReplyInput("");
-    // Clear typing indicator immediately on send
     if (adminTypingRef.current) { clearTimeout(adminTypingRef.current); adminTypingRef.current = null; }
     ch.publish("admin-typing", { isTyping: false, isAI: false }).catch(() => {});
     try { await ch.publish("admin-message", { text, timestamp }); }
     catch {
-      setConversations((prev) => {
-        const next = new Map(prev); const conv = next.get(activeWallet);
-        if (conv) next.set(activeWallet, { ...conv, messages: conv.messages.filter((m) => m.id !== msgId) });
-        return next;
-      });
+      setConversations((prev) => { const next = new Map(prev); const conv = next.get(activeWallet); if (conv) next.set(activeWallet, { ...conv, messages: conv.messages.filter((m) => m.id !== msgId) }); return next; });
       setReplyInput(text);
     } finally { setSending(false); }
   }, [replyInput, activeWallet, sending]);
 
   const selectConversation = (wallet: string) => {
     setActiveWallet(wallet);
-    setConversations((prev) => {
-      const next = new Map(prev); const conv = next.get(wallet);
-      if (conv) next.set(wallet, { ...conv, unread: 0 }); return next;
-    });
+    setConversations((prev) => { const next = new Map(prev); const conv = next.get(wallet); if (conv) next.set(wallet, { ...conv, unread: 0 }); return next; });
     setTimeout(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); inputRef.current?.focus(); }, 50);
   };
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [conversations, activeWallet]);
 
-  // ── Derived ───────────────────────────────────────────────────────────────
   const totalUnread  = Array.from(conversations.values()).reduce((s, c) => s + c.unread, 0);
   const sortedConvs  = Array.from(conversations.values()).sort((a, b) => b.lastActivity - a.lastActivity);
   const activeConv   = activeWallet ? conversations.get(activeWallet) : null;
   const isCallActive = callState.status === "active"  && callState.walletAddress === activeWallet;
   const isCalling    = callState.status === "calling" && callState.walletAddress === activeWallet;
 
+  // All buttons combined (presets + custom) for broadcast button picker
+  const allButtons: QuickButton[] = [
+    ...PRESET_BUTTONS.map((p, i) => ({ ...p, id: `preset-${i}` })),
+    ...quickButtons,
+  ];
+
   return (
     <div className="flex gap-6 h-[calc(100vh-220px)] min-h-[500px]">
 
-      {/* ── Left: Inbox ─────────────────────────────────────────────────── */}
+      {/* ── Left: Inbox ───────────────────────────────────────────────────── */}
       <div className="w-[300px] flex-shrink-0 flex flex-col gap-3">
         <div className="bg-white border-4 border-black rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden h-full flex flex-col">
 
-          {/* Header with AI toggle */}
+          {/* Header */}
           <div className="bg-black text-white px-4 py-3 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
               <Inbox size={16} />
@@ -616,42 +534,16 @@ const handleBroadcastImage = useCallback(async (file: File) => {
               )}
             </div>
             <div className="flex items-center gap-2">
-              {/* Broadcast Notification Toggle */}
-              <button
-                onClick={() => setShowBroadcastPanel((v) => !v)}
-                title="Send broadcast notification to all users"
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 transition-all text-[9px] font-black uppercase ${
-                  showBroadcastPanel
-                    ? "bg-orange-500 border-orange-300 text-white"
-                    : "bg-white/10 border-white/20 text-white/50 hover:bg-white/20"
-                }`}
-              >
-                <Bell size={11} />
-                Notify
+              <button onClick={() => setShowBroadcastPanel((v) => !v)} title="Send broadcast notification"
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 transition-all text-[9px] font-black uppercase ${showBroadcastPanel ? "bg-orange-500 border-orange-300 text-white" : "bg-white/10 border-white/20 text-white/50 hover:bg-white/20"}`}>
+                <Bell size={11} /> Notify
               </button>
-              {/* Quick Buttons Panel Toggle */}
-              <button
-                onClick={() => setShowQBPanel((v) => !v)}
-                title="Manage quick reply buttons"
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 transition-all text-[9px] font-black uppercase ${
-                  showQBPanel
-                    ? "bg-cyan-500 border-cyan-300 text-white"
-                    : "bg-white/10 border-white/20 text-white/50 hover:bg-white/20"
-                }`}
-              >
-                <LayoutGrid size={11} />
-                Buttons
+              <button onClick={() => setShowQBPanel((v) => !v)} title="Manage quick reply buttons"
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 transition-all text-[9px] font-black uppercase ${showQBPanel ? "bg-cyan-500 border-cyan-300 text-white" : "bg-white/10 border-white/20 text-white/50 hover:bg-white/20"}`}>
+                <LayoutGrid size={11} /> Buttons
               </button>
-              {/* AI Mode Toggle */}
-              <button
-                onClick={() => setAiMode((v) => !v)}
-                title={aiMode ? "AI auto-reply ON — click to disable" : "AI auto-reply OFF — click to enable"}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 transition-all text-[9px] font-black uppercase ${
-                  aiMode
-                    ? "bg-purple-500 border-purple-300 text-white shadow-[0_0_8px_rgba(168,85,247,0.6)]"
-                    : "bg-white/10 border-white/20 text-white/50 hover:bg-white/20"
-                }`}
-              >
+              <button onClick={() => setAiMode((v) => !v)}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 transition-all text-[9px] font-black uppercase ${aiMode ? "bg-purple-500 border-purple-300 text-white shadow-[0_0_8px_rgba(168,85,247,0.6)]" : "bg-white/10 border-white/20 text-white/50 hover:bg-white/20"}`}>
                 {aiMode ? <Bot size={11} /> : <BotOff size={11} />}
                 {aiMode ? "AI On" : "AI Off"}
               </button>
@@ -659,47 +551,36 @@ const handleBroadcastImage = useCallback(async (file: File) => {
             </div>
           </div>
 
-          {/* Connected wallet count strip */}
+          {/* Wallet count strip */}
           {sortedConvs.length > 0 && (
             <div className="bg-slate-50 border-b-2 border-slate-100 px-4 py-1.5 flex items-center justify-between flex-shrink-0">
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
                 {sortedConvs.length} wallet{sortedConvs.length !== 1 ? "s" : ""} connected
               </p>
               <button
-                onClick={() => {
-                  if (!confirm("Clear all saved wallets from inbox? This cannot be undone.")) return;
-                  localStorage.removeItem(KNOWN_WALLETS_KEY);
-                  setConversations(new Map());
-                  setActiveWallet(null);
-                }}
-                className="text-[9px] font-black text-red-400 hover:text-red-600 uppercase tracking-widest transition-colors"
-              >
+                onClick={() => { if (!confirm("Clear all saved wallets?")) return; localStorage.removeItem(KNOWN_WALLETS_KEY); setConversations(new Map()); setActiveWallet(null); }}
+                className="text-[9px] font-black text-red-400 hover:text-red-600 uppercase tracking-widest transition-colors">
                 Clear All
               </button>
             </div>
           )}
 
-          {/* ── Broadcast Notification Panel ── */}
+          {/* ── Broadcast Panel ── */}
           {showBroadcastPanel && (
-            <div className="border-b-2 border-slate-100 bg-orange-50 flex-shrink-0">
+            <div className="border-b-2 border-slate-100 bg-orange-50 flex-shrink-0 overflow-y-auto max-h-[520px]">
               <div className="p-3 space-y-2.5">
                 <p className="text-[9px] font-black text-orange-400 uppercase tracking-widest px-1 flex items-center gap-1.5">
                   <Bell size={10} /> Send Notification
                 </p>
 
-                {/* Target selector */}
+                {/* Target */}
                 <div>
                   <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Send To</p>
-                  <select
-                    value={broadcastTarget}
-                    onChange={e => setBroadcastTarget(e.target.value)}
-                    className="w-full h-8 border-2 border-orange-200 bg-white rounded-lg px-2.5 text-[10px] font-black outline-none focus:border-orange-400 text-slate-700"
-                  >
+                  <select value={broadcastTarget} onChange={e => setBroadcastTarget(e.target.value)}
+                    className="w-full h-8 border-2 border-orange-200 bg-white rounded-lg px-2.5 text-[10px] font-black outline-none focus:border-orange-400 text-slate-700">
                     <option value="all">🌐 All Users (Everyone)</option>
                     {Array.from(conversationsRef.current.keys()).map(addr => (
-                      <option key={addr} value={addr}>
-                        👤 {addr.slice(0, 8)}...{addr.slice(-4)}
-                      </option>
+                      <option key={addr} value={addr}>👤 {addr.slice(0, 8)}...{addr.slice(-4)}</option>
                     ))}
                   </select>
                   {broadcastTarget !== "all" && (
@@ -708,30 +589,56 @@ const handleBroadcastImage = useCallback(async (file: File) => {
                 </div>
 
                 {/* Title */}
-                <input
-                  value={broadcastTitle}
-                  onChange={e => setBroadcastTitle(e.target.value)}
-                  placeholder="Notification title..."
-                  maxLength={80}
-                  className="w-full h-8 border-2 border-orange-200 bg-white rounded-lg px-2.5 text-xs font-black outline-none focus:border-orange-400 placeholder:text-slate-300"
-                />
+                <input value={broadcastTitle} onChange={e => setBroadcastTitle(e.target.value)}
+                  placeholder="Notification title..." maxLength={80}
+                  className="w-full h-8 border-2 border-orange-200 bg-white rounded-lg px-2.5 text-xs font-black outline-none focus:border-orange-400 placeholder:text-slate-300" />
 
                 {/* Description */}
-                <textarea
-                  value={broadcastDesc}
-                  onChange={e => setBroadcastDesc(e.target.value)}
-                  placeholder="Message / description..."
-                  maxLength={300}
-                  rows={2}
-                  className="w-full border-2 border-orange-200 bg-white rounded-lg px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-orange-400 resize-none placeholder:text-slate-300"
-                />
+                <textarea value={broadcastDesc} onChange={e => setBroadcastDesc(e.target.value)}
+                  placeholder="Message / description..." maxLength={300} rows={2}
+                  className="w-full border-2 border-orange-200 bg-white rounded-lg px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-orange-400 resize-none placeholder:text-slate-300" />
+
+                {/* ── Button attachment ── */}
+                <div>
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                    Attach Button <span className="normal-case font-semibold text-slate-300">(optional)</span>
+                  </p>
+                  {broadcastButton ? (
+                    /* Selected button preview */
+                    <div className="flex items-center gap-2 bg-white border-2 border-orange-300 rounded-lg px-2.5 py-1.5">
+                      <span className="text-sm">{broadcastButton.emoji || (broadcastButton.type === "link" ? "🔗" : "🤖")}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-black text-slate-800 truncate">{broadcastButton.label}</p>
+                        <p className="text-[9px] font-mono text-slate-400 truncate">{broadcastButton.value}</p>
+                      </div>
+                      <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border flex-shrink-0 ${broadcastButton.type === "link" ? "bg-blue-50 text-blue-500 border-blue-200" : "bg-purple-50 text-purple-500 border-purple-200"}`}>
+                        {broadcastButton.type}
+                      </span>
+                      <button onClick={() => setBroadcastButton(null)}
+                        className="w-5 h-5 flex items-center justify-center rounded-full bg-red-100 text-red-400 hover:bg-red-500 hover:text-white transition-all flex-shrink-0">
+                        <XIcon size={10} />
+                      </button>
+                    </div>
+                  ) : (
+                    /* Button picker grid */
+                    <div className="flex flex-wrap gap-1.5">
+                      {allButtons.map((btn) => (
+                        <button key={btn.id} onClick={() => setBroadcastButton(btn)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-full border-2 border-orange-100 bg-white text-[9px] font-black text-slate-600 hover:border-orange-400 hover:bg-orange-50 transition-all">
+                          {btn.emoji} {btn.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 {/* Image upload */}
                 {broadcastImage ? (
                   <div className="relative flex items-center gap-2 bg-white border-2 border-orange-200 rounded-lg px-2.5 py-1.5">
                     <img src={broadcastImage} alt="preview" className="w-8 h-8 rounded object-cover border border-slate-100 flex-shrink-0" />
                     <span className="text-[9px] font-mono text-slate-400 truncate flex-1">{broadcastImageName}</span>
-                    <button onClick={() => { setBroadcastImage(null); setBroadcastImageName(""); }} className="w-5 h-5 flex items-center justify-center rounded-full bg-red-100 text-red-400 hover:bg-red-500 hover:text-white transition-all flex-shrink-0">
+                    <button onClick={() => { setBroadcastImage(null); setBroadcastImageName(""); }}
+                      className="w-5 h-5 flex items-center justify-center rounded-full bg-red-100 text-red-400 hover:bg-red-500 hover:text-white transition-all flex-shrink-0">
                       <XIcon size={10} />
                     </button>
                   </div>
@@ -744,11 +651,9 @@ const handleBroadcastImage = useCallback(async (file: File) => {
                 )}
 
                 {/* Send button */}
-                <button
-                  onClick={sendBroadcast}
+                <button onClick={sendBroadcast}
                   disabled={(!broadcastTitle.trim() && !broadcastDesc.trim()) || isBroadcasting}
-                  className="w-full h-8 bg-orange-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 disabled:opacity-40 hover:bg-orange-400 transition-colors shadow-[0_2px_0_0_#c2410c]"
-                >
+                  className="w-full h-8 bg-orange-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 disabled:opacity-40 hover:bg-orange-400 transition-colors shadow-[0_2px_0_0_#c2410c]">
                   {isBroadcasting ? (
                     <><span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Sending...</>
                   ) : broadcastTarget === "all" ? (
@@ -761,13 +666,11 @@ const handleBroadcastImage = useCallback(async (file: File) => {
             </div>
           )}
 
-          {/* AI mode info strip */}
+          {/* AI mode strip */}
           {aiMode && (
             <div className="bg-purple-50 border-b-2 border-purple-100 px-3 py-2 flex items-center gap-2 flex-shrink-0">
               <Sparkles size={11} className="text-purple-500 flex-shrink-0" />
-              <p className="text-[10px] font-semibold text-purple-600 leading-tight">
-                Llama 3.3 auto-replies when you're away
-              </p>
+              <p className="text-[10px] font-semibold text-purple-600 leading-tight">Kapogian Support v1 auto-replies when you're away</p>
             </div>
           )}
 
@@ -775,7 +678,6 @@ const handleBroadcastImage = useCallback(async (file: File) => {
           {showQBPanel && (
             <div className="border-b-2 border-slate-100 bg-slate-50 flex-shrink-0 max-h-[420px] overflow-y-auto">
               <div className="p-3 space-y-3">
-                {/* Presets */}
                 <div>
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Presets</p>
                   <div className="flex flex-wrap gap-1.5">
@@ -783,10 +685,7 @@ const handleBroadcastImage = useCallback(async (file: File) => {
                       const already = quickButtons.some((b) => b.label === preset.label);
                       return (
                         <button key={preset.label} onClick={() => addPreset(preset)} disabled={already}
-                          className={`flex items-center gap-1 px-2.5 py-1 rounded-full border-2 text-[9px] font-black transition-all ${
-                            already ? "bg-slate-100 border-slate-200 text-slate-300 cursor-not-allowed"
-                                     : "bg-white border-slate-200 text-slate-600 hover:border-black hover:bg-black hover:text-white"
-                          }`}>
+                          className={`flex items-center gap-1 px-2.5 py-1 rounded-full border-2 text-[9px] font-black transition-all ${already ? "bg-slate-100 border-slate-200 text-slate-300 cursor-not-allowed" : "bg-white border-slate-200 text-slate-600 hover:border-black hover:bg-black hover:text-white"}`}>
                           {preset.emoji} {preset.label}
                           {!already && <Plus size={9} />}
                         </button>
@@ -794,8 +693,6 @@ const handleBroadcastImage = useCallback(async (file: File) => {
                     })}
                   </div>
                 </div>
-
-                {/* Active buttons list */}
                 {quickButtons.length > 0 && (
                   <div>
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Active Buttons ({quickButtons.length})</p>
@@ -807,9 +704,7 @@ const handleBroadcastImage = useCallback(async (file: File) => {
                             <p className="text-[10px] font-black text-slate-800 truncate">{btn.label}</p>
                             <p className="text-[9px] text-slate-400 truncate font-mono">{btn.value}</p>
                           </div>
-                          <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border ${
-                            btn.type === "link" ? "bg-blue-50 text-blue-500 border-blue-200" : "bg-purple-50 text-purple-500 border-purple-200"
-                          }`}>{btn.type}</span>
+                          <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border ${btn.type === "link" ? "bg-blue-50 text-blue-500 border-blue-200" : "bg-purple-50 text-purple-500 border-purple-200"}`}>{btn.type}</span>
                           <button onClick={() => removeQuickButton(btn.id)}
                             className="w-6 h-6 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
                             <Trash2 size={11} />
@@ -819,16 +714,12 @@ const handleBroadcastImage = useCallback(async (file: File) => {
                     </div>
                   </div>
                 )}
-
-                {/* Add new button form */}
                 <div className="bg-white border-2 border-dashed border-slate-200 rounded-xl p-3 space-y-2">
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Add Custom Button</p>
                   <div className="flex gap-2">
-                    <input value={newBtnEmoji} onChange={(e) => setNewBtnEmoji(e.target.value)}
-                      placeholder="😊" maxLength={4}
+                    <input value={newBtnEmoji} onChange={(e) => setNewBtnEmoji(e.target.value)} placeholder="😊" maxLength={4}
                       className="w-10 h-8 text-center border-2 border-slate-200 rounded-lg text-sm outline-none focus:border-black" />
-                    <input value={newBtnLabel} onChange={(e) => setNewBtnLabel(e.target.value)}
-                      placeholder="Button label..." maxLength={40}
+                    <input value={newBtnLabel} onChange={(e) => setNewBtnLabel(e.target.value)} placeholder="Button label..." maxLength={40}
                       className="flex-1 h-8 border-2 border-slate-200 rounded-lg px-2 text-xs font-semibold outline-none focus:border-black" />
                   </div>
                   <div className="flex gap-2">
@@ -850,6 +741,7 @@ const handleBroadcastImage = useCallback(async (file: File) => {
             </div>
           )}
 
+          {/* Conversation list */}
           <div className="overflow-y-auto flex-1">
             {sortedConvs.length === 0 ? (
               <div className="p-8 flex flex-col items-center gap-3 text-center h-full justify-center">
@@ -898,7 +790,7 @@ const handleBroadcastImage = useCallback(async (file: File) => {
         </div>
       </div>
 
-      {/* ── Right: Chat ──────────────────────────────────────────────────── */}
+      {/* ── Right: Chat ───────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col bg-white border-4 border-black rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
         {!activeConv ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center p-8">
@@ -971,9 +863,7 @@ const handleBroadcastImage = useCallback(async (file: File) => {
             {activeWallet && typingUsers.has(activeWallet) && (
               <div className="bg-emerald-50 border-b-2 border-emerald-100 px-5 py-2 flex items-center gap-2.5 flex-shrink-0">
                 <div className="flex items-center gap-0.5">
-                  {[0,1,2].map((i) => (
-                    <span key={i} className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: `${i*150}ms` }} />
-                  ))}
+                  {[0,1,2].map((i) => <span key={i} className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: `${i*150}ms` }} />)}
                 </div>
                 <span className="text-emerald-700 font-black text-[10px] uppercase tracking-wider">User is typing...</span>
               </div>
@@ -993,7 +883,7 @@ const handleBroadcastImage = useCallback(async (file: File) => {
                       ? msg.isAI ? "bg-purple-600 text-white rounded-br-sm" : "bg-black text-white rounded-br-sm"
                       : "bg-white border-2 border-slate-200 text-slate-800 rounded-bl-sm shadow-sm"
                   }`}>
-                    {msg.sender === "user"                && <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">User</p>}
+                    {msg.sender === "user"               && <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">User</p>}
                     {msg.sender === "admin" && msg.isAI  && <p className="text-[9px] font-black text-purple-200 uppercase tracking-widest mb-1 flex items-center gap-1"><Sparkles size={8} /> AI Assistant</p>}
                     {msg.sender === "admin" && !msg.isAI && <p className="text-[9px] font-black text-white/40 uppercase tracking-widest mb-1">You (Admin)</p>}
                     <p>{msg.text}</p>
@@ -1036,52 +926,9 @@ export function useAdminUnreadCount(): number {
       const { walletAddress } = msg.data as { walletAddress: string };
       if (!walletAddress || subscribed.has(walletAddress)) return;
       subscribed.add(walletAddress);
-      ably.channels.get(`kapogian-support:${walletAddress.toLowerCase()}`)
-        .subscribe("user-message", () => setCount((c) => c + 1));
+      ably.channels.get(`kapogian-support:${walletAddress.toLowerCase()}`).subscribe("user-message", () => setCount((c) => c + 1));
     });
     return () => { inbox.unsubscribe(); ably.close(); };
   }, []);
   return count;
-}
-// Add this function near the top of AdminMessagesTab (outside the component)
-async function compressImage(file: File, maxSizeKB = 50): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const canvas = document.createElement("canvas");
-
-      // Scale down to fit within maxSizeKB
-      let { width, height } = img;
-      const maxDim = 600; // max width or height in px
-      if (width > maxDim || height > maxDim) {
-        if (width > height) {
-          height = Math.round((height / width) * maxDim);
-          width = maxDim;
-        } else {
-          width = Math.round((width / height) * maxDim);
-          height = maxDim;
-        }
-      }
-
-      canvas.width  = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(img, 0, 0, width, height);
-
-      // Try progressively lower quality until under maxSizeKB
-      let quality = 0.7;
-      let result  = canvas.toDataURL("image/jpeg", quality);
-
-      while (result.length > maxSizeKB * 1024 * 1.37 && quality > 0.1) {
-        quality -= 0.1;
-        result = canvas.toDataURL("image/jpeg", quality);
-      }
-
-      resolve(result);
-    };
-    img.onerror = reject;
-    img.src = url;
-  });
 }
