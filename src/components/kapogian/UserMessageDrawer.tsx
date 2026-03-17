@@ -609,7 +609,11 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
         ) : open ? (
           <X size={22} />
         ) : (
-          <MessageCircle size={22} />
+         <img
+  src="/images/KapogianLogo.webp"
+  alt="Kapogian"
+
+/>
         )}
         {!open && unreadCount > 0 && callState.status === "idle" && (
           <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 border-2 border-white rounded-full text-[10px] font-black flex items-center justify-center">
@@ -624,7 +628,11 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="w-9 h-9 bg-white/10 rounded-full border-2 border-white/20 flex items-center justify-center">
-                  <ShieldCheck size={16} className="text-white" />
+                 <img
+  src="/images/KapogianLogo.webp"
+  alt="Kapogian"
+ 
+/>
                 </div>
                 <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-black ${connected ? "bg-green-400" : "bg-slate-500"}`} />
               </div>
@@ -654,8 +662,12 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
 
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full py-10 gap-3 text-center">
-                <div className="w-14 h-14 bg-slate-100 rounded-full border-2 border-slate-200 flex items-center justify-center">
-                  <MessageCircle size={24} className="text-slate-300" />
+                <div className="w-24 h-24 bg-slate-100 rounded-full border-2 border-slate-200 flex items-center justify-center">
+                 <img
+  src="/images/KapogianLogo.webp"
+  alt="Kapogian"
+ 
+/>
                 </div>
                 <div>
                   <p className="font-black text-slate-500 text-sm uppercase tracking-tight">Send us a message</p>
