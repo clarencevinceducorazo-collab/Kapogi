@@ -143,6 +143,15 @@ export function AdminMessagesTab() {
   useEffect(() => {
     aiModeRef.current = aiMode;
     localStorage.setItem("kapogian_ai_mode", String(aiMode));
+    // Broadcast AI mode to all users so their UserMessageDrawer knows
+    // whether to call /api/ai-reply after sending a message.
+    // This is the KEY for production — AI works even when admin tab is closed.
+    const ably = ablyRef.current;
+    if (ably) {
+      ably.channels.get("kapogian-support-inbox")
+        .publish("ai-mode-update", { enabled: aiMode })
+        .catch(() => {});
+    }
   }, [aiMode]);
 
   // Sync quickButtons: persist + broadcast to all user channels
@@ -301,13 +310,9 @@ export function AdminMessagesTab() {
     const conv = conversationsRef.current.get(walletAddress);
     if (!conv || conv.messages.length === 0) return;
 
-    // Guard 4: last message must be from user AND must be recent (< 30s old)
-    // This prevents the AI from replying to OLD messages when admin reconnects
-    // or when history loads and the last historical message was from user.
+    // Guard 4: last message must be from user (not AI or admin)
     const lastMsg = conv.messages[conv.messages.length - 1];
     if (!lastMsg || lastMsg.sender !== "user") return;
-    const msgAge = Date.now() - lastMsg.timestamp;
-    if (msgAge > 30_000) return; // older than 30 seconds — not a live message
 
     // Guard 5: Don't fire if either of the last 2 messages before this one was
     // from admin (human or AI). This prevents rapid double-fire scenarios while
@@ -406,12 +411,9 @@ export function AdminMessagesTab() {
         return next;
       });
 
-      // Trigger AI after state settles.
-      // 250ms gives React time to commit state AND run the useEffect
-      // that syncs conversationsRef — so triggerAIReply sees fresh messages.
-      if (aiModeRef.current) {
-        setTimeout(() => triggerAIReply(walletAddress), 250);
-      }
+      // AI reply is now triggered from UserMessageDrawer (user's browser)
+      // after each message send. This works in production even when admin
+      // tab is closed. No client-side trigger needed here.
     });
 
     // Live admin messages (incl. AI replies published by the API route)
@@ -499,6 +501,11 @@ export function AdminMessagesTab() {
     if (typeof window !== "undefined") {
       loadKnownWallets().forEach((addr) => subscribeToUser(addr, ably));
     }
+
+    // Publish current AI mode immediately so any connected users get it
+    ably.channels.get("kapogian-support-inbox")
+      .publish("ai-mode-update", { enabled: aiModeRef.current })
+      .catch(() => {});
 
     ably.channels.get("kapogian-support-inbox").subscribe("user-connected", (msg) => {
       const { walletAddress } = msg.data as { walletAddress: string };
@@ -813,7 +820,7 @@ export function AdminMessagesTab() {
             <div className="bg-purple-50 border-b-2 border-purple-100 px-3 py-2 flex items-center gap-2 flex-shrink-0">
               <Sparkles size={11} className="text-purple-500 flex-shrink-0" />
               <p className="text-[10px] font-semibold text-purple-600 leading-tight">
-                Kapogian Support v1 auto-replies when you're away
+                Llama 3.3 auto-replies when you're away
               </p>
             </div>
           )}
