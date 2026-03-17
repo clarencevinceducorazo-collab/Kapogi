@@ -429,10 +429,27 @@ export async function getOwnedCharacters(walletAddress: string): Promise<SuiObje
       if (cap.data?.content?.dataType === 'moveObject') {
         const kioskId = (cap.data.content.fields as any).for;
         if (kioskId) {
-          const kioskFields = await suiClient.getDynamicFields({ parentId: kioskId });
-          const itemIds = kioskFields.data
-            .filter((f) => f.type === 'DynamicObject')
-            .map((f) => f.objectId);
+          // Paginate through ALL dynamic fields — getDynamicFields only returns one page at a time
+          const itemIds: string[] = [];
+          let hasNextPage = true;
+          let cursor: string | null = null;
+
+          while (hasNextPage) {
+            const page = await suiClient.getDynamicFields({
+              parentId: kioskId,
+              ...(cursor ? { cursor } : {}),
+            });
+
+            page.data
+              .filter((f) => f.type === 'DynamicObject')
+              .forEach((f) => itemIds.push(f.objectId));
+
+            if (page.hasNextPage && page.nextCursor) {
+              cursor = page.nextCursor;
+            } else {
+              hasNextPage = false;
+            }
+          }
 
           if (itemIds.length > 0) {
             const chunkSize = 50;
