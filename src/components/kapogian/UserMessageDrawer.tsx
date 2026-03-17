@@ -199,7 +199,11 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
 
   // Typing indicators
   const [adminTyping, setAdminTyping] = useState<{ isTyping: boolean; isAI: boolean }>({ isTyping: false, isAI: false });
-  const userTypingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const userTypingRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const aiCooldownRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Blocks input for AI_COOLDOWN_MS after an AI reply arrives so the AI can
+  // always see a clean last-user-message before the cooldown resets.
+  const [aiCooldown, setAiCooldown] = useState(false);
 
   const ablyRef          = useRef<Ably.Realtime | null>(null);
   const channelRef       = useRef<Ably.RealtimeChannel | null>(null);
@@ -250,6 +254,13 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
       if (!historyLoadedRef.current) { liveBufferRef.current.push(incoming); return; }
       setMessages((prev) => mergeMessage(prev, incoming));
       setUnreadCount((c) => c + 1);
+      // If this was an AI reply, lock input for 2s so the AI cooldown
+      // on the admin side expires before the user can send again.
+      if (incoming.isAI) {
+        setAiCooldown(true);
+        if (aiCooldownRef.current) clearTimeout(aiCooldownRef.current);
+        aiCooldownRef.current = setTimeout(() => setAiCooldown(false), 2000);
+      }
     });
 
     channel.subscribe("user-message", (msg) => {
@@ -373,6 +384,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
       destroyed = true;
       if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
       if (userTypingRef.current) clearTimeout(userTypingRef.current);
+      if (aiCooldownRef.current) clearTimeout(aiCooldownRef.current);
       channel.unsubscribe();
       ably.close();
       webrtc.hangup();
@@ -432,7 +444,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
   // ── Send message ──────────────────────────────────────────────────────────
   const handleSend = useCallback(async () => {
     const text = input.trim();
-    if (!text || !channelRef.current || sending) return;
+    if (!text || !channelRef.current || sending || aiCooldown) return;
 
     setSending(true);
     const clientMsgId = `cmid-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -469,14 +481,14 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
     } finally {
       setSending(false);
     }
-  }, [input, sending, walletAddress]);
+  }, [input, sending, walletAddress, aiCooldown]);
 
   // ── Quick button handler ───────────────────────────────────────────────────
   const handleQuickButton = useCallback(async (btn: QuickButton) => {
     if (btn.type === "link") {
       window.open(btn.value.startsWith("http") ? btn.value : btn.value, "_blank", "noopener");
       const text = `${btn.emoji ? btn.emoji + " " : ""}${btn.label}`;
-      if (!channelRef.current || sending) return;
+      if (!channelRef.current || sending || aiCooldown) return;
       setSending(true);
       const clientMsgId = `cmid-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const timestamp   = Date.now();
@@ -492,7 +504,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
       } finally { setSending(false); }
     } else {
       const text = btn.value;
-      if (!channelRef.current || sending) return;
+      if (!channelRef.current || sending || aiCooldown) return;
       setSending(true);
       const clientMsgId = `cmid-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const timestamp   = Date.now();
@@ -508,7 +520,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
         setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
       } finally { setSending(false); }
     }
-  }, [sending, walletAddress]);
+  }, [sending, walletAddress, aiCooldown]);
 
   // Publish user typing indicator to admin
   const handleInputChange = useCallback((val: string) => {
@@ -544,11 +556,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
         ) : open ? (
           <X size={22} />
         ) : (
-         <img
-  src="/images/KapogianLogo.webp"
-  alt="Kapogian"
-
-/>
+          <MessageCircle size={22} />
         )}
         {!open && unreadCount > 0 && callState.status === "idle" && (
           <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 border-2 border-white rounded-full text-[10px] font-black flex items-center justify-center">
@@ -563,11 +571,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="w-9 h-9 bg-white/10 rounded-full border-2 border-white/20 flex items-center justify-center">
-                  <img
-  src="/images/KapogianLogo.webp"
-  alt="Kapogian"
-
-/>
+                  <ShieldCheck size={16} className="text-white" />
                 </div>
                 <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-black ${connected ? "bg-green-400" : "bg-slate-500"}`} />
               </div>
@@ -598,11 +602,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full py-10 gap-3 text-center">
                 <div className="w-14 h-14 bg-slate-100 rounded-full border-2 border-slate-200 flex items-center justify-center">
-                 <img
-  src="/images/KapogianLogo.webp"
-  alt="Kapogian"
- 
-/>
+                  <MessageCircle size={24} className="text-slate-300" />
                 </div>
                 <div>
                   <p className="font-black text-slate-500 text-sm uppercase tracking-tight">Send us a message</p>
@@ -711,18 +711,32 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
           )}
 
           <div className="flex gap-2 p-3 border-t-2 border-slate-100 bg-white flex-shrink-0">
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => handleInputChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your concern..."
-              maxLength={500}
-              className="flex-1 h-10 rounded-2xl border-2 border-slate-200 px-4 text-sm font-semibold outline-none focus:border-black transition-colors bg-slate-50"
-            />
+            <div className="flex-1 relative">
+              <input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => handleInputChange(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={aiCooldown ? "AI is replying, please wait..." : "Type your concern..."}
+                maxLength={500}
+                disabled={aiCooldown}
+                className={`w-full h-10 rounded-2xl border-2 px-4 text-sm font-semibold outline-none transition-all bg-slate-50 ${
+                  aiCooldown
+                    ? "border-purple-200 bg-purple-50 text-slate-400 cursor-not-allowed placeholder:text-purple-300"
+                    : "border-slate-200 focus:border-black"
+                }`}
+              />
+              {aiCooldown && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-0.5">
+                  {[0,1,2].map(i => (
+                    <span key={i} className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: `${i*150}ms` }} />
+                  ))}
+                </span>
+              )}
+            </div>
             <button
               onClick={handleSend}
-              disabled={!input.trim() || sending || !connected}
+              disabled={!input.trim() || sending || !connected || aiCooldown}
               className="w-10 h-10 rounded-2xl bg-black text-white border-2 border-black flex items-center justify-center disabled:opacity-40 hover:bg-slate-800 transition-colors flex-shrink-0"
               aria-label="Send message"
             >
