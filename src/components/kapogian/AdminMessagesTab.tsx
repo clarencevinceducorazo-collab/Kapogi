@@ -177,8 +177,7 @@ export function AdminMessagesTab() {
   // Dedup: which wallets have an AI call already in-flight
   const aiInFlightRef    = useRef<Set<string>>(new Set());
   // Cooldown: timestamp of last AI trigger per wallet — prevents rapid re-triggering
-  const aiLastTriggerRef = useRef<Map<string, number>>(new Map());
-  const AI_COOLDOWN_MS   = 2000; // reduced from 4s — was blocking fast conversations // min 4s between AI replies per wallet
+  // No client-side cooldown — server enforces natural 5s reply delay.
 
   // WebRTC refs
   const pcRef          = useRef<RTCPeerConnection | null>(null);
@@ -296,9 +295,7 @@ export function AdminMessagesTab() {
     if (!aiModeRef.current) return;
     // Guard 2: already in-flight for this wallet
     if (aiInFlightRef.current.has(walletAddress)) return;
-    // Guard 3: cooldown — don't fire again within AI_COOLDOWN_MS
-    const lastTrigger = aiLastTriggerRef.current.get(walletAddress) ?? 0;
-    if (Date.now() - lastTrigger < AI_COOLDOWN_MS) return;
+    // Guard 3 removed — server enforces 5s natural delay, no client cooldown needed.
 
     // Read the latest messages directly from the ref (always current)
     const conv = conversationsRef.current.get(walletAddress);
@@ -319,7 +316,6 @@ export function AdminMessagesTab() {
     }
 
     aiInFlightRef.current.add(walletAddress);
-    aiLastTriggerRef.current.set(walletAddress, Date.now());
     setAiThinking(walletAddress);
     try {
       const res = await fetch("/api/ai-reply", {
