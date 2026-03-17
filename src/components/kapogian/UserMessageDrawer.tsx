@@ -259,7 +259,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
       if (incoming.isAI) {
         setAiCooldown(true);
         if (aiCooldownRef.current) clearTimeout(aiCooldownRef.current);
-        aiCooldownRef.current = setTimeout(() => setAiCooldown(false), 2000);
+        aiCooldownRef.current = setTimeout(() => setAiCooldown(false), 2500);
       }
     });
 
@@ -694,7 +694,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
                   <button
                     key={btn.id}
                     onClick={() => handleQuickButton(btn)}
-                    disabled={sending || !connected}
+                    disabled={sending || !connected || aiCooldown}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-[10px] font-black transition-all disabled:opacity-40 ${
                       btn.type === "link"
                         ? "bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100 hover:border-sky-400"
