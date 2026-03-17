@@ -6,6 +6,7 @@ import {
   MessageCircle, Send, Loader2, User, ShieldCheck,
   Inbox, Circle, Phone, PhoneOff, PhoneCall, PhoneMissed,
   Bot, BotOff, Sparkles, Link2, Cpu, Plus, Trash2, LayoutGrid, ChevronDown, ChevronUp,
+  Bell, Image as ImageIcon, Send as SendIcon, X as XIcon,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -124,6 +125,15 @@ export function AdminMessagesTab() {
     return localStorage.getItem("kapogian_ai_mode") === "true";
   });
   const [aiThinking, setAiThinking] = useState<string | null>(null);
+
+  // ── Broadcast Notification state ──────────────────────────────────────────
+  const [showBroadcastPanel, setShowBroadcastPanel] = useState(false);
+  const [broadcastTitle, setBroadcastTitle]         = useState("");
+  const [broadcastDesc, setBroadcastDesc]           = useState("");
+  const [broadcastImage, setBroadcastImage]         = useState<string | null>(null); // base64 data URL
+  const [broadcastImageName, setBroadcastImageName] = useState<string>("");
+  const [isBroadcasting, setIsBroadcasting]         = useState(false);
+  const [broadcastTarget, setBroadcastTarget]       = useState<string>("all"); // "all" or wallet address
   const aiModeRef = useRef(aiMode);
   useEffect(() => {
     aiModeRef.current = aiMode;
@@ -227,6 +237,55 @@ export function AdminMessagesTab() {
       if (prev.some((b) => b.label === preset.label)) return prev;
       return [...prev, { ...preset, id: `qb-${Date.now()}-${Math.random().toString(36).slice(2)}` }];
     });
+  }, []);
+
+  // ── Broadcast Notification ────────────────────────────────────────────────
+  const sendBroadcast = useCallback(async () => {
+    if (!broadcastTitle.trim() && !broadcastDesc.trim()) return;
+    const ably = ablyRef.current;
+    if (!ably) return;
+    setIsBroadcasting(true);
+    try {
+      const payload = {
+        title:     broadcastTitle.trim() || "Kapogian",
+        desc:      broadcastDesc.trim(),
+        image:     broadcastImage ?? null,
+        timestamp: Date.now(),
+        // "all" means every user, otherwise a specific wallet address
+        target:    broadcastTarget,
+      };
+
+  // In sendBroadcast, replace the targeted block:
+if (broadcastTarget === "all") {
+  await ably.channels.get("kapogian-support-inbox")
+    .publish("broadcast-notification", payload);
+} else {
+  // ✅ Personal channel ONLY — no inbox publish for targeted sends
+  await ably.channels
+    .get(`kapogian-support:${broadcastTarget.toLowerCase()}`)
+    .publish("broadcast-notification", payload);
+}
+
+      setBroadcastTitle("");
+      setBroadcastDesc("");
+      setBroadcastImage(null);
+      setBroadcastImageName("");
+      setBroadcastTarget("all");
+      setShowBroadcastPanel(false);
+    } catch (e) {
+      console.error("[Broadcast] failed:", e);
+    } finally {
+      setIsBroadcasting(false);
+    }
+  }, [broadcastTitle, broadcastDesc, broadcastImage, broadcastTarget]);
+
+  const handleBroadcastImage = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setBroadcastImage(e.target?.result as string);
+      setBroadcastImageName(file.name);
+    };
+    reader.readAsDataURL(file);
   }, []);
 
   // ── AI auto-reply ─────────────────────────────────────────────────────────
@@ -549,6 +608,19 @@ export function AdminMessagesTab() {
               )}
             </div>
             <div className="flex items-center gap-2">
+              {/* Broadcast Notification Toggle */}
+              <button
+                onClick={() => setShowBroadcastPanel((v) => !v)}
+                title="Send broadcast notification to all users"
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 transition-all text-[9px] font-black uppercase ${
+                  showBroadcastPanel
+                    ? "bg-orange-500 border-orange-300 text-white"
+                    : "bg-white/10 border-white/20 text-white/50 hover:bg-white/20"
+                }`}
+              >
+                <Bell size={11} />
+                Notify
+              </button>
               {/* Quick Buttons Panel Toggle */}
               <button
                 onClick={() => setShowQBPanel((v) => !v)}
@@ -596,6 +668,88 @@ export function AdminMessagesTab() {
               >
                 Clear All
               </button>
+            </div>
+          )}
+
+          {/* ── Broadcast Notification Panel ── */}
+          {showBroadcastPanel && (
+            <div className="border-b-2 border-slate-100 bg-orange-50 flex-shrink-0">
+              <div className="p-3 space-y-2.5">
+                <p className="text-[9px] font-black text-orange-400 uppercase tracking-widest px-1 flex items-center gap-1.5">
+                  <Bell size={10} /> Send Notification
+                </p>
+
+                {/* Target selector */}
+                <div>
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Send To</p>
+                  <select
+                    value={broadcastTarget}
+                    onChange={e => setBroadcastTarget(e.target.value)}
+                    className="w-full h-8 border-2 border-orange-200 bg-white rounded-lg px-2.5 text-[10px] font-black outline-none focus:border-orange-400 text-slate-700"
+                  >
+                    <option value="all">🌐 All Users (Everyone)</option>
+                    {Array.from(conversationsRef.current.keys()).map(addr => (
+                      <option key={addr} value={addr}>
+                        👤 {addr.slice(0, 8)}...{addr.slice(-4)}
+                      </option>
+                    ))}
+                  </select>
+                  {broadcastTarget !== "all" && (
+                    <p className="text-[8px] font-mono text-orange-400 mt-0.5 ml-1 truncate">{broadcastTarget}</p>
+                  )}
+                </div>
+
+                {/* Title */}
+                <input
+                  value={broadcastTitle}
+                  onChange={e => setBroadcastTitle(e.target.value)}
+                  placeholder="Notification title..."
+                  maxLength={80}
+                  className="w-full h-8 border-2 border-orange-200 bg-white rounded-lg px-2.5 text-xs font-black outline-none focus:border-orange-400 placeholder:text-slate-300"
+                />
+
+                {/* Description */}
+                <textarea
+                  value={broadcastDesc}
+                  onChange={e => setBroadcastDesc(e.target.value)}
+                  placeholder="Message / description..."
+                  maxLength={300}
+                  rows={2}
+                  className="w-full border-2 border-orange-200 bg-white rounded-lg px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-orange-400 resize-none placeholder:text-slate-300"
+                />
+
+                {/* Image upload */}
+                {broadcastImage ? (
+                  <div className="relative flex items-center gap-2 bg-white border-2 border-orange-200 rounded-lg px-2.5 py-1.5">
+                    <img src={broadcastImage} alt="preview" className="w-8 h-8 rounded object-cover border border-slate-100 flex-shrink-0" />
+                    <span className="text-[9px] font-mono text-slate-400 truncate flex-1">{broadcastImageName}</span>
+                    <button onClick={() => { setBroadcastImage(null); setBroadcastImageName(""); }} className="w-5 h-5 flex items-center justify-center rounded-full bg-red-100 text-red-400 hover:bg-red-500 hover:text-white transition-all flex-shrink-0">
+                      <XIcon size={10} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-2 w-full h-8 border-2 border-dashed border-orange-200 rounded-lg px-2.5 cursor-pointer hover:border-orange-400 hover:bg-white transition-all">
+                    <ImageIcon size={11} className="text-orange-300" />
+                    <span className="text-[9px] font-black text-orange-300 uppercase tracking-widest">Attach Image (optional)</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleBroadcastImage(f); }} />
+                  </label>
+                )}
+
+                {/* Send button */}
+                <button
+                  onClick={sendBroadcast}
+                  disabled={(!broadcastTitle.trim() && !broadcastDesc.trim()) || isBroadcasting}
+                  className="w-full h-8 bg-orange-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 disabled:opacity-40 hover:bg-orange-400 transition-colors shadow-[0_2px_0_0_#c2410c]"
+                >
+                  {isBroadcasting ? (
+                    <><span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Sending...</>
+                  ) : broadcastTarget === "all" ? (
+                    <><SendIcon size={11} /> Send to All Users</>
+                  ) : (
+                    <><SendIcon size={11} /> Send to User</>
+                  )}
+                </button>
+              </div>
             </div>
           )}
 
