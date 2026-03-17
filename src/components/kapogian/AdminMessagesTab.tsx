@@ -813,7 +813,7 @@ export function AdminMessagesTab() {
             <div className="bg-purple-50 border-b-2 border-purple-100 px-3 py-2 flex items-center gap-2 flex-shrink-0">
               <Sparkles size={11} className="text-purple-500 flex-shrink-0" />
               <p className="text-[10px] font-semibold text-purple-600 leading-tight">
-                Llama 3.3 auto-replies when you're away
+                Kapogian Support v1 auto-replies when you're away
               </p>
             </div>
           )}
