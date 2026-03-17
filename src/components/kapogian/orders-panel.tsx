@@ -25,7 +25,7 @@ import {
 import { suiClient } from "@/lib/sui";
 import { CONTRACT_ADDRESSES, MODULES, ORDER_STATUS, mistToSui } from "@/lib/constants";
 import { getIPFSGatewayUrl } from "@/lib/pinata";
-import { UserMessageDrawer } from "@/components/kapogian/UserMessageDrawer";
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -768,7 +768,7 @@ export function OrdersPanel({ account }: { account: any }) {
   return (
     <div className="space-y-6">
       {/* Support Chat Drawer at the very top */}
-      <UserMessageDrawer walletAddress={account?.address ?? ""} />
+     
       {/* ── Tab bar + live indicator ─────────────────────────────────────── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-2xl w-fit">
