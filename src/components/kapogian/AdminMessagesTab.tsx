@@ -301,18 +301,28 @@ export function AdminMessagesTab() {
     const conv = conversationsRef.current.get(walletAddress);
     if (!conv || conv.messages.length === 0) return;
 
-    // Guard 4: last message must be from user (not AI or admin)
+    // Guard 4: last message must be from user AND must be recent (< 30s old)
+    // This prevents the AI from replying to OLD messages when admin reconnects
+    // or when history loads and the last historical message was from user.
     const lastMsg = conv.messages[conv.messages.length - 1];
     if (!lastMsg || lastMsg.sender !== "user") return;
+    const msgAge = Date.now() - lastMsg.timestamp;
+    if (msgAge > 30_000) return; // older than 30 seconds — not a live message
 
-    // Guard 5 (fixed): only block if the message IMMEDIATELY before this user message
-    // was from admin (human or AI). This prevents AI→AI→AI loops while still allowing
-    // normal User→AI→User→AI conversations. The old check (any AI in last 3) was
-    // blocking every reply after the very first one.
+    // Guard 5: Don't fire if either of the last 2 messages before this one was
+    // from admin (human or AI). This prevents rapid double-fire scenarios while
+    // still allowing normal User→AI→User→AI conversations.
     const msgs = conv.messages;
     if (msgs.length >= 2) {
-      const prevMsg = msgs[msgs.length - 2];
-      if (prevMsg && prevMsg.sender === "admin") return;
+      const prev1 = msgs[msgs.length - 2]; // message before the current user msg
+      if (prev1?.sender === "admin") return;
+    }
+    if (msgs.length >= 3) {
+      const prev2 = msgs[msgs.length - 3]; // two messages back
+      if (prev2?.sender === "admin" && msgs[msgs.length - 2]?.sender === "user") {
+        // Pattern: admin → user → user (two user messages in a row after admin)
+        // Allow this — user sent a follow-up, AI should respond
+      }
     }
 
     aiInFlightRef.current.add(walletAddress);
@@ -605,56 +615,62 @@ export function AdminMessagesTab() {
       <div className="w-[300px] flex-shrink-0 flex flex-col gap-3">
         <div className="bg-white border-4 border-black rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden h-full flex flex-col">
 
-          {/* Header with AI toggle */}
-          <div className="bg-black text-white px-4 py-3 flex items-center justify-between flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <Inbox size={16} />
-              <span className="font-black text-sm uppercase tracking-tight">Inbox</span>
-              {totalUnread > 0 && (
-                <span className="w-5 h-5 bg-red-500 text-[9px] font-black rounded-full flex items-center justify-center">{totalUnread > 9 ? "9+" : totalUnread}</span>
-              )}
+          {/* ── Header: two rows for clean layout at 300px ── */}
+          <div className="bg-black text-white px-4 pt-3 pb-2 flex-shrink-0">
+            {/* Row 1: title + unread badge + connection dot */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Inbox size={15} />
+                <span className="font-black text-sm uppercase tracking-tight">Inbox</span>
+                {totalUnread > 0 && (
+                  <span className="w-5 h-5 bg-red-500 text-[9px] font-black rounded-full flex items-center justify-center">
+                    {totalUnread > 9 ? "9+" : totalUnread}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className={`w-2 h-2 rounded-full ${connected ? "bg-green-400" : "bg-slate-500"}`} />
+                <span className={`text-[9px] font-black uppercase ${connected ? "text-green-400" : "text-slate-500"}`}>
+                  {connected ? "Live" : "Off"}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              {/* Broadcast Notification Toggle */}
+            {/* Row 2: three equal action buttons — always fully visible */}
+            <div className="grid grid-cols-3 gap-1.5">
               <button
-                onClick={() => setShowBroadcastPanel((v) => !v)}
-                title="Send broadcast notification to all users"
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 transition-all text-[9px] font-black uppercase ${
+                onClick={() => { setShowBroadcastPanel((v) => !v); setShowQBPanel(false); }}
+                title="Send broadcast notification"
+                className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg border-2 transition-all text-[9px] font-black uppercase ${
                   showBroadcastPanel
-                    ? "bg-orange-500 border-orange-300 text-white"
-                    : "bg-white/10 border-white/20 text-white/50 hover:bg-white/20"
+                    ? "bg-orange-500 border-orange-400 text-white"
+                    : "bg-white/10 border-white/20 text-white/70 hover:bg-white/20 hover:border-white/40"
                 }`}
               >
-                <Bell size={11} />
-                Notify
+                <Bell size={11} /> Notify
               </button>
-              {/* Quick Buttons Panel Toggle */}
               <button
-                onClick={() => setShowQBPanel((v) => !v)}
+                onClick={() => { setShowQBPanel((v) => !v); setShowBroadcastPanel(false); }}
                 title="Manage quick reply buttons"
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 transition-all text-[9px] font-black uppercase ${
+                className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg border-2 transition-all text-[9px] font-black uppercase ${
                   showQBPanel
-                    ? "bg-cyan-500 border-cyan-300 text-white"
-                    : "bg-white/10 border-white/20 text-white/50 hover:bg-white/20"
+                    ? "bg-cyan-500 border-cyan-400 text-white"
+                    : "bg-white/10 border-white/20 text-white/70 hover:bg-white/20 hover:border-white/40"
                 }`}
               >
-                <LayoutGrid size={11} />
-                Buttons
+                <LayoutGrid size={11} /> Buttons
               </button>
-              {/* AI Mode Toggle */}
               <button
                 onClick={() => setAiMode((v) => !v)}
-                title={aiMode ? "AI auto-reply ON — click to disable" : "AI auto-reply OFF — click to enable"}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 transition-all text-[9px] font-black uppercase ${
+                title={aiMode ? "AI auto-reply ON" : "AI auto-reply OFF"}
+                className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg border-2 transition-all text-[9px] font-black uppercase ${
                   aiMode
-                    ? "bg-purple-500 border-purple-300 text-white shadow-[0_0_8px_rgba(168,85,247,0.6)]"
-                    : "bg-white/10 border-white/20 text-white/50 hover:bg-white/20"
+                    ? "bg-purple-500 border-purple-400 text-white shadow-[0_0_8px_rgba(168,85,247,0.5)]"
+                    : "bg-white/10 border-white/20 text-white/70 hover:bg-white/20 hover:border-white/40"
                 }`}
               >
                 {aiMode ? <Bot size={11} /> : <BotOff size={11} />}
                 {aiMode ? "AI On" : "AI Off"}
               </button>
-              <div className={`w-2 h-2 rounded-full ${connected ? "bg-green-400" : "bg-slate-500"}`} />
             </div>
           </div>
 
@@ -680,7 +696,7 @@ export function AdminMessagesTab() {
 
           {/* ── Broadcast Notification Panel ── */}
           {showBroadcastPanel && (
-            <div className="border-b-2 border-slate-100 bg-orange-50 flex-shrink-0">
+            <div className="border-b-2 border-slate-100 bg-orange-50 flex-shrink-0 max-h-[480px] overflow-y-auto">
               <div className="p-3 space-y-2.5">
                 <p className="text-[9px] font-black text-orange-400 uppercase tracking-widest px-1 flex items-center gap-1.5">
                   <Bell size={10} /> Send Notification
