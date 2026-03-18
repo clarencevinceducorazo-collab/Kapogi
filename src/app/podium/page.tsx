@@ -794,12 +794,12 @@ function SummonDetailModal({ user, isOpen, onClose }: { user: SummonEntry; isOpe
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent hideCloseButton className="max-w-4xl w-full p-0 bg-transparent border-none shadow-none !rounded-[2.5rem]">
+      <DialogContent hideCloseButton className="max-w-[95vw] md:max-w-4xl w-full p-0 bg-transparent border-none shadow-none !rounded-[2.5rem]">
         <DialogHeader className="sr-only">
           <DialogTitle>Summoner: {short(user.walletAddress)}</DialogTitle>
           <DialogDescription>Best MMR NFT and full collection for this wallet.</DialogDescription>
         </DialogHeader>
-        <div className="w-full bg-white rounded-[2.5rem] border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col md:flex-row max-h-[85vh] relative">
+        <div className="w-full bg-white rounded-[2.5rem] border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] md:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col md:flex-row max-h-[85vh] relative">
           <button onClick={onClose} className="absolute top-6 right-6 z-[60] bg-white border-4 border-black rounded-full p-2 hover:bg-red-500 hover:text-white transition-all active:scale-95">
             <X size={24} strokeWidth={3} />
           </button>
@@ -834,34 +834,36 @@ function SummonDetailModal({ user, isOpen, onClose }: { user: SummonEntry; isOpe
               </div>
             </div>
           </div>
-          <div className="w-full md:w-[65%] flex flex-col h-full bg-white">
-            <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 custom-scrollbar">
-              <div className="flex flex-col sm:flex-row gap-4 border-b-4 border-slate-50 pb-8">
-                <div className="flex items-center gap-4 bg-slate-50 border-4 border-black p-4 rounded-[1.5rem] flex-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                  <div className="w-12 h-12 rounded-xl bg-blue-500 text-white flex items-center justify-center border-2 border-black">
-                    <iconify-icon icon="fluent-emoji:trophy" class="text-2xl" />
+          <div className="w-full md:w-[65%] flex flex-col h-full bg-white min-h-0">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-10 space-y-6 md:space-y-8 custom-scrollbar">
+              <div className="flex flex-col sm:flex-row gap-3 md:gap-4 border-b-4 border-slate-50 pb-4 md:pb-8">
+                <div className="flex items-center gap-3 md:gap-4 bg-slate-50 border-4 border-black p-3 md:p-4 rounded-2xl md:rounded-[1.5rem] flex-1 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-blue-500 text-white flex items-center justify-center border-2 border-black">
+                    <iconify-icon icon="fluent-emoji:trophy" class="text-xl md:text-2xl" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Best Rating</p>
-                    <p className="text-2xl font-black text-slate-800 tracking-tighter">{mmr.toLocaleString()}</p>
+                    <p className="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-1">Best Rating</p>
+                    <p className="text-xl md:text-2xl font-black text-slate-800 tracking-tighter leading-none">{mmr.toLocaleString()}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 bg-slate-50 border-4 border-black p-4 rounded-[1.5rem] flex-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                  <div className="w-12 h-12 rounded-xl bg-indigo-500 text-white flex items-center justify-center border-2 border-black">
-                    <iconify-icon icon="fluent-emoji:chart-increasing" class="text-2xl" />
+                <div className="flex flex-row justify-between gap-3 sm:gap-4 flex-1">
+                  <div className="flex items-center gap-2 md:gap-4 bg-slate-50 border-4 border-black p-2 md:p-4 rounded-2xl md:rounded-[1.5rem] flex-1 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    <div className="w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-indigo-500 text-white flex items-center justify-center border-2 border-black">
+                      <iconify-icon icon="fluent-emoji:chart-increasing" class="text-lg md:text-2xl" />
+                    </div>
+                    <div>
+                      <p className="text-[8px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-1">Avg MMR</p>
+                      <p className="text-lg md:text-2xl font-black text-slate-800 tracking-tighter leading-none">{avgMmr.toLocaleString()}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Avg MMR</p>
-                    <p className="text-2xl font-black text-slate-800 tracking-tighter">{avgMmr.toLocaleString()}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 bg-slate-50 border-4 border-black p-4 rounded-[1.5rem] flex-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500 text-white flex items-center justify-center border-2 border-black">
-                    <iconify-icon icon="fluent-emoji:package" class="text-2xl" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Summons</p>
-                    <p className="text-2xl font-black text-slate-800 tracking-tighter">{user.totalNftSummon}</p>
+                  <div className="flex items-center gap-2 md:gap-4 bg-slate-50 border-4 border-black p-2 md:p-4 rounded-2xl md:rounded-[1.5rem] flex-1 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    <div className="w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-emerald-500 text-white flex items-center justify-center border-2 border-black">
+                      <iconify-icon icon="fluent-emoji:package" class="text-lg md:text-2xl" />
+                    </div>
+                    <div>
+                      <p className="text-[8px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-1">Summons</p>
+                      <p className="text-lg md:text-2xl font-black text-slate-800 tracking-tighter leading-none">{user.totalNftSummon}</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1011,12 +1013,12 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser; isO
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent hideCloseButton className="max-w-4xl w-full p-0 bg-transparent border-none shadow-none !rounded-[2.5rem]">
+      <DialogContent hideCloseButton className="max-w-[95vw] md:max-w-4xl w-full p-0 bg-transparent border-none shadow-none !rounded-[2.5rem]">
         <DialogHeader className="sr-only">
           <DialogTitle>Character Details: {user.nftName}</DialogTitle>
           <DialogDescription>Detailed statistics and traits for {user.nftName}.</DialogDescription>
         </DialogHeader>
-        <div className="w-full bg-white rounded-[2.5rem] border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col md:flex-row relative">
+        <div className="w-full bg-white rounded-[2.5rem] border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] md:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col md:flex-row max-h-[85vh] relative">
           <button onClick={onClose} className="absolute top-6 right-6 z-[60] bg-white border-4 border-black rounded-full p-2 hover:bg-red-500 hover:text-white transition-all active:scale-95">
             <X size={24} strokeWidth={3} />
           </button>
@@ -1048,23 +1050,23 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser; isO
               </div>
             </div>
           </div>
-          <div className="w-full md:w-[65%] flex flex-col h-full bg-white">
-            <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-10 custom-scrollbar">
-              <div className="flex justify-between items-center border-b-4 border-slate-50 pb-8">
-                <div className="flex items-center gap-4 bg-slate-50 border-4 border-black p-5 rounded-[2rem] w-full shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-                  <div className="w-14 h-14 rounded-2xl bg-blue-500 text-white flex items-center justify-center border-2 border-black shadow-lg">
-                    <iconify-icon icon="fluent-emoji:chart-increasing" class="text-3xl" />
+          <div className="w-full md:w-[65%] flex flex-col h-full bg-white min-h-0">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-10 space-y-8 md:space-y-10 custom-scrollbar">
+              <div className="flex justify-between items-center border-b-4 border-slate-50 pb-4 md:pb-8">
+                <div className="flex items-center gap-3 md:gap-4 bg-slate-50 border-4 border-black p-3 md:p-5 rounded-2xl md:rounded-[2rem] w-full shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-blue-500 text-white flex items-center justify-center border-2 border-black shadow-md md:shadow-lg">
+                    <iconify-icon icon="fluent-emoji:chart-increasing" class="text-xl md:text-3xl" />
                   </div>
                   <div>
-                    <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Spirit Rating (MMR)</p>
-                    <p className="text-4xl font-black text-slate-900 tracking-tighter">{mmr.toLocaleString()}</p>
+                    <p className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-0 md:mb-1">Spirit Rating</p>
+                    <p className="text-2xl md:text-4xl font-black text-slate-900 tracking-tighter leading-none">{mmr.toLocaleString()}</p>
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                <div className="space-y-6">
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                    <iconify-icon icon="fluent-emoji:magic-wand" class="text-lg" /> Core Skillset
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
+                <div className="space-y-3 md:space-y-6">
+                  <h3 className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-1 md:mb-0">
+                    <iconify-icon icon="fluent-emoji:magic-wand" class="text-base md:text-lg" /> Core Skillset
                   </h3>
                   {[
                     { label: "Cuteness",   val: user.attributes?.cuteness,   color: "bg-pink-400"   },
@@ -1072,56 +1074,51 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser; isO
                     { label: "Tili Factor", val: user.attributes?.tiliFactor, color: "bg-amber-400"  },
                   ].map((skill) => (
                     <div key={skill.label}>
-                      <div className="flex justify-between text-xs font-black mb-2 text-slate-600 uppercase tracking-wider">
+                      <div className="flex justify-between items-end text-[10px] md:text-xs font-black mb-1 md:mb-2 text-slate-600 uppercase tracking-wider leading-none">
                         <span>{skill.label}</span>
-                        <span className="text-slate-400 font-mono">{skill.val || 0}%</span>
+                        <span className="text-slate-400 font-mono text-[9px] md:text-xs">{skill.val || 0}%</span>
                       </div>
-                      <div className="h-5 w-full bg-slate-100 rounded-full border-2 border-black p-0.5 shadow-inner overflow-hidden">
+                      <div className="h-3 md:h-5 w-full bg-slate-100 rounded-full border-2 border-black p-[1px] md:p-0.5 shadow-inner overflow-hidden">
                         <div className={cn("h-full rounded-full transition-all duration-1000 ease-out border-r-2 border-black/20", skill.color)}
                           style={{ width: animate ? `${skill.val || 0}%` : "0%" }} />
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="space-y-6">
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                    <iconify-icon icon="fluent-emoji:map-point" class="text-lg" /> Territory Affinity
+                <div>
+                  <h3 className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-3 md:mb-6">
+                    <iconify-icon icon="fluent-emoji:map-point" class="text-base md:text-lg" /> Territory Affinity
                   </h3>
-                  <div className="flex items-end gap-4 h-[120px] pt-8">
+                  <div className="grid grid-cols-3 gap-2 md:gap-4">
                     {[
                       { label: "Luzon",    val: user.attributes?.luzon,    color: "bg-red-400"    },
                       { label: "Visayas",  val: user.attributes?.visayas,  color: "bg-blue-400"   },
                       { label: "Mindanao", val: user.attributes?.mindanao, color: "bg-yellow-400" },
                     ].map((region) => (
-                      <div key={region.label} className="flex-1 flex flex-col justify-end group h-full">
-                        <div className="w-full bg-slate-100 rounded-t-xl relative border-x-2 border-t-2 border-black flex flex-col justify-end h-full overflow-visible">
-                          <span className={cn("absolute left-1/2 -translate-x-1/2 text-[10px] font-black transition-all duration-1000 ease-out font-mono",
-                            (region.val ?? 0) > 0 ? "text-slate-900 opacity-100" : "text-slate-300 opacity-50")}
-                            style={{ bottom: `calc(${animate ? region.val || 0 : 0}% + 8px)`, zIndex: 10 }}>
-                            {region.val || 0}%
-                          </span>
-                          <div className={cn("w-full rounded-t-lg transition-all duration-1000 ease-out", region.color)}
-                            style={{ height: animate ? `${region.val || 0}%` : "0%" }} />
+                      <div key={region.label} className="flex flex-col items-center justify-center bg-slate-50 border-2 border-black rounded-xl p-2 md:p-3 relative overflow-hidden">
+                        <span className="text-[8px] md:text-[10px] uppercase font-black text-slate-500 tracking-wider mb-1 z-10">{region.label}</span>
+                        <span className="text-sm md:text-lg font-black text-slate-800 font-mono z-10">{region.val || 0}%</span>
+                        <div className="absolute bottom-0 left-0 right-0 h-1 md:h-2 bg-slate-200">
+                          <div className={cn("h-full transition-all duration-1000 ease-out", region.color)} style={{ width: animate ? `${region.val || 0}%` : "0%" }} />
                         </div>
-                        <span className="text-[10px] text-slate-500 text-center mt-3 font-black uppercase tracking-tighter italic">{region.label}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
-              <div className="pt-4">
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-6">
-                  <iconify-icon icon="fluent-emoji:t-shirt" class="text-lg" /> Visual Signature
+              <div className="pt-2 md:pt-4">
+                <h3 className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-3 md:mb-6">
+                  <iconify-icon icon="fluent-emoji:t-shirt" class="text-base md:text-lg" /> Visual Signature
                 </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div className="flex flex-wrap gap-2 md:gap-4">
                   {traits.map((trait) => (
-                    <div key={trait.label} className="flex items-center gap-3 px-4 py-3 bg-slate-50 border-2 border-black rounded-2xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all">
-                      <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
-                        <iconify-icon icon={trait.icon} class="text-xl text-slate-400" />
+                    <div key={trait.label} className="flex-1 min-w-[120px] md:min-w-[160px] flex items-center gap-2 px-3 py-2 bg-slate-50 border-2 border-black rounded-xl md:rounded-2xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] md:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all">
+                      <div className="w-6 h-6 md:w-8 md:h-8 rounded-md md:rounded-lg bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
+                        <iconify-icon icon={trait.icon} class="text-sm md:text-xl text-slate-400" />
                       </div>
                       <div className="flex flex-col min-w-0">
-                        <span className="text-[9px] text-slate-400 uppercase font-black leading-tight tracking-widest">{trait.label}</span>
-                        <span className="text-xs text-slate-800 font-black uppercase italic tracking-tighter truncate">{trait.value}</span>
+                        <span className="text-[7px] md:text-[9px] text-slate-400 uppercase font-black leading-none tracking-widest">{trait.label}</span>
+                        <span className="text-[10px] md:text-xs text-slate-800 font-black uppercase italic tracking-tighter truncate mt-0.5">{trait.value}</span>
                       </div>
                     </div>
                   ))}
