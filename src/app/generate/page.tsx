@@ -89,7 +89,6 @@ import {
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 
-// Reusable Enchantment Slider
 const EnchantmentControl = ({
   label,
   value,
@@ -102,7 +101,7 @@ const EnchantmentControl = ({
   onChange: (value: number) => void;
 }) => (
   <div className="flex flex-col">
-    <div className="flex justify-between px-1 -mb-1 text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 mt-5">
+    <div className="flex justify-between px-1 -mb-1 text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 mt-2 md:mt-5">
       <span>{label}</span>
       <span className="font-mono opacity-80">{value}%</span>
     </div>
@@ -130,30 +129,32 @@ const CarouselSelector = ({
   const Icon = current.icon;
 
   return (
-    <div className="space-y-3">
-      <label className="text-xs font-black uppercase text-slate-500 flex items-center gap-2">
+    <div className="space-y-2 md:space-y-3">
+      <label className="text-[10px] md:text-xs font-black uppercase text-slate-500 flex items-center gap-2">
         {label}
       </label>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 md:gap-2">
         <button
           onClick={onPrev}
-          className="p-3 bg-white border-2 border-black rounded-xl hover:bg-slate-50 shadow-[2px_2px_0_0_#000] active:translate-y-[1px] active:shadow-none transition-all"
+          className="p-1.5 md:p-3 bg-white border-2 border-black rounded-[0.4rem] md:rounded-xl hover:bg-slate-50 shadow-[1px_1px_0_0_#000] md:shadow-[2px_2px_0_0_#000] active:translate-y-[1px] active:shadow-none transition-all flex-shrink-0"
         >
-          <ChevronLeft size={20} />
+          <ChevronLeft size={14} className="md:hidden" />
+          <ChevronLeft size={20} className="hidden md:block" />
         </button>
 
         <div
-          className={`flex-1 flex flex-col items-center justify-center gap-2 p-6 rounded-3xl border-4 border-black transition-all duration-300 ${current.color} shadow-[4px_4px_0_0_#000]`}
+          className={`flex-1 flex flex-col items-center justify-center gap-1 md:gap-2 p-3 md:p-6 rounded-[1rem] md:rounded-3xl border-[2px] md:border-4 border-black transition-all duration-300 ${current.color} shadow-[2px_2px_0_0_#000] md:shadow-[4px_4px_0_0_#000] min-w-0`}
         >
-          <Icon size={32} strokeWidth={2.5} className="text-black" />
-          <span className="font-black text-sm uppercase tracking-tighter text-black">
+          <Icon size={20} strokeWidth={2.5} className="text-black md:hidden" />
+          <Icon size={32} strokeWidth={2.5} className="text-black hidden md:block" />
+          <span className="font-black text-[10px] md:text-sm uppercase tracking-tighter text-black truncate w-full text-center">
             {current.name}
           </span>
-          <div className="flex gap-1 mt-1">
+          <div className="flex gap-1 mt-0.5 md:mt-1 flex-wrap justify-center">
             {options.map((_, i) => (
               <div
                 key={i}
-                className={`w-1.5 h-1.5 rounded-full border border-black/20 ${i === currentIndex ? "bg-black w-4" : "bg-black/10"}`}
+                className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full border border-black/20 ${i === currentIndex ? "bg-black w-2 md:w-4" : "bg-black/10"}`}
               />
             ))}
           </div>
@@ -161,16 +162,16 @@ const CarouselSelector = ({
 
         <button
           onClick={onNext}
-          className="p-3 bg-white border-2 border-black rounded-xl hover:bg-slate-50 shadow-[2px_2px_0_0_#000] active:translate-y-[1px] active:shadow-none transition-all"
+          className="p-1.5 md:p-3 bg-white border-2 border-black rounded-[0.4rem] md:rounded-xl hover:bg-slate-50 shadow-[1px_1px_0_0_#000] md:shadow-[2px_2px_0_0_#000] active:translate-y-[1px] active:shadow-none transition-all flex-shrink-0"
         >
-          <ChevronRight size={20} />
+          <ChevronRight size={14} className="md:hidden" />
+          <ChevronRight size={20} className="hidden md:block" />
         </button>
       </div>
     </div>
   );
 };
 
-// Optimized Tactile Slider
 const CustomSlider = ({
   value,
   color,
@@ -182,8 +183,8 @@ const CustomSlider = ({
   customStyle?: React.CSSProperties;
   onChange: (value: number) => void;
 }) => (
-  <div className="relative flex items-center h-8">
-    <div className="absolute inset-0 h-4 my-auto bg-white rounded-full border-2 border-black overflow-hidden shadow-inner">
+  <div className="relative flex items-center h-5 md:h-8">
+    <div className="absolute inset-0 h-2 md:h-4 my-auto bg-white rounded-full border-[1.5px] md:border-2 border-black overflow-hidden shadow-inner">
       <div
         className={`h-full transition-all duration-150 ${color || ""}`}
         style={{
@@ -201,11 +202,11 @@ const CustomSlider = ({
       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
     />
     <div
-      className="absolute w-7 h-7 bg-white border-2 border-black rounded-xl shadow-[2px_2px_0_0_#000] pointer-events-none transition-all duration-75"
+      className="absolute w-4 h-4 md:w-7 md:h-7 bg-white border-[1.5px] md:border-2 border-black rounded-full md:rounded-xl shadow-[1px_1px_0_0_#000] md:shadow-[2px_2px_0_0_#000] pointer-events-none transition-all duration-75"
       style={{
-        left: `calc(${value}% - 14px)`,
+        left: `${value}%`,
         top: "50%",
-        transform: "translateY(-50%)",
+        transform: "translate(-50%, -50%)",
       }}
     />
   </div>
@@ -1816,23 +1817,25 @@ export default function GeneratorPage() {
                   </div>
                 ) : (
                   <div className="min-h-screen text-slate-900 font-sans p-4 md:p-8">
-                    <header className="max-w-6xl mx-auto text-center mb-10">
+                    <header className="max-w-6xl mx-auto text-center mb-6 md:mb-10">
                       <div className="flex items-center justify-center gap-2 mb-2">
-                        <div className="bg-yellow-400 p-1.5 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                          <Sparkles size={24} strokeWidth={2.5} />
+                        <div className="bg-yellow-400 p-1 md:p-1.5 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                          <Sparkles size={20} strokeWidth={2.5} className="md:hidden" />
+                          <Sparkles size={24} strokeWidth={2.5} className="hidden md:block" />
                         </div>
-                        <h1 className="text-3xl font-black uppercase tracking-tighter text-black">
+                        <h1 className="text-xl md:text-3xl font-black uppercase tracking-tighter text-black leading-tight">
                           Kapogian Spirit Summoner
                         </h1>
                       </div>
                     </header>
 
-                    <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                      <section className="lg:col-span-4 space-y-6 flex flex-col h-fit">
-                        <div className="bg-white border-4 border-black p-6 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-[150px]">
-                          <div className="flex items-center gap-2 mb-4">
-                            <Dna size={20} className="text-blue-600" />
-                            <h2 className="font-bold text-lg uppercase tracking-tight">
+                    <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-8 items-start">
+                      <section className="lg:col-span-4 space-y-4 md:space-y-6 flex flex-col h-fit">
+                        <div className="bg-white border-2 md:border-4 border-black p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] min-h-[120px] md:h-[150px]">
+                          <div className="flex items-center gap-1.5 md:gap-2 mb-3 md:mb-4">
+                            <Dna size={18} className="text-blue-600 md:hidden" />
+                            <Dna size={20} className="text-blue-600 hidden md:block" />
+                            <h2 className="font-bold text-base md:text-lg uppercase tracking-tight">
                               Spirit Lineage
                             </h2>
                           </div>
@@ -1853,10 +1856,11 @@ export default function GeneratorPage() {
                           </div>
                         </div>
 
-                        <div className="bg-white border-4 border-black p-6 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                          <div className="flex items-center gap-2 mb-4 h-[0px]">
-                            <User size={20} className="text-purple-600" />
-                            <h2 className="font-bold text-lg uppercase tracking-tight">
+                        <div className="bg-white border-2 md:border-4 border-black p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] min-h-[120px]">
+                          <div className="flex items-center gap-1.5 md:gap-2 mb-3 md:mb-4">
+                            <User size={18} className="text-purple-600 md:hidden" />
+                            <User size={20} className="text-purple-600 hidden md:block" />
+                            <h2 className="font-bold text-base md:text-lg uppercase tracking-tight">
                               Identity
                             </h2>
                           </div>
@@ -1865,14 +1869,15 @@ export default function GeneratorPage() {
                             placeholder="Leave blank for random..."
                             value={characterName}
                             onChange={(e) => setCharacterName(e.target.value)}
-                            className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-4 font-bold outline-none focus:border-purple-400 focus:bg-white transition-all shadow-inner"
+                            className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 md:p-4 font-bold text-sm md:text-base outline-none focus:border-purple-400 focus:bg-white transition-all shadow-inner"
                           />
                         </div>
 
-                        <div className="bg-white border-4 border-black p-4 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-[250px] flex flex-col justify-between">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Crown size={20} className="text-yellow-600" />
-                            <h2 className="font-bold text-lg uppercase tracking-tight">
+                        <div className="bg-white border-2 md:border-4 border-black p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-auto min-h-[220px] md:h-[250px] flex flex-col justify-between">
+                          <div className="flex items-center gap-1.5 md:gap-2 mb-2">
+                            <Crown size={18} className="text-yellow-600 md:hidden" />
+                            <Crown size={20} className="text-yellow-600 hidden md:block" />
+                            <h2 className="font-bold text-base md:text-lg uppercase tracking-tight">
                               Enchantments
                             </h2>
                           </div>
@@ -1904,10 +1909,11 @@ export default function GeneratorPage() {
                           </div>
                         </div>
 
-                        <div className="bg-white border-4 border-black p-4 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-[250px] flex flex-col justify-between">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Crown size={20} className="text-red-600" />
-                            <h2 className="font-bold text-lg uppercase tracking-tight">
+                        <div className="bg-white border-2 md:border-4 border-black p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-auto min-h-[220px] md:h-[250px] flex flex-col justify-between">
+                          <div className="flex items-center gap-1.5 md:gap-2 mb-2">
+                            <Crown size={18} className="text-red-600 md:hidden" />
+                            <Crown size={20} className="text-red-600 hidden md:block" />
+                            <h2 className="font-bold text-base md:text-lg uppercase tracking-tight">
                               Regions
                             </h2>
                           </div>
@@ -1939,18 +1945,19 @@ export default function GeneratorPage() {
                       </section>
 
                       <section className="lg:col-span-8 flex flex-col">
-                        <div className="bg-[#E6F4F1] border-4 border-black p-8 rounded-[2.5rem] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-1 flex flex-col">
-                          <div className="flex items-center justify-between mb-8">
-                            <div className="flex items-center gap-2">
-                              <Palette size={24} className="text-emerald-600" />
-                              <h2 className="font-black text-2xl uppercase tracking-tighter italic">
+                        <div className="bg-[#E6F4F1] border-2 md:border-4 border-black p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-1 flex flex-col">
+                          <div className="flex items-center justify-between mb-6 md:mb-8">
+                            <div className="flex items-center gap-1.5 md:gap-2">
+                              <Palette size={20} className="text-emerald-600 md:hidden" strokeWidth={3} />
+                              <Palette size={24} className="text-emerald-600 hidden md:block" />
+                              <h2 className="font-black text-xl md:text-2xl uppercase tracking-tighter italic leading-none">
                                 Porma Designer
                               </h2>
                             </div>
                           </div>
 
                           <div className="flex-1 flex flex-col justify-between">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                            <div className="grid grid-cols-2 gap-3 md:gap-6 mb-4 md:mb-10">
                               <CarouselSelector
                                 label="Outfit Style"
                                 options={clothingOptions}
@@ -1967,13 +1974,13 @@ export default function GeneratorPage() {
                               />
                             </div>
 
-                            <div className="bg-white border-2 border-black rounded-3xl p-6 mb-8 grid grid-cols-1 md:grid-cols-2 gap-10">
-                              <div className="space-y-6">
+                            <div className="bg-white border-2 border-black rounded-2xl md:rounded-3xl p-3 md:p-6 mb-4 md:mb-8 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-10 shadow-[2px_2px_0_0_#000]">
+                              <div className="space-y-4 md:space-y-6">
                                 <div className="space-y-2">
-                                  <label className="text-xs font-black uppercase text-slate-500 flex items-center gap-2">
+                                  <label className="text-[10px] md:text-xs font-black uppercase text-slate-500 flex items-center gap-2">
                                     <Palette size={14} /> Hair Color
                                   </label>
-                                  <div className="flex gap-4 items-center">
+                                  <div className="flex gap-2 md:gap-4 items-center">
                                     <input
                                       type="color"
                                       value={attributes.hairColor}
@@ -1983,16 +1990,16 @@ export default function GeneratorPage() {
                                           hairColor: e.target.value,
                                         })
                                       }
-                                      className="w-16 h-10 cursor-pointer appearance-none bg-transparent border-2 border-black rounded-full overflow-hidden shadow-[4px_4px_0_0_#000]"
+                                      className="w-12 h-8 md:w-16 md:h-10 cursor-pointer appearance-none bg-transparent border-[1.5px] md:border-2 border-black rounded-full overflow-hidden shadow-[2px_2px_0_0_#000] md:shadow-[4px_4px_0_0_#000]"
                                     />
-                                    <div className="flex-1 bg-slate-50 border-2 border-black/10 rounded-xl px-3 py-2 font-mono text-xs font-bold uppercase text-center">
+                                    <div className="flex-1 bg-slate-50 border-[1.5px] md:border-2 border-black/10 rounded-lg md:rounded-xl px-2 py-1.5 md:px-3 md:py-2 font-mono text-[10px] md:text-xs font-bold uppercase text-center">
                                       {attributes.hairColor}
                                     </div>
                                   </div>
                                 </div>
 
                                 <div className="space-y-2">
-                                  <label className="text-xs font-black uppercase text-slate-500 flex items-center gap-2">
+                                  <label className="text-[10px] md:text-xs font-black uppercase text-slate-500 flex items-center gap-2">
                                     <Scissors size={14} /> Hair Style Amount
                                   </label>
                                   <CustomSlider
@@ -2009,7 +2016,7 @@ export default function GeneratorPage() {
                                   />
                                 </div>
                                 <div className="space-y-2">
-                                  <label className="text-xs font-black uppercase text-slate-500 flex items-center gap-2">
+                                  <label className="text-[10px] md:text-xs font-black uppercase text-slate-500 flex items-center gap-2">
                                     Facial Hair
                                   </label>
                                   <CustomSlider
@@ -2025,11 +2032,11 @@ export default function GeneratorPage() {
                                 </div>
                               </div>
 
-                              <div className="space-y-4">
-                                <label className="text-xs font-black uppercase text-slate-500">
+                              <div className="space-y-3 md:space-y-4">
+                                <label className="text-[10px] md:text-xs font-black uppercase text-slate-500">
                                   Skin Tone
                                 </label>
-                                <div className="grid grid-cols-5 gap-2 p-2 bg-slate-50 border-2 border-black/10 rounded-2xl">
+                                <div className="grid grid-cols-5 gap-1.5 md:gap-2 p-1.5 md:p-2 bg-slate-50 border-[1.5px] md:border-2 border-black/10 rounded-xl md:rounded-2xl">
                                   {skinTones.map((tone) => (
                                     <button
                                       key={tone}
@@ -2039,13 +2046,13 @@ export default function GeneratorPage() {
                                           skinTone: tone,
                                         })
                                       }
-                                      className={`h-10 rounded-lg border-2 transition-all ${attributes.skinTone === tone ? "border-black scale-[1.15] shadow-[2px_2px_0_0_#000] z-10" : "border-transparent opacity-60"}`}
+                                      className={`h-6 md:h-10 rounded-md md:rounded-lg border-[1.5px] md:border-2 transition-all ${attributes.skinTone === tone ? "border-black scale-[1.15] shadow-[2px_2px_0_0_#000] z-10" : "border-transparent opacity-60"}`}
                                       style={{ backgroundColor: tone }}
                                     />
                                   ))}
                                 </div>
-                                <div className="space-y-2 pt-2">
-                                  <label className="text-xs font-black uppercase text-slate-500 flex items-center gap-2">
+                                <div className="space-y-2 pt-1 md:pt-2">
+                                  <label className="text-[10px] md:text-xs font-black uppercase text-slate-500 flex items-center gap-2">
                                     <Eye size={14} /> Eyewear
                                   </label>
                                   <CustomSlider
@@ -2062,9 +2069,9 @@ export default function GeneratorPage() {
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                              <div className="space-y-4">
-                                <label className="text-xs font-black uppercase text-slate-500">
+                            <div className="grid grid-cols-2 gap-3 md:gap-8">
+                              <div className="space-y-2 md:space-y-4">
+                                <label className="text-[10px] md:text-xs font-black uppercase text-slate-500">
                                   Body Mass Ratio
                                 </label>
                                 <CustomSlider
@@ -2075,8 +2082,8 @@ export default function GeneratorPage() {
                                   }
                                 />
                               </div>
-                              <div className="space-y-3">
-                                <label className="text-xs font-black uppercase text-slate-500">
+                              <div className="space-y-2 md:space-y-3">
+                                <label className="text-[10px] md:text-xs font-black uppercase text-slate-500">
                                   Ritual Item
                                 </label>
                                 <div className="relative">
@@ -2088,7 +2095,7 @@ export default function GeneratorPage() {
                                         heldItem: e.target.value,
                                       })
                                     }
-                                    className="w-full bg-white border-2 border-black rounded-xl p-3 font-black text-sm appearance-none outline-none shadow-[3px_3px_0_0_#000]"
+                                    className="w-full bg-white border-[1.5px] md:border-2 border-black rounded-lg md:rounded-xl px-2 py-1.5 md:p-3 font-black text-[10px] md:text-sm appearance-none outline-none shadow-[2px_2px_0_0_#000] md:shadow-[3px_3px_0_0_#000]"
                                   >
                                     {items.map((item) => (
                                       <option key={item} value={item}>
@@ -2106,23 +2113,27 @@ export default function GeneratorPage() {
                           </div>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                        <div className="flex flex-col sm:flex-row gap-2.5 md:gap-4 pt-3 md:pt-6">
                           <button
                             onClick={handleShuffle}
-                            className="flex-1 flex items-center justify-center gap-3 bg-white hover:bg-slate-50 border-4 border-black p-6 rounded-[2rem] font-black text-xl uppercase shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px]"
+                            className="flex-1 flex items-center justify-center gap-1.5 md:gap-3 bg-white hover:bg-slate-50 border-[2px] md:border-4 border-black py-2.5 px-4 md:p-6 rounded-xl md:rounded-[2rem] font-black text-sm md:text-xl uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px]"
                           >
-                            <Shuffle size={24} strokeWidth={3} />
+                            <Shuffle size={16} strokeWidth={3} className="md:hidden" />
+                            <Shuffle size={24} strokeWidth={3} className="hidden md:block" />
                             Randomize
                           </button>
                           <button
                             onClick={handleGenerate}
                             disabled={loading}
-                            className={`flex-[1.5] flex items-center justify-center gap-3 ${loading ? "bg-emerald-200" : "bg-yellow-400 hover:bg-yellow-300"} border-4 border-black p-6 rounded-[2rem] font-black text-2xl uppercase shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] transition-all group`}
+                            className={`flex-[1.5] flex items-center justify-center gap-1.5 md:gap-3 ${loading ? "bg-emerald-200" : "bg-yellow-400 hover:bg-yellow-300"} border-[2px] md:border-4 border-black py-2.5 px-4 md:p-6 rounded-xl md:rounded-[2rem] font-black text-base md:text-2xl uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] transition-all group`}
                           >
                             {loading ? (
-                              <LoaderCircle className="w-8 h-8 animate-spin" />
+                              <LoaderCircle className="w-5 h-5 md:w-8 md:h-8 animate-spin" />
                             ) : (
-                              <Sparkles size={28} strokeWidth={3} />
+                              <>
+                                <Sparkles size={20} strokeWidth={3} className="md:hidden" />
+                                <Sparkles size={28} strokeWidth={3} className="hidden md:block" />
+                              </>
                             )}
                             {loading ? "Summoning..." : "Summon Spirit"}
                           </button>
