@@ -1022,7 +1022,7 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser; isO
           <button onClick={onClose} className="absolute top-4 right-4 z-[60] bg-white border-[3px] border-black rounded-full p-1 md:p-2 hover:bg-red-500 hover:text-white transition-all active:scale-95">
             <X size={20} strokeWidth={3} />
           </button>
-          <div className="w-full bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-64 md:h-80 border-b-[3px] md:border-b-4 border-black flex flex-col items-center justify-start pt-8 md:pt-16 p-4">
+          <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-64 md:h-auto border-b-[3px] md:border-b-0 md:border-r-4 border-black flex flex-col items-center justify-start pt-8 md:pt-16 p-4">
             <div className="text-center z-20 absolute top-4 md:top-8 left-1/2 -translate-x-1/2 w-full">
               <h2 className={cn("text-[10px] md:text-base uppercase font-black tracking-widest flex items-center justify-center gap-1 drop-shadow-sm opacity-80", rankInfo.style)}>
                 {user.attributes?.rank || "Spirit Seed."}
@@ -1043,10 +1043,10 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser; isO
               </div>
             </div>
           </div>
-          <div className="w-full flex flex-col bg-white overflow-hidden min-h-0 relative">
+          <div className="w-full md:w-[65%] flex flex-col bg-white overflow-hidden min-h-0 relative">
             {/* Absolute positioning of Name and Lineage to overlap avatar container on mobile */}
-            <div className="absolute top-[-30px] md:relative md:top-0 left-0 w-full text-center z-40 md:mt-8 md:mb-12 pointer-events-none">
-              <h1 className="text-2xl md:text-3xl font-black text-[#5ce1e6] tracking-tighter uppercase leading-none mb-1 md:mb-2 pointer-events-auto filter drop-shadow-[0_2px_4px_rgba(255,255,255,0.8)] md:drop-shadow-none">{user.nftName}</h1>
+            <div className="relative left-0 w-full text-center z-40 mt-4 md:mt-8 md:mb-6 pointer-events-none">
+              <h1 className="text-2xl md:text-3xl font-black text tracking-tighter uppercase leading-none mb-1 md:mb-2 pointer-events-auto filter drop-shadow-[0_2px_4px_rgba(255,255,255,0.8)] md:drop-shadow-none">{user.nftName}</h1>
             </div>
             {/* Removed the absolute positioning wrapper, returning to a normal scroll layout */}
             <div className="overflow-y-auto w-full flex flex-col flex-1 custom-scrollbar pt-8">
