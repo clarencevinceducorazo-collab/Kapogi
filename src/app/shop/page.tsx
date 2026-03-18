@@ -117,6 +117,7 @@ export default function KapogianShop() {
     postalCode?: string;
     country?: string;
   }>({});
+  const [formTouched, setFormTouched] = useState(false);
 
   // Email validation: must be a valid email format
   function validateEmail(email: string) {
@@ -190,7 +191,18 @@ export default function KapogianShop() {
     document.body.style.overflow = "";
   };
 
-  const nextStep = () => setCurrentStep((p) => Math.min(p + 1, 3));
+  const nextStep = () => {
+    if (currentStep === 2) {
+      const errors = validateFormFields(shippingForm);
+      setFormErrors(errors);
+      setFormTouched(true);
+      if (Object.keys(errors).length > 0) {
+        setToast({ message: "Fill in all required and valid shipping fields.", type: "error" });
+        return;
+      }
+    }
+    setCurrentStep((p) => Math.min(p + 1, 3));
+  };
   const prevStep = () => setCurrentStep((p) => Math.max(p - 1, 1));
 
   const canProceedStep1 =
@@ -636,16 +648,23 @@ export default function KapogianShop() {
                               value = value.replace(/[^0-9]/g, "").slice(0, 11);
                             }
                             setShippingForm((f) => ({ ...f, [key]: value }));
-                            setFormErrors((err) => ({ ...err, [key]: undefined }));
+                            // Only clear error for this field if user corrects it after submit attempt
+                            if (formTouched) {
+                              setFormErrors((err) => {
+                                const newErr = { ...err };
+                                delete newErr[key as keyof typeof formErrors];
+                                return newErr;
+                              });
+                            }
                           }}
                           placeholder={placeholder}
                           className={
                             "w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" +
-                            (formErrors[key as keyof typeof formErrors] ? " border-red-500" : "")
+                            (formTouched && formErrors[key as keyof typeof formErrors] ? " border-red-500" : "")
                           }
                           maxLength={key === "phone" ? 11 : undefined}
                         />
-                        {formErrors[key as keyof typeof formErrors] && (
+                        {formTouched && formErrors[key as keyof typeof formErrors] && (
                           <div className="text-red-500 text-xs font-bold mt-1 ml-2">{formErrors[key as keyof typeof formErrors]}</div>
                         )}
                       </div>
@@ -664,15 +683,21 @@ export default function KapogianShop() {
                             value={(shippingForm as any)[key]}
                             onChange={(e) => {
                               setShippingForm((f) => ({ ...f, [key]: e.target.value }));
-                              setFormErrors((err) => ({ ...err, [key]: undefined }));
+                              if (formTouched) {
+                                setFormErrors((err) => {
+                                  const newErr = { ...err };
+                                  delete newErr[key as keyof typeof formErrors];
+                                  return newErr;
+                                });
+                              }
                             }}
                             placeholder={placeholder}
                             className={
                               "w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" +
-                              (formErrors[key as keyof typeof formErrors] ? " border-red-500" : "")
+                              (formTouched && formErrors[key as keyof typeof formErrors] ? " border-red-500" : "")
                             }
                           />
-                          {formErrors[key as keyof typeof formErrors] && (
+                          {formTouched && formErrors[key as keyof typeof formErrors] && (
                             <div className="text-red-500 text-xs font-bold mt-1 ml-2">{formErrors[key as keyof typeof formErrors]}</div>
                           )}
                         </div>
@@ -689,8 +714,13 @@ export default function KapogianShop() {
                       <button onClick={prevStep} className="w-14 h-14 bg-white border-4 border-black rounded-2xl font-black text-slate-800 hover:bg-slate-50 squishy-btn flex items-center justify-center flex-shrink-0 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                         <iconify-icon icon="solar:arrow-left-bold" width="24" />
                       </button>
-                      <button onClick={nextStep} disabled={!canProceedStep2}
-                        className="flex-1 bg-sky-400 text-white border-4 border-black font-black py-4 rounded-2xl hover:bg-sky-500 squishy-btn flex items-center justify-center gap-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] uppercase tracking-widest text-sm disabled:opacity-40 disabled:cursor-not-allowed">
+                      <button onClick={nextStep}
+                        className={
+                          "flex-1 bg-sky-400 text-white border-4 border-black font-black py-4 rounded-2xl hover:bg-sky-500 squishy-btn flex items-center justify-center gap-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] uppercase tracking-widest text-sm" +
+                          (!canProceedStep2 ? " opacity-60" : "")
+                        }
+                        type="button"
+                      >
                         Confirm Logistics <iconify-icon icon="solar:check-circle-bold" width="20" />
                       </button>
                     </div>
