@@ -373,7 +373,7 @@ export default function KapogianShop() {
               key={filter.id}
               onClick={() => setActiveFilter(filter.id)}
               className={cn(
-                "px-5 py-2 rounded-full font-bold text-sm squishy-btn border-2 transition-all flex items-center gap-2",
+                "px-4 py-1.5 md:px-5 md:py-2 rounded-full font-bold text-sm squishy-btn border-2 transition-all flex items-center gap-1.5 md:gap-2",
                 activeFilter === filter.id
                   ? "bg-slate-900 text-white border-slate-900"
                   : "bg-white text-slate-600 border-slate-100 hover:border-cyan-300",
@@ -404,26 +404,24 @@ export default function KapogianShop() {
                   className="poster-card rounded-[2.5rem] overflow-hidden flex flex-col h-full group"
                 >
                   <div
-                    className="relative h-64 flex items-center justify-center overflow-hidden m-2 rounded-[2rem] border-2 border-black"
+                    className="relative h-48 md:h-64 flex items-center justify-center overflow-hidden m-2 rounded-[2rem] border-2 border-black"
                     style={{ backgroundColor: item.colorBg || "#f8fafc" }}
                   >
                     <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
-                    <div className="relative z-10 w-40 h-40 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
+                    <div className="relative z-10 w-32 h-32 md:w-40 md:h-40 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
                       <Image
                         src={item.imageStatic}
                         alt={item.name}
-                        width={160}
-                        height={160}
+                        fill
                         className="object-contain drop-shadow-2xl transition-opacity duration-300 group-hover:opacity-0"
                       />
                       <div className="absolute inset-0 flex items-center justify-center">
                         <Image
                           src={item.imageAnimated}
                           alt={item.name}
-                          width={160}
-                          height={160}
+                          fill
                           unoptimized
-                          className="object-contain drop-shadow-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-hover:-translate-y-2"
+                          className="object-contain drop-shadow-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 md:group-hover:-translate-y-2"
                         />
                       </div>
                     </div>
@@ -475,46 +473,46 @@ export default function KapogianShop() {
           >
             {/* Left panel — compact on mobile, sidebar on md+ */}
             <div
-              className="w-full h-44 md:h-auto md:w-56 flex-shrink-0 flex flex-row md:flex-col items-center justify-center gap-4 md:gap-0 px-5 py-3 md:p-6 relative overflow-hidden"
+              className="w-full h-32 md:h-auto md:w-56 flex-shrink-0 flex flex-row md:flex-col items-center justify-center gap-4 md:gap-0 px-4 py-2 md:p-6 relative overflow-hidden"
               style={{ backgroundColor: selectedItem.colorBg || "#f8fafc" }}
             >
               <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
-              <div className="relative z-10 w-32 h-32 md:w-44 md:h-44 bg-white rounded-3xl flex items-center justify-center shadow-xl border-4 border-black md:mb-4 animate-float overflow-hidden flex-shrink-0">
-                <Image src={selectedItem.imageAnimated} alt="preview" width={120} height={120} unoptimized className="object-contain" />
+              <div className="relative z-10 w-20 h-20 md:w-44 md:h-44 bg-white rounded-[1.25rem] md:rounded-3xl flex items-center justify-center shadow-md md:shadow-xl border-[3px] md:border-4 border-black md:mb-4 animate-float overflow-hidden flex-shrink-0">
+                <Image src={selectedItem.imageAnimated} alt="preview" fill unoptimized className="object-contain p-2 md:p-0" />
               </div>
-              <div className="relative z-10 flex flex-col items-start md:items-center gap-2 min-w-0">
-                <div className="bg-black text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
+              <div className="relative z-10 flex flex-col items-start md:items-center gap-1.5 md:gap-2 min-w-0 flex-1 md:flex-none">
+                <div className="bg-black text-white text-[8px] md:text-[10px] font-black px-2 md:px-3 py-0.5 md:py-1 rounded-full uppercase tracking-widest shadow-md md:shadow-lg">
                   {ITEM_TYPE_LABELS[selectedItem.itemType]}
                 </div>
-                <h2 className="text-sm md:text-base font-headline text-white tracking-tight leading-tight uppercase">
+                <h2 className="text-xs md:text-base font-headline text-white tracking-tight leading-tight uppercase truncate w-full md:text-center md:w-auto">
                   <span style={{ textShadow: "-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000" }}>
                     {selectedItem.name}
                   </span>
                 </h2>
-                <div className="bg-sky-50 border-2 border-black rounded-xl px-3 py-1.5 flex items-center gap-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                  <iconify-icon icon="token-branded:sui" class="text-blue-500 text-lg" />
-                  <span className="font-black text-black text-base">{mistToSui(Number(selectedItem.priceMist)).toFixed(3)}</span>
+                <div className="bg-sky-50 border-2 border-black rounded-lg md:rounded-xl px-2 py-1 md:px-3 md:py-1.5 flex items-center gap-1.5 md:gap-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                  <iconify-icon icon="token-branded:sui" class="text-blue-500 text-sm md:text-lg" />
+                  <span className="font-black text-black text-sm md:text-base leading-none">{mistToSui(Number(selectedItem.priceMist)).toFixed(3)}</span>
                 </div>
               </div>
             </div>
 
             {/* Right panel */}
-            <div className="flex-1 flex flex-col overflow-hidden border-l-4 border-black bg-slate-50">
-              <div className="px-7 pt-6 pb-4 border-b-4 border-black bg-white flex items-center justify-between flex-shrink-0">
-                <div className="flex gap-2 items-center">
+            <div className="flex-1 flex flex-col overflow-hidden border-t-4 md:border-t-0 md:border-l-4 border-black bg-slate-50 relative">
+              <div className="px-4 md:px-7 pt-4 pb-3 md:pt-6 md:pb-4 border-b-4 border-black bg-white flex items-center justify-between flex-shrink-0 z-20">
+                <div className="flex gap-1.5 md:gap-2 items-center">
                   {[1, 2, 3].map((step, i) => (
                     <React.Fragment key={step}>
                       {i > 0 && (
-                        <div className="h-1.5 w-10 bg-slate-200 rounded-full border border-black/10 overflow-hidden">
+                        <div className="h-1 md:h-1.5 w-3 md:w-10 bg-slate-200 rounded-full border border-black/10 overflow-hidden">
                           <div className={cn("h-full bg-sky-400 transition-all duration-500", currentStep > i ? "w-full" : "w-0")} />
                         </div>
                       )}
-                      <div className={cn("step-indicator w-8 h-8 rounded-full border-2 border-black flex items-center justify-center font-black text-sm transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]", currentStep >= step ? "active" : "text-slate-400 bg-slate-100")}>
+                      <div className={cn("step-indicator w-6 h-6 md:w-8 md:h-8 rounded-full border-2 border-black flex items-center justify-center font-black text-xs md:text-sm transition-all shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] md:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]", currentStep >= step ? "active" : "text-slate-400 bg-slate-100")}>
                         {step}
                       </div>
                     </React.Fragment>
                   ))}
-                  <span className="text-[10px] font-black text-slate-400 ml-2 uppercase tracking-[0.2em]">
+                  <span className="text-[8px] md:text-[10px] font-black text-slate-400 ml-1.5 md:ml-2 uppercase tracking-wide md:tracking-[0.2em] truncate hidden sm:inline-block">
                     {currentStep === 1 ? "Configuration" : currentStep === 2 ? "Logistics" : "Authorize Pay"}
                   </span>
                 </div>
@@ -524,7 +522,7 @@ export default function KapogianShop() {
               <div className="flex-1 overflow-y-auto">
                 {/* Step 1 */}
                 {currentStep === 1 && (
-                  <div className="px-7 py-6 space-y-8">
+                  <div className="px-4 py-5 md:px-7 md:py-6 space-y-6 md:space-y-8">
                     {selectedItem.sizes.length > 0 && (
                       <div>
                         <p className="font-black text-black mb-2 text-xs tracking-widest uppercase flex items-center gap-2">
@@ -630,10 +628,10 @@ export default function KapogianShop() {
 
                 {/* Step 2 */}
                 {currentStep === 2 && (
-                  <div className="px-7 py-6 space-y-4">
-                    <div className="bg-white border-4 border-black rounded-[2rem] p-6 mb-2">
-                      <h3 className="text-2xl font-headline text-black mb-1 uppercase tracking-tight">Logistics Form</h3>
-                      <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Encrypted end-to-end on-chain</p>
+                  <div className="px-4 py-5 md:px-7 md:py-6 space-y-4">
+                    <div className="bg-white border-4 border-black rounded-2xl md:rounded-[2rem] p-4 md:p-6 mb-2 md:mb-4">
+                      <h3 className="text-xl md:text-2xl font-headline text-black mb-1 uppercase tracking-tight leading-none md:leading-normal">Logistics Form</h3>
+                      <p className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-widest mt-1 md:mt-0">Encrypted end-to-end on-chain</p>
                     </div>
                     {[
                       { key: "fullName", label: "Receiver Name *",        placeholder: "e.g. Satoshi Pogi",     type: "text"  },
@@ -664,7 +662,7 @@ export default function KapogianShop() {
                           }}
                           placeholder={placeholder}
                           className={
-                            "w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 text-black font-bold placeholder-gray-400 text-base focus:outline-none focus:ring-2 focus:ring-sky-300" +
+                            "w-full bg-white border-4 border-black rounded-xl md:rounded-2xl px-4 py-3 md:px-5 md:py-3.5 text-black font-bold placeholder-gray-400 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-sky-300" +
                             (formTouched && formErrors[key as keyof typeof formErrors] ? " border-red-500" : "")
                           }
                           maxLength={key === "phone" ? 11 : undefined}
@@ -674,7 +672,7 @@ export default function KapogianShop() {
                         )}
                       </div>
                     ))}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                       {[
                         { key: "province",   label: "Province *",  placeholder: "Metro Manila" },
                         { key: "city",       label: "City *",      placeholder: "Quezon City"  },
@@ -698,7 +696,7 @@ export default function KapogianShop() {
                             }}
                             placeholder={placeholder}
                             className={
-                              "w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 text-black font-bold placeholder-gray-400 text-base focus:outline-none focus:ring-2 focus:ring-sky-300" +
+                              "w-full bg-white border-4 border-black rounded-xl md:rounded-2xl px-4 py-3 md:px-5 md:py-3.5 text-black font-bold placeholder-gray-400 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-sky-300" +
                                 (formTouched && formErrors[key as keyof typeof formErrors] ? " border-red-500" : "")
                             }
                           />
@@ -713,15 +711,15 @@ export default function KapogianShop() {
                       <input type="text" value={shippingForm.notes}
                         onChange={(e) => setShippingForm((f) => ({ ...f, notes: e.target.value }))}
                         placeholder="Any special instructions..."
-                        className="w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                        className="w-full bg-white border-4 border-black rounded-xl md:rounded-2xl px-4 py-3 md:px-5 md:py-3.5 font-black text-slate-700 placeholder-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
                     </div>
-                    <div className="flex gap-4 mt-8">
-                      <button onClick={prevStep} className="w-14 h-14 bg-white border-4 border-black rounded-2xl font-black text-slate-800 hover:bg-slate-50 squishy-btn flex items-center justify-center flex-shrink-0 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                        <iconify-icon icon="solar:arrow-left-bold" width="24" />
+                    <div className="flex gap-2.5 md:gap-4 mt-6 md:mt-8">
+                      <button onClick={prevStep} className="w-12 h-12 md:w-14 md:h-14 bg-white border-4 border-black rounded-xl md:rounded-2xl font-black text-slate-800 hover:bg-slate-50 squishy-btn flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                        <iconify-icon icon="solar:arrow-left-bold" width="20" className="md:w-6" />
                       </button>
                       <button onClick={nextStep}
                         className={
-                          "flex-1 bg-sky-400 text-white border-4 border-black font-black py-4 rounded-2xl hover:bg-sky-500 squishy-btn flex items-center justify-center gap-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] uppercase tracking-widest text-sm" +
+                          "flex-1 bg-sky-400 text-white border-4 border-black font-black py-3 md:py-4 rounded-xl md:rounded-2xl hover:bg-sky-500 squishy-btn flex items-center justify-center gap-2 md:gap-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] uppercase tracking-[0.1em] md:tracking-widest text-xs md:text-sm" +
                           (!canProceedStep2 ? " opacity-60" : "")
                         }
                         type="button"
@@ -734,13 +732,13 @@ export default function KapogianShop() {
 
                 {/* Step 3 */}
                 {currentStep === 3 && (
-                  <div className="px-7 py-6 space-y-6">
-                    <div className="bg-white border-4 border-black rounded-[2rem] p-6">
-                      <h3 className="text-2xl font-headline text-black mb-1 uppercase tracking-tight">Checkout Manifest</h3>
-                      <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Network: SUI Mainnet</p>
+                  <div className="px-4 py-5 md:px-7 md:py-6 space-y-5 md:space-y-6">
+                    <div className="bg-white border-4 border-black rounded-2xl md:rounded-[2rem] p-4 md:p-6">
+                      <h3 className="text-xl md:text-2xl font-headline text-black mb-1 uppercase tracking-tight leading-none md:leading-normal">Checkout Manifest</h3>
+                      <p className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-widest mt-1 md:mt-0">Network: SUI Mainnet</p>
                     </div>
-                    <div className="bg-white border-4 border-black rounded-[2rem] p-6">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Final Receipt</p>
+                    <div className="bg-white border-4 border-black rounded-2xl md:rounded-[2rem] p-4 md:p-6">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 md:mb-4">Final Receipt</p>
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-16 bg-slate-50 border-2 border-black rounded-2xl flex items-center justify-center overflow-hidden relative flex-shrink-0">
                           {selectedPrintId !== "none" && selectedNft
@@ -749,8 +747,8 @@ export default function KapogianShop() {
                           }
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-black text-black text-lg truncate uppercase italic tracking-tighter">{selectedItem.name}</p>
-                          <p className="text-slate-400 font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
+                          <p className="font-black text-black text-base md:text-lg truncate uppercase italic tracking-tighter leading-tight">{selectedItem.name}</p>
+                          <p className="text-slate-400 font-black text-[9px] md:text-[10px] uppercase tracking-wide md:tracking-widest flex items-center gap-1.5 md:gap-2 mt-0.5 md:mt-0">
                             Qty: {currentQty}
                             {selectedSize && selectedSize !== "N/A" && (<><span className="w-1 h-1 bg-slate-200 rounded-full" /> Size: {selectedSize}</>)}
                             {selectedColor && (<><span className="w-1 h-1 bg-slate-200 rounded-full" /> {selectedColor}</>)}
@@ -764,11 +762,11 @@ export default function KapogianShop() {
                         <p>📦 {shippingForm.fullName} — {shippingForm.phone}</p>
                         <p>📍 {shippingForm.address}, {shippingForm.city}, {shippingForm.province}</p>
                       </div>
-                      <div className="mt-6 pt-5 border-t-4 border-black flex justify-between items-center">
-                        <span className="font-black text-slate-400 text-xs uppercase tracking-widest">Total SUI</span>
-                        <div className="flex-1 bg-sky-50 border-2 border-black rounded-xl p-3 flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] ml-4">
-                          <iconify-icon icon="token-branded:sui" class="text-blue-500 text-2xl" />
-                          <span className="font-black text-black text-xl">{totalSui.toFixed(3)}</span>
+                      <div className="mt-5 md:mt-6 pt-4 md:pt-5 border-t-4 border-black flex justify-between items-center">
+                        <span className="font-black text-slate-400 text-[10px] md:text-xs uppercase tracking-widest">Total SUI</span>
+                        <div className="flex-1 bg-sky-50 border-2 border-black rounded-xl p-2 md:p-3 flex items-center justify-center gap-1.5 md:gap-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] md:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] ml-3 md:ml-4">
+                          <iconify-icon icon="token-branded:sui" class="text-blue-500 text-xl md:text-2xl" />
+                          <span className="font-black text-black text-lg md:text-xl">{totalSui.toFixed(3)}</span>
                         </div>
                       </div>
                     </div>
@@ -779,10 +777,10 @@ export default function KapogianShop() {
                       </div>
                     ) : (
                       <button onClick={handlePurchase} disabled={purchasing}
-                        className="w-full bg-black text-white font-black py-6 rounded-[2rem] hover:bg-slate-900 transition-all squishy-btn flex items-center justify-center gap-4 text-xl shine-effect shadow-[8px_8px_0px_0px_rgba(59,130,246,0.6)] border-4 border-black disabled:opacity-50 disabled:cursor-not-allowed">
+                        className="w-full bg-black text-white font-black py-4 md:py-6 rounded-2xl md:rounded-[2rem] hover:bg-slate-900 transition-all squishy-btn flex items-center justify-center gap-3 md:gap-4 text-lg md:text-xl shine-effect shadow-[4px_4px_0px_0px_rgba(59,130,246,0.6)] md:shadow-[8px_8px_0px_0px_rgba(59,130,246,0.6)] border-[3px] md:border-4 border-black disabled:opacity-50 disabled:cursor-not-allowed leading-none">
                         {purchasing
-                          ? <><LoaderCircle className="animate-spin" size={28} /> Signing Transaction...</>
-                          : <><iconify-icon icon="token-branded:sui" width="32" /> Authorize & Pay</>
+                          ? <><LoaderCircle className="animate-spin w-5 h-5 md:w-7 md:h-7" /> Signing...</>
+                          : <><iconify-icon icon="token-branded:sui" class="text-2xl md:text-[32px]" /> Authorize & Pay</>
                         }
                       </button>
                     )}
