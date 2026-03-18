@@ -136,14 +136,14 @@ const CarouselSelector = ({
       <div className="flex items-center gap-1.5 md:gap-2">
         <button
           onClick={onPrev}
-          className="p-1.5 md:p-3 bg-white border-2 border-black rounded-[0.4rem] md:rounded-xl hover:bg-slate-50 shadow-[1px_1px_0_0_#000] md:shadow-[2px_2px_0_0_#000] active:translate-y-[1px] active:shadow-none transition-all flex-shrink-0"
+          className="p-1 md:p-3 bg-white border-2 border-black rounded-[0.4rem] md:rounded-xl hover:bg-slate-50 shadow-[1px_1px_0_0_#000] md:shadow-[2px_2px_0_0_#000] active:translate-y-[1px] active:shadow-none transition-all flex-shrink-0"
         >
           <ChevronLeft size={14} className="md:hidden" />
           <ChevronLeft size={20} className="hidden md:block" />
         </button>
 
         <div
-          className={`flex-1 flex flex-col items-center justify-center gap-1 md:gap-2 p-3 md:p-6 rounded-[1rem] md:rounded-3xl border-[2px] md:border-4 border-black transition-all duration-300 ${current.color} shadow-[2px_2px_0_0_#000] md:shadow-[4px_4px_0_0_#000] min-w-0`}
+          className={`flex-1 flex flex-col items-center justify-center gap-1 md:gap-2 p-2 md:p-6 rounded-[1rem] md:rounded-3xl border-[2px] md:border-4 border-black transition-all duration-300 ${current.color} shadow-[2px_2px_0_0_#000] md:shadow-[4px_4px_0_0_#000] min-w-0`}
         >
           <Icon size={20} strokeWidth={2.5} className="text-black md:hidden" />
           <Icon size={32} strokeWidth={2.5} className="text-black hidden md:block" />
@@ -162,7 +162,7 @@ const CarouselSelector = ({
 
         <button
           onClick={onNext}
-          className="p-1.5 md:p-3 bg-white border-2 border-black rounded-[0.4rem] md:rounded-xl hover:bg-slate-50 shadow-[1px_1px_0_0_#000] md:shadow-[2px_2px_0_0_#000] active:translate-y-[1px] active:shadow-none transition-all flex-shrink-0"
+          className="p-1 md:p-3 bg-white border-2 border-black rounded-[0.4rem] md:rounded-xl hover:bg-slate-50 shadow-[1px_1px_0_0_#000] md:shadow-[2px_2px_0_0_#000] active:translate-y-[1px] active:shadow-none transition-all flex-shrink-0"
         >
           <ChevronRight size={14} className="md:hidden" />
           <ChevronRight size={20} className="hidden md:block" />
@@ -1829,10 +1829,10 @@ export default function GeneratorPage() {
                       </div>
                     </header>
 
-                    <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-8 items-start">
+                    <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8 items-start">
                       <section className="lg:col-span-4 space-y-4 md:space-y-6 flex flex-col h-fit">
-                        <div className="bg-white border-2 md:border-4 border-black p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] min-h-[120px] md:h-[150px]">
-                          <div className="flex items-center gap-1.5 md:gap-2 mb-3 md:mb-4">
+                        <div className="bg-white border-[2px] md:border-4 border-black p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:h-[150px]">
+                          <div className="flex items-center gap-1.5 md:gap-2 mb-2 md:mb-4">
                             <Dna size={18} className="text-blue-600 md:hidden" />
                             <Dna size={20} className="text-blue-600 hidden md:block" />
                             <h2 className="font-bold text-base md:text-lg uppercase tracking-tight">
@@ -1856,8 +1856,8 @@ export default function GeneratorPage() {
                           </div>
                         </div>
 
-                        <div className="bg-white border-2 md:border-4 border-black p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] min-h-[120px]">
-                          <div className="flex items-center gap-1.5 md:gap-2 mb-3 md:mb-4">
+                        <div className="bg-white border-[2px] md:border-4 border-black p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                          <div className="flex items-center gap-1.5 md:gap-2 mb-2 md:mb-4">
                             <User size={18} className="text-purple-600 md:hidden" />
                             <User size={20} className="text-purple-600 hidden md:block" />
                             <h2 className="font-bold text-base md:text-lg uppercase tracking-tight">
@@ -1869,12 +1869,12 @@ export default function GeneratorPage() {
                             placeholder="Leave blank for random..."
                             value={characterName}
                             onChange={(e) => setCharacterName(e.target.value)}
-                            className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 md:p-4 font-bold text-sm md:text-base outline-none focus:border-purple-400 focus:bg-white transition-all shadow-inner"
+                            className="w-full bg-slate-50 border-[1.5px] md:border-2 border-slate-200 rounded-lg md:rounded-xl p-2.5 md:p-4 font-bold text-sm md:text-base outline-none focus:border-purple-400 focus:bg-white transition-all shadow-inner"
                           />
                         </div>
 
-                        <div className="bg-white border-2 md:border-4 border-black p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-auto min-h-[220px] md:h-[250px] flex flex-col justify-between">
-                          <div className="flex items-center gap-1.5 md:gap-2 mb-2">
+                        <div className="bg-white border-[2px] md:border-4 border-black p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
+                          <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
                             <Crown size={18} className="text-yellow-600 md:hidden" />
                             <Crown size={20} className="text-yellow-600 hidden md:block" />
                             <h2 className="font-bold text-base md:text-lg uppercase tracking-tight">
@@ -1909,8 +1909,8 @@ export default function GeneratorPage() {
                           </div>
                         </div>
 
-                        <div className="bg-white border-2 md:border-4 border-black p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-auto min-h-[220px] md:h-[250px] flex flex-col justify-between">
-                          <div className="flex items-center gap-1.5 md:gap-2 mb-2">
+                        <div className="bg-white border-[2px] md:border-4 border-black p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
+                          <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
                             <Crown size={18} className="text-red-600 md:hidden" />
                             <Crown size={20} className="text-red-600 hidden md:block" />
                             <h2 className="font-bold text-base md:text-lg uppercase tracking-tight">
@@ -1945,8 +1945,8 @@ export default function GeneratorPage() {
                       </section>
 
                       <section className="lg:col-span-8 flex flex-col">
-                        <div className="bg-[#E6F4F1] border-2 md:border-4 border-black p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-1 flex flex-col">
-                          <div className="flex items-center justify-between mb-6 md:mb-8">
+                        <div className="bg-[#E6F4F1] border-2 md:border-4 border-black p-3 md:p-8 rounded-2xl md:rounded-[2.5rem] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-1 flex flex-col">
+                          <div className="flex items-center justify-between mb-4 md:mb-8">
                             <div className="flex items-center gap-1.5 md:gap-2">
                               <Palette size={20} className="text-emerald-600 md:hidden" strokeWidth={3} />
                               <Palette size={24} className="text-emerald-600 hidden md:block" />
@@ -1957,7 +1957,7 @@ export default function GeneratorPage() {
                           </div>
 
                           <div className="flex-1 flex flex-col justify-between">
-                            <div className="grid grid-cols-2 gap-3 md:gap-6 mb-4 md:mb-10">
+                            <div className="grid grid-cols-2 gap-2 md:gap-6 mb-3 md:mb-10">
                               <CarouselSelector
                                 label="Outfit Style"
                                 options={clothingOptions}
@@ -1974,10 +1974,10 @@ export default function GeneratorPage() {
                               />
                             </div>
 
-                            <div className="bg-white border-2 border-black rounded-2xl md:rounded-3xl p-3 md:p-6 mb-4 md:mb-8 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-10 shadow-[2px_2px_0_0_#000]">
+                            <div className="bg-white border-2 border-black rounded-2xl md:rounded-3xl p-3 md:p-6 mb-3 md:mb-8 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-10 shadow-[2px_2px_0_0_#000]">
                               <div className="space-y-4 md:space-y-6">
-                                <div className="space-y-2">
-                                  <label className="text-[10px] md:text-xs font-black uppercase text-slate-500 flex items-center gap-2">
+                                <div className="space-y-1.5 md:space-y-2">
+                                  <label className="text-[10px] md:text-xs font-black uppercase text-slate-500 flex items-center gap-1.5 md:gap-2">
                                     <Palette size={14} /> Hair Color
                                   </label>
                                   <div className="flex gap-2 md:gap-4 items-center">
@@ -1990,7 +1990,7 @@ export default function GeneratorPage() {
                                           hairColor: e.target.value,
                                         })
                                       }
-                                      className="w-12 h-8 md:w-16 md:h-10 cursor-pointer appearance-none bg-transparent border-[1.5px] md:border-2 border-black rounded-full overflow-hidden shadow-[2px_2px_0_0_#000] md:shadow-[4px_4px_0_0_#000]"
+                                      className="w-12 h-8 md:w-16 md:h-10 cursor-pointer appearance-none bg-transparent border-none md:border-[1.5px] lg:border-2 md:border-black rounded-[2rem] md:rounded-full overflow-hidden shadow-[2px_2px_0_0_#000] md:shadow-[4px_4px_0_0_#000] [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-none [&::-webkit-color-swatch]:rounded-[2rem] md:[&::-webkit-color-swatch]:rounded-full [&::-moz-color-swatch]:border-none [&::-moz-color-swatch]:rounded-[2rem] md:[&::-moz-color-swatch]:rounded-full"
                                     />
                                     <div className="flex-1 bg-slate-50 border-[1.5px] md:border-2 border-black/10 rounded-lg md:rounded-xl px-2 py-1.5 md:px-3 md:py-2 font-mono text-[10px] md:text-xs font-bold uppercase text-center">
                                       {attributes.hairColor}
@@ -2032,7 +2032,7 @@ export default function GeneratorPage() {
                                 </div>
                               </div>
 
-                              <div className="space-y-3 md:space-y-4">
+                              <div className="space-y-2.5 md:space-y-4">
                                 <label className="text-[10px] md:text-xs font-black uppercase text-slate-500">
                                   Skin Tone
                                 </label>
@@ -2046,7 +2046,7 @@ export default function GeneratorPage() {
                                           skinTone: tone,
                                         })
                                       }
-                                      className={`h-6 md:h-10 rounded-md md:rounded-lg border-[1.5px] md:border-2 transition-all ${attributes.skinTone === tone ? "border-black scale-[1.15] shadow-[2px_2px_0_0_#000] z-10" : "border-transparent opacity-60"}`}
+                                      className={`h-5 md:h-10 rounded-md md:rounded-lg border-[1.5px] md:border-2 transition-all ${attributes.skinTone === tone ? "border-black scale-[1.15] shadow-[2px_2px_0_0_#000] z-10" : "border-transparent opacity-60"}`}
                                       style={{ backgroundColor: tone }}
                                     />
                                   ))}
@@ -2113,10 +2113,10 @@ export default function GeneratorPage() {
                           </div>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row gap-2.5 md:gap-4 pt-3 md:pt-6">
+                        <div className="flex flex-col sm:flex-row gap-2.5 md:gap-4 pt-2 md:pt-6">
                           <button
                             onClick={handleShuffle}
-                            className="flex-1 flex items-center justify-center gap-1.5 md:gap-3 bg-white hover:bg-slate-50 border-[2px] md:border-4 border-black py-2.5 px-4 md:p-6 rounded-xl md:rounded-[2rem] font-black text-sm md:text-xl uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px]"
+                            className="flex-1 flex items-center justify-center gap-1.5 md:gap-3 bg-white hover:bg-slate-50 border-[2px] md:border-4 border-black py-2 px-3 md:p-6 rounded-xl md:rounded-[2rem] font-black text-xs md:text-xl uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px]"
                           >
                             <Shuffle size={16} strokeWidth={3} className="md:hidden" />
                             <Shuffle size={24} strokeWidth={3} className="hidden md:block" />
@@ -2125,7 +2125,7 @@ export default function GeneratorPage() {
                           <button
                             onClick={handleGenerate}
                             disabled={loading}
-                            className={`flex-[1.5] flex items-center justify-center gap-1.5 md:gap-3 ${loading ? "bg-emerald-200" : "bg-yellow-400 hover:bg-yellow-300"} border-[2px] md:border-4 border-black py-2.5 px-4 md:p-6 rounded-xl md:rounded-[2rem] font-black text-base md:text-2xl uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] transition-all group`}
+                            className={`flex-[1.5] flex items-center justify-center gap-1.5 md:gap-3 ${loading ? "bg-emerald-200" : "bg-yellow-400 hover:bg-yellow-300"} border-[2px] md:border-4 border-black py-2 px-3 md:p-6 rounded-xl md:rounded-[2rem] font-black text-sm md:text-2xl uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] transition-all group`}
                           >
                             {loading ? (
                               <LoaderCircle className="w-5 h-5 md:w-8 md:h-8 animate-spin" />
