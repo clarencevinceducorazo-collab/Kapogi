@@ -107,17 +107,38 @@ export default function KapogianShop() {
     country: "Philippines",
     notes: "",
   });
-  const [formErrors, setFormErrors] = useState<{ email?: string; phone?: string }>({});
+  const [formErrors, setFormErrors] = useState<{
+    fullName?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    province?: string;
+    postalCode?: string;
+    country?: string;
+  }>({});
 
   // Email validation: must be a valid email format
   function validateEmail(email: string) {
     return /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/.test(email);
   }
 
-  // Philippine phone validation: starts with 09 and 11 digits, or +639 and 13 digits
+  // Philippine phone validation: only 11 digits, starts with 09
   function validatePHPhone(phone: string) {
-    // Accepts 09XXXXXXXXX or +639XXXXXXXXX
-    return /^09\d{9}$/.test(phone) || /^\+639\d{9}$/.test(phone);
+    return /^09\d{9}$/.test(phone);
+  }
+
+  function validateFormFields(form: typeof shippingForm) {
+    const errors: typeof formErrors = {};
+    if (!form.fullName.trim()) errors.fullName = "Receiver name is required.";
+    if (form.email && !validateEmail(form.email)) errors.email = "Enter a valid email address.";
+    if (!form.phone.trim()) errors.phone = "Mobile number is required.";
+    else if (!validatePHPhone(form.phone)) errors.phone = "Enter a valid PH mobile (11 digits, starts with 09).";
+    if (!form.address.trim()) errors.address = "Address is required.";
+    if (!form.city.trim()) errors.city = "City is required.";
+    if (!form.province.trim()) errors.province = "Province is required.";
+    // postalCode and country are optional
+    return errors;
   }
 
   const [purchasing, setPurchasing] = useState(false);
@@ -177,26 +198,13 @@ export default function KapogianShop() {
     (selectedItem.itemType === 2 || selectedItem.itemType === 3 ? true : selectedSize !== "");
 
   const canProceedStep2 =
-    shippingForm.fullName.trim() &&
-    shippingForm.phone.trim() &&
-    shippingForm.address.trim() &&
-    shippingForm.city.trim() &&
-    shippingForm.province.trim() &&
-    (!shippingForm.email || validateEmail(shippingForm.email)) &&
-    validatePHPhone(shippingForm.phone);
+    Object.keys(validateFormFields(shippingForm)).length === 0;
 
   const handlePurchase = async () => {
     if (!selectedItem || !account) return;
-    // Validate email and phone before proceeding
-    const errors: { email?: string; phone?: string } = {};
-    if (shippingForm.email && !validateEmail(shippingForm.email)) {
-      errors.email = "Enter a valid email address.";
-    }
-    if (!validatePHPhone(shippingForm.phone)) {
-      errors.phone = "Enter a valid PH mobile (09XXXXXXXXX or +639XXXXXXXXX).";
-    }
+    const errors = validateFormFields(shippingForm);
     setFormErrors(errors);
-    if (!canProceedStep2 || Object.keys(errors).length > 0) {
+    if (Object.keys(errors).length > 0) {
       setToast({ message: "Fill in all required and valid shipping fields.", type: "error" });
       return;
     }
@@ -613,7 +621,7 @@ export default function KapogianShop() {
                     {[
                       { key: "fullName", label: "Receiver Name *",        placeholder: "e.g. Satoshi Pogi",     type: "text"  },
                       { key: "email",    label: "Email",                   placeholder: "your@email.com",        type: "email" },
-                      { key: "phone",    label: "Mobile Number *",         placeholder: "09XXXXXXXXX or +639XXXXXXXXX", type: "tel"   },
+                      { key: "phone",    label: "Mobile Number *",         placeholder: "09XXXXXXXXX",           type: "tel"   },
                       { key: "address",  label: "Street & Unit Address *", placeholder: "Lot, Block, Street...", type: "text"  },
                     ].map(({ key, label, placeholder, type }) => (
                       <div key={key} className="space-y-1.5">
@@ -622,25 +630,23 @@ export default function KapogianShop() {
                           type={type}
                           value={(shippingForm as any)[key]}
                           onChange={(e) => {
-                            setShippingForm((f) => ({ ...f, [key]: e.target.value }));
-                            // Clear error on change
-                            if (key === "email" || key === "phone") {
-                              setFormErrors((err) => ({ ...err, [key]: undefined }));
+                            let value = e.target.value;
+                            if (key === "phone") {
+                              // Only allow numbers, max 11 digits
+                              value = value.replace(/[^0-9]/g, "").slice(0, 11);
                             }
+                            setShippingForm((f) => ({ ...f, [key]: value }));
+                            setFormErrors((err) => ({ ...err, [key]: undefined }));
                           }}
                           placeholder={placeholder}
                           className={
                             "w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" +
-                            ((key === "email" && formErrors.email) || (key === "phone" && formErrors.phone)
-                              ? " border-red-500"
-                              : "")
+                            (formErrors[key as keyof typeof formErrors] ? " border-red-500" : "")
                           }
+                          maxLength={key === "phone" ? 11 : undefined}
                         />
-                        {key === "email" && formErrors.email && (
-                          <div className="text-red-500 text-xs font-bold mt-1 ml-2">{formErrors.email}</div>
-                        )}
-                        {key === "phone" && formErrors.phone && (
-                          <div className="text-red-500 text-xs font-bold mt-1 ml-2">{formErrors.phone}</div>
+                        {formErrors[key as keyof typeof formErrors] && (
+                          <div className="text-red-500 text-xs font-bold mt-1 ml-2">{formErrors[key as keyof typeof formErrors]}</div>
                         )}
                       </div>
                     ))}
@@ -653,10 +659,22 @@ export default function KapogianShop() {
                       ].map(({ key, label, placeholder }) => (
                         <div key={key} className="space-y-1.5">
                           <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{label}</label>
-                          <input type="text" value={(shippingForm as any)[key]}
-                            onChange={(e) => setShippingForm((f) => ({ ...f, [key]: e.target.value }))}
+                          <input
+                            type="text"
+                            value={(shippingForm as any)[key]}
+                            onChange={(e) => {
+                              setShippingForm((f) => ({ ...f, [key]: e.target.value }));
+                              setFormErrors((err) => ({ ...err, [key]: undefined }));
+                            }}
                             placeholder={placeholder}
-                            className="w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                            className={
+                              "w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" +
+                              (formErrors[key as keyof typeof formErrors] ? " border-red-500" : "")
+                            }
+                          />
+                          {formErrors[key as keyof typeof formErrors] && (
+                            <div className="text-red-500 text-xs font-bold mt-1 ml-2">{formErrors[key as keyof typeof formErrors]}</div>
+                          )}
                         </div>
                       ))}
                     </div>
