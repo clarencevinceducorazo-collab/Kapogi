@@ -121,7 +121,12 @@ export default function KapogianShop() {
 
   // Email validation: must be a valid email format
   function validateEmail(email: string) {
-    return /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/.test(email);
+    // Only allow valid TLDs: .com, .net, .org, .ph, .io, .co, .gov, .edu, .info, .biz, .dev, .app, .xyz, .me, .tv, .us, .uk, .ca, .au, .sg, .id, .my, .jp, .kr, .cn, .in, .eu, .fr, .de, .es, .it, .nl, .ru, .br, .za, .tr, .ir, .ua, .pl, .se, .no, .fi, .dk, .ch, .at, .be, .cz, .gr, .hu, .pt, .ro, .sk, .si, .bg, .lt, .lv, .ee, .hr, .rs, .ba, .mk, .al, .by, .ge, .md, .am, .az, .kg, .kz, .tj, .tm, .uz, .mn, .vn, .th, .la, .kh, .mm, .lk, .np, .pk, .bd, .af, .sa, .ae, .qa, .kw, .om, .bh, .ye, .jo, .lb, .sy, .iq, .eg, .ma, .dz, .tn, .ly, .sd, .ss, .et, .so, .ke, .ug, .tz, .rw, .bi, .mw, .zm, .zm, .zw, .mz, .ao, .cm, .gh, .ng, .sn, .ci, .ml, .bf, .ne, .tg, .bj, .gm, .gw, .cv, .st, .sc, .mu, .mg, .re, .yt, .pm, .wf, .tf, .pf, .nc, .vu, .sb, .fm, .mh, .pw, .ki, .nr, .tv, .tk, .to, .ws, .as, .ck, .nu, .tk, .fj, .pg, .sb, .vu, .wf, .ws, .ph
+    // You can add/remove TLDs as needed
+    const tldPattern = /\.(com|net|org|ph|io|co|gov|edu|info|biz|dev|app|xyz|me|tv|us|uk|ca|au|sg|id|my|jp|kr|cn|in|eu|fr|de|es|it|nl|ru|br|za|tr|ir|ua|pl|se|no|fi|dk|ch|at|be|cz|gr|hu|pt|ro|sk|si|bg|lt|lv|ee|hr|rs|ba|mk|al|by|ge|md|am|az|kg|kz|tj|tm|uz|mn|vn|th|la|kh|mm|lk|np|pk|bd|af|sa|ae|qa|kw|om|bh|ye|jo|lb|sy|iq|eg|ma|dz|tn|ly|sd|ss|et|so|ke|ug|tz|rw|bi|mw|zm|zw|mz|ao|cm|gh|ng|sn|ci|ml|bf|ne|tg|bj|gm|gw|cv|st|sc|mu|mg|re|yt|pm|wf|tf|pf|nc|vu|sb|fm|mh|pw|ki|nr|tk|to|ws|as|ck|nu|fj|pg|sb|vu|wf|ws)\b$/i;
+    // Standard email regex
+    const emailPattern = /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/;
+    return emailPattern.test(email) && tldPattern.test(email);
   }
 
   // Philippine phone validation: only 11 digits, starts with 09
@@ -659,7 +664,7 @@ export default function KapogianShop() {
                           }}
                           placeholder={placeholder}
                           className={
-                            "w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" +
+                            "w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 text-black font-bold placeholder-gray-400 text-base focus:outline-none focus:ring-2 focus:ring-sky-300" +
                             (formTouched && formErrors[key as keyof typeof formErrors] ? " border-red-500" : "")
                           }
                           maxLength={key === "phone" ? 11 : undefined}
@@ -677,7 +682,7 @@ export default function KapogianShop() {
                         { key: "country",    label: "Country",     placeholder: "Philippines"  },
                       ].map(({ key, label, placeholder }) => (
                         <div key={key} className="space-y-1.5">
-                          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{label}</label>
+                          <label className="block text-[10px] font-bold text-black uppercase tracking-widest ml-2">{label}</label>
                           <input
                             type="text"
                             value={(shippingForm as any)[key]}
@@ -693,8 +698,8 @@ export default function KapogianShop() {
                             }}
                             placeholder={placeholder}
                             className={
-                              "w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 font-black text-slate-700 placeholder-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" +
-                              (formTouched && formErrors[key as keyof typeof formErrors] ? " border-red-500" : "")
+                              "w-full bg-white border-4 border-black rounded-2xl px-5 py-3.5 text-black font-bold placeholder-gray-400 text-base focus:outline-none focus:ring-2 focus:ring-sky-300" +
+                                (formTouched && formErrors[key as keyof typeof formErrors] ? " border-red-500" : "")
                             }
                           />
                           {formTouched && formErrors[key as keyof typeof formErrors] && (
