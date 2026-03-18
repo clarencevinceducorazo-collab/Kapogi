@@ -85,9 +85,7 @@ const lineageColors: Record<string, string> = {
 };
 
 // Podium slot config: display order is [left=2nd, center=1st, right=3rd]
-// Each slot defines which rank index to pull from sorted `data` array (0-based)
 const PODIUM_SLOTS = [
-  // LEFT — Silver #2
   {
     dataIndex: 1,
     rankLabel: "2",
@@ -103,7 +101,6 @@ const PODIUM_SLOTS = [
     badgeSize: "w-10 h-10 text-sm",
     floatClass: "animate-float-2",
   },
-  // CENTER — Gold #1
   {
     dataIndex: 0,
     rankLabel: "1",
@@ -119,7 +116,6 @@ const PODIUM_SLOTS = [
     badgeSize: "px-4 py-1 text-sm rounded-full",
     floatClass: "animate-float-1",
   },
-  // RIGHT — Bronze #3
   {
     dataIndex: 2,
     rankLabel: "3",
@@ -137,10 +133,198 @@ const PODIUM_SLOTS = [
   },
 ] as const;
 
-const REFRESH_INTERVAL = 30; // seconds
+const REFRESH_INTERVAL = 30;
+const SEASON_1_END = new Date("2026-04-10T00:00:00Z");
 
-// Season 1 end date — 30 days from a fixed start
-const SEASON_1_END = new Date("2026-04-10T00:00:00Z"); // adjust start as needed
+// ─── Rank tier config — each rank gets its own border color, bg gradient, glow, and text color ───
+const RANK_TIER_CONFIG: Record<
+  string,
+  {
+    borderColor: string;
+    bgGradient: string;
+    textColor: string;
+    glowColor: string;
+    pillBg: string;
+    pillBorder: string;
+    pillText: string;
+    shimmer: boolean;
+  }
+> = {
+  "Kapogian Ascendant": {
+    borderColor: "border-violet-400",
+    bgGradient: "bg-gradient-to-r from-violet-900/80 via-fuchsia-800/80 to-violet-900/80",
+    textColor: "text-violet-200",
+    glowColor: "shadow-[0_0_20px_4px_rgba(167,139,250,0.45)]",
+    pillBg: "bg-violet-950/60",
+    pillBorder: "border-violet-400/60",
+    pillText: "text-violet-200",
+    shimmer: true,
+  },
+  "Hall of Fame Immortal": {
+    borderColor: "border-yellow-300",
+    bgGradient: "bg-gradient-to-r from-yellow-900/80 via-amber-700/70 to-yellow-900/80",
+    textColor: "text-yellow-200",
+    glowColor: "shadow-[0_0_18px_3px_rgba(253,224,71,0.4)]",
+    pillBg: "bg-yellow-950/60",
+    pillBorder: "border-yellow-400/60",
+    pillText: "text-yellow-200",
+    shimmer: true,
+  },
+  "Lord of Biringan": {
+    borderColor: "border-sky-400",
+    bgGradient: "bg-gradient-to-r from-sky-900/80 via-cyan-800/70 to-sky-900/80",
+    textColor: "text-sky-200",
+    glowColor: "shadow-[0_0_16px_3px_rgba(56,189,248,0.4)]",
+    pillBg: "bg-sky-950/60",
+    pillBorder: "border-sky-400/60",
+    pillText: "text-sky-200",
+    shimmer: true,
+  },
+  "Aura God": {
+    borderColor: "border-rose-400",
+    bgGradient: "bg-gradient-to-r from-rose-900/80 via-pink-800/70 to-rose-900/80",
+    textColor: "text-rose-200",
+    glowColor: "shadow-[0_0_16px_3px_rgba(251,113,133,0.4)]",
+    pillBg: "bg-rose-950/60",
+    pillBorder: "border-rose-400/60",
+    pillText: "text-rose-200",
+    shimmer: false,
+  },
+  "Supreme Pogi": {
+    borderColor: "border-emerald-400",
+    bgGradient: "bg-gradient-to-r from-emerald-900/80 via-teal-800/70 to-emerald-900/80",
+    textColor: "text-emerald-200",
+    glowColor: "shadow-[0_0_14px_2px_rgba(52,211,153,0.35)]",
+    pillBg: "bg-emerald-950/60",
+    pillBorder: "border-emerald-400/60",
+    pillText: "text-emerald-200",
+    shimmer: false,
+  },
+  "Proof of Pogi Elite": {
+    borderColor: "border-cyan-400",
+    bgGradient: "bg-gradient-to-r from-cyan-900/80 via-blue-800/70 to-cyan-900/80",
+    textColor: "text-cyan-200",
+    glowColor: "shadow-[0_0_14px_2px_rgba(34,211,238,0.35)]",
+    pillBg: "bg-cyan-950/60",
+    pillBorder: "border-cyan-400/60",
+    pillText: "text-cyan-200",
+    shimmer: false,
+  },
+  "Eternal Light Bearer": {
+    borderColor: "border-orange-400",
+    bgGradient: "bg-gradient-to-r from-orange-900/80 via-amber-800/70 to-orange-900/80",
+    textColor: "text-orange-200",
+    glowColor: "shadow-[0_0_14px_2px_rgba(251,146,60,0.35)]",
+    pillBg: "bg-orange-950/60",
+    pillBorder: "border-orange-400/60",
+    pillText: "text-orange-200",
+    shimmer: false,
+  },
+  "Generational Tycoon": {
+    borderColor: "border-lime-400",
+    bgGradient: "bg-gradient-to-r from-lime-900/80 via-green-800/70 to-lime-900/80",
+    textColor: "text-lime-200",
+    glowColor: "shadow-[0_0_12px_2px_rgba(163,230,53,0.3)]",
+    pillBg: "bg-lime-950/60",
+    pillBorder: "border-lime-400/60",
+    pillText: "text-lime-200",
+    shimmer: false,
+  },
+  "Cultural Icon": {
+    borderColor: "border-fuchsia-400",
+    bgGradient: "bg-gradient-to-r from-fuchsia-900/80 via-purple-800/70 to-fuchsia-900/80",
+    textColor: "text-fuchsia-200",
+    glowColor: "shadow-[0_0_12px_2px_rgba(232,121,249,0.3)]",
+    pillBg: "bg-fuchsia-950/60",
+    pillBorder: "border-fuchsia-400/60",
+    pillText: "text-fuchsia-200",
+    shimmer: false,
+  },
+  "Master Rancher": {
+    borderColor: "border-amber-400",
+    bgGradient: "bg-gradient-to-r from-amber-900/80 via-yellow-800/70 to-amber-900/80",
+    textColor: "text-amber-200",
+    glowColor: "shadow-[0_0_10px_2px_rgba(251,191,36,0.25)]",
+    pillBg: "bg-amber-950/60",
+    pillBorder: "border-amber-400/60",
+    pillText: "text-amber-200",
+    shimmer: false,
+  },
+  "Fearless Descent": {
+    borderColor: "border-red-500",
+    bgGradient: "bg-gradient-to-r from-red-950/80 via-rose-900/70 to-red-950/80",
+    textColor: "text-red-200",
+    glowColor: "shadow-[0_0_10px_2px_rgba(239,68,68,0.25)]",
+    pillBg: "bg-red-950/60",
+    pillBorder: "border-red-500/60",
+    pillText: "text-red-200",
+    shimmer: false,
+  },
+  "Dalaketnon Slayer": {
+    borderColor: "border-red-400",
+    bgGradient: "bg-gradient-to-r from-slate-900/80 via-red-900/60 to-slate-900/80",
+    textColor: "text-red-300",
+    glowColor: "shadow-[0_0_10px_2px_rgba(248,113,113,0.2)]",
+    pillBg: "bg-slate-950/60",
+    pillBorder: "border-red-400/60",
+    pillText: "text-red-300",
+    shimmer: false,
+  },
+  "Ghost Walker": {
+    borderColor: "border-slate-400",
+    bgGradient: "bg-gradient-to-r from-slate-800/80 via-slate-700/70 to-slate-800/80",
+    textColor: "text-slate-200",
+    glowColor: "shadow-[0_0_8px_1px_rgba(148,163,184,0.2)]",
+    pillBg: "bg-slate-900/60",
+    pillBorder: "border-slate-400/60",
+    pillText: "text-slate-200",
+    shimmer: false,
+  },
+  "Initiate of Pogi": {
+    borderColor: "border-teal-400",
+    bgGradient: "bg-gradient-to-r from-teal-900/80 via-emerald-800/70 to-teal-900/80",
+    textColor: "text-teal-200",
+    glowColor: "shadow-none",
+    pillBg: "bg-teal-950/60",
+    pillBorder: "border-teal-400/60",
+    pillText: "text-teal-200",
+    shimmer: false,
+  },
+  "Aura Touched": {
+    borderColor: "border-indigo-400",
+    bgGradient: "bg-gradient-to-r from-indigo-900/80 via-blue-800/70 to-indigo-900/80",
+    textColor: "text-indigo-200",
+    glowColor: "shadow-none",
+    pillBg: "bg-indigo-950/60",
+    pillBorder: "border-indigo-400/60",
+    pillText: "text-indigo-200",
+    shimmer: false,
+  },
+  "Pogi Spark": {
+    borderColor: "border-yellow-500",
+    bgGradient: "bg-gradient-to-r from-yellow-900/70 via-orange-900/60 to-yellow-900/70",
+    textColor: "text-yellow-300",
+    glowColor: "shadow-none",
+    pillBg: "bg-yellow-950/60",
+    pillBorder: "border-yellow-500/60",
+    pillText: "text-yellow-300",
+    shimmer: false,
+  },
+  "Spirit Seed": {
+    borderColor: "border-slate-500",
+    bgGradient: "bg-gradient-to-r from-slate-800/60 via-slate-700/50 to-slate-800/60",
+    textColor: "text-slate-300",
+    glowColor: "shadow-none",
+    pillBg: "bg-slate-900/60",
+    pillBorder: "border-slate-500/60",
+    pillText: "text-slate-300",
+    shimmer: false,
+  },
+};
+
+function getRankTierConfig(rank: string) {
+  return RANK_TIER_CONFIG[rank] ?? RANK_TIER_CONFIG["Spirit Seed"];
+}
 
 function useSeasonCountdown(endDate: Date) {
   const [timeLeft, setTimeLeft] = useState(() => Math.max(0, endDate.getTime() - Date.now()));
@@ -270,7 +454,6 @@ export default function PodiumPage() {
       ownerStats.forEach((s) => s.allNfts.sort((a, b) => b.mmr - a.mmr));
       const processedData = Array.from(ownerStats.values());
 
-      // Build new sorted array, then set in one atomic state update
       const newData = mode === "summon"
         ? processedData
             .sort((a, b) => b.totalNftSummon - a.totalNftSummon)
@@ -290,7 +473,6 @@ export default function PodiumPage() {
     }
   }, [mode]);
 
-  // Start polling
   const startPolling = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
@@ -330,7 +512,6 @@ export default function PodiumPage() {
     }
   };
 
-  // data[0] = rank #1 (highest), data[1] = rank #2, data[2] = rank #3
   const podiumData = data.slice(0, 3);
   const listData = data.slice(3);
   const totalPages = Math.ceil(listData.length / ITEMS_PER_PAGE) || 1;
@@ -348,9 +529,6 @@ export default function PodiumPage() {
     });
   };
 
-  // ─── Podium ──────────────────────────────────────────────────────────────────
-  // Layout order: [Silver/Left #2] [Gold/Center #1] [Bronze/Right #3]
-  // data is sorted descending so data[0]=1st, data[1]=2nd, data[2]=3rd
   const Podium = ({ users }: { users: (PodiumUser | undefined)[] }) => (
     <div className="flex flex-row justify-center items-end gap-2 md:gap-6 mb-12 w-full max-w-3xl mx-auto pt-12 relative z-10">
       {PODIUM_SLOTS.map((slot) => {
@@ -378,9 +556,7 @@ export default function PodiumPage() {
           >
             {user && (
               <>
-                {/* Avatar */}
                 <div className="relative mb-3 transition-transform group-hover:scale-110 duration-300">
-                  {/* Crown only for #1 */}
                   {slot.isCenter && (
                     <iconify-icon
                       icon="solar:crown-bold"
@@ -399,7 +575,6 @@ export default function PodiumPage() {
                       slot.isCenter ? "bg-yellow-100 shadow-2xl" : "bg-slate-200",
                     )}
                   />
-                  {/* Rank badge */}
                   {slot.isCenter ? (
                     <div
                       className={cn(
@@ -425,7 +600,6 @@ export default function PodiumPage() {
                   )}
                 </div>
 
-                {/* Podium block */}
                 <div
                   className={cn(
                     "w-full rounded-t-[2.5rem] flex flex-col justify-end items-center p-4 text-center relative overflow-hidden border-4 border-black",
@@ -547,7 +721,6 @@ export default function PodiumPage() {
               </div>
             </div>
 
-            {/* Countdown blocks */}
             {season.ended ? (
               <div className="bg-red-500/20 border-2 border-red-400/40 rounded-2xl px-6 py-2">
                 <p className="text-sm font-black text-red-300 uppercase tracking-widest">Season Ended</p>
@@ -587,7 +760,6 @@ export default function PodiumPage() {
                 <p className="text-white font-black uppercase tracking-[0.2em] text-sm md:text-base bg-black/40 backdrop-blur-md px-6 py-2 rounded-2xl border-2 border-white/20 inline-block shadow-lg">
                   Climb the ranks and earn rewards!
                 </p>
-                {/* Live sync badge */}
                 <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-2xl border-2 border-white/20 shadow-lg">
                   <div className="relative w-7 h-7 flex-shrink-0">
                     <svg className="w-7 h-7 -rotate-90" viewBox="0 0 28 28">
@@ -722,6 +894,71 @@ export default function PodiumPage() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// RANK BADGE COMPONENT — shared between both modals
+// ─────────────────────────────────────────────────────────────────────────────
+
+function RankBadge({ rank, icon, size = "md" }: { rank: string; icon: string; size?: "sm" | "md" | "lg" }) {
+  const cfg = getRankTierConfig(rank);
+
+  const sizeClasses = {
+    sm: { wrapper: "px-3 py-1.5 rounded-xl gap-1.5 border-2", icon: "text-base", text: "text-[10px]", iconBox: "w-5 h-5 rounded-lg" },
+    md: { wrapper: "px-4 py-2 rounded-2xl gap-2 border-2", icon: "text-lg", text: "text-xs", iconBox: "w-7 h-7 rounded-xl" },
+    lg: { wrapper: "px-5 py-2.5 rounded-2xl gap-2.5 border-[3px]", icon: "text-xl", text: "text-sm", iconBox: "w-8 h-8 rounded-xl" },
+  }[size];
+
+  return (
+    <div
+      className={cn(
+        "inline-flex items-center relative overflow-hidden",
+        cfg.bgGradient,
+        cfg.borderColor,
+        cfg.glowColor,
+        sizeClasses.wrapper,
+      )}
+      style={{ animation: "rankPulse 3s ease-in-out infinite" }}
+    >
+      {/* Shimmer sweep — all ranks get it, legendary more intense */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: cfg.shimmer
+            ? "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.22) 50%, transparent 70%)"
+            : "linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.10) 50%, transparent 65%)",
+          animation: `shimmer ${cfg.shimmer ? "1.8s" : "3s"} ease-in-out infinite`,
+        }}
+      />
+
+      {/* Border sweep glow overlay */}
+      <div
+        className="absolute inset-0 rounded-[inherit] pointer-events-none"
+        style={{
+          background: "linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.08) 40%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.08) 60%, transparent 100%)",
+          animation: "borderSweep 4s linear infinite",
+        }}
+      />
+
+      {/* Subtle top highlight line */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-white/30 pointer-events-none" />
+      {/* Bottom shadow line */}
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-black/20 pointer-events-none" />
+
+      {/* Icon box — bounces slightly for legendary */}
+      <div
+        className={cn("flex items-center justify-center bg-black/30 border border-white/10 flex-shrink-0 relative z-10", sizeClasses.iconBox)}
+        style={cfg.shimmer ? { animation: "iconBob 2s ease-in-out infinite" } : undefined}
+      >
+        <iconify-icon icon={icon} class={cn(sizeClasses.icon)} />
+      </div>
+
+      {/* Rank text */}
+      <span className={cn("font-black uppercase tracking-widest leading-none relative z-10", cfg.textColor, sizeClasses.text)}>
+        {rank}
+      </span>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SUMMON MODAL
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -799,21 +1036,33 @@ function SummonDetailModal({ user, isOpen, onClose }: { user: SummonEntry; isOpe
           <DialogTitle>Summoner: {short(user.walletAddress)}</DialogTitle>
           <DialogDescription>Best MMR NFT and full collection for this wallet.</DialogDescription>
         </DialogHeader>
+
+        {/* Keyframes */}
+        <style>{`
+          @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            60%, 100% { transform: translateX(200%); }
+          }
+          @keyframes borderSweep {
+            0% { transform: translateX(-120%); }
+            50%, 100% { transform: translateX(220%); }
+          }
+          @keyframes rankPulse {
+            0%, 100% { box-shadow: var(--rank-glow, 0 0 0 0 transparent); }
+            50% { box-shadow: var(--rank-glow, 0 0 14px 4px rgba(255,255,255,0.12)); }
+          }
+          @keyframes iconBob {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-2px); }
+          }
+        `}</style>
+
         <div className="w-full bg-white rounded-[2.5rem] border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] md:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col md:flex-row max-h-[85vh] relative">
           <button onClick={onClose} className="absolute top-6 right-6 z-[60] bg-white border-4 border-black rounded-full p-2 hover:bg-red-500 hover:text-white transition-all active:scale-95">
             <X size={24} strokeWidth={3} />
           </button>
-          <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r-4 border-black flex flex-col items-center justify-start pt-16 p-4">
-            <div className="slide-up-delay-1 text-center z-20">
-              <span className="inline-flex items-center gap-1 bg-white/80 border-2 border-black text-[9px] font-black uppercase tracking-[0.18em] text-amber-600 px-3 py-1 rounded-full shadow-sm">
-                <iconify-icon icon="fluent-emoji:trophy" class="text-sm" /> Best MMR NFT
-              </span>
-            </div>
-            <div className="slide-up-delay-1 text-center z-20 mt-4">
-              <h2 className={cn("uppercase font-black tracking-wider flex items-center justify-center gap-1 drop-shadow-sm", rankInfo.style)}>
-                <iconify-icon icon={rankInfo.icon} /> {bestNft?.rank || "Spirit Seed"}
-              </h2>
-            </div>
+          <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-80 md:h-auto border-b md:border-b-0 md:border-r-4 border-black flex flex-col items-center justify-start pt-6 p-4">
+
             <div className="relative w-full flex-1 flex flex-col items-center justify-center">
               <div className="relative z-30 w-64 h-64 md:w-72 md:h-72 mb-1 transition-all duration-700 ease-out mix-blend-multiply"
                 style={{ transform: animate ? (highestMmr > 1200 ? "translateY(-5px)" : "translateY(-10px)") : "translateY(0px)" }}>
@@ -826,6 +1075,12 @@ function SummonDetailModal({ user, isOpen, onClose }: { user: SummonEntry; isOpe
                 )}
               </div>
             </div>
+
+            {/* ── RANK BADGE — below the avatar, above the name ── */}
+            <div className="relative z-20 flex justify-center mb-2">
+              <RankBadge rank={bestNft?.rank || "Spirit Seed"} icon={rankInfo.icon} size="sm" />
+            </div>
+
             <div className="text-center z-20 mb-16">
               <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tighter uppercase italic leading-none mb-2">{bestNft?.name ?? "—"}</h1>
               <div className="flex items-center justify-center gap-2 text-slate-500 text-xs font-black bg-white border-2 border-black py-1.5 px-4 rounded-full shadow-sm">
@@ -1018,16 +1273,33 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser; isO
           <DialogTitle>Character Details: {user.nftName}</DialogTitle>
           <DialogDescription>Detailed statistics and traits for {user.nftName}.</DialogDescription>
         </DialogHeader>
+
+        {/* Keyframes */}
+        <style>{`
+          @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            60%, 100% { transform: translateX(200%); }
+          }
+          @keyframes borderSweep {
+            0% { transform: translateX(-120%); }
+            50%, 100% { transform: translateX(220%); }
+          }
+          @keyframes rankPulse {
+            0%, 100% { box-shadow: var(--rank-glow, 0 0 0 0 transparent); }
+            50% { box-shadow: var(--rank-glow, 0 0 14px 4px rgba(255,255,255,0.12)); }
+          }
+          @keyframes iconBob {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-2px); }
+          }
+        `}</style>
+
         <div className="w-full bg-white rounded-[2.5rem] border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] md:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col md:flex-row max-h-[85vh] relative">
           <button onClick={onClose} className="absolute top-4 right-4 z-[60] bg-white border-[3px] border-black rounded-full p-1 md:p-2 hover:bg-red-500 hover:text-white transition-all active:scale-95">
             <X size={20} strokeWidth={3} />
           </button>
-          <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-64 md:h-auto border-b-[3px] md:border-b-0 md:border-r-4 border-black flex flex-col items-center justify-start pt-8 md:pt-16 p-4">
-            <div className="text-center z-20 absolute top-4 md:top-8 left-1/2 -translate-x-1/2 w-full">
-              <h2 className={cn("text-[10px] md:text-base uppercase font-black tracking-widest flex items-center justify-center gap-1 drop-shadow-sm opacity-80", rankInfo.style)}>
-                {user.attributes?.rank || "Spirit Seed."}
-              </h2>
-            </div>
+          <div className="w-full md:w-[35%] bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 relative overflow-hidden h-64 md:h-auto border-b-[3px] md:border-b-0 md:border-r-4 border-black flex flex-col items-center justify-start pt-4 md:pt-8 p-4">
+
             <div className="relative w-full flex-1 flex flex-col items-center justify-center mt-4 md:mt-0">
               <div className="relative z-30 w-48 h-48 md:w-64 md:h-64 transition-all duration-700 ease-out mix-blend-multiply"
                 style={{ transform: animate ? (user.mmrScore > 1200 ? "translateY(-5px)" : "translateY(-10px)") : "translateY(0px)" }}>
@@ -1042,13 +1314,15 @@ function CharacterDetailModal({ user, isOpen, onClose }: { user: PodiumUser; isO
                 </div>
               </div>
             </div>
+            {/* ── RANK BADGE — top-1 on mobile, top-20 on desktop ── */}
+            <div className="absolute top-1 md:top-20 left-0 w-full flex justify-center z-20">
+              <RankBadge rank={user.attributes?.rank || "Spirit Seed"} icon={rankInfo.icon} size="sm" />
+            </div>
           </div>
           <div className="w-full md:w-[65%] flex flex-col bg-white overflow-hidden min-h-0 relative">
-            {/* Absolute positioning of Name and Lineage to overlap avatar container on mobile */}
             <div className="relative left-0 w-full text-center z-40 mt-4 md:mt-8 md:mb-6 pointer-events-none">
               <h1 className="text-2xl md:text-3xl font-black text tracking-tighter uppercase leading-none mb-1 md:mb-2 pointer-events-auto filter drop-shadow-[0_2px_4px_rgba(255,255,255,0.8)] md:drop-shadow-none">{user.nftName}</h1>
             </div>
-            {/* Removed the absolute positioning wrapper, returning to a normal scroll layout */}
             <div className="overflow-y-auto w-full flex flex-col flex-1 custom-scrollbar pt-8">
               <div className="px-4 pb-6 sm:p-6 md:px-10 md:pb-10 space-y-4 md:space-y-6 flex-1">
               <div className="flex justify-between items-center pb-2 md:pb-6">
