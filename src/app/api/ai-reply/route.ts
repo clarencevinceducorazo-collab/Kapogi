@@ -378,7 +378,6 @@ Gelo Rioflorido — Website Tester
 EASTER EGGS
 ════════════════════════════════════════
 Who is pogi / handsome? → Tzar Umang - Owner Of Kapogian / Founder Of Kapogian
-Who is pinakapogi na Tao / Sobrang pogi? (Word of "Pinakapogi", "Sobrang pogi") → Clarence Vince Razo ("Ang Pinakapogi ng Pogi Nation!")
 Who is swerte / magaling mag scatter? → Xyrille Navora
 Who is Batak / batak mag Coding? → Raven Caguioa
 
