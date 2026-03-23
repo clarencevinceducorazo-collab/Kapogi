@@ -862,33 +862,32 @@ export default function PodiumPage() {
             <SummonDetailModal user={selectedSummonUser} isOpen={!!selectedSummonUser} onClose={() => setSelectedSummonUser(null)} />
           )}
         </main>
-      </div>
-
-      {totalPages > 1 && (
-        <div className="fixed bottom-10 left-0 right-0 z-20 flex justify-center pointer-events-none">
-          <div className="bg-white border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] rounded-3xl p-3 flex items-center gap-6 pointer-events-auto">
-            <button
-              onClick={() => changePage(-1)}
-              disabled={currentPage === 1}
-              className="w-12 h-12 rounded-2xl bg-slate-50 border-2 border-black text-black hover:bg-sky-400 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              <ArrowLeft size={24} strokeWidth={3} />
-            </button>
-            <div className="flex flex-col items-center min-w-[120px]">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Registry Page</span>
-              <span className="text-lg font-black text-slate-900 font-mono">{currentPage} / {totalPages}</span>
+        {totalPages > 1 && (
+          <div className="fixed bottom-10 left-0 right-0 z-20 flex justify-center pointer-events-none">
+            <div className="bg-white border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] rounded-3xl p-3 flex items-center gap-6 pointer-events-auto">
+              <button
+                onClick={() => changePage(-1)}
+                disabled={currentPage === 1}
+                className="w-12 h-12 rounded-2xl bg-slate-50 border-2 border-black text-black hover:bg-sky-400 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                <ArrowLeft size={24} strokeWidth={3} />
+              </button>
+              <div className="flex flex-col items-center min-w-[120px]">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Registry Page</span>
+                <span className="text-lg font-black text-slate-900 font-mono">{currentPage} / {totalPages}</span>
+              </div>
+              <button
+                onClick={() => changePage(1)}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="w-12 h-12 rounded-2xl bg-slate-50 border-2 border-black text-black hover:bg-sky-400 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                <ArrowRight size={24} strokeWidth={3} />
+              </button>
             </div>
-            <button
-              onClick={() => changePage(1)}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className="w-12 h-12 rounded-2xl bg-slate-50 border-2 border-black text-black hover:bg-sky-400 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              <ArrowRight size={24} strokeWidth={3} />
-            </button>
           </div>
-        </div>
-      )}
-      <PageFooter />
+        )}
+        <PageFooter />
+      </div>
     </div>
   );
 }
