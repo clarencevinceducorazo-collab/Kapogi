@@ -304,7 +304,7 @@ export default function EarnPage() {
           id="hero"
           className="relative z-10 min-h-screen flex flex-col justify-center items-center text-center pt-24 pb-12 px-4"
         >
-          <div className="flex gap-4 mb-6 animate-float">
+          <div className="flex gap-4 mb-6 animate-float mt-4 sm:mt-0">
             <div className="bg-yellow-300 text-yellow-900 px-4 py-1.5 rounded-full font-extrabold text-xs tracking-wide transform -rotate-3 border-2 border-white shadow-md">
               ✨ MINT LIVE
             </div>
