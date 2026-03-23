@@ -755,7 +755,7 @@ export function UserMessageDrawer({ walletAddress }: { walletAddress: string }) 
                         : "bg-white border-2 border-slate-200 text-slate-800 rounded-bl-sm"
                     }`}>
                       {msg.sender === "admin" && msg.isAI && (
-                        <p className="text-[9px] font-black text-purple-300 uppercase tracking-widest mb-1">✦ AI Assistant</p>
+                        <p className="text-[9px] font-black text-purple-300 uppercase tracking-widest mb-1">✦ Kapogian Assistant</p>
                       )}
                       {msg.sender === "admin" && !msg.isAI && (
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Kapogian Admin</p>
