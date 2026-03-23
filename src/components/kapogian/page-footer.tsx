@@ -54,7 +54,7 @@ export const PageFooter = () => {
               <iconify-icon icon="ri:twitter-x-fill" class="text-2xl" />
             </a>
             <a
-              href="https://discord.gg/rtBhBccW"
+              href="https://discord.com/invite/kV37u9w48g"
               target="_blank"
               rel="noopener noreferrer"
               className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-white/20 border-2 border-white/20 flex items-center justify-center transition-all hover:-translate-y-1 active:scale-95 shadow-md"
