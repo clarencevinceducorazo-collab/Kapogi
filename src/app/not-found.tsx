@@ -65,7 +65,7 @@ export default function NotFound() {
             </h2>
             
             <p className="mt-8 text-slate-500 font-black uppercase tracking-wider text-sm sm:text-base max-w-md px-4">
-              The cutest Phygital experience on-chain couldn't find this page. Let's get you back to Biringan!
+              The cutest Phygital experience on-chain couldn't find this page. Let's get you back to Home!
             </p>
           </div>
 
