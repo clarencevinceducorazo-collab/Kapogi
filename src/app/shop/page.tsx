@@ -88,6 +88,7 @@ export default function KapogianShop() {
 
   const [activeFilter, setActiveFilter] = useState("all");
   const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null);
+  const [previewItem, setPreviewItem] = useState<ShopItem | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [currentQty, setCurrentQty] = useState(1);
   const [selectedSize, setSelectedSize] = useState("");
@@ -404,8 +405,9 @@ export default function KapogianShop() {
                   className="poster-card rounded-[2.5rem] overflow-hidden flex flex-col h-full group"
                 >
                   <div
-                    className="relative h-48 md:h-64 flex items-center justify-center overflow-hidden m-2 rounded-[2rem] border-2 border-black"
+                    className="relative h-48 md:h-64 flex items-center justify-center overflow-hidden m-2 rounded-[2rem] border-2 border-black cursor-pointer group/img"
                     style={{ backgroundColor: item.colorBg || "#f8fafc" }}
+                    onClick={() => setPreviewItem(item)}
                   >
                     <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
                     <div className="relative z-10 w-32 h-32 md:w-40 md:h-40 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
@@ -462,6 +464,56 @@ export default function KapogianShop() {
           )}
         </div>
       </section>
+
+      {/* Item Preview Modal */}
+      {previewItem && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 animate-fade-in" onClick={() => setPreviewItem(null)}>
+          <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" />
+          
+          <div 
+            className="relative z-10 w-full max-w-sm sm:max-w-md flex flex-col items-center animate-pop-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Title */}
+            <h2 className="text-3xl sm:text-4xl font-black text-white text-center mb-6 tracking-tight uppercase leading-none drop-shadow-xl" style={{ textShadow: "0px 4px 0px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000" }}>
+              {previewItem.name}
+            </h2>
+
+            {/* Image */}
+            <div className="relative w-full aspect-square mb-8 pointer-events-none">
+              <Image src={previewItem.imageAnimated} alt={previewItem.name} fill unoptimized className="object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)] animate-float" />
+            </div>
+
+            {/* Price & Purchase Button */}
+            <div className="flex flex-col items-center gap-4 w-full px-4 md:px-8">
+              <div className="bg-sky-50 border-[3px] border-black rounded-2xl px-6 py-2 flex items-center gap-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full justify-center">
+                <iconify-icon icon="token-branded:sui" class="text-blue-500 text-3xl" />
+                <span className="font-black text-black text-2xl pt-1">
+                  {mistToSui(Number(previewItem.priceMist)).toFixed(3)} SUI
+                </span>
+              </div>
+              
+              <button
+                className="w-full bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-black py-4 rounded-[1.5rem] hover:opacity-90 transition-all squishy-btn flex items-center justify-center gap-3 text-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] border-[3px] border-black uppercase tracking-widest mt-2"
+                onClick={() => {
+                  const item = previewItem;
+                  setPreviewItem(null);
+                  openModal(item);
+                }}
+              >
+                Purchase Now
+              </button>
+            </div>
+            
+            <button 
+              className="absolute -top-4 -right-2 sm:-right-8 z-20 w-12 h-12 bg-white text-black border-4 border-black font-black rounded-full flex items-center justify-center hover:bg-slate-200 transition-all squishy-btn shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] text-2xl leading-none"
+              onClick={() => setPreviewItem(null)}
+            >
+              <span className="-mb-1">✕</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Purchase Modal — identical to original */}
       {selectedItem && (
