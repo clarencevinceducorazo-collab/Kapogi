@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { useWebRTCCall } from "./useWebRTCCall";
+import { resolveAnalyticsEndpoint } from "@/lib/chat-analytics";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -145,11 +146,14 @@ function ActiveCallOverlay({ startedAt, onEndCall }: { startedAt: number; onEndC
   );
 }
 
+// ─── Analytics routing (internal) ────────────────────────────────────────────
+
 // ─── AI trigger helper (fire-and-forget, fully outside component render) ──────
 
 async function triggerAI(walletAddress: string, messages: SupportMessage[]) {
+  const route = resolveAnalyticsEndpoint(messages);
   try {
-    await fetch("/api/ai-reply", {
+    await fetch(route, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -165,6 +169,7 @@ async function triggerAI(walletAddress: string, messages: SupportMessage[]) {
     console.warn("[AI] trigger failed:", e);
   }
 }
+
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
