@@ -325,8 +325,7 @@ export default function KapogianShop() {
         <div className="absolute top-10 left-10 w-64 h-64 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" />
         <div className="absolute top-10 right-10 w-64 h-64 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" style={{ animationDelay: "2s" }} />
         <div className="absolute bottom-32 left-20 w-80 h-80 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-25 animate-blob" style={{ animationDelay: "4s" }} />
-        <iconify-icon icon="solar:cloud-bold" class="absolute top-20 left-[10%] text-white opacity-40 text-9xl animate-float-delayed" />
-        <iconify-icon icon="solar:cloud-bold" class="absolute top-40 right-[15%] text-white opacity-30 text-8xl animate-float" />
+       
       </div>
 
       {/* Hero */}
