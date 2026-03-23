@@ -1,14 +1,14 @@
 // app/api/ai-reply/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
-const GROQ_API_KEY    = process.env.GROQ_API_KEY;
-const GROQ_API_KEYv2  = process.env.GROQ_API_KEYv2;
-const GROQ_API_KEYv3  = process.env.GROQ_API_KEYv3;
-const GROQ_API_KEYv4  = process.env.GROQ_API_KEYv4;
-const GROQ_API_KEYv5  = process.env.GROQ_API_KEYv5;
-const GROQ_API_KEYv6  = process.env.GROQ_API_KEYv6;
-const GROQ_API_KEYv7  = process.env.GROQ_API_KEYv7;
-const ABLY_KEY        = process.env.ABLY_KEY;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_API_KEYv2 = process.env.GROQ_API_KEYv2;
+const GROQ_API_KEYv3 = process.env.GROQ_API_KEYv3;
+const GROQ_API_KEYv4 = process.env.GROQ_API_KEYv4;
+const GROQ_API_KEYv5 = process.env.GROQ_API_KEYv5;
+const GROQ_API_KEYv6 = process.env.GROQ_API_KEYv6;
+const GROQ_API_KEYv7 = process.env.GROQ_API_KEYv7;
+const ABLY_KEY = process.env.ABLY_KEY;
 
 // FIX: Read AI_ALWAYS_ON from env — if true, AI always responds regardless
 // of any admin toggle. This is the primary "always on" switch.
@@ -55,13 +55,13 @@ const MIN_REPLY_DELAY_MS = 2000;
 
 // ─── Navigation buttons ───────────────────────────────────────────────────────
 const NAV_BUTTONS = [
-  { id: "shop",       label: "Kapo Shop",         emoji: "🛍️", url: "https://kapogian.xyz/shop" },
-  { id: "generate",   label: "Summon / Generate", emoji: "⚡", url: "https://kapogian.xyz/generate" },
-  { id: "roadmap",    label: "Roadmap",            emoji: "🗺️", url: "https://kapogian.xyz/roadmapv3" },
-  { id: "whitepaper", label: "Whitepaper",         emoji: "📄", url: "https://kapogian.xyz/whitepaper" },
-  { id: "Podium", label: "Podium",         emoji: "📄", url: "https://kapogian.xyz/Podium" },
-  { id: "discord",    label: "Discord Server",     emoji: "💬", url: "https://discord.gg/rtBhBccW" },
-  { id: "twitter",    label: "Kapogian on X",      emoji: "🐦", url: "https://x.com/kapogian63" },
+  { id: "shop", label: "Kapo Shop", emoji: "🛍️", url: "https://kapogian.xyz/shop" },
+  { id: "generate", label: "Summon / Generate", emoji: "⚡", url: "https://kapogian.xyz/generate" },
+  { id: "roadmap", label: "Roadmap", emoji: "🗺️", url: "https://kapogian.xyz/roadmapv3" },
+  { id: "whitepaper", label: "Whitepaper", emoji: "📄", url: "https://kapogian.xyz/whitepaper" },
+  { id: "Podium", label: "Podium", emoji: "📄", url: "https://kapogian.xyz/Podium" },
+  { id: "discord", label: "Discord Server", emoji: "💬", url: "https://discord.gg/rtBhBccW" },
+  { id: "twitter", label: "Kapogian on X", emoji: "🐦", url: "https://x.com/kapogian63" },
 ];
 const SYSTEM_PROMPT = `You are Kapo, the official AI support assistant for Kapogian — a phygital NFT project on the SUI Network. You are warm, enthusiastic, and speak with confident but friendly energy. You call the community "Pogi Nation."
 
@@ -366,13 +366,7 @@ Kapogian is built on Sui's Object-Centric Model — assets are truly "living" ob
 - SBT (Soulbound Token) receipts use Sui's non-transferable object standard
 - Treasury wallet: 0x42124c7cb84.........54ab3eb1d2da31e993dad94d
 
-════════════════════════════════════════
-TEAM
-════════════════════════════════════════
-Raven Caguioa — Backend Developer
-Clarence Vince Razo — Frontend Developer & Creative Developer
-Xyrille Navora — Frontend Developer
-Gelo Rioflorido — Website Tester
+
 
 ════════════════════════════════════════
 EASTER EGGS
@@ -526,7 +520,7 @@ async function callGroq(
     return null;
   }
 
-  const data    = await res.json();
+  const data = await res.json();
   const content = data.choices?.[0]?.message?.content?.trim() ?? "";
   if (!content) {
     console.warn(`[ai-reply] ${keyLabel} empty content`);
@@ -543,7 +537,7 @@ export async function POST(req: NextRequest) {
   }
 
   const allKeys: Array<{ key: string; label: string }> = [
-    { key: GROQ_API_KEY!,   label: "primary" },
+    { key: GROQ_API_KEY!, label: "primary" },
     { key: GROQ_API_KEYv2!, label: "v2" },
     { key: GROQ_API_KEYv3!, label: "v3" },
     { key: GROQ_API_KEYv4!, label: "v4" },
@@ -556,9 +550,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No Groq API keys configured" }, { status: 500 });
   }
 
-  const availableKeys   = allKeys.filter((k) => isKeyAvailable(k.label));
+  const availableKeys = allKeys.filter((k) => isKeyAvailable(k.label));
   const rateLimitedKeys = allKeys.filter((k) => !isKeyAvailable(k.label));
-  const orderedKeys     = [...availableKeys, ...rateLimitedKeys];
+  const orderedKeys = [...availableKeys, ...rateLimitedKeys];
 
   const requestStartTime = Date.now();
   let walletKey = "";
@@ -579,7 +573,7 @@ export async function POST(req: NextRequest) {
     // FIX: Use timestamp-based dedup instead of a simple Set.
     // This prevents permanent lockout if previous request never hit finally.
     if (!isRequestAllowed(walletKey)) {
-      console.log(`[ai-reply] Dedup: ${walletKey.slice(0,8)} already in-flight — skipping`);
+      console.log(`[ai-reply] Dedup: ${walletKey.slice(0, 8)} already in-flight — skipping`);
       return NextResponse.json({ ok: true, skipped: true, reason: "duplicate" }, { status: 202 });
     }
     activeWalletRequests.set(walletKey, Date.now());
@@ -590,11 +584,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, skipped: true, reason: "last message not from user" });
     }
 
-    const recent    = humanMessages.slice(-10);
+    const recent = humanMessages.slice(-10);
     const firstUser = recent.findIndex((m) => m.sender === "user");
-    const trimmed   = firstUser > 0 ? recent.slice(firstUser) : recent;
+    const trimmed = firstUser > 0 ? recent.slice(firstUser) : recent;
     const groqMessages = trimmed.map((m) => ({
-      role:    m.sender === "user" ? "user" : "assistant",
+      role: m.sender === "user" ? "user" : "assistant",
       content: m.text,
     }));
 
@@ -622,7 +616,7 @@ export async function POST(req: NextRequest) {
     await ablyPublish("admin-typing", { isTyping: true, isAI: true });
 
     let rawContent = "";
-    let usedLabel  = "";
+    let usedLabel = "";
 
     for (const { key, label } of orderedKeys) {
       if (!isKeyAvailable(label) && availableKeys.length > 0) continue;
@@ -630,7 +624,7 @@ export async function POST(req: NextRequest) {
       if (!result) continue;
       if (result.rateLimited) continue;
       rawContent = result.content;
-      usedLabel  = label;
+      usedLabel = label;
       break;
     }
 
@@ -640,14 +634,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "AI temporarily unavailable" }, { status: 503 });
     }
 
-    let replyText     = "";
+    let replyText = "";
     let buttonsPayload: Array<{ label: string; emoji: string; url: string; id: string }> = [];
 
     try {
       const parsed = JSON.parse(rawContent) as {
         text: string;
         buttons?: Array<{ id: string }> | null;
-        button?:  { id: string } | null;
+        button?: { id: string } | null;
       };
       replyText = parsed.text?.trim() ?? "";
       const rawButtons = parsed.buttons ?? (parsed.button ? [parsed.button] : []);
@@ -668,13 +662,13 @@ export async function POST(req: NextRequest) {
 
     // FIX: Reduced delay from 4000ms to 2000ms for snappier responses.
     // Still feels natural but half the wait time.
-    const elapsed   = Date.now() - requestStartTime;
+    const elapsed = Date.now() - requestStartTime;
     const remaining = MIN_REPLY_DELAY_MS - elapsed;
     if (remaining > 0) {
       await new Promise<void>((resolve) => setTimeout(resolve, remaining));
     }
 
-    const timestamp   = Date.now();
+    const timestamp = Date.now();
     const clientMsgId = `ai-${timestamp}-${Math.random().toString(36).slice(2)}`;
 
     await ablyPublish("admin-typing", { isTyping: false, isAI: true });
