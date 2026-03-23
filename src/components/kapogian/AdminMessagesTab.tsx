@@ -820,7 +820,7 @@ export function AdminMessagesTab() {
             <div className="bg-purple-50 border-b-2 border-purple-100 px-3 py-2 flex items-center gap-2 flex-shrink-0">
               <Sparkles size={11} className="text-purple-500 flex-shrink-0" />
               <p className="text-[10px] font-semibold text-purple-600 leading-tight">
-                Llama 3.3 auto-replies when you're away
+                Kapogian Support auto-replies when you're away
               </p>
             </div>
           )}
@@ -1048,7 +1048,7 @@ export function AdminMessagesTab() {
                       : "bg-white border-2 border-slate-200 text-slate-800 rounded-bl-sm shadow-sm"
                   }`}>
                     {msg.sender === "user"                && <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">User</p>}
-                    {msg.sender === "admin" && msg.isAI  && <p className="text-[9px] font-black text-purple-200 uppercase tracking-widest mb-1 flex items-center gap-1"><Sparkles size={8} /> AI Assistant</p>}
+                    {msg.sender === "admin" && msg.isAI  && <p className="text-[9px] font-black text-purple-200 uppercase tracking-widest mb-1 flex items-center gap-1"><Sparkles size={8} /> Kapogian Assistant</p>}
                     {msg.sender === "admin" && !msg.isAI && <p className="text-[9px] font-black text-white/40 uppercase tracking-widest mb-1">You (Admin)</p>}
                     <p>{msg.text}</p>
                     <p className={`text-[9px] mt-1 font-mono ${msg.sender === "admin" ? "text-white/40 text-right" : "text-slate-400"}`}>
