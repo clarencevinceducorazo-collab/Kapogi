@@ -45,7 +45,14 @@ export default function RoadmapV3Page() {
     const phaseText = phaseTextRef.current;
     const progressBar = progressBarRef.current;
 
-    if (!container || !bgLayer || !ambientOrb || !navUi || !phaseText || !progressBar)
+    if (
+      !container ||
+      !bgLayer ||
+      !ambientOrb ||
+      !navUi ||
+      !phaseText ||
+      !progressBar
+    )
       return;
 
     const slides = Array.from(
@@ -73,7 +80,8 @@ export default function RoadmapV3Page() {
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       // Support trackpads: deltaX for horizontal, deltaY for vertical
-      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      const delta =
+        Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       targetScroll += delta;
       targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
     };
@@ -105,13 +113,16 @@ export default function RoadmapV3Page() {
         // Use both axes: vertical swipe up = scroll forward, horizontal swipe left = scroll forward
         const moveDelta =
           Math.abs(dx) >= Math.abs(dy)
-            ? t.clientX - touchLastX   // horizontal: drag left → scroll right
+            ? t.clientX - touchLastX // horizontal: drag left → scroll right
             : touchLastX === touchStartX
               ? 0
               : (touchStartY - t.clientY) * 1.5; // vertical: drag up → scroll forward
 
         // For horizontal, negate (drag left moves content right = scroll forward)
-        const scrollDelta = Math.abs(dx) >= Math.abs(dy) ? -(t.clientX - touchLastX) : (touchStartY - t.clientY) * 1.5;
+        const scrollDelta =
+          Math.abs(dx) >= Math.abs(dy)
+            ? -(t.clientX - touchLastX)
+            : (touchStartY - t.clientY) * 1.5;
 
         targetScroll += scrollDelta;
         targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
@@ -133,10 +144,15 @@ export default function RoadmapV3Page() {
       // Snap to next/prev slide on a quick swipe (velocity snap)
       if (Math.abs(totalDelta) > 40) {
         const direction = totalDelta > 0 ? 1 : -1;
-        const nextIndex = Math.max(0, Math.min(slides.length - 1, activeIndex + direction));
+        const nextIndex = Math.max(
+          0,
+          Math.min(slides.length - 1, activeIndex + direction),
+        );
         const targetSlide = slides[nextIndex];
         if (targetSlide) {
-          targetScroll = targetSlide.offsetLeft - (window.innerWidth - targetSlide.offsetWidth) / 2;
+          targetScroll =
+            targetSlide.offsetLeft -
+            (window.innerWidth - targetSlide.offsetWidth) / 2;
           targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
         }
       }
@@ -352,9 +368,10 @@ export default function RoadmapV3Page() {
         {/* HUD */}
         <div
           ref={navUiRef}
-          className="fixed bottom-0 left-0 w-full z-50 px-8 py-10 flex justify-end items-start transition-all duration-500 opacity-0 -translate-y-4"
+          className="fixed left-0 w-full z-50 px-4 py-3 md:py-10 flex justify-end items-start transition-all duration-500 opacity-0 -translate-y-4 md:static md:translate-y-0 md:opacity-100"
+          style={{ bottom: 2, position: "fixed" }}
         >
-          <div className="flex items-center gap-4 bg-white/80 backdrop-blur-md border border-black/5 px-4 py-2 rounded-full shadow-sm">
+          <div className="flex items-center gap-3 bg-white/80 backdrop-blur-md border border-black/5 px-2 py-2 rounded-full shadow-sm w-[65vw] max-w-[160px] md:w-auto md:max-w-none">
             <span
               ref={phaseTextRef}
               className="text-xs font-semibold uppercase tracking-wider text-slate-500 w-24 text-right"
@@ -417,7 +434,9 @@ export default function RoadmapV3Page() {
                 </span>
                 <div className="flex items-center gap-2 text-slate-400">
                   <span className="text-lg">←</span>
-                  <span className="text-xs font-semibold uppercase tracking-widest">swipe</span>
+                  <span className="text-xs font-semibold uppercase tracking-widest">
+                    swipe
+                  </span>
                   <span className="text-lg">→</span>
                 </div>
               </div>
@@ -442,42 +461,81 @@ export default function RoadmapV3Page() {
                     <span className="px-3 py-1 rounded-md bg-emerald-100 text-emerald-800 text-xs font-semibold">
                       Q1 2026
                     </span>
-                    <iconify-icon icon="solar:sledgehammer-linear" width="24" class="text-emerald-600" />
+                    <iconify-icon
+                      icon="solar:sledgehammer-linear"
+                      width="24"
+                      class="text-emerald-600"
+                    />
                   </div>
-                  <h2 className="text-4xl md:text-5xl font-semibold tracking-tighter mb-2">Genesis</h2>
-                  <p className="text-emerald-700/80 font-medium text-lg mb-8">Foundation & Infrastructure</p>
+                  <h2 className="text-4xl md:text-5xl font-semibold tracking-tighter mb-2">
+                    Genesis
+                  </h2>
+                  <p className="text-emerald-700/80 font-medium text-lg mb-8">
+                    Foundation & Infrastructure
+                  </p>
                   <div className="space-y-5">
                     <div className="flex gap-4 items-start">
                       <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <iconify-icon icon="solar:paint-palette-linear" class="text-white" width="14" />
+                        <iconify-icon
+                          icon="solar:paint-palette-linear"
+                          class="text-white"
+                          width="14"
+                        />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-slate-900 text-sm md:text-base">Art & Brand Finalization</h4>
-                        <p className="text-xs md:text-sm text-slate-500 leading-relaxed mt-1">High-fashion pixel art for 10,000 Spirit NFT traits.</p>
+                        <h4 className="font-semibold text-slate-900 text-sm md:text-base">
+                          Art & Brand Finalization
+                        </h4>
+                        <p className="text-xs md:text-sm text-slate-500 leading-relaxed mt-1">
+                          High-fashion pixel art for 10,000 Spirit NFT traits.
+                        </p>
                       </div>
                     </div>
                     <div className="flex gap-4 items-start">
                       <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <iconify-icon icon="solar:shield-check-linear" class="text-white" width="14" />
+                        <iconify-icon
+                          icon="solar:shield-check-linear"
+                          class="text-white"
+                          width="14"
+                        />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-slate-900 text-sm md:text-base">Smart Contract Audits</h4>
-                        <p className="text-xs md:text-sm text-slate-500 leading-relaxed mt-1">Security-first Sui Move contracts for staking/locking.</p>
+                        <h4 className="font-semibold text-slate-900 text-sm md:text-base">
+                          Smart Contract Audits
+                        </h4>
+                        <p className="text-xs md:text-sm text-slate-500 leading-relaxed mt-1">
+                          Security-first Sui Move contracts for staking/locking.
+                        </p>
                       </div>
                     </div>
                     <div className="flex gap-4 items-start">
                       <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <iconify-icon icon="solar:users-group-two-rounded-linear" class="text-white" width="14" />
+                        <iconify-icon
+                          icon="solar:users-group-two-rounded-linear"
+                          class="text-white"
+                          width="14"
+                        />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-slate-900 text-sm md:text-base">Community Cultivation</h4>
-                        <p className="text-xs md:text-sm text-slate-500 leading-relaxed mt-1">"Pogi Nation" launch & whitelist campaigns.</p>
+                        <h4 className="font-semibold text-slate-900 text-sm md:text-base">
+                          Community Cultivation
+                        </h4>
+                        <p className="text-xs md:text-sm text-slate-500 leading-relaxed mt-1">
+                          "Pogi Nation" launch & whitelist campaigns.
+                        </p>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="absolute -bottom-5 -right-5 w-40 h-40 z-20">
-                  <Image src="/images/Roadmaps/chibi-character/phase1.gif" alt="c1" width={160} height={160} className="w-full h-full object-contain chibi-character" unoptimized />
+                  <Image
+                    src="/images/Roadmaps/chibi-character/phase1.gif"
+                    alt="c1"
+                    width={160}
+                    height={160}
+                    className="w-full h-full object-contain chibi-character"
+                    unoptimized
+                  />
                 </div>
               </div>
             </div>
@@ -491,46 +549,91 @@ export default function RoadmapV3Page() {
           >
             <div className="slide-content w-full h-full max-h-[580px] pt-28 md:pt-24">
               <div className="pogi-card p-8 md:p-10 h-full flex flex-col relative group">
-                <iconify-icon icon="solar:user-id-linear" class="absolute -left-8 -top-8 text-cyan-100 opacity-50" width="200" />
+                <iconify-icon
+                  icon="solar:user-id-linear"
+                  class="absolute -left-8 -top-8 text-cyan-100 opacity-50"
+                  width="200"
+                />
                 <div className="relative z-10">
                   <div className="flex justify-between items-center mb-6">
-                    <span className="px-3 py-1 rounded-md bg-cyan-100 text-cyan-800 text-xs font-semibold">Q1-Q2 2026</span>
-                    <iconify-icon icon="solar:glasses-linear" width="24" class="text-cyan-600" />
+                    <span className="px-3 py-1 rounded-md bg-cyan-100 text-cyan-800 text-xs font-semibold">
+                      Q1-Q2 2026
+                    </span>
+                    <iconify-icon
+                      icon="solar:glasses-linear"
+                      width="24"
+                      class="text-cyan-600"
+                    />
                   </div>
-                  <h2 className="text-4xl md:text-5xl font-semibold tracking-tighter mb-2">Identity</h2>
-                  <p className="text-cyan-700/80 font-medium text-lg mb-8">Digital Ownership Meets Reality</p>
+                  <h2 className="text-4xl md:text-5xl font-semibold tracking-tighter mb-2">
+                    Identity
+                  </h2>
+                  <p className="text-cyan-700/80 font-medium text-lg mb-8">
+                    Digital Ownership Meets Reality
+                  </p>
                   <div className="space-y-5">
                     <div className="flex gap-4 items-start">
                       <div className="w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <iconify-icon icon="solar:ticket-linear" class="text-white" width="14" />
+                        <iconify-icon
+                          icon="solar:ticket-linear"
+                          class="text-white"
+                          width="14"
+                        />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-slate-900 text-sm">Genesis Mint</h4>
-                        <p className="text-xs text-slate-500 mt-1">Official launch of Kapogian Spirit NFT collection.</p>
+                        <h4 className="font-semibold text-slate-900 text-sm">
+                          Genesis Mint
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Official launch of Kapogian Spirit NFT collection.
+                        </p>
                       </div>
                     </div>
                     <div className="flex gap-4 items-start">
                       <div className="w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <iconify-icon icon="solar:shop-linear" class="text-white" width="14" />
+                        <iconify-icon
+                          icon="solar:shop-linear"
+                          class="text-white"
+                          width="14"
+                        />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-slate-900 text-sm">Pogi Storefront</h4>
-                        <p className="text-xs text-slate-500 mt-1">Verify NFT to order 1-to-1 unique apparel & plates.</p>
+                        <h4 className="font-semibold text-slate-900 text-sm">
+                          Pogi Storefront
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Verify NFT to order 1-to-1 unique apparel & plates.
+                        </p>
                       </div>
                     </div>
                     <div className="flex gap-4 items-start">
                       <div className="w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <iconify-icon icon="solar:box-minimalistic-linear" class="text-white" width="14" />
+                        <iconify-icon
+                          icon="solar:box-minimalistic-linear"
+                          class="text-white"
+                          width="14"
+                        />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-slate-900 text-sm">Global Logistics</h4>
-                        <p className="text-xs text-slate-500 mt-1">Partnerships for "Proof of Pogi" fulfillment.</p>
+                        <h4 className="font-semibold text-slate-900 text-sm">
+                          Global Logistics
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Partnerships for "Proof of Pogi" fulfillment.
+                        </p>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="absolute -bottom-4 -right-2 w-40 h-40 z-20">
-                  <Image src="/images/Roadmaps/chibi-character/phase2.gif" alt="c2" width={160} height={160} className="w-full h-full object-contain chibi-character" unoptimized />
+                  <Image
+                    src="/images/Roadmaps/chibi-character/phase2.gif"
+                    alt="c2"
+                    width={160}
+                    height={160}
+                    className="w-full h-full object-contain chibi-character"
+                    unoptimized
+                  />
                 </div>
               </div>
             </div>
@@ -545,46 +648,88 @@ export default function RoadmapV3Page() {
             <div className="slide-content w-full h-full max-h-[580px] pt-28 md:pt-24">
               <div className="pogi-card p-8 md:p-10 h-full flex flex-col relative group">
                 <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-purple-50 opacity-50" />
-                <iconify-icon icon="solar:gamepad-linear" class="absolute -right-8 -top-8 text-purple-100 opacity-60" width="200" />
+                <iconify-icon
+                  icon="solar:gamepad-linear"
+                  class="absolute -right-8 -top-8 text-purple-100 opacity-60"
+                  width="200"
+                />
                 <div className="relative z-10">
                   <div className="flex justify-between items-center mb-6">
-                    <span className="px-3 py-1 rounded-md bg-purple-100 text-purple-800 text-xs font-semibold">Q2-Q3 2026</span>
-                    <iconify-icon icon="solar:ghost-linear" width="24" class="text-purple-600" />
+                    <span className="px-3 py-1 rounded-md bg-purple-100 text-purple-800 text-xs font-semibold">
+                      Q2-Q3 2026
+                    </span>
+                    <iconify-icon
+                      icon="solar:ghost-linear"
+                      width="24"
+                      class="text-purple-600"
+                    />
                   </div>
-                  <h2 className="text-4xl md:text-5xl font-semibold tracking-tighter mb-2">Conquest</h2>
-                  <p className="text-purple-700/80 font-medium text-lg mb-8">Biringan City High-Stakes Gaming</p>
+                  <h2 className="text-4xl md:text-5xl font-semibold tracking-tighter mb-2">
+                    Conquest
+                  </h2>
+                  <p className="text-purple-700/80 font-medium text-lg mb-8">
+                    Biringan City High-Stakes Gaming
+                  </p>
                   <div className="space-y-6">
                     <div className="flex gap-4 items-start">
                       <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-[10px] font-bold text-white">3A</span>
+                        <span className="text-[10px] font-bold text-white">
+                          3A
+                        </span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-slate-900 text-sm">Wilderness Prototype</h4>
-                        <p className="text-xs text-slate-500 mt-1">Core mechanics in Construct 3, "Social Anxiety" shader, and Samar Threshold alpha.</p>
+                        <h4 className="font-semibold text-slate-900 text-sm">
+                          Wilderness Prototype
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Core mechanics in Construct 3, "Social Anxiety"
+                          shader, and Samar Threshold alpha.
+                        </p>
                       </div>
                     </div>
                     <div className="flex gap-4 items-start">
                       <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-[10px] font-bold text-white">3B</span>
+                        <span className="text-[10px] font-bold text-white">
+                          3B
+                        </span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-slate-900 text-sm">Bugkot Integration</h4>
-                        <p className="text-xs text-slate-500 mt-1">Asset locking, "Permadeath Burn" logic, and The Graveyard Hall of Fame.</p>
+                        <h4 className="font-semibold text-slate-900 text-sm">
+                          Bugkot Integration
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Asset locking, "Permadeath Burn" logic, and The
+                          Graveyard Hall of Fame.
+                        </p>
                       </div>
                     </div>
                     <div className="flex gap-4 items-start">
                       <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-[10px] font-bold text-white">3C</span>
+                        <span className="text-[10px] font-bold text-white">
+                          3C
+                        </span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-slate-900 text-sm">Obsidian Core (Beta)</h4>
-                        <p className="text-xs text-slate-500 mt-1">50 levels, Boss AI, and NFT stats-based adaptive MMR scaling.</p>
+                        <h4 className="font-semibold text-slate-900 text-sm">
+                          Obsidian Core (Beta)
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1">
+                          50 levels, Boss AI, and NFT stats-based adaptive MMR
+                          scaling.
+                        </p>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="absolute -bottom-10 -right-10 w-48 h-48 z-20">
-                  <Image src="/images/Roadmaps/chibi-character/phase3.gif" alt="c3" width={192} height={192} className="w-full h-full object-contain chibi-character" unoptimized />
+                  <Image
+                    src="/images/Roadmaps/chibi-character/phase3.gif"
+                    alt="c3"
+                    width={192}
+                    height={192}
+                    className="w-full h-full object-contain chibi-character"
+                    unoptimized
+                  />
                 </div>
               </div>
             </div>
@@ -598,46 +743,88 @@ export default function RoadmapV3Page() {
           >
             <div className="slide-content w-full h-full max-h-[580px] pt-28 md:pt-24">
               <div className="pogi-card p-8 md:p-10 h-full flex flex-col relative group">
-                <iconify-icon icon="solar:sun-2-linear" class="absolute -top-8 -left-8 text-orange-100 opacity-60" width="200" />
+                <iconify-icon
+                  icon="solar:sun-2-linear"
+                  class="absolute -top-8 -left-8 text-orange-100 opacity-60"
+                  width="200"
+                />
                 <div className="relative z-10">
                   <div className="flex justify-between items-center mb-6">
-                    <span className="px-3 py-1 rounded-md bg-orange-100 text-orange-800 text-xs font-semibold">Q3-Q4 2026</span>
-                    <iconify-icon icon="solar:smart-home-angle-linear" width="24" class="text-orange-600" />
+                    <span className="px-3 py-1 rounded-md bg-orange-100 text-orange-800 text-xs font-semibold">
+                      Q3-Q4 2026
+                    </span>
+                    <iconify-icon
+                      icon="solar:smart-home-angle-linear"
+                      width="24"
+                      class="text-orange-600"
+                    />
                   </div>
-                  <h2 className="text-4xl md:text-5xl font-semibold tracking-tighter mb-2">The Farm</h2>
-                  <p className="text-orange-700/80 font-medium text-lg mb-8">Phygital RWA Agriculture</p>
+                  <h2 className="text-4xl md:text-5xl font-semibold tracking-tighter mb-2">
+                    The Farm
+                  </h2>
+                  <p className="text-orange-700/80 font-medium text-lg mb-8">
+                    Phygital RWA Agriculture
+                  </p>
                   <div className="space-y-6">
                     <div className="flex gap-4 items-start">
                       <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-[10px] font-bold text-white">4A</span>
+                        <span className="text-[10px] font-bold text-white">
+                          4A
+                        </span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-slate-900 text-sm">The Barn (Smart Contracts)</h4>
-                        <p className="text-xs text-slate-500 mt-1">NFT reminting engine, investment halving algorithm, and automated payouts.</p>
+                        <h4 className="font-semibold text-slate-900 text-sm">
+                          The Barn (Smart Contracts)
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1">
+                          NFT reminting engine, investment halving algorithm,
+                          and automated payouts.
+                        </p>
                       </div>
                     </div>
                     <div className="flex gap-4 items-start">
                       <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-[10px] font-bold text-white">4B</span>
+                        <span className="text-[10px] font-bold text-white">
+                          4B
+                        </span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-slate-900 text-sm">The Pilot Farm</h4>
-                        <p className="text-xs text-slate-500 mt-1">Mapandan, Philippines. RFID tags, IoT sensors, and farmer admin app.</p>
+                        <h4 className="font-semibold text-slate-900 text-sm">
+                          The Pilot Farm
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Mapandan, Philippines. RFID tags, IoT sensors, and
+                          farmer admin app.
+                        </p>
                       </div>
                     </div>
                     <div className="flex gap-4 items-start">
                       <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-[10px] font-bold text-white">4C</span>
+                        <span className="text-[10px] font-bold text-white">
+                          4C
+                        </span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-slate-900 text-sm">The Daily Report Loop</h4>
-                        <p className="text-xs text-slate-500 mt-1">Stardew-inspired dashboard with real-time livestock tracking (Pigs/Goats).</p>
+                        <h4 className="font-semibold text-slate-900 text-sm">
+                          The Daily Report Loop
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Stardew-inspired dashboard with real-time livestock
+                          tracking (Pigs/Goats).
+                        </p>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="absolute -bottom-4 -right-4 w-40 h-40 z-20">
-                  <Image src="/images/Roadmaps/chibi-character/phase4.gif" alt="c4" width={160} height={160} className="w-full h-full object-contain chibi-character" unoptimized />
+                  <Image
+                    src="/images/Roadmaps/chibi-character/phase4.gif"
+                    alt="c4"
+                    width={160}
+                    height={160}
+                    className="w-full h-full object-contain chibi-character"
+                    unoptimized
+                  />
                 </div>
               </div>
             </div>
@@ -651,46 +838,94 @@ export default function RoadmapV3Page() {
           >
             <div className="slide-content w-full h-full max-h-[580px] pt-28 md:pt-24">
               <div className="pogi-card p-8 md:p-10 h-full flex flex-col relative group">
-                <iconify-icon icon="solar:bolt-linear" class="absolute -top-8 -right-8 text-yellow-100 opacity-80" width="200" />
+                <iconify-icon
+                  icon="solar:bolt-linear"
+                  class="absolute -top-8 -right-8 text-yellow-100 opacity-80"
+                  width="200"
+                />
                 <div className="relative z-10">
                   <div className="flex justify-between items-center mb-6">
-                    <span className="px-3 py-1 rounded-md bg-yellow-100 text-yellow-800 text-xs font-semibold">Q3 2027</span>
-                    <iconify-icon icon="solar:globus-linear" width="24" class="text-yellow-600" />
+                    <span className="px-3 py-1 rounded-md bg-yellow-100 text-yellow-800 text-xs font-semibold">
+                      Q3 2027
+                    </span>
+                    <iconify-icon
+                      icon="solar:globus-linear"
+                      width="24"
+                      class="text-yellow-600"
+                    />
                   </div>
-                  <h2 className="text-4xl md:text-5xl font-semibold tracking-tighter mb-2">Expansion</h2>
-                  <p className="text-yellow-700/80 font-medium text-lg mb-8">Interoperability & Scaling</p>
+                  <h2 className="text-4xl md:text-5xl font-semibold tracking-tighter mb-2">
+                    Expansion
+                  </h2>
+                  <p className="text-yellow-700/80 font-medium text-lg mb-8">
+                    Interoperability & Scaling
+                  </p>
                   <div className="space-y-5">
                     <div className="flex gap-4 items-start">
                       <div className="w-6 h-6 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <iconify-icon icon="solar:transfer-horizontal-linear" class="text-white" width="14" />
+                        <iconify-icon
+                          icon="solar:transfer-horizontal-linear"
+                          class="text-white"
+                          width="14"
+                        />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-slate-900 text-sm">Cross-Game Traits</h4>
-                        <p className="text-xs text-slate-500 mt-1">Soulbound Badges from Biringan provide boosts/discounts in Farm.</p>
+                        <h4 className="font-semibold text-slate-900 text-sm">
+                          Cross-Game Traits
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Soulbound Badges from Biringan provide
+                          boosts/discounts in Farm.
+                        </p>
                       </div>
                     </div>
                     <div className="flex gap-4 items-start">
                       <div className="w-6 h-6 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <iconify-icon icon="solar:shop-2-linear" class="text-white" width="14" />
+                        <iconify-icon
+                          icon="solar:shop-2-linear"
+                          class="text-white"
+                          width="14"
+                        />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-slate-900 text-sm">Trading Post</h4>
-                        <p className="text-xs text-slate-500 mt-1">Secondary market for high-level assets and matured livestock yields.</p>
+                        <h4 className="font-semibold text-slate-900 text-sm">
+                          Trading Post
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Secondary market for high-level assets and matured
+                          livestock yields.
+                        </p>
                       </div>
                     </div>
                     <div className="flex gap-4 items-start">
                       <div className="w-6 h-6 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <iconify-icon icon="solar:leaf-linear" class="text-white" width="14" />
+                        <iconify-icon
+                          icon="solar:leaf-linear"
+                          class="text-white"
+                          width="14"
+                        />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-slate-900 text-sm">Global Biomes</h4>
-                        <p className="text-xs text-slate-500 mt-1">Coffee/Cacao expansion based on community governance data.</p>
+                        <h4 className="font-semibold text-slate-900 text-sm">
+                          Global Biomes
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Coffee/Cacao expansion based on community governance
+                          data.
+                        </p>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="absolute -bottom-5 -right-5 w-40 h-40 z-20">
-                  <Image src="/images/Roadmaps/chibi-character/phase5.gif" alt="c5" width={160} height={160} className="w-full h-full object-contain chibi-character" unoptimized />
+                  <Image
+                    src="/images/Roadmaps/chibi-character/phase5.gif"
+                    alt="c5"
+                    width={160}
+                    height={160}
+                    className="w-full h-full object-contain chibi-character"
+                    unoptimized
+                  />
                 </div>
               </div>
             </div>
@@ -709,34 +944,62 @@ export default function RoadmapV3Page() {
                 </div>
                 <div className="relative z-10 flex flex-col h-full">
                   <div className="flex justify-between items-center mb-6">
-                    <span className="px-3 py-1 rounded-md bg-pink-100 text-pink-800 text-xs font-semibold">End 2027</span>
-                    <iconify-icon icon="solar:star-fall-linear" width="24" class="text-pink-600" />
+                    <span className="px-3 py-1 rounded-md bg-pink-100 text-pink-800 text-xs font-semibold">
+                      End 2027
+                    </span>
+                    <iconify-icon
+                      icon="solar:star-fall-linear"
+                      width="24"
+                      class="text-pink-600"
+                    />
                   </div>
-                  <h2 className="text-5xl md:text-6xl font-semibold tracking-tighter mb-2 text-pink-950">$POGI</h2>
-                  <p className="text-pink-800 font-medium text-lg mb-8">The Ultimate Economic Engine</p>
+                  <h2 className="text-5xl md:text-6xl font-semibold tracking-tighter mb-2 text-pink-950">
+                    $POGI
+                  </h2>
+                  <p className="text-pink-800 font-medium text-lg mb-8">
+                    The Ultimate Economic Engine
+                  </p>
                   <ul className="space-y-4 mb-auto">
                     <li className="flex items-center gap-3 text-pink-900 font-medium text-sm">
-                      <iconify-icon icon="solar:rocket-2-linear" class="text-pink-600 text-xl" />
+                      <iconify-icon
+                        icon="solar:rocket-2-linear"
+                        class="text-pink-600 text-xl"
+                      />
                       Token TGE & Liquidity Injection on Sui
                     </li>
                     <li className="flex items-center gap-3 text-pink-900 font-medium text-sm">
-                      <iconify-icon icon="solar:card-recieved-linear" class="text-pink-600 text-xl" />
+                      <iconify-icon
+                        icon="solar:card-recieved-linear"
+                        class="text-pink-600 text-xl"
+                      />
                       Full Ecosystem Fee Integration
                     </li>
                     <li className="flex items-center gap-3 text-pink-900 font-medium text-sm">
-                      <iconify-icon icon="solar:users-group-rounded-linear" class="text-pink-600 text-xl" />
+                      <iconify-icon
+                        icon="solar:users-group-rounded-linear"
+                        class="text-pink-600 text-xl"
+                      />
                       The Pogi Council (DAO) Governance
                     </li>
                   </ul>
                   <button
-                    onClick={() => { window.location.href = "/whitepaper"; }}
+                    onClick={() => {
+                      window.location.href = "/whitepaper";
+                    }}
                     className="w-full py-4 bg-pink-600 text-white rounded-xl font-semibold hover:bg-pink-700 transition-colors shadow-lg shadow-pink-200 mt-6 relative z-30"
                   >
                     Read Whitepaper
                   </button>
                 </div>
                 <div className="absolute -bottom-2 -right-4 w-36 h-36 z-20">
-                  <Image src="/images/Roadmaps/chibi-character/pogi.gif" alt="c6" width={160} height={160} className="w-full h-full object-contain chibi-character" unoptimized />
+                  <Image
+                    src="/images/Roadmaps/chibi-character/pogi.gif"
+                    alt="c6"
+                    width={160}
+                    height={160}
+                    className="w-full h-full object-contain chibi-character"
+                    unoptimized
+                  />
                 </div>
               </div>
             </div>
@@ -756,7 +1019,13 @@ export default function RoadmapV3Page() {
                 The Evolution of Pogi Nation Continues.
               </p>
               <button
-                onClick={() => { window.open("https://discord.gg/kV37u9w48g", "_blank", "noopener,noreferrer"); }}
+                onClick={() => {
+                  window.open(
+                    "https://discord.gg/kV37u9w48g",
+                    "_blank",
+                    "noopener,noreferrer",
+                  );
+                }}
                 className="px-8 py-4 bg-white text-slate-900 font-semibold text-lg rounded-full hover:bg-white/90 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
               >
                 Join the Community

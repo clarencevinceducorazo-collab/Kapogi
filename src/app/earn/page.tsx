@@ -55,7 +55,7 @@ export default function EarnPage() {
           className="relative z-10 min-h-screen flex flex-col justify-center items-center text-center pt-24 pb-12 px-4"
         >
           {/* Badges */}
-          <div className="flex gap-4 mb-6 animate-float">
+          <div className="flex gap-4 mb-6 animate-float mt-8 md:mt-0">
             <div className="bg-yellow-300 text-yellow-900 px-4 py-1.5 rounded-full font-extrabold text-xs tracking-wide transform -rotate-3 border-2 border-white shadow-md">
               ✨ MINT LIVE
             </div>
@@ -362,31 +362,34 @@ export default function EarnPage() {
           </div>
         </section>
 
-    {/* Wave Divider (flipped) */}
-<div className="w-full overflow-hidden leading-[0] bg-white">
-  <svg
-    className="block w-full h-[120px] scale-y-[-1]"
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 1440 320"
-    preserveAspectRatio="none"
-  >
-    <defs>
-      <linearGradient id="wave-yellow-gradient" x1="0" y1="0" x2="0" y2="1">
-         <stop offset="0%" stopColor="#fefce8" />
-      
-      </linearGradient>
-    </defs>
+        {/* Wave Divider (flipped) */}
+        <div className="w-full overflow-hidden leading-[0] bg-white">
+          <svg
+            className="block w-full h-[120px] scale-y-[-1]"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 1440 320"
+            preserveAspectRatio="none"
+          >
+            <defs>
+              <linearGradient
+                id="wave-yellow-gradient"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop offset="0%" stopColor="#fefce8" />
+              </linearGradient>
+            </defs>
 
-    <path
-      fill="url(#wave-yellow-gradient)"
-      d="M0,160 C320,300 420,0 720,120 C1020,240 1120,40 1440,160 L1440,320 L0,320 Z"
-    />
-  </svg>
-</div>
+            <path
+              fill="url(#wave-yellow-gradient)"
+              d="M0,160 C320,300 420,0 720,120 C1020,240 1120,40 1440,160 L1440,320 L0,320 Z"
+            />
+          </svg>
+        </div>
         {/* Phygital Story */}
         <section id="story" className="py-24 bg-white px-4">
-
-
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-black text-slate-800 mb-4 tracking-tight">
