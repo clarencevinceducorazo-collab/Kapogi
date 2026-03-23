@@ -19,7 +19,9 @@ export default function Home() {
       <StylistShopSection />
       <SecuritySection />
       <FaqSection />
-      <PageFooter />
+      <div className="bg-primary pt-1">
+        <PageFooter />
+      </div>
     </>
   );
 }
