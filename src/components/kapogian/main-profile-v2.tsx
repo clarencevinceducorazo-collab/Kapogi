@@ -4,7 +4,6 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-// ...other imports for icons, UI, hooks, and data
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -382,7 +381,6 @@ const RANK_STYLE_MAP: Record<
     selectBorder: "border-indigo-500",
   },
 };
-
 // ─────────────────────────────────────────────────────────────────────────────
 // REQUIREMENT TYPE HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -467,7 +465,7 @@ export function MainProfileV2({
   pendingGrants,
   achievementsLoading,
   onAchievementsRefresh,
-  walletCard, // ← destructured here
+  walletCard,
 }: MainProfileV2Props) {
   const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
 
@@ -482,6 +480,16 @@ export function MainProfileV2({
   const [initializing, setInitializing] = useState(false);
   const [initError, setInitError] = useState("");
   const [claimingId, setClaimingId] = useState<string | null>(null);
+
+  // ── Avatar picker state ──────────────────────────────────────────────────
+  // Tracks which character is shown in the identity card avatar.
+  // Intentionally separate from `index` (the active stats character) so
+  // changing your profile pic doesn't silently swap the dashboard view.
+  const [avatarIndex, setAvatarIndex] = useState(0);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+
+  const avatarCharacter = characters[avatarIndex] ?? characters[0];
+  // ────────────────────────────────────────────────────────────────────────
 
   const currentCharacter = characters[index];
   const attrs = currentCharacter?.attributes ?? {};
@@ -911,26 +919,45 @@ export function MainProfileV2({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
 
         {/* ═══════════════════════════════════════════════════════════════
-            LEFT COLUMN — always visible, same on every tab
-            1. Compact identity card (avatar + name + wallet)
-            2. Token Balances (walletCard prop)
-            3. Social Identity
-            4. Profile Actions (nav)
+            LEFT COLUMN
         ════════════════════════════════════════════════════════════════ */}
         <div className="lg:col-span-4 flex flex-col gap-4">
 
           {/* 1 ── Compact identity card */}
           <div className="bg-white rounded-[2rem] border-4 border-slate-100 shadow-[0_8px_0_0_rgba(226,232,240,1)] overflow-hidden">
             {/* Gradient banner */}
-            <div className="h-16 ">
-            </div>
-            {/* User icon overlapping banner + info */}
+            <div className="h-16" />
+
+            {/* Avatar + info */}
             <div className="px-5 pb-4">
               <div className="flex items-end gap-4 -mt-8 mb-3">
-                {/* Generic user avatar */}
-                <div className="w-16 h-16 rounded-2xl border-4 border-white shadow-lg bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center flex-shrink-0">
-                  <iconify-icon icon="solar:user-circle-bold" class="text-4xl text-indigo-400" />
-                </div>
+
+                {/* ── NFT Avatar button — opens picker modal ── */}
+                <button
+                  onClick={() => setShowAvatarPicker(true)}
+                  title="Change avatar"
+                  className="relative w-16 h-16 rounded-2xl border-4 border-white shadow-lg bg-gradient-to-br from-indigo-100 to-purple-100 flex-shrink-0 overflow-hidden group focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                >
+                  {avatarCharacter?.imageUrl ? (
+                    <Image
+                      src={avatarCharacter.imageUrl}
+                      alt={avatarCharacter.name}
+                      fill
+                      className="object-contain p-1 group-hover:scale-110 transition-transform duration-300"
+                    />
+                  ) : (
+                    <iconify-icon
+                      icon="solar:user-circle-bold"
+                      class="text-4xl text-indigo-400 absolute inset-0 m-auto"
+                    />
+                  )}
+                  {/* Hover overlay — edit pencil */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
+                    <iconify-icon icon="solar:pen-bold" class="text-white text-base" />
+                  </div>
+                </button>
+                {/* ─────────────────────────────────────────────── */}
+
                 <div className="pb-1 min-w-0">
                   <p className="font-black text-slate-800 text-base uppercase tracking-tight truncate leading-tight">
                     {account?.label || account?.name || "Kapogian User"}
@@ -940,7 +967,8 @@ export function MainProfileV2({
                   </p>
                 </div>
               </div>
-              {/* Full wallet address row */}
+
+              {/* Wallet address row */}
               <div className="flex items-center gap-2 bg-slate-50 border-2 border-slate-100 rounded-xl px-3 py-2">
                 <Wallet size={13} className="text-slate-400 flex-shrink-0" />
                 <span className="text-xs font-mono font-semibold text-slate-500 truncate">
@@ -953,7 +981,7 @@ export function MainProfileV2({
             </div>
           </div>
 
-          {/* 2 ── Token Balances (injected from profile-page.tsx) */}
+          {/* 2 ── Token Balances */}
           {walletCard}
 
           {/* 3 ── Social Identity */}
@@ -1035,11 +1063,11 @@ export function MainProfileV2({
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════
-            RIGHT COLUMN — content changes per tab
+            RIGHT COLUMN
         ════════════════════════════════════════════════════════════════ */}
         <div className="lg:col-span-8 flex flex-col gap-6">
 
-          {/* Player Hub stat cards — always visible */}
+          {/* Stat cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <StatCard label="Best MMR" value={bestMmrNum.toLocaleString()} icon="solar:medal-star-circle-linear" theme="yellow" />
             <StatCard label="Avg MMR" value={avgMmrNum.toLocaleString()} icon="solar:chart-square-linear" theme="orange" />
@@ -1050,13 +1078,10 @@ export function MainProfileV2({
           {/* Tab content panel */}
           <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border-4 border-slate-100 shadow-[0_12px_0_0_rgba(226,232,240,1)] flex-grow min-h-[560px]">
 
-            {/* ── STATS TAB ────────────────────────────────────────────── */}
+            {/* ── STATS TAB ── */}
             {activeTab === "Stats" && (
               <div className="animate-in fade-in duration-500 space-y-6">
-
-                {/* Character hero — image + loadout header side by side */}
                 <div className="flex gap-5 pb-5 border-b-2 border-slate-100 border-dashed">
-                  {/* Character image */}
                   <div className="w-32 h-32 flex-shrink-0 rounded-[1.5rem] bg-gradient-to-br from-sky-100 to-indigo-100 border-4 border-sky-200 shadow-inner relative overflow-hidden">
                     {currentCharacter?.imageUrl ? (
                       <Image
@@ -1069,8 +1094,6 @@ export function MainProfileV2({
                       <iconify-icon icon="solar:ghost-smile-linear" class="text-6xl text-sky-400 absolute inset-0 m-auto" />
                     )}
                   </div>
-
-                  {/* Loadout info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div>
@@ -1079,7 +1102,6 @@ export function MainProfileV2({
                         </h3>
                         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Current Loadout</p>
                       </div>
-                      {/* MMR badge */}
                       <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl px-3 py-1.5 flex-shrink-0 shadow-sm">
                         <p className="text-[9px] font-black uppercase tracking-widest text-yellow-600 leading-none mb-0.5">MMR</p>
                         <p className="text-lg font-black text-yellow-700 leading-none">
@@ -1095,7 +1117,6 @@ export function MainProfileV2({
                   </div>
                 </div>
 
-                {/* Spirit Lore */}
                 <div className="bg-slate-50 border-2 border-slate-100 p-4 rounded-xl relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-3 opacity-5">
                     <BookOpen size={36} className="text-slate-400" />
@@ -1108,7 +1129,6 @@ export function MainProfileV2({
                   </div>
                 </div>
 
-                {/* Skills + Territory */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-5">
                     <h4 className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-widest">
@@ -1128,7 +1148,6 @@ export function MainProfileV2({
                   </div>
                 </div>
 
-                {/* Visual Traits */}
                 {traits.length > 0 && (
                   <div className="pt-4 border-t-2 border-slate-100 border-dashed">
                     <h4 className="text-xs font-black text-slate-400 mb-3 flex items-center gap-2 uppercase tracking-widest">
@@ -1150,10 +1169,10 @@ export function MainProfileV2({
               </div>
             )}
 
-            {/* ── BADGES TAB ───────────────────────────────────────────── */}
+            {/* ── BADGES TAB ── */}
             {activeTab === "Badges" && renderBadgesTab()}
 
-            {/* ── COLLECTIONS TAB ──────────────────────────────────────── */}
+            {/* ── COLLECTIONS TAB ── */}
             {activeTab === "Collections" && (
               <div className="animate-in slide-in-from-bottom-4 duration-500">
                 <h3 className="text-2xl tracking-tight font-semibold text-slate-800 mb-6 flex items-center gap-2">
@@ -1199,19 +1218,82 @@ export function MainProfileV2({
               </div>
             )}
 
-            {/* ── ORDERS TAB ───────────────────────────────────────────── */}
+            {/* ── ORDERS TAB ── */}
             {activeTab === "Orders" && (
               <div className="animate-in slide-in-from-bottom-4 duration-500">
                 <OrdersPanel account={account} />
               </div>
             )}
 
-          </div>{/* end tab panel */}
-        </div>{/* end right col */}
-      </div>{/* end grid */}
+          </div>
+        </div>
+      </div>
 
+      {/* ── Badge detail modal ── */}
       {selectedBadge && (
         <BadgeDetailModal badge={selectedBadge} isOpen={!!selectedBadge} onClose={() => setSelectedBadge(null)} />
+      )}
+
+      {/* ── Avatar picker modal ── */}
+      {characters.length > 0 && (
+        <Dialog open={showAvatarPicker} onOpenChange={setShowAvatarPicker}>
+          <DialogContent className="max-w-sm w-full !rounded-[2rem] p-6 border-4 border-slate-100">
+            <DialogHeader className="mb-4">
+              <DialogTitle className="font-black uppercase tracking-tight text-slate-800 text-lg">
+                Choose Avatar
+              </DialogTitle>
+              <DialogDescription className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Select which NFT appears as your profile picture
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid grid-cols-3 gap-3 max-h-72 overflow-y-auto pr-1">
+              {characters.map((c, i) => {
+                const isActive = avatarIndex === i;
+                const rankName = c.attributes?.rank || "Spirit Seed";
+                const isAscendant = rankName === "Kapogian Ascendant";
+                return (
+                  <button
+                    key={c.objectId}
+                    onClick={() => { setAvatarIndex(i); setShowAvatarPicker(false); }}
+                    className={cn(
+                      "relative aspect-square rounded-2xl border-4 overflow-hidden transition-all hover:scale-105 focus:outline-none",
+                      isActive
+                        ? isAscendant
+                          ? "border-transparent shadow-lg scale-105"
+                          : "border-indigo-400 shadow-[0_4px_0_0_rgba(129,140,248,1)] scale-105"
+                        : "border-slate-100 hover:border-slate-300",
+                    )}
+                  >
+                    {/* Ascendant spinning border */}
+                    {isAscendant && isActive && (
+                      <div className="absolute inset-[-100%] bg-gradient-to-r from-indigo-500 via-pink-500 to-amber-500 kpg-conic-spin z-0" />
+                    )}
+                    <div className="relative z-10 w-full h-full bg-white rounded-[0.875rem] overflow-hidden">
+                      <Image
+                        src={c.imageUrl}
+                        alt={c.name}
+                        fill
+                        className="object-contain p-1"
+                      />
+                    </div>
+                    {/* Selected checkmark */}
+                    {isActive && (
+                      <div className="absolute top-1 right-1 w-5 h-5 bg-indigo-500 rounded-full border-2 border-white flex items-center justify-center shadow-sm z-20">
+                        <CheckCircle size={9} className="text-white" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Name of currently-hovered/selected character */}
+            <p className="mt-3 text-center text-[10px] font-black uppercase tracking-widest text-slate-400">
+              {avatarCharacter?.name ?? ""}
+            </p>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
