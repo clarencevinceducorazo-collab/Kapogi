@@ -300,8 +300,8 @@ function CartoonRoadProgress() {
               }
               x="-19"
               y="-28"
-              width="38"
-              height="56"
+              width="48"
+              height="86"
               preserveAspectRatio="xMidYMid meet"
             />
           </g>
