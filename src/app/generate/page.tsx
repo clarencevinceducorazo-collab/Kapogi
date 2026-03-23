@@ -101,11 +101,11 @@ const EnchantmentControl = ({
   onChange: (value: number) => void;
 }) => (
   <div className="flex flex-col">
-    <div className="flex justify-between px-1 -mb-1 text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 mt-2 md:mt-5">
+    <div className="flex justify-between px-1 -mb-2 text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 mt-2 md:mt-5">
       <span>{label}</span>
       <span className="font-mono opacity-80">{value}%</span>
     </div>
-    <div className="w-11/12 mx-auto">
+    <div className="w-11/12 mx-auto mb-2">
       <CustomSlider value={value} color={color} onChange={onChange} />
     </div>
   </div>
@@ -146,7 +146,11 @@ const CarouselSelector = ({
           className={`flex-1 flex flex-col items-center justify-center gap-1 md:gap-2 p-2 md:p-6 rounded-[1rem] md:rounded-3xl border-[2px] md:border-4 border-black transition-all duration-300 ${current.color} shadow-[2px_2px_0_0_#000] md:shadow-[4px_4px_0_0_#000] min-w-0`}
         >
           <Icon size={20} strokeWidth={2.5} className="text-black md:hidden" />
-          <Icon size={32} strokeWidth={2.5} className="text-black hidden md:block" />
+          <Icon
+            size={32}
+            strokeWidth={2.5}
+            className="text-black hidden md:block"
+          />
           <span className="font-black text-[10px] md:text-sm uppercase tracking-tighter text-black truncate w-full text-center">
             {current.name}
           </span>
@@ -1820,8 +1824,16 @@ export default function GeneratorPage() {
                     <header className="max-w-6xl mx-auto text-center mb-6 md:mb-10">
                       <div className="flex items-center justify-center gap-2 mb-2">
                         <div className="bg-yellow-400 p-1 md:p-1.5 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                          <Sparkles size={20} strokeWidth={2.5} className="md:hidden" />
-                          <Sparkles size={24} strokeWidth={2.5} className="hidden md:block" />
+                          <Sparkles
+                            size={20}
+                            strokeWidth={2.5}
+                            className="md:hidden"
+                          />
+                          <Sparkles
+                            size={24}
+                            strokeWidth={2.5}
+                            className="hidden md:block"
+                          />
                         </div>
                         <h1 className="text-xl md:text-3xl font-black uppercase tracking-tighter text-black leading-tight">
                           Kapogian Spirit Summoner
@@ -1833,8 +1845,14 @@ export default function GeneratorPage() {
                       <section className="lg:col-span-4 space-y-4 md:space-y-6 flex flex-col h-fit">
                         <div className="bg-white border-[2px] md:border-4 border-black p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:h-[150px]">
                           <div className="flex items-center gap-1.5 md:gap-2 mb-2 md:mb-4">
-                            <Dna size={18} className="text-blue-600 md:hidden" />
-                            <Dna size={20} className="text-blue-600 hidden md:block" />
+                            <Dna
+                              size={18}
+                              className="text-blue-600 md:hidden"
+                            />
+                            <Dna
+                              size={20}
+                              className="text-blue-600 hidden md:block"
+                            />
                             <h2 className="font-bold text-base md:text-lg uppercase tracking-tight">
                               Spirit Lineage
                             </h2>
@@ -1858,8 +1876,14 @@ export default function GeneratorPage() {
 
                         <div className="bg-white border-[2px] md:border-4 border-black p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
                           <div className="flex items-center gap-1.5 md:gap-2 mb-2 md:mb-4">
-                            <User size={18} className="text-purple-600 md:hidden" />
-                            <User size={20} className="text-purple-600 hidden md:block" />
+                            <User
+                              size={18}
+                              className="text-purple-600 md:hidden"
+                            />
+                            <User
+                              size={20}
+                              className="text-purple-600 hidden md:block"
+                            />
                             <h2 className="font-bold text-base md:text-lg uppercase tracking-tight">
                               Identity
                             </h2>
@@ -1875,8 +1899,14 @@ export default function GeneratorPage() {
 
                         <div className="bg-white border-[2px] md:border-4 border-black p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
                           <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
-                            <Crown size={18} className="text-yellow-600 md:hidden" />
-                            <Crown size={20} className="text-yellow-600 hidden md:block" />
+                            <Crown
+                              size={18}
+                              className="text-yellow-600 md:hidden"
+                            />
+                            <Crown
+                              size={20}
+                              className="text-yellow-600 hidden md:block"
+                            />
                             <h2 className="font-bold text-base md:text-lg uppercase tracking-tight">
                               Enchantments
                             </h2>
@@ -1911,8 +1941,14 @@ export default function GeneratorPage() {
 
                         <div className="bg-white border-[2px] md:border-4 border-black p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
                           <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
-                            <Crown size={18} className="text-red-600 md:hidden" />
-                            <Crown size={20} className="text-red-600 hidden md:block" />
+                            <Crown
+                              size={18}
+                              className="text-red-600 md:hidden"
+                            />
+                            <Crown
+                              size={20}
+                              className="text-red-600 hidden md:block"
+                            />
                             <h2 className="font-bold text-base md:text-lg uppercase tracking-tight">
                               Regions
                             </h2>
@@ -1948,8 +1984,15 @@ export default function GeneratorPage() {
                         <div className="bg-[#E6F4F1] border-2 md:border-4 border-black p-3 md:p-8 rounded-2xl md:rounded-[2.5rem] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-1 flex flex-col">
                           <div className="flex items-center justify-between mb-4 md:mb-8">
                             <div className="flex items-center gap-1.5 md:gap-2">
-                              <Palette size={20} className="text-emerald-600 md:hidden" strokeWidth={3} />
-                              <Palette size={24} className="text-emerald-600 hidden md:block" />
+                              <Palette
+                                size={20}
+                                className="text-emerald-600 md:hidden"
+                                strokeWidth={3}
+                              />
+                              <Palette
+                                size={24}
+                                className="text-emerald-600 hidden md:block"
+                              />
                               <h2 className="font-black text-xl md:text-2xl uppercase tracking-tighter italic leading-none">
                                 Porma Designer
                               </h2>
@@ -2118,8 +2161,16 @@ export default function GeneratorPage() {
                             onClick={handleShuffle}
                             className="flex-1 flex items-center justify-center gap-1.5 md:gap-3 bg-white hover:bg-slate-50 border-[2px] md:border-4 border-black py-2 px-3 md:p-6 rounded-xl md:rounded-[2rem] font-black text-xs md:text-xl uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px]"
                           >
-                            <Shuffle size={16} strokeWidth={3} className="md:hidden" />
-                            <Shuffle size={24} strokeWidth={3} className="hidden md:block" />
+                            <Shuffle
+                              size={16}
+                              strokeWidth={3}
+                              className="md:hidden"
+                            />
+                            <Shuffle
+                              size={24}
+                              strokeWidth={3}
+                              className="hidden md:block"
+                            />
                             Randomize
                           </button>
                           <button
@@ -2131,8 +2182,16 @@ export default function GeneratorPage() {
                               <LoaderCircle className="w-5 h-5 md:w-8 md:h-8 animate-spin" />
                             ) : (
                               <>
-                                <Sparkles size={20} strokeWidth={3} className="md:hidden" />
-                                <Sparkles size={28} strokeWidth={3} className="hidden md:block" />
+                                <Sparkles
+                                  size={20}
+                                  strokeWidth={3}
+                                  className="md:hidden"
+                                />
+                                <Sparkles
+                                  size={28}
+                                  strokeWidth={3}
+                                  className="hidden md:block"
+                                />
                               </>
                             )}
                             {loading ? "Summoning..." : "Summon Spirit"}
@@ -2160,13 +2219,13 @@ export default function GeneratorPage() {
                 <div className="relative bg-stone-100 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-black min-h-[300px] md:min-h-0">
                   {loading ? (
                     showExitLoader ? (
-                      <div className="relative w-[800px] h-[400px] flex items-center justify-center">
+                      <div className="relative w-full max-w-[800px] h-[270px] md:h-[400px] flex items-center justify-center">
                         <Image
                           src="/images/latefinalexit.gif"
                           alt="Finishing up..."
                           width={300}
                           height={400}
-                          className="object-contain w-[800px] h-[400px]"
+                          className="object-contain w-full h-[270px] md:w-[800px] md:h-[400px]"
                           unoptimized
                           priority
                         />
@@ -2178,7 +2237,7 @@ export default function GeneratorPage() {
                           alt="Generating..."
                           width={300}
                           height={400}
-                          className="object-contain"
+                          className="object-contain w-full h-[270px] md:w-[300px] md:h-[400px]"
                           unoptimized
                         />
                         <p className="font-semibold animate__animated animate__fadeIn mt-2 text-stone-600">
@@ -2262,14 +2321,14 @@ export default function GeneratorPage() {
                         </p>
                       )}
                     </div>
-                    <div className="p-4 flex flex-col items-center justify-center bg-white text-center">
-                      <p className="text-[12px] font-bold text-stone-500 uppercase tracking-widest mb-1">
+                    <div className="p-2 md:p-4 flex flex-col items-center justify-center bg-white text-center">
+                      <p className="text-[10px] md:text-[12px] font-bold text-stone-500 uppercase tracking-widest mb-0.5 md:mb-1">
                         Rank
                       </p>
                       {loading ? (
                         <h3
                           className={cn(
-                            "w-32 text-center truncate",
+                            "w-24 md:w-32 text-center truncate text-base md:text-lg",
                             shufflingRank.style,
                           )}
                         >
@@ -2279,13 +2338,13 @@ export default function GeneratorPage() {
                         <>
                           <h3
                             className={cn(
-                              "animate__animated animate__fadeInUp",
+                              "animate__animated animate__fadeInUp text-base md:text-lg",
                               displayRankInfo.style,
                             )}
                           >
                             {displayRankInfo.name}
                           </h3>
-                          <p className="text-[10px] font-bold text-stone-400 mt-1 uppercase tracking-wide">
+                          <p className="text-[9px] md:text-[10px] font-bold text-stone-400 mt-0.5 md:mt-1 uppercase tracking-wide">
                             (Top {displayRankInfo.rarity})
                           </p>
                         </>
@@ -2668,7 +2727,7 @@ export default function GeneratorPage() {
                   </h2>
                   <p className="text-stone-500 font-medium text-sm mt-1">
                     Order. #{txHash.substring(0, 8)}
-                  </p>  
+                  </p>
                 </div>
 
                 <div className="flex gap-4 mb-6">
