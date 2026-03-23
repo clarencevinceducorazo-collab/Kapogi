@@ -16,14 +16,9 @@ export const PageFooter = () => {
           preserveAspectRatio="none"
         >
           <path
-            fill="hsl(var(--primary) / 0.9)"
+            fill="#247BE6"
             style={{ animation: "wave-move 6s ease-in-out infinite" }}
             d="M0,160 C320,300 420,0 720,120 C1020,240 1120,40 1440,160 L1440,320 L0,320 Z"
-          />
-          <path
-            fill="hsl(var(--primary) / 0.45)"
-            style={{ animation: "wave-move 8s ease-in-out infinite reverse" }}
-            d="M0,200 C240,100 480,280 720,180 C960,80 1200,260 1440,200 L1440,320 L0,320 Z"
           />
         </svg>
       </div>
@@ -36,7 +31,7 @@ export const PageFooter = () => {
       `}</style>
 
       {/* Footer Body */}
-      <div className="bg-primary/90 text-primary-foreground" style={{ marginTop: "-1px" }}>
+      <div className="text-primary-foreground" style={{ backgroundColor: "#247BE6", marginTop: "-1px" }}>
         <div className="container mx-auto px-6 pb-10">
           <div className="flex flex-col items-center gap-6">
 
