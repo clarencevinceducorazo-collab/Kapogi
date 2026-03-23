@@ -6,7 +6,7 @@ import Script from "next/script";
 import { StartingScreen } from "@/components/kapogian/StartingScreen";
 import { GlobalNotification } from "@/components/kapogian/GlobalNotification";
 import { UserDrawerWrapper } from "@/components/kapogian/UserDrawerWrapper";
-
+import { ClientShell } from "@/components/kapogian/ClientShell";
 
 export const metadata: Metadata = {
   title: "Kapogian | Collectible Reality",
@@ -58,19 +58,23 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
         />
-        <Script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js" strategy="afterInteractive" />
+        <Script
+          src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"
+          strategy="afterInteractive"
+        />
       </head>
       <body className="font-body bg-slate-950" suppressHydrationWarning={true}>
         <GlobalNotification />
         <Providers>
-          <StartingScreen />
-       <UserDrawerWrapper />
-          <div className="opacity-0 transition-opacity duration-500" id="main-content">
-            {children}
-          </div>
-          <Toaster />
+          <ClientShell>
+            <StartingScreen />
+            <UserDrawerWrapper />
+            <div className="opacity-0 transition-opacity duration-500" id="main-content">
+              {children}
+            </div>
+            <Toaster />
+          </ClientShell>
         </Providers>
-        
       </body>
     </html>
   );

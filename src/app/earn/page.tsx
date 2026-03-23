@@ -449,8 +449,8 @@ export default function EarnPage() {
                     </div>
                   </div>
                   <button className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 squishy-btn">
-                    Play This Game!{" "}
-                    <iconify-icon icon="solar:arrow-right-bold"></iconify-icon>
+                    Coming Soon!{" "}
+                  
                   </button>
                 </div>
               </div>
@@ -505,10 +505,14 @@ export default function EarnPage() {
                       Rare Seeds
                     </div>
                   </div>
-                  <button className="w-full bg-emerald-500 text-white font-bold py-4 rounded-2xl hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2 squishy-btn shadow-lg shadow-emerald-200">
-                    Play This Game!{" "}
-                    <iconify-icon icon="solar:map-arrow-right-bold"></iconify-icon>
-                  </button>
+                  <a href="https://kapogian-game.vercel.app/"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="w-full bg-emerald-500 text-white font-bold py-4 rounded-2xl hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2 squishy-btn shadow-lg shadow-emerald-200"
+>
+  Try Early Access{" "}
+  <iconify-icon icon="solar:map-arrow-right-bold"></iconify-icon>
+</a>
                 </div>
               </div>
             </div>
