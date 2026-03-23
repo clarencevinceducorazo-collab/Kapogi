@@ -2554,9 +2554,17 @@ export default function AdminPage() {
       <nav className="sticky top-0 z-50 bg-white border-b-4 border-black px-6 py-4 shadow-[0_4px_0_0_rgba(0,0,0,0.05)]">
         <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-4">
-            <div className="bg-black text-white p-2.5 rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-              <Box size={24} />
-            </div>
+          
+             
+                             <Image
+                  src="/images/KapogianLogo.webp"
+
+                  width={64}
+                  height={64}
+                  className="rounded-full border-2 border-white/30 shadow-lg hover:scale-105 transition-transform" alt={""}                              
+                             />
+                          
+          
             <div>
               <h1 className="text-2xl font-black uppercase tracking-tight leading-none">
                 Management
