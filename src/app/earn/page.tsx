@@ -147,9 +147,9 @@ function AdventureModal({ onClose }: { onClose: () => void }) {
       icon: "solar:leaf-bold",
       iconColor: "text-emerald-400",
       img: "/images/earn/kapogianFarm.png",
-      tag: "Coming Soon",
+      tag: "Try Early Access!",
       tagBg: "bg-emerald-600",
-      href: "#",
+      href: "https://kapogian-game.vercel.app/",
     },
   ];
 
@@ -236,7 +236,7 @@ function AdventureModal({ onClose }: { onClose: () => void }) {
                 <div
                   className={`w-full ${game.btnBg} ${game.btnText} font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm transition-colors shadow ${game.shadow}`}
                 >
-                  Play Now
+                  {game.tag}
                   <iconify-icon icon="solar:arrow-right-bold" class="text-sm" />
                 </div>
               </div>
