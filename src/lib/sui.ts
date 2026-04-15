@@ -121,7 +121,7 @@ export async function getAdminRegistryInfo(): Promise<{
  * Fetch TreasuryConfig fields for the super admin panel.
  */
 export async function getTreasuryConfigInfo(): Promise<{
-  treasuryAddress: string;
+  shares: { recipient: string; share_bps: number }[];
   baseMintPrice: number;
   bundleUpgradePrice: number;
 } | null> {
@@ -134,8 +134,13 @@ export async function getTreasuryConfigInfo(): Promise<{
     const fields = (configObj.data?.content as any)?.fields;
     if (!fields) return null;
 
+    const shares = (fields.shares ?? []).map((s: any) => ({
+      recipient: s.fields?.recipient,
+      share_bps: Number(s.fields?.share_bps),
+    }));
+
     return {
-      treasuryAddress: fields.treasury_address,
+      shares,
       baseMintPrice: Number(fields.base_mint_price),
       bundleUpgradePrice: Number(fields.bundle_upgrade_price),
     };
@@ -215,18 +220,56 @@ export async function superAdminUnpauseMinting(params: {
   return params.signAndExecute({ transaction: tx }, { showEffects: true });
 }
 
-export async function superAdminUpdateTreasury(params: {
+export async function superAdminSetRevenueShares(params: {
   superAdminCapId: string;
-  newTreasuryAddress: string;
+  recipients: string[];
+  sharesBps: number[];
   signAndExecute: any;
 }) {
   const tx = new Transaction();
   tx.moveCall({
-    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::update_treasury_address`,
+    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::set_revenue_shares`,
     arguments: [
       tx.object(params.superAdminCapId),
       tx.object(CONTRACT_ADDRESSES.TREASURY_CONFIG_ID),
-      tx.pure.address(params.newTreasuryAddress),
+      tx.pure.vector('address', params.recipients),
+      tx.pure.vector('u64', params.sharesBps),
+    ],
+  });
+  return params.signAndExecute({ transaction: tx }, { showEffects: true });
+}
+
+export async function superAdminAddRevenueShare(params: {
+  superAdminCapId: string;
+  newRecipient: string;
+  newShareBps: number;
+  signAndExecute: any;
+}) {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::add_revenue_share`,
+    arguments: [
+      tx.object(params.superAdminCapId),
+      tx.object(CONTRACT_ADDRESSES.TREASURY_CONFIG_ID),
+      tx.pure.address(params.newRecipient),
+      tx.pure.u64(params.newShareBps),
+    ],
+  });
+  return params.signAndExecute({ transaction: tx }, { showEffects: true });
+}
+
+export async function superAdminRemoveRevenueShare(params: {
+  superAdminCapId: string;
+  recipient: string;
+  signAndExecute: any;
+}) {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::${MODULES.ADMIN}::remove_revenue_share`,
+    arguments: [
+      tx.object(params.superAdminCapId),
+      tx.object(CONTRACT_ADDRESSES.TREASURY_CONFIG_ID),
+      tx.pure.address(params.recipient),
     ],
   });
   return params.signAndExecute({ transaction: tx }, { showEffects: true });

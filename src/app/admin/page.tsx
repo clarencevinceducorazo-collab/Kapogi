@@ -64,7 +64,9 @@ import {
   superAdminRemoveAdmin,
   superAdminPauseMinting,
   superAdminUnpauseMinting,
-  superAdminUpdateTreasury,
+  superAdminSetRevenueShares,
+  superAdminAddRevenueShare,
+  superAdminRemoveRevenueShare,
   superAdminUpdateMintPrice,
   superAdminUpdateBundlePrice,
   getAllAchievements,
@@ -139,7 +141,7 @@ interface RegistryInfo {
   pauseReason: string;
 }
 interface TreasuryInfo {
-  treasuryAddress: string;
+  shares: { recipient: string; share_bps: number }[];
   baseMintPrice: number;
   bundleUpgradePrice: number;
 }
@@ -880,8 +882,15 @@ function SuperAdminPanel({
   const [removingAdmin, setRemovingAdmin] = useState<string | null>(null);
   const [pauseReason, setPauseReason] = useState("");
   const [togglingPause, setTogglingPause] = useState(false);
-  const [newTreasuryAddr, setNewTreasuryAddr] = useState("");
-  const [updatingTreasury, setUpdatingTreasury] = useState(false);
+  const [newShareRecipient, setNewShareRecipient] = useState("");
+  const [newShareBps, setNewShareBps] = useState("");
+  const [addingShare, setAddingShare] = useState(false);
+  const [removingShare, setRemovingShare] = useState<string | null>(null);
+
+  const [editableShares, setEditableShares] = useState<{ addr: string; bps: number }[]>([]);
+  const [savingShares, setSavingShares] = useState(false);
+  const [sharesEdited, setSharesEdited] = useState(false);
+
   const [newMintPriceSui, setNewMintPriceSui] = useState("");
   const [newBundlePriceSui, setNewBundlePriceSui] = useState("");
   const [updatingMintPrice, setUpdatingMintPrice] = useState(false);
@@ -889,6 +898,47 @@ function SuperAdminPanel({
   const [transferRecipient, setTransferRecipient] = useState("");
   const [transferring, setTransferring] = useState(false);
   const [transferArmed, setTransferArmed] = useState(false);
+
+  useEffect(() => {
+    if (treasury?.shares) {
+      setEditableShares(treasury.shares.map(s => ({ addr: s.recipient, bps: s.share_bps })));
+      setSharesEdited(false);
+    }
+  }, [treasury]);
+
+  const sharesTotal = editableShares.reduce((s, r) => s + (r.bps || 0), 0);
+  const sharesValid =
+    sharesTotal === 10000 &&
+    editableShares.length > 0 &&
+    editableShares.every(r => r.addr.trim().startsWith('0x') && r.bps > 0);
+
+  const handleSaveAllShares = async () => {
+    if (!sharesValid) return;
+    setSavingShares(true);
+    try {
+      await superAdminSetRevenueShares({
+        superAdminCapId: superCapId,
+        recipients: editableShares.map(r => r.addr.trim()),
+        sharesBps: editableShares.map(r => r.bps),
+        signAndExecute,
+      });
+      onToast("Revenue shares saved!", "success");
+      setSharesEdited(false);
+      loadInfo();
+    } catch {
+      onToast("Failed to save revenue shares.", "error");
+    } finally {
+      setSavingShares(false);
+    }
+  };
+
+  const autoBalance = () => {
+    const n = editableShares.length;
+    const base = Math.floor(10000 / n);
+    const rem = 10000 - base * n;
+    setEditableShares(editableShares.map((r, i) => ({ ...r, bps: base + (i === 0 ? rem : 0) })));
+    setSharesEdited(true);
+  };
 
   useEffect(() => {
     loadInfo();
@@ -1051,25 +1101,49 @@ function SuperAdminPanel({
     }
   };
 
-  const handleUpdateTreasury = async () => {
-    if (!newTreasuryAddr.startsWith("0x")) {
+  const handleAddRevenueShare = async () => {
+    if (!newShareRecipient.startsWith("0x")) {
       onToast("Invalid address format", "error");
       return;
     }
-    setUpdatingTreasury(true);
+    const bps = parseInt(newShareBps);
+    if (isNaN(bps) || bps <= 0 || bps >= 10000) {
+      onToast("BPS must be between 1 and 9999", "error");
+      return;
+    }
+    setAddingShare(true);
     try {
-      await superAdminUpdateTreasury({
+      await superAdminAddRevenueShare({
         superAdminCapId: superCapId,
-        newTreasuryAddress: newTreasuryAddr,
+        newRecipient: newShareRecipient.trim(),
+        newShareBps: bps,
         signAndExecute,
       });
-      onToast("Treasury updated!", "success");
-      setNewTreasuryAddr("");
+      onToast("Revenue share added!", "success");
+      setNewShareRecipient("");
+      setNewShareBps("");
       loadInfo();
     } catch {
-      onToast("Failed to update treasury.", "error");
+      onToast("Failed to add revenue share.", "error");
     } finally {
-      setUpdatingTreasury(false);
+      setAddingShare(false);
+    }
+  };
+
+  const handleRemoveRevenueShare = async (recipient: string) => {
+    setRemovingShare(recipient);
+    try {
+      await superAdminRemoveRevenueShare({
+        superAdminCapId: superCapId,
+        recipient,
+        signAndExecute,
+      });
+      onToast("Revenue share removed.", "success");
+      loadInfo();
+    } catch {
+      onToast("Failed to remove revenue share.", "error");
+    } finally {
+      setRemovingShare(null);
     }
   };
 
@@ -1348,44 +1422,91 @@ function SuperAdminPanel({
               </div>
             </section>
 
-            {/* Treasury */}
+            {/* Revenue Shares */}
             <div className="border-2 border-slate-200 rounded-2xl p-5">
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-3 mb-4">
                 <Wallet size={18} />
-                <h3 className="font-bold uppercase tracking-tight text-sm">
-                  Treasury Wallet
-                </h3>
+                <h3 className="font-bold uppercase tracking-tight text-sm">Revenue Shares</h3>
+                <Badge className="bg-slate-100 ml-auto">{sharesTotal} / 10000 BPS</Badge>
               </div>
-              <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl mb-3">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">
-                  Current
-                </p>
-                <p
-                  className="font-mono text-xs font-bold text-slate-700 truncate"
-                  title={treasury?.treasuryAddress}
-                >
-                  {treasury?.treasuryAddress ?? "—"}
-                </p>
+
+              {/* Editable rows */}
+              <div className="space-y-2 mb-3">
+                {editableShares.map((share, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input
+                      value={share.addr}
+                      onChange={e => {
+                        const next = [...editableShares];
+                        next[i] = { ...next[i], addr: e.target.value };
+                        setEditableShares(next);
+                        setSharesEdited(true);
+                      }}
+                      placeholder="0x... address"
+                      className="flex-1 h-9 border-2 border-slate-200 rounded-xl px-3 font-mono text-xs bg-white outline-none focus:border-blue-400"
+                    />
+                    <input
+                      type="number"
+                      value={share.bps}
+                      onChange={e => {
+                        const next = [...editableShares];
+                        next[i] = { ...next[i], bps: parseInt(e.target.value) || 0 };
+                        setEditableShares(next);
+                        setSharesEdited(true);
+                      }}
+                      className="w-24 h-9 border-2 border-slate-200 rounded-xl px-3 font-mono text-xs bg-white outline-none focus:border-blue-400"
+                    />
+                    <span className="text-[10px] font-black text-slate-400 w-10 text-right">
+                      {(share.bps / 100).toFixed(1)}%
+                    </span>
+                    <button
+                      onClick={() => {
+                        setEditableShares(editableShares.filter((_, j) => j !== i));
+                        setSharesEdited(true);
+                      }}
+                      disabled={editableShares.length <= 1}
+                      className="w-8 h-8 flex items-center justify-center text-red-400 hover:bg-red-50 rounded-lg disabled:opacity-30"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                ))}
               </div>
-              <div className="flex gap-2">
-                <input
-                  placeholder="New 0x... address"
-                  value={newTreasuryAddr}
-                  onChange={(e) => setNewTreasuryAddr(e.target.value)}
-                  className="flex-1 h-10 border-2 border-slate-200 rounded-xl px-3 font-semibold text-xs bg-white outline-none focus:border-blue-400"
+
+              {/* BPS progress bar */}
+              <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-3">
+                <div
+                  className={`h-2 rounded-full transition-all ${sharesTotal === 10000 ? 'bg-green-500' : sharesTotal > 10000 ? 'bg-red-500' : 'bg-yellow-400'}`}
+                  style={{ width: `${Math.min(100, (sharesTotal / 10000) * 100)}%` }}
                 />
+              </div>
+
+              <div className="flex gap-2 mb-3">
                 <button
-                  className="h-10 px-4 bg-orange-500 text-white rounded-xl font-bold text-xs disabled:opacity-50"
-                  onClick={handleUpdateTreasury}
-                  disabled={updatingTreasury || !newTreasuryAddr}
+                  onClick={() => { setEditableShares([...editableShares, { addr: '', bps: 0 }]); setSharesEdited(true); }}
+                  className="flex-1 h-8 border-2 border-dashed border-slate-200 rounded-xl font-bold text-xs text-slate-400 hover:border-blue-300 hover:text-blue-500"
                 >
-                  {updatingTreasury ? (
-                    <LoaderCircle size={14} className="animate-spin" />
-                  ) : (
-                    "Update"
-                  )}
+                  + Add recipient
+                </button>
+                <button onClick={autoBalance} className="h-8 px-3 border-2 border-slate-200 rounded-xl font-bold text-xs text-slate-500 hover:bg-slate-50">
+                  Auto-balance
                 </button>
               </div>
+
+              <button
+                onClick={handleSaveAllShares}
+                disabled={!sharesValid || savingShares || !sharesEdited}
+                className="w-full h-10 bg-black text-white rounded-xl font-black text-xs border-2 border-black disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {savingShares ? <LoaderCircle size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                Save all shares — 1 transaction
+              </button>
+
+              {sharesTotal !== 10000 && (
+                <p className="text-[10px] font-black text-red-500 text-center mt-2">
+                  {10000 - sharesTotal > 0 ? `${10000 - sharesTotal} BPS short` : `${sharesTotal - 10000} BPS over`} — must equal exactly 10 000
+                </p>
+              )}
             </div>
 
             {/* Pricing */}
